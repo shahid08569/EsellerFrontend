@@ -1,10 +1,11 @@
+/* To learn more about Typescript configuration file: https://www.typescriptlang.org/docs/handbook/tsconfig-json.html. */
+/* To learn more about Angular compiler options: https://angular.dev/reference/configs/angular-compiler-options. */
 {
   "compileOnSave": false,
   "compilerOptions": {
     "paths": {
-      "eseller-shared": ["./projects/eseller-shared/src/public-api.ts"]
+      "eseller-shared": ["./dist/eseller-shared"]
     },
-    "strict": true,
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
@@ -19,11 +20,22 @@
   "angularCompilerOptions": {
     "enableI18nLegacyMessageIdFormat": false,
     "strictInjectionParameters": true,
-    "strictInputAccessModifiers": true,
-    "strictTemplates": true
+    "strictInputAccessModifiers": true
   },
   "files": [],
   "references": [
+    {
+      "path": "./tsconfig.app.json"
+    },
+    {
+      "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/user-web/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/user-web/tsconfig.spec.json"
+    },
     {
       "path": "./projects/eseller-customer/tsconfig.app.json"
     },
