@@ -3,6 +3,9 @@
 {
   "compileOnSave": false,
   "compilerOptions": {
+    "paths": {
+      "eseller-shared": ["./dist/eseller-shared"]
+    },
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
@@ -26,6 +29,42 @@
     },
     {
       "path": "./tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/user-web/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/user-web/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/eseller-customer/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/eseller-customer/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/eseller-seller/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/eseller-seller/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/eseller-admin/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/eseller-admin/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/eseller-affiliate/tsconfig.app.json"
+    },
+    {
+      "path": "./projects/eseller-affiliate/tsconfig.spec.json"
+    },
+    {
+      "path": "./projects/eseller-shared/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/eseller-shared/tsconfig.spec.json"
     }
   ]
 }
