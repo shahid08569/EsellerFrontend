@@ -1,0 +1,127 @@
+/**
+ * Eseller Shared Tailwind Theme
+ * ---------------------------------
+ * Tailwind v4 CSS-first theme. Maps our design tokens
+ * (tokens.css) to Tailwind utility classes so we can use
+ * `bg-primary`, `text-success`, `shadow-md`, etc. everywhere.
+ *
+ * Every value here references a CSS custom property so that
+ * per-app accent overrides at :root automatically flow through
+ * Tailwind utilities — no per-app Tailwind config needed.
+ */
+
+@theme {
+  /* ============================================
+     COLORS — NEUTRAL
+     ============================================ */
+  --color-bg-app: #F8F9FB;
+  --color-bg-card: #FFFFFF;
+  --color-bg-sidebar: #111827;
+  --color-bg-hover: #F1F3F5;
+
+  --color-border-base: #E5E7EB;
+
+  /* Text */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+  --color-text-on-dark: #F9FAFB;
+  --color-text-on-dark-secondary: #9CA3AF;
+
+  /* ============================================
+     COLORS — SEMANTIC (identical across apps)
+     ============================================ */
+  --color-success: #16A34A;
+  --color-success-bg: #F0FDF4;
+
+  --color-warning: #D97706;
+  --color-warning-bg: #FFFBEB;
+
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEF2F2;
+
+  --color-info: #0EA5E9;
+  --color-info-bg: #F0F9FF;
+
+  /* ============================================
+     COLORS — PRIMARY (accent-driven)
+     --------------------------------------------
+     Values come from tokens.css :root which each app
+     overrides. Tailwind utilities like `bg-primary`
+     automatically pick up the active app's accent.
+     ============================================ */
+  --color-primary: var(--color-primary);
+  --color-primary-hover: var(--color-primary-hover);
+  --color-primary-active: var(--color-primary-active);
+  --color-primary-tint: var(--color-primary-tint);
+
+  /* ============================================
+     FONT FAMILY
+     ============================================ */
+  --font-sans: 'Inter', -apple-system, BlinkMacSystemFont,
+               'Segoe UI', Roboto, sans-serif;
+
+  /* ============================================
+     FONT SIZES (with line-height)
+     --------------------------------------------
+     Tailwind v4 syntax: --text-{name} and --text-{name}--line-height
+     ============================================ */
+  --text-xs: 12px;
+  --text-xs--line-height: 1.5;
+
+  --text-sm: 14px;
+  --text-sm--line-height: 1.5;
+
+  --text-base: 16px;
+  --text-base--line-height: 1.5;
+
+  --text-lg: 18px;
+  --text-lg--line-height: 1.4;
+
+  --text-xl: 20px;
+  --text-xl--line-height: 1.4;
+
+  --text-2xl: 24px;
+  --text-2xl--line-height: 1.25;
+
+  --text-3xl: 30px;
+  --text-3xl--line-height: 1.25;
+
+  --text-4xl: 36px;
+  --text-4xl--line-height: 1.25;
+
+  /* ============================================
+     FONT WEIGHTS
+     ============================================ */
+  --font-weight-normal: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+  --font-weight-extrabold: 800;
+
+  /* ============================================
+     LETTER SPACING
+     ============================================ */
+  --tracking-normal: 0;
+  --tracking-tight: -0.01em;
+  --tracking-wide: 0.02em;
+
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ============================================
+     SHADOWS
+     ============================================ */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.1),
+               0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 8px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 24px rgba(16, 24, 40, 0.12);
+  --shadow-focus-ring: 0 0 0 3px var(--color-primary-focus-ring);
+}
