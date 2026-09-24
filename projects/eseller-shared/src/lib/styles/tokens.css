@@ -1,0 +1,171 @@
+/**
+ * Eseller Shared Design Tokens
+ * ---------------------------------
+ * Neutral base + semantic colors (same across all 4 apps).
+ * Per-app accent colors are set at each app's :root.
+ *
+ * Tailwind v4 — these are exposed as CSS custom properties
+ * so they work both in Tailwind utilities AND in dynamic
+ * inline styles (charts, third-party libs, etc.).
+ */
+
+:root {
+  /* ============================================
+     NEUTRAL BASE (identical in all 4 apps)
+     ============================================ */
+  --color-bg-app: #F8F9FB;
+  --color-bg-card: #FFFFFF;
+  --color-bg-sidebar: #111827;
+  --color-bg-hover: #F1F3F5;
+  --color-border: #E5E7EB;
+
+  /* Text — light surfaces */
+  --color-text-primary: #111827;
+  --color-text-secondary: #6B7280;
+  --color-text-muted: #9CA3AF;
+
+  /* Text — dark sidebar */
+  --color-text-on-dark: #F9FAFB;
+  --color-text-on-dark-secondary: #9CA3AF;
+
+  /* ============================================
+     SEMANTIC COLORS (never change across apps)
+     ============================================ */
+  --color-success: #16A34A;
+  --color-success-bg: #F0FDF4;
+
+  --color-warning: #D97706;
+  --color-warning-bg: #FFFBEB;
+
+  --color-danger: #DC2626;
+  --color-danger-bg: #FEF2F2;
+
+  --color-info: #0EA5E9;
+  --color-info-bg: #F0F9FF;
+
+  /* ============================================
+     ACCENT — DEFAULT (Indigo — seller panel)
+     --------------------------------------------
+     Each app overrides these at its own :root.
+     ============================================ */
+  --color-primary: #4F46E5;
+  --color-primary-hover: #4338CA;
+  --color-primary-active: #3730A3;
+  --color-primary-tint: #EEF2FF;
+  --color-primary-focus-ring: rgba(79, 70, 229, 0.15);
+
+  /* ============================================
+     BUTTONS (structure identical; primary uses accent)
+     ============================================ */
+  --color-btn-primary-bg: var(--color-primary);
+  --color-btn-primary-bg-hover: var(--color-primary-hover);
+  --color-btn-primary-text: #FFFFFF;
+
+  --color-btn-secondary-bg: transparent;
+  --color-btn-secondary-border: #D1D5DB;
+  --color-btn-secondary-text: #374151;
+  --color-btn-secondary-bg-hover: #F9FAFB;
+
+  --color-btn-destructive-bg: #DC2626;
+  --color-btn-destructive-bg-hover: #B91C1C;
+  --color-btn-destructive-text: #FFFFFF;
+
+  --color-btn-disabled-bg: #E5E7EB;
+  --color-btn-disabled-text: #9CA3AF;
+
+  /* ============================================
+     SPACING SCALE (Tailwind default — documented here)
+     ============================================ */
+  --space-0: 0;
+  --space-0-5: 2px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+  /* ============================================
+     TYPOGRAPHY — FONT FAMILY
+     ============================================ */
+  --font-family-base: 'Inter', -apple-system, BlinkMacSystemFont,
+                      'Segoe UI', Roboto, sans-serif;
+
+  /* ============================================
+     TYPOGRAPHY — FONT SIZES (with line-height)
+     ============================================ */
+  --font-size-xs: 12px;
+  --font-size-sm: 14px;
+  --font-size-base: 16px;
+  --font-size-lg: 18px;
+  --font-size-xl: 20px;
+  --font-size-2xl: 24px;
+  --font-size-3xl: 30px;
+  --font-size-4xl: 36px;
+
+  --line-height-body: 1.5;
+  --line-height-heading: 1.25;
+  --line-height-table: 1.4;
+
+  /* Composite size / line-height pairs (for reference) */
+  --text-xs: 12px;    --text-xs-lh: 1.5;
+  --text-sm: 14px;    --text-sm-lh: 1.5;
+  --text-base: 16px;  --text-base-lh: 1.5;
+  --text-lg: 18px;    --text-lg-lh: 1.4;
+  --text-xl: 20px;    --text-xl-lh: 1.4;
+  --text-2xl: 24px;   --text-2xl-lh: 1.25;
+  --text-3xl: 30px;   --text-3xl-lh: 1.25;
+  --text-4xl: 36px;   --text-4xl-lh: 1.25;
+
+  /* ============================================
+     TYPOGRAPHY — FONT WEIGHTS
+     ============================================ */
+  --font-weight-regular: 400;    /* body text, paragraphs */
+  --font-weight-medium: 500;     /* labels, table headers, nav items */
+  --font-weight-semibold: 600;   /* card titles, buttons, section headers */
+  --font-weight-bold: 700;       /* page titles, key stats, hero headlines */
+  --font-weight-extrabold: 800;  /* user-web only — marketing headlines */
+
+  /* ============================================
+     TYPOGRAPHY — LETTER SPACING
+     ============================================ */
+  --letter-spacing-normal: 0;             /* body text */
+  --letter-spacing-tight: -0.01em;        /* headings 2xl and above */
+  --letter-spacing-wide: 0.02em;          /* all-caps labels (badges) */
+
+  /* ============================================
+     BORDER RADIUS
+     ============================================ */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 9999px;
+
+  /* ============================================
+     SHADOWS
+     ============================================ */
+  --shadow-xs: 0 1px 2px rgba(16, 24, 40, 0.05);
+  --shadow-sm: 0 1px 3px rgba(16, 24, 40, 0.1), 0 1px 2px rgba(16, 24, 40, 0.06);
+  --shadow-md: 0 4px 8px rgba(16, 24, 40, 0.08);
+  --shadow-lg: 0 12px 24px rgba(16, 24, 40, 0.12);
+  --shadow-focus-ring: 0 0 0 3px var(--color-primary-focus-ring);
+}
+
+/* ============================================
+   TABULAR NUMBERS UTILITY
+   --------------------------------------------
+   Use .tabular-nums on prices, quantities,
+   stat numbers, and table cells so digits
+   align in columns.
+   ============================================ */
+.tabular-nums {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum';
+}

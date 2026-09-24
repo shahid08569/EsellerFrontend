@@ -1,2 +1,10 @@
-/* You can add global styles to this file, and also import other style files */
-@import "tailwindcss";
+@import 'tailwindcss';
+@import '../../eseller-shared/src/lib/styles/index.css';
+
+:root {
+  --color-primary: #E11D48;
+  --color-primary-hover: #BE123C;
+  --color-primary-active: #9F1239;
+  --color-primary-tint: #FFF1F2;
+  --color-primary-focus-ring: rgba(225, 29, 72, 0.15);
+}
