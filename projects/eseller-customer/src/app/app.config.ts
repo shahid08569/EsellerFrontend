@@ -1,11 +1,18 @@
 import {
   ApplicationConfig,
   provideZonelessChangeDetection,
-  provideAppInitializer,
-  inject
+  provideAppInitializer
 } from '@angular/core';
 import { provideRouter } from '@angular/router';
-import { provideHttpClient, withInterceptors } from '@angular/common/http';
+import {
+  provideHttpClient,
+  withInterceptors,
+  withInterceptorsFromDi
+} from '@angular/common/http';
+
+import { provideLoadingBar } from '@ngx-loading-bar/core';
+import { provideLoadingBarInterceptor } from '@ngx-loading-bar/http-client';
+import { provideLoadingBarRouter } from '@ngx-loading-bar/router';
 
 import {
   authInterceptor,
@@ -20,14 +27,22 @@ export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(routes),
+
+    // ✅ Loading bar setup
+    provideLoadingBar({ latencyThreshold: 100 }),
+    provideLoadingBarRouter(),
+    provideLoadingBarInterceptor(),
+
+    // ✅ HttpClient with interceptors
     provideHttpClient(
+      withInterceptorsFromDi(),
       withInterceptors([
-        authInterceptor,      // 1. Attach JWT + cookies
-        refreshInterceptor,   // 2. Catch 401 → silent refresh → retry
-        errorInterceptor      // 3. Normalise errors
+        authInterceptor,
+        refreshInterceptor,
+        errorInterceptor
       ])
     ),
-    // Silent refresh on app bootstrap (uses HttpOnly cookie)
+
     provideAppInitializer(authBootstrapFactory())
   ]
 };

@@ -5,6 +5,6 @@
   "compilerOptions": {
     "types": []
   },
-  "include": ["src/**/*.ts"],
+  "include": ["src/**/*.ts", "src/app/features/home/components/brands-grid"],
   "exclude": ["src/**/*.spec.ts"]
 }

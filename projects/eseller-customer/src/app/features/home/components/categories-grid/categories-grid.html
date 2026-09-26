@@ -1,0 +1,71 @@
+@if (categories().length > 0) {
+  <section class="py-2 md:py-4">
+
+    <!-- Heading -->
+    <h2 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tracking-tight mb-6 md:mb-8">
+      What are you shopping for today?
+    </h2>
+
+    <!-- Horizontal scroll mobile / centered desktop -->
+    <div class="flex gap-6 md:gap-10 lg:gap-14 overflow-x-auto scrollbar-hide pb-2 md:pb-0 md:justify-center px-2">
+
+      @for (category of categories(); track category.id) {
+        <a
+          [routerLink]="['/categories', category.slug]"
+          class="flex flex-col items-center gap-3 flex-shrink-0 group"
+        >
+          <!-- Circle image -->
+          <div class="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white group-hover:border-primary transition-colors duration-[2000ms] flex items-center justify-center">
+
+            @if (getImageUrl(category.imageUrl); as imgUrl) {
+              <img
+                [src]="imgUrl"
+                [alt]="category.name"
+                class="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-110"
+                loading="lazy"
+              />
+            } @else {
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                class="w-8 h-8 md:w-10 md:h-10 text-text-muted"
+                fill="none"
+                viewBox="0 0 24 24"
+                stroke="currentColor"
+                stroke-width="1.5"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
+                />
+              </svg>
+            }
+
+          </div>
+
+          <!-- Name -->
+          <span class="text-sm md:text-base font-medium text-text-primary text-center group-hover:text-primary transition-colors whitespace-nowrap">
+            {{ category.name }}
+          </span>
+        </a>
+      }
+
+    </div>
+
+  </section>
+} @else {
+  <!-- SKELETON -->
+  <section class="py-2 md:py-4">
+    <h2 class="text-center text-2xl md:text-3xl lg:text-4xl font-bold text-text-primary tracking-tight mb-6 md:mb-8">
+      What are you shopping for today?
+    </h2>
+    <div class="flex gap-6 md:gap-10 lg:gap-14 overflow-x-auto scrollbar-hide pb-2 md:pb-0 md:justify-center px-2">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="flex flex-col items-center gap-3 flex-shrink-0 animate-pulse">
+          <div class="w-20 h-20 md:w-24 md:h-24 lg:w-28 lg:h-28 rounded-full bg-gray-200"></div>
+          <div class="h-4 w-16 bg-gray-200 rounded"></div>
+        </div>
+      }
+    </div>
+  </section>
+}

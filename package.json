@@ -18,7 +18,11 @@
     "@angular/platform-browser": "^22.1.0",
     "@angular/router": "^22.1.0",
     "@microsoft/signalr": "^10.0.11",
+    "@ngx-loading-bar/core": "^7.0.1",
+    "@ngx-loading-bar/http-client": "^7.0.1",
+    "@ngx-loading-bar/router": "^7.0.1",
     "rxjs": "~7.8.0",
+    "swiper": "^14.2.0",
     "tslib": "^2.3.0"
   },
   "devDependencies": {
