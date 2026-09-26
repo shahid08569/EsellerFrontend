@@ -1,12 +1,10 @@
-import { Component, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { NgxLoadingBar } from '@ngx-loading-bar/core';
 
 @Component({
-  imports: [RouterOutlet],
   selector: 'app-root',
-  styleUrl: './app.css',
-  templateUrl: './app.html',
+  imports: [RouterOutlet, NgxLoadingBar],
+  templateUrl: './app.html'
 })
-export class App {
-  protected readonly title = signal('eseller-customer');
-}
+export class App {}

@@ -1,0 +1,74 @@
+<section class="w-full bg-white rounded-[24px] py-6 md:py-8 px-4 md:px-6 border border-gray-100 mt-4">
+
+  <div class="flex items-center justify-between mb-4 md:mb-6">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 md:w-12 md:h-12 rounded-full bg-orange-100 flex items-center justify-center flex-shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 md:w-6 md:h-6 text-orange-500" viewBox="0 0 24 24" fill="currentColor">
+          <path d="M12.963 2.286a.75.75 0 00-1.071-.136 9.742 9.742 0 00-3.539 6.177A7.547 7.547 0 016.648 6.61a.75.75 0 00-1.152-.082A9 9 0 1015.68 4.534a7.46 7.46 0 01-2.717-2.248zM15.75 14.25a3.75 3.75 0 11-7.313-1.172c.628.465 1.35.81 2.133 1a5.99 5.99 0 011.925-3.545 3.75 3.75 0 013.255 3.717z" />
+        </svg>
+      </div>
+      <div>
+        <h2 class="text-lg md:text-xl lg:text-2xl font-bold text-orange-500 tracking-tight">
+          {{ title() }}
+        </h2>
+        <p class="text-xs md:text-sm text-text-secondary">Trending in last 30 days</p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button type="button" class="hot-prev w-9 h-9 md:w-10 md:h-10 rounded-full bg-white hover:bg-orange-500 border border-gray-200 hover:border-orange-500 flex items-center justify-center text-text-primary hover:text-white transition-colors cursor-pointer" aria-label="Previous">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+        </svg>
+      </button>
+      <button type="button" class="hot-next w-9 h-9 md:w-10 md:h-10 rounded-full bg-white hover:bg-orange-500 border border-gray-200 hover:border-orange-500 flex items-center justify-center text-text-primary hover:text-white transition-colors cursor-pointer" aria-label="Next">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-5">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="bg-[#F2F1EC] rounded-[24px] p-3 animate-pulse">
+          <div class="aspect-square bg-white rounded-[20px]"></div>
+          <div class="px-2 pt-4 space-y-2">
+            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+  @else if (products().length === 0) {
+    <div class="text-center py-12 px-4 bg-bg-hover rounded-2xl">
+      <p class="text-sm text-text-secondary">No hot selling products yet.</p>
+    </div>
+  }
+  @else {
+    <div #swiperContainer class="swiper hot-swiper overflow-hidden">
+      <div class="swiper-wrapper">
+        @for (product of products(); track product.id) {
+          <div class="swiper-slide h-auto">
+            <es-product-card
+  [product]="product"
+  [preferredBadge]="'hot'"
+/>
+               </div>
+        }
+      </div>
+    </div>
+
+    <div class="flex justify-center mt-6">
+      <a [routerLink]="viewAllLink()" class="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-500 text-white text-sm font-medium rounded-full hover:bg-orange-600 transition-colors">
+        View All
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+        </svg>
+      </a>
+    </div>
+  }
+
+</section>

@@ -1,0 +1,62 @@
+@if (hasSlides()) {
+  <div #swiperContainer class="swiper hero-swiper relative w-full overflow-hidden rounded-lg bg-bg-hover group">
+
+    <div class="swiper-wrapper">
+      @for (banner of banners(); track banner.id) {
+        <div class="swiper-slide">
+          <div class="relative w-full aspect-[16/7] md:aspect-[16/4.5]">
+
+            <img
+              [src]="banner.imageUrl"
+              [alt]="'Banner'"
+              class="w-full h-full object-cover"
+              loading="lazy"
+            />
+
+            <div class="absolute inset-0 bg-gradient-to-r from-black/40 via-transparent to-transparent"></div>
+
+            @if (banner.linkUrl) {
+              <a
+                [routerLink]="banner.linkUrl"
+                class="absolute bottom-4 left-4 md:bottom-8 md:left-8 inline-flex items-center gap-2 px-4 py-2 md:px-6 md:py-3 bg-primary text-white text-sm md:text-base font-semibold rounded-md hover:bg-primary-hover transition-colors shadow-lg"
+              >
+                Shop Now
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+                </svg>
+              </a>
+            }
+
+          </div>
+        </div>
+      }
+    </div>
+
+    <!-- Custom Arrows -->
+    <button
+      type="button"
+      class="hero-prev hidden md:flex absolute top-1/2 left-4 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white/95 hover:bg-primary text-text-primary hover:text-white rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+      aria-label="Previous slide"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="hero-next hidden md:flex absolute top-1/2 right-4 -translate-y-1/2 z-10 w-12 h-12 items-center justify-center bg-white/95 hover:bg-primary text-text-primary hover:text-white rounded-full shadow-lg transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
+      aria-label="Next slide"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+    </button>
+
+    <!-- Dots -->
+    <div class="hero-pagination absolute bottom-3 md:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2"></div>
+
+  </div>
+} @else {
+  <div class="w-full aspect-[16/7] md:aspect-[16/4.5] rounded-lg bg-bg-hover animate-pulse"></div>
+}

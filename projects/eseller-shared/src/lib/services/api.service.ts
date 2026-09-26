@@ -1,36 +1,29 @@
-import { HttpClient, HttpErrorResponse, HttpHeaders } from '@angular/common/http';
+import {
+  HttpClient,
+  HttpErrorResponse,
+  HttpHeaders,
+  HttpParams
+} from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
 import { Observable, throwError } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
 import { ApiErrorResponse } from '../models/auth/auth.models';
 
+interface RequestOptions {
+  headers?: HttpHeaders;
+  params?: HttpParams;
+}
+
 /**
  * ============================================================
  * ApiService — Central HTTP wrapper
- * ------------------------------------------------------------
- * Responsibilities:
- *   - Prepends the API base URL to every request.
- *   - Sends cookies with every request (`withCredentials: true`)
- *     so the backend's HttpOnly refresh-token cookie is sent.
- *   - Normalises backend error responses into a consistent shape.
- *
- * Every feature service (Auth, Product, Cart, …) should depend
- * on this — no direct HttpClient usage outside this service.
  * ============================================================
  */
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
 
-  /**
-   * Base API URL. Read from a global config injected at bootstrap.
-   * The app's bootstrap sets `window.__ESELLER_API_URL__` from
-   * its environment file BEFORE Angular boots.
-   *
-   * This avoids duplicating the environment import inside the
-   * shared library (which cannot know which app is running).
-   */
   private get baseUrl(): string {
     const url = (window as any).__ESELLER_API_URL__ as string | undefined;
     if (!url) {
@@ -38,17 +31,18 @@ export class ApiService {
         'Eseller API URL not configured. Ensure app bootstrap sets window.__ESELLER_API_URL__.'
       );
     }
-    return url.replace(/\/+$/, ''); // strip trailing slashes
+    return url.replace(/\/+$/, '');
   }
 
   // ============================================================
   // GET
   // ============================================================
-  get<T>(path: string, options?: { headers?: HttpHeaders }): Observable<T> {
+  get<T>(path: string, options?: RequestOptions): Observable<T> {
     return this.http
       .get<T>(this.buildUrl(path), {
         withCredentials: true,
-        headers: options?.headers
+        headers: options?.headers,
+        params: options?.params
       })
       .pipe(catchError((err) => this.handleError(err)));
   }
@@ -56,11 +50,12 @@ export class ApiService {
   // ============================================================
   // POST
   // ============================================================
-  post<T>(path: string, body: unknown, options?: { headers?: HttpHeaders }): Observable<T> {
+  post<T>(path: string, body: unknown, options?: RequestOptions): Observable<T> {
     return this.http
       .post<T>(this.buildUrl(path), body, {
         withCredentials: true,
-        headers: options?.headers
+        headers: options?.headers,
+        params: options?.params
       })
       .pipe(catchError((err) => this.handleError(err)));
   }
@@ -68,11 +63,12 @@ export class ApiService {
   // ============================================================
   // PUT
   // ============================================================
-  put<T>(path: string, body: unknown, options?: { headers?: HttpHeaders }): Observable<T> {
+  put<T>(path: string, body: unknown, options?: RequestOptions): Observable<T> {
     return this.http
       .put<T>(this.buildUrl(path), body, {
         withCredentials: true,
-        headers: options?.headers
+        headers: options?.headers,
+        params: options?.params
       })
       .pipe(catchError((err) => this.handleError(err)));
   }
@@ -80,11 +76,12 @@ export class ApiService {
   // ============================================================
   // PATCH
   // ============================================================
-  patch<T>(path: string, body: unknown, options?: { headers?: HttpHeaders }): Observable<T> {
+  patch<T>(path: string, body: unknown, options?: RequestOptions): Observable<T> {
     return this.http
       .patch<T>(this.buildUrl(path), body, {
         withCredentials: true,
-        headers: options?.headers
+        headers: options?.headers,
+        params: options?.params
       })
       .pipe(catchError((err) => this.handleError(err)));
   }
@@ -92,11 +89,12 @@ export class ApiService {
   // ============================================================
   // DELETE
   // ============================================================
-  delete<T>(path: string, options?: { headers?: HttpHeaders }): Observable<T> {
+  delete<T>(path: string, options?: RequestOptions): Observable<T> {
     return this.http
       .delete<T>(this.buildUrl(path), {
         withCredentials: true,
-        headers: options?.headers
+        headers: options?.headers,
+        params: options?.params
       })
       .pipe(catchError((err) => this.handleError(err)));
   }
@@ -109,10 +107,6 @@ export class ApiService {
     return `${this.baseUrl}${cleanPath}`;
   }
 
-  /**
-   * Normalises errors: extracts backend's { error, errorCode }
-   * shape when present; otherwise passes a generic shape.
-   */
   private handleError(err: HttpErrorResponse): Observable<never> {
     let normalised: ApiErrorResponse;
 

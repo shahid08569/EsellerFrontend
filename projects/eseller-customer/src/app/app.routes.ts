@@ -9,7 +9,7 @@ export const routes: Routes = [
       {
         path: '',
         loadComponent: () =>
-          import('./features/home/home').then(m => m.Home),
+          import('./features/home/home/home').then(m => m.Home),
         title: 'Eseller — Home'
       },
       {

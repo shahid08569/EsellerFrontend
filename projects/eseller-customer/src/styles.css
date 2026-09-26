@@ -1,10 +1,128 @@
 @import 'tailwindcss';
 @import '../../eseller-shared/src/lib/styles/index.css';
 
+/* ✅ ADD THIS — Tailwind ko batao ke library bhi scan karo */
+@source '../../eseller-shared/src/**/*.{html,ts}';
+
+/* Swiper styles */
+@import 'swiper/css';
+@import 'swiper/css/navigation';
+@import 'swiper/css/pagination';
+
 :root {
   --color-primary: #E11D48;
   --color-primary-hover: #BE123C;
   --color-primary-active: #9F1239;
   --color-primary-tint: #FFF1F2;
   --color-primary-focus-ring: rgba(225, 29, 72, 0.15);
+}
+
+body {
+  background-color: #FFF5F6;
+}
+/* ============================================================
+   Swiper custom overrides
+   ============================================================ */
+
+/* Dots — inactive: white 60%, active: rose */
+.hero-swiper .swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.6);
+  opacity: 1;
+  width: 8px;
+  height: 8px;
+  transition: all 0.3s ease;
+}
+
+.hero-swiper .swiper-pagination-bullet:hover {
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.hero-swiper .swiper-pagination-bullet-active {
+  background: #E11D48;
+  width: 28px;
+  border-radius: 9999px;
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);
+}
+
+/* ============================================================
+   Featured Products Slider — Swiper Pagination (Dark Section)
+   ============================================================ */
+.featured-swiper .swiper-pagination-bullet {
+  background: rgba(255, 255, 255, 0.3);
+  opacity: 1;
+  width: 8px;
+  height: 8px;
+  transition: all 0.3s ease;
+}
+
+.featured-swiper .swiper-pagination-bullet-active {
+  background: #3B82F6;
+  width: 24px;
+  border-radius: 9999px;
+}
+
+
+/* ============================================================
+   Brands Marquee — CSS auto-scroll (right to left, infinite)
+   ============================================================ */
+@keyframes brands-scroll {
+  0% {
+    transform: translateX(0);
+  }
+  100% {
+    transform: translateX(-50%);
+  }
+}
+
+.brands-marquee {
+  width: 100%;
+  overflow: hidden;
+  position: relative;
+  mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+  -webkit-mask-image: linear-gradient(to right, transparent 0%, black 5%, black 95%, transparent 100%);
+}
+
+.brands-track {
+  display: flex;
+  align-items: flex-start;
+  gap: 40px;
+  width: max-content;
+  padding-right: 40px;
+  animation: brands-scroll 40s linear infinite;
+  will-change: transform;
+}
+
+.brands-item {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  width: 96px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .brands-item {
+    width: 112px;
+  }
+}
+
+/* Prevent image drag */
+.brands-item img {
+  pointer-events: none;
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+/* Hover pe pause */
+.brands-marquee:hover .brands-track {
+  animation-play-state: paused;
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .brands-track {
+    animation: none;
+  }
 }
