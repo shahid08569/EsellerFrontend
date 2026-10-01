@@ -1,0 +1,329 @@
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 animate-in fade-in duration-300">
+
+  <!-- ============================================================ -->
+  <!-- HERO HEADER BANNER                                           -->
+  <!-- ============================================================ -->
+  <div class="bg-gradient-to-r from-gray-950 via-gray-900 to-gray-950 rounded-3xl p-6 sm:p-10 text-white shadow-xl border border-gray-800 relative overflow-hidden">
+    <!-- Decorative background glow -->
+    <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-primary/25 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-10 -top-10 w-60 h-60 bg-amber-400/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-4 max-w-3xl">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-amber-300 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
+        <span>⚖️</span>
+        <span>Legal Documentation &amp; Agreements</span>
+      </div>
+
+      <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white">
+        Terms of Service &amp; Marketplace Agreement
+      </h1>
+
+      <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+        Welcome to <strong>Eseller</strong>. This agreement governs the use of our multi-vendor marketplace platform across Pakistan, including customer transactions, verified seller shopfronts, order dispatches, and dispute resolutions.
+      </p>
+
+      <div class="flex flex-wrap items-center gap-4 pt-1 text-xs text-gray-400 font-medium">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          Effective Date: September 2026
+        </span>
+        <span class="hidden sm:inline">•</span>
+        <span>Version 2.4</span>
+        <span class="hidden sm:inline">•</span>
+        <span class="text-amber-300 font-semibold">Includes Customer &amp; Merchant Policies</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- TAB CONTROLS                                                 -->
+  <!-- ============================================================ -->
+  <div class="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-gray-200">
+    <div class="inline-flex p-1 bg-gray-100 rounded-2xl border border-gray-200 shadow-inner">
+      <button
+        type="button"
+        (click)="setTab('all')"
+        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+        [class.bg-white]="activeTab() === 'all'"
+        [class.text-gray-900]="activeTab() === 'all'"
+        [class.shadow-xs]="activeTab() === 'all'"
+        [class.text-gray-600]="activeTab() !== 'all'"
+        [class.hover:text-gray-900]="activeTab() !== 'all'"
+      >
+        📑 Complete Terms
+      </button>
+
+      <button
+        type="button"
+        (click)="setTab('customer')"
+        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+        [class.bg-primary]="activeTab() === 'customer'"
+        [class.text-white]="activeTab() === 'customer'"
+        [class.shadow-xs]="activeTab() === 'customer'"
+        [class.text-gray-600]="activeTab() !== 'customer'"
+        [class.hover:text-gray-900]="activeTab() !== 'customer'"
+      >
+        🛍️ For Customers
+      </button>
+
+      <button
+        type="button"
+        (click)="setTab('seller')"
+        class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer"
+        [class.bg-gray-950]="activeTab() === 'seller'"
+        [class.text-amber-400]="activeTab() === 'seller'"
+        [class.shadow-xs]="activeTab() === 'seller'"
+        [class.text-gray-600]="activeTab() !== 'seller'"
+        [class.hover:text-gray-900]="activeTab() !== 'seller'"
+      >
+        🏪 For Merchants &amp; Sellers
+      </button>
+    </div>
+
+    <div class="text-xs text-text-secondary font-medium">
+      Related: <a routerLink="/privacy" class="text-primary font-bold hover:underline">Privacy Policy &rarr;</a>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- CONTENT SECTIONS                                             -->
+  <!-- ============================================================ -->
+  <div class="space-y-6">
+
+    <!-- Section 1: General Platform Terms (Shown on 'all' or 'customer') -->
+    @if (activeTab() === 'all' || activeTab() === 'customer') {
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
+            1
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-text-primary">
+              1. Acceptance of Terms &amp; Platform Access
+            </h2>
+            <p class="text-xs text-text-secondary">Applies to all users browsing or purchasing on Eseller</p>
+          </div>
+        </div>
+
+        <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+          <p>
+            By accessing, creating an account, or purchasing goods through Eseller (the "Platform"), you agree to be bound by these Terms of Service. If you do not agree to all provisions, you must discontinue using our services immediately.
+          </p>
+          <p>
+            Eseller operates as a <strong>multi-vendor e-commerce platform</strong> facilitating transactions between independent third-party merchants ("Sellers") and buyers ("Customers"). Unless expressly specified otherwise, items are supplied and fulfilled by the respective sellers.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
+            2
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-text-primary">
+              2. Customer Accounts &amp; Email Verification
+            </h2>
+            <p class="text-xs text-text-secondary">Registration requirements, security, and verification</p>
+          </div>
+        </div>
+
+        <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+          <ul class="list-disc pl-5 space-y-2">
+            <li>
+              <strong>Account Credibility:</strong> You must provide accurate personal details (full legal name, active phone number, verified email address, and delivery address).
+            </li>
+            <li>
+              <strong>Mandatory Email Verification:</strong> In alignment with Amazon and Daraz anti-fraud standards, every newly registered account receives a 6-digit one-time password (OTP) via email. Verification ensures you can track real-time courier statuses, claim warranty, and initiate returns.
+            </li>
+            <li>
+              <strong>Account Safeguards:</strong> You are responsible for maintaining the confidentiality of your password. Eseller staff will never ask for your password or verification codes via phone call or SMS.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
+            3
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-text-primary">
+              3. Ordering, Cash on Delivery (COD) &amp; Pricing
+            </h2>
+            <p class="text-xs text-text-secondary">Transparent purchasing rules across Pakistan</p>
+          </div>
+        </div>
+
+        <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+          <p>
+            <strong>Pricing &amp; Currency:</strong> All prices displayed on Eseller are denominated in Pakistani Rupees (PKR) and include all applicable platform taxes unless explicitly highlighted.
+          </p>
+          <p>
+            <strong>Cash on Delivery (COD):</strong> For customer convenience, COD is offered nationwide. Placing a fake order or refusing parcels upon courier arrival without valid defect causes financial harm to sellers and will result in permanent address/device blacklisting.
+          </p>
+          <p>
+            <strong>Order Cancellations:</strong> Customers may cancel orders directly from their Customer Dashboard prior to seller dispatch. Once marked as "Shipped" or handed to logistics partners, standard return policies apply.
+          </p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-primary/10 text-primary flex items-center justify-center font-black text-lg">
+            4
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-text-primary">
+              4. Return, Replacement &amp; Refund Policy
+            </h2>
+            <p class="text-xs text-text-secondary">7-day buyer protection policy</p>
+          </div>
+        </div>
+
+        <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-2">
+            <div class="p-3.5 rounded-2xl bg-emerald-50 border border-emerald-200">
+              <span class="font-bold text-xs text-emerald-900 block mb-1">✅ 7-Day Window</span>
+              <p class="text-[11px] text-emerald-800">Defective, damaged, or misdescribed products are eligible for replacement or return within 7 calendar days of receipt.</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-amber-50 border border-amber-200">
+              <span class="font-bold text-xs text-amber-900 block mb-1">📦 Original Packaging</span>
+              <p class="text-[11px] text-amber-800">Items must be returned with intact tags, original box packaging, and accessories provided by the merchant.</p>
+            </div>
+            <div class="p-3.5 rounded-2xl bg-blue-50 border border-blue-200">
+              <span class="font-bold text-xs text-blue-900 block mb-1">⚡ Fast Resolution</span>
+              <p class="text-[11px] text-blue-800">Our dispute mediation team ensures replacement shipments are dispatched promptly or funds refunded.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    <!-- Section 2: Merchant & Seller Specific Agreement (Shown on 'all' or 'seller') -->
+    @if (activeTab() === 'all' || activeTab() === 'seller') {
+      <div class="bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white rounded-3xl p-6 sm:p-8 border border-amber-300 shadow-xs space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gray-950 text-amber-400 flex items-center justify-center font-black text-lg shadow-sm">
+            5
+          </div>
+          <div>
+            <div class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md bg-amber-400/20 text-amber-950 text-[10px] font-black uppercase tracking-wider mb-0.5">
+              Merchant Agreement
+            </div>
+            <h2 class="text-lg sm:text-xl font-black text-gray-950">
+              5. Merchant Code of Conduct &amp; 0% Commission Guarantee
+            </h2>
+            <p class="text-xs text-amber-900">Empowering Pakistani merchants and vendors nationwide</p>
+          </div>
+        </div>
+
+        <div class="prose prose-sm text-xs sm:text-sm text-gray-800 space-y-3 leading-relaxed">
+          <p>
+            <strong>0% Platform Commission Policy:</strong> Eseller provides independent businesses and brand owners with 100% free store setup and 0% sales commission, enabling shop owners to retain maximal profit on every transaction.
+          </p>
+          <ul class="list-disc pl-5 space-y-2">
+            <li>
+              <strong>Authenticity &amp; Quality Guarantee:</strong> Merchants strictly guarantee that all products listed on their digital shopfront are 100% genuine, unexpired, and safe for consumer use. Selling counterfeit replicas or banned contraband results in immediate store suspension and legal escalation.
+            </li>
+            <li>
+              <strong>48-Hour Dispatch SLA:</strong> Sellers must process and dispatch confirmed customer orders within 48 hours of order placement. Habitual delays or stock cancellations harm marketplace reputation and lower merchant search rankings.
+            </li>
+            <li>
+              <strong>Accurate Stock &amp; Inventory:</strong> Sellers must keep stock levels accurate in their merchant portal. Pricing discrepancies between listing and dispatch will not be tolerated.
+            </li>
+            <li>
+              <strong>KYC &amp; Identity Verification:</strong> Merchants must provide authentic business registration, store email, and national identity credentials upon request by Eseller Compliance.
+            </li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-gray-950 text-amber-400 flex items-center justify-center font-black text-lg">
+            6
+          </div>
+          <div>
+            <h2 class="text-lg sm:text-xl font-black text-text-primary">
+              6. Live Chat, Real-Time Messaging &amp; Off-Platform Dealings
+            </h2>
+            <p class="text-xs text-text-secondary">Maintaining professional and secure communication</p>
+          </div>
+        </div>
+
+        <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+          <p>
+            Eseller equips customers and merchants with real-time direct live chat powered by SignalR technology for inquiries, specifications, and shipment coordination.
+          </p>
+          <p>
+            <strong>Prohibition of Circumvention:</strong> Sellers and buyers are strictly prohibited from soliciting payments outside the Eseller platform or arranging unrecorded offline transactions. Doing so voids all buyer protection, insurance, and warranty guarantees.
+          </p>
+          <p>
+            <strong>Zero Tolerance for Harassment:</strong> Any abusive, defamatory, discriminatory, or unsolicited marketing messages will result in immediate permanent banning.
+          </p>
+        </div>
+      </div>
+    }
+
+    <!-- Section 3: Platform Governance (Always shown on all tabs) -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gray-100 text-gray-800 flex items-center justify-center font-black text-lg">
+          7
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-text-primary">
+            7. Limitation of Liability &amp; Governing Law
+          </h2>
+          <p class="text-xs text-text-secondary">Jurisdiction and legal dispute mechanisms</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+        <p>
+          These Terms of Service are governed by and construed in accordance with the laws of the Islamic Republic of Pakistan. Any legal dispute or controversy arising out of platform usage shall be resolved amicably through the Eseller Dispute Desk or submitted to the competent jurisdiction of Pakistani courts.
+        </p>
+        <p>
+          Eseller reserves the right to amend or update these terms at any time. Continued use of the platform following the posting of updated terms constitutes acceptance.
+        </p>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM SUPPORT & ACTION CTA                                  -->
+  <!-- ============================================================ -->
+  <div class="bg-gray-50 border border-gray-200 rounded-3xl p-6 text-center space-y-3">
+    <h3 class="text-base sm:text-lg font-black text-text-primary">
+      Have questions regarding our policies or agreements?
+    </h3>
+    <p class="text-xs text-text-secondary max-w-lg mx-auto">
+      Our legal compliance and dispute resolution team is available to assist customers and merchants nationwide.
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+      <a
+        routerLink="/privacy"
+        class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-text-primary font-bold text-xs rounded-xl transition-all shadow-2xs"
+      >
+        Read Privacy Policy
+      </a>
+      <a
+        routerLink="/auth/seller-register"
+        class="px-4 py-2 bg-gray-950 hover:bg-black text-amber-400 font-bold text-xs rounded-xl transition-all shadow-xs flex items-center gap-1.5"
+      >
+        <span>🏪</span>
+        <span>Register as Merchant</span>
+      </a>
+      <a
+        routerLink="/"
+        class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl transition-all shadow-xs"
+      >
+        Return to Marketplace
+      </a>
+    </div>
+  </div>
+
+</div>

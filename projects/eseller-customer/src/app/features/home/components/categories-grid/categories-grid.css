@@ -1,11 +1,19 @@
-/* ============================================================
-   Hide scrollbar (mobile horizontal scroll)
-   ============================================================ */
-.scrollbar-hide {
-  scrollbar-width: none;         /* Firefox */
-  -ms-overflow-style: none;      /* IE/Edge */
+.categories-marquee-container {
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
-.scrollbar-hide::-webkit-scrollbar {
-  display: none;                 /* Chrome/Safari */
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.no-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+img {
+  -webkit-user-drag: none;
 }

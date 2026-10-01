@@ -10,7 +10,7 @@
   <app-flash-sale-section
     [products]="flashSaleProducts()"
     [loading]="loadingFlashSale()"
-    viewAllLink="/products"
+    viewAllLink="/flash-sales"
   />
 
   <!-- 4. DYNAMIC CATEGORY SECTIONS (admin-controlled) -->
@@ -53,7 +53,7 @@
   <!-- 5. New Arrivals -->
   <app-products-section
     title="New Arrivals"
-    viewAllLink="/products"
+    viewAllLink="/new-arrivals"
     [products]="newArrivals()"
     [loading]="loadingNewArrivals()"
   />
@@ -61,7 +61,7 @@
   <!-- 6. Featured Products -->
   <app-featured-products-slider
     title="Featured Products"
-    viewAllLink="/products"
+    viewAllLink="/featured"
     [products]="featuredProducts()"
     [loading]="loadingFeatured()"
   />
@@ -69,7 +69,7 @@
   <!-- 7. Best Selling -->
   <app-best-selling-section
     title="Best Selling"
-    viewAllLink="/products?sortBy=popular"
+    viewAllLink="/best-selling"
     [products]="bestSellingProducts()"
     [loading]="loadingBestSelling()"
   />
@@ -77,7 +77,7 @@
   <!-- 8. Hot Selling -->
   <app-hot-selling-section
     title="Hot Selling"
-    viewAllLink="/products?sortBy=popular"
+    viewAllLink="/hot-selling"
     [products]="hotSellingProducts()"
     [loading]="loadingHotSelling()"
   />

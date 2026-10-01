@@ -1,0 +1,113 @@
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-5">
+
+  <!-- ============================================================ -->
+  <!-- 1. UNIFIED COMPACT HEADER & SEARCH TOOLBAR                   -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs py-2.5 px-3.5 sm:px-4 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
+    
+    <!-- LEFT: Page Info -->
+    <div class="min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <h1 class="text-base sm:text-lg font-bold text-text-primary tracking-tight truncate">
+          Featured Brands
+        </h1>
+        @if (filteredBrands().length > 0) {
+          <span class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-primary border border-rose-100/80 flex-shrink-0">
+            {{ filteredBrands().length }} {{ filteredBrands().length === 1 ? 'brand' : 'brands' }}
+          </span>
+        }
+      </div>
+      <p class="text-[11px] sm:text-xs text-text-muted mt-0.5 truncate max-w-lg">
+        Discover official authentic products from verified premium global and local brands.
+      </p>
+    </div>
+
+    <!-- RIGHT: Quick Search Input -->
+    <div class="w-full md:w-72 relative">
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Search brands..."
+        class="w-full pl-9 pr-8 py-2 text-xs bg-gray-50/80 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+      />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-3.5 h-3.5 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      @if (searchQuery()) {
+        <button
+          type="button"
+          (click)="searchQuery.set('')"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-xs"
+        >
+          &times;
+        </button>
+      }
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. BRANDS GRID -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center gap-3 animate-pulse shadow-xs">
+          <div class="w-16 h-16 rounded-full bg-gray-200"></div>
+          <div class="h-4 bg-gray-200 rounded w-20"></div>
+        </div>
+      }
+    </div>
+  } @else if (filteredBrands().length === 0) {
+    <es-empty-state
+      title="No brands found"
+      description="We couldn't find any brands matching your search."
+      buttonText="Clear Search"
+      (action)="searchQuery.set('')"
+    />
+  } @else {
+    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
+      @for (brand of filteredBrands(); track brand.id) {
+        <a
+          [routerLink]="['/brands', brand.slug]"
+          class="bg-white rounded-2xl border border-gray-100 hover:border-primary/40 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col items-center text-center gap-3 group"
+        >
+          <!-- Brand Logo Circle -->
+          <div class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white shadow-xs border-2 border-gray-100 group-hover:border-primary transition-all duration-300 flex items-center justify-center p-2.5">
+            @if (getLogoUrl(brand.logoUrl); as logoUrl) {
+              <img
+                [src]="logoUrl"
+                [alt]="brand.name"
+                class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300"
+                loading="lazy"
+              />
+            } @else {
+              <div class="w-full h-full flex items-center justify-center text-xl font-bold text-primary">
+                {{ brand.name.charAt(0).toUpperCase() }}
+              </div>
+            }
+          </div>
+
+          <!-- Brand Name -->
+          <div class="space-y-0.5">
+            <span class="text-sm font-bold text-text-primary group-hover:text-primary transition-colors block truncate max-w-full">
+              {{ brand.name }}
+            </span>
+            <span class="text-[11px] text-text-muted font-medium block">
+              Official Store &rarr;
+            </span>
+          </div>
+        </a>
+      }
+    </div>
+  }
+
+</div>

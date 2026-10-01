@@ -48,7 +48,7 @@
     </div>
   }
   @else {
-    <div #swiperContainer class="swiper hot-swiper overflow-hidden">
+    <div #swiperContainer class="swiper hot-swiper">
       <div class="swiper-wrapper">
         @for (product of products(); track product.id) {
           <div class="swiper-slide h-auto">
@@ -61,14 +61,29 @@
       </div>
     </div>
 
-    <div class="flex justify-center mt-6">
-      <a [routerLink]="viewAllLink()" class="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-500 text-white text-sm font-medium rounded-full hover:bg-orange-600 transition-colors">
-        View All
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-        </svg>
-      </a>
-    </div>
+    <!-- VIEW ALL — Bottom Center (Hidden on desktop if < 4 cards, visible on mobile if row filled) -->
+    @if (products().length >= 2) {
+      <div class="flex justify-center mt-6" [class.md:hidden]="products().length < 4">
+        <a
+          [routerLink]="viewAllLink()"
+          class="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-500 !text-white text-sm font-semibold rounded-full hover:bg-orange-600 transition-colors shadow-2xs cursor-pointer"
+          style="color: white !important;"
+        >
+          <span class="!text-white" style="color: white !important;">View All</span>
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            class="w-4 h-4 !text-white"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+            stroke-width="2.5"
+            style="color: white !important; stroke: white !important;"
+          >
+            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+          </svg>
+        </a>
+      </div>
+    }
   }
 
 </section>

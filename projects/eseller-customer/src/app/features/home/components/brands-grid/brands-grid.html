@@ -1,83 +1,84 @@
-<section class="w-full py-6 md:py-8">
+<section class="w-full py-6 md:py-8 overflow-hidden">
 
   <!-- HEADING -->
   <div class="flex items-center justify-between mb-6 md:mb-8 max-w-7xl mx-auto px-3 md:px-4">
     <h2 class="text-2xl md:text-3xl font-bold text-text-primary tracking-tight">
       {{ title() }}
     </h2>
+    <a
+      [routerLink]="viewAllLink()"
+      class="text-xs md:text-sm font-semibold text-primary hover:text-primary-hover hover:underline transition-colors"
+    >
+      View All Brands &rarr;
+    </a>
   </div>
 
   @if (visibleBrands().length === 0) {
     <!-- SKELETON -->
-    <div class="brands-marquee">
-      <div class="brands-track">
-        @for (i of [1,2,3,4,5,6,7,8,9,10]; track i) {
-          <div class="brands-item animate-pulse">
-            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200 border-2 border-transparent"></div>
+    <div class="max-w-7xl mx-auto px-3 md:px-4">
+      <div class="flex gap-4 md:gap-8 overflow-hidden">
+        @for (i of [1,2,3,4,5,6,7,8]; track i) {
+          <div class="flex-shrink-0 flex flex-col items-center gap-2 animate-pulse">
+            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full bg-gray-200"></div>
             <div class="h-4 w-16 bg-gray-200 rounded"></div>
           </div>
         }
       </div>
     </div>
   } @else {
-    <!-- REAL MARQUEE -->
-    <div class="brands-marquee">
-      <div class="brands-track">
+    <!-- CONTINUOUS INFINITE DRAGGABLE MARQUEE TRACK -->
+    <div class="w-full overflow-hidden">
+      <div
+        #scrollContainer
+        class="brands-marquee-container w-full overflow-x-hidden no-scrollbar cursor-grab active:cursor-grabbing select-none"
+        (mouseenter)="onMouseEnter()"
+        (mouseleave)="onMouseLeave()"
+        (mousedown)="onMouseDown($event)"
+        (touchstart)="onTouchStart($event)"
+        (touchmove)="onTouchMove($event)"
+        (touchend)="onTouchEnd()"
+        (touchcancel)="onTouchEnd()"
+      >
+        <div #trackContainer class="relative flex items-center gap-6 md:gap-10 w-max py-2 px-4">
 
-        @for (brand of visibleBrands(); track brand.id) {
-          <a [routerLink]="['/brands', brand.slug]" class="brands-item group">
+          @for (brand of sliderBrands(); track $index) {
+            <a
+              [routerLink]="['/brands', brand.slug]"
+              (click)="onBrandClick($event)"
+              (dragstart)="$event.preventDefault()"
+              draggable="false"
+              class="flex-shrink-0 flex flex-col items-center gap-2 group w-20 md:w-24 text-center select-none"
+            >
+              <!-- Brand Circle -->
+              <div
+                class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white shadow-xs border-2 border-gray-100 group-hover:border-primary group-hover:shadow-md transition-all duration-300 flex items-center justify-center p-2.5"
+              >
+                @if (getLogoUrl(brand.logoUrl); as logoUrl) {
+                  <img
+                    [src]="logoUrl"
+                    [alt]="brand.name"
+                    (dragstart)="$event.preventDefault()"
+                    draggable="false"
+                    class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300 pointer-events-none select-none"
+                    loading="lazy"
+                  />
+                } @else {
+                  <div class="w-full h-full flex items-center justify-center text-lg md:text-xl font-bold text-primary select-none">
+                    {{ brand.name.charAt(0).toUpperCase() }}
+                  </div>
+                }
+              </div>
 
-            <!-- Circle — same as categories grid -->
-            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white group-hover:border-primary transition-colors duration-[1000ms] flex items-center justify-center">
+              <!-- Brand Name -->
+              <span
+                class="text-xs md:text-sm font-medium text-text-primary group-hover:text-primary transition-colors truncate max-w-full block"
+              >
+                {{ brand.name }}
+              </span>
+            </a>
+          }
 
-              @if (getLogoUrl(brand.logoUrl); as logoUrl) {
-                <img
-                  [src]="logoUrl"
-                  [alt]="brand.name"
-                  class="w-full h-full object-cover transition-transform duration-[1000ms] group-hover:scale-90"
-                  loading="lazy"
-                />
-              } @else {
-                <div class="w-full h-full flex items-center justify-center text-xl md:text-2xl font-bold text-primary">
-                  {{ brand.name.charAt(0).toUpperCase() }}
-                </div>
-              }
-
-            </div>
-
-            <span class="text-xs md:text-sm font-medium text-text-primary group-hover:text-primary transition-colors whitespace-nowrap">
-              {{ brand.name }}
-            </span>
-          </a>
-        }
-
-        <!-- Duplicate set -->
-        @for (brand of visibleBrands(); track 'dup-' + brand.id) {
-          <a [routerLink]="['/brands', brand.slug]" class="brands-item group" aria-hidden="true" tabindex="-1">
-
-            <div class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white shadow-sm border-2 border-white group-hover:border-primary transition-colors duration-[2000ms] flex items-center justify-center">
-
-              @if (getLogoUrl(brand.logoUrl); as logoUrl) {
-                <img
-                  [src]="logoUrl"
-                  [alt]="brand.name"
-                  class="w-full h-full object-cover transition-transform duration-[2000ms] group-hover:scale-90"
-                  loading="lazy"
-                />
-              } @else {
-                <div class="w-full h-full flex items-center justify-center text-xl md:text-2xl font-bold text-primary">
-                  {{ brand.name.charAt(0).toUpperCase() }}
-                </div>
-              }
-
-            </div>
-
-            <span class="text-xs md:text-sm font-medium text-text-primary group-hover:text-primary transition-colors whitespace-nowrap">
-              {{ brand.name }}
-            </span>
-          </a>
-        }
-
+        </div>
       </div>
     </div>
   }

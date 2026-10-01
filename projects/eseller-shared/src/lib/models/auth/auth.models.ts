@@ -110,6 +110,10 @@ export type RegisterAffiliateResponse = string;
 export interface RefreshTokenResponse {
   accessToken: string;
   accessTokenExpiresAt: string;
+  accountId: string;
+  username: string;
+  email: string;
+  roleType: RoleType;
 }
 
 // ============================================================

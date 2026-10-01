@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Observable, shareReplay } from 'rxjs';
 import { HttpParams } from '@angular/common/http';
 
 import { ApiService } from './api.service';
@@ -13,32 +13,49 @@ import {
   FlashSaleDto,
   GetProductsQuery,
   PagedList,
-  HomepageCategorySectionDto
+  HomepageCategorySectionDto,
+  ProductImageDto,
+  ProductVariantDto,
+  ReviewDto,
+  ProductQuestionDto
 } from '../models/catalog/catalog.models';
 
 @Injectable({ providedIn: 'root' })
 export class HomeService {
   private readonly api = inject(ApiService);
 
+  private categories$?: Observable<CategoryTreeDto[]>;
+  private brands$?: Observable<BrandDto[]>;
+  private banners$?: Observable<HomepageBannerDto[]>;
+
   // ============================================================
   // BANNERS
   // ============================================================
-  getHomepageBanners(): Observable<HomepageBannerDto[]> {
-    return this.api.get<HomepageBannerDto[]>('/banners/active');
+  getHomepageBanners(forceRefresh = false): Observable<HomepageBannerDto[]> {
+    if (!this.banners$ || forceRefresh) {
+      this.banners$ = this.api.get<HomepageBannerDto[]>('/banners/active').pipe(shareReplay(1));
+    }
+    return this.banners$;
   }
 
   // ============================================================
   // CATEGORIES
   // ============================================================
-  getCategories(): Observable<CategoryTreeDto[]> {
-    return this.api.get<CategoryTreeDto[]>('/Categories');
+  getCategories(forceRefresh = false): Observable<CategoryTreeDto[]> {
+    if (!this.categories$ || forceRefresh) {
+      this.categories$ = this.api.get<CategoryTreeDto[]>('/Categories').pipe(shareReplay(1));
+    }
+    return this.categories$;
   }
 
   // ============================================================
   // BRANDS
   // ============================================================
-  getBrands(): Observable<BrandDto[]> {
-    return this.api.get<BrandDto[]>('/Brands');
+  getBrands(forceRefresh = false): Observable<BrandDto[]> {
+    if (!this.brands$ || forceRefresh) {
+      this.brands$ = this.api.get<BrandDto[]>('/Brands').pipe(shareReplay(1));
+    }
+    return this.brands$;
   }
 
   // ============================================================
@@ -144,5 +161,52 @@ export class HomeService {
 
   getProductById(id: string): Observable<ProductDto> {
     return this.api.get<ProductDto>(`/Products/${id}`);
+  }
+
+  // ============================================================
+  // PRODUCT DETAIL SUB-RESOURCES
+  // ============================================================
+  getProductImages(productId: string): Observable<ProductImageDto[]> {
+    return this.api.get<ProductImageDto[]>(`/Products/${productId}/images`);
+  }
+
+  getProductVariants(productId: string): Observable<ProductVariantDto[]> {
+    return this.api.get<ProductVariantDto[]>(`/products/${productId}/variants`);
+  }
+
+  getProductReviews(
+    productId: string,
+    rating?: number | null,
+    pageNumber = 1,
+    pageSize = 20
+  ): Observable<PagedList<ReviewDto>> {
+    let params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+    if (rating != null) params = params.set('rating', rating);
+
+    return this.api.get<PagedList<ReviewDto>>(`/products/${productId}/reviews`, { params });
+  }
+
+  getProductQuestions(
+    productId: string,
+    pageNumber = 1,
+    pageSize = 20
+  ): Observable<PagedList<ProductQuestionDto>> {
+    const params = new HttpParams()
+      .set('pageNumber', pageNumber)
+      .set('pageSize', pageSize);
+
+    return this.api.get<PagedList<ProductQuestionDto>>(`/products/${productId}/questions`, { params });
+  }
+
+  submitProductQuestion(
+    productId: string,
+    question: string
+  ): Observable<{ questionId: string; message: string }> {
+    return this.api.post<{ questionId: string; message: string }>(
+      `/products/${productId}/questions`,
+      { question }
+    );
   }
 }

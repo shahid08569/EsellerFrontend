@@ -1,0 +1,32 @@
+/* Seller Register Scoped Styles — Maximum Contrast & Luxury Merchant Styling */
+
+.merchant-hero-heading {
+  color: #ffffff !important;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+}
+
+.merchant-hero-heading .highlight-gold {
+  color: #fbbf24 !important;
+}
+
+.merchant-hero-badge {
+  background: rgba(251, 191, 36, 0.15) !important;
+  border-color: rgba(251, 191, 36, 0.5) !important;
+  color: #fcd34d !important;
+}
+
+.merchant-hero-subtext {
+  color: #e5e7eb !important;
+}
+
+.merchant-perk-title {
+  color: #ffffff !important;
+}
+
+.merchant-perk-desc {
+  color: #9ca3af !important;
+}
+
+.merchant-trust-text {
+  color: #9ca3af !important;
+}

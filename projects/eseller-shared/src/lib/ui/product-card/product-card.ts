@@ -11,6 +11,10 @@ import {
 import { Router } from '@angular/router';
 
 import { ProductListDto } from '../../models/catalog/catalog.models';
+import { CartService } from '../../services/cart.service';
+import { WishlistService } from '../../services/wishlist.service';
+import { CompareService } from '../../services/compare.service';
+import { ToastService } from '../../services/toast.service';
 
 export type PreferredBadge =
   | 'flash_sale'
@@ -25,11 +29,19 @@ export type PreferredBadge =
   imports: [],
   templateUrl: './product-card.html',
   host: {
-    class: 'block'
+    class: 'block h-full'
   }
 })
 export class ProductCard implements OnInit, OnDestroy {
   private readonly router = inject(Router);
+  private readonly cartService = inject(CartService);
+  private readonly wishlistService = inject(WishlistService);
+  private readonly compareService = inject(CompareService);
+  private readonly toastService = inject(ToastService);
+
+  readonly isInWishlist = computed(() => this.wishlistService.isInWishlist(this.product().id));
+  readonly isInCart = computed(() => this.cartService.isInCart(this.product().id));
+  readonly isInCompare = computed(() => this.compareService.isInCompare(this.product().id));
 
   // ============================================================
   // INPUTS
@@ -61,8 +73,8 @@ export class ProductCard implements OnInit, OnDestroy {
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
     })
   );
 
@@ -85,8 +97,8 @@ export class ProductCard implements OnInit, OnDestroy {
 
   readonly formattedOldPrice = computed(() =>
     this.oldPrice().toLocaleString('en-US', {
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
     })
   );
 
@@ -204,18 +216,44 @@ export class ProductCard implements OnInit, OnDestroy {
   onAddToCart(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.addToCart.emit(this.product());
+    const p = this.product();
+    if (this.isInCart()) {
+      this.cartService.removeByProductId(p.id);
+      this.toastService.show(`Removed "${p.name}" from your cart!`, 'info');
+      return;
+    }
+    this.cartService.addItem({
+      productId: p.id,
+      productSlug: p.slug,
+      name: p.name,
+      imageUrl: this.getImageUrl(p.primaryImageUrl),
+      shopId: '',
+      shopName: p.shopName || '',
+      price: p.basePrice,
+      quantity: 1
+    });
+    this.toastService.show(`Added "${p.name}" to your cart!`, 'success');
+    this.addToCart.emit(p);
   }
 
   onAddToWishlist(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.addToWishlist.emit(this.product());
+    const p = this.product();
+    const added = this.wishlistService.toggleItem(p);
+    this.toastService.show(
+      added ? `Added "${p.name}" to your wishlist!` : `Removed "${p.name}" from your wishlist!`,
+      added ? 'success' : 'info'
+    );
+    this.addToWishlist.emit(p);
   }
 
   onAddToCompare(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
-    this.addToCompare.emit(this.product());
+    const p = this.product();
+    const result = this.compareService.toggleItem(p);
+    this.toastService.show(result.message, result.added ? 'success' : 'info');
+    this.addToCompare.emit(p);
   }
 }

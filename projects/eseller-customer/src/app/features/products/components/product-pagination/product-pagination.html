@@ -1,0 +1,61 @@
+@if (totalPages() > 1) {
+  <nav class="flex items-center justify-center gap-1.5 py-6 select-none" aria-label="Pagination">
+
+    <!-- Previous Button -->
+    <button
+      type="button"
+      (click)="onPrev()"
+      [disabled]="pageNumber() <= 1"
+      class="px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl border border-gray-200 bg-white text-text-primary hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors flex items-center gap-1"
+      aria-label="Previous page"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5L8.25 12l7.5-7.5" />
+      </svg>
+      <span class="hidden sm:inline">Previous</span>
+    </button>
+
+    <!-- Page Number Pills -->
+    <div class="flex items-center gap-1">
+      @for (page of visiblePages(); track $index) {
+        @if (page === '...') {
+          <span class="w-9 h-9 flex items-center justify-center text-text-muted text-xs font-bold">
+            &hellip;
+          </span>
+        } @else {
+          <button
+            type="button"
+            (click)="onPageClick(page)"
+            class="w-9 h-9 md:w-10 md:h-10 text-xs md:text-sm font-bold rounded-xl transition-all flex items-center justify-center"
+            [class.bg-primary]="page === pageNumber()"
+            [class.text-white]="page === pageNumber()"
+            [class.shadow-xs]="page === pageNumber()"
+            [class.bg-white]="page !== pageNumber()"
+            [class.text-text-primary]="page !== pageNumber()"
+            [class.border]="page !== pageNumber()"
+            [class.border-gray-200]="page !== pageNumber()"
+            [class.hover:bg-gray-50]="page !== pageNumber()"
+            [class.hover:border-primary/50]="page !== pageNumber()"
+          >
+            {{ page }}
+          </button>
+        }
+      }
+    </div>
+
+    <!-- Next Button -->
+    <button
+      type="button"
+      (click)="onNext()"
+      [disabled]="pageNumber() >= totalPages()"
+      class="px-3.5 py-2 text-xs md:text-sm font-semibold rounded-xl border border-gray-200 bg-white text-text-primary hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed disabled:hover:bg-white transition-colors flex items-center gap-1"
+      aria-label="Next page"
+    >
+      <span class="hidden sm:inline">Next</span>
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 4.5l7.5 7.5-7.5 7.5" />
+      </svg>
+    </button>
+
+  </nav>
+}

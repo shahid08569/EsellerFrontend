@@ -7,6 +7,7 @@ import {
 } from '@microsoft/signalr';
 
 import { AuthStore } from '../state/auth.store';
+import { SignalRIncomingMessage } from '../models/chat/chat.models';
 
 /**
  * ============================================================
@@ -84,6 +85,54 @@ export class SignalRService {
 
   getChatConnection(): HubConnection | null {
     return this.chatConnection;
+  }
+
+  async joinOrderRoom(orderRequestId: string): Promise<void> {
+    if (this.chatConnection && this.chatConnection.state === HubConnectionState.Connected) {
+      await this.chatConnection.invoke('JoinOrderRoom', orderRequestId);
+    }
+  }
+
+  async leaveOrderRoom(orderRequestId: string): Promise<void> {
+    if (this.chatConnection && this.chatConnection.state === HubConnectionState.Connected) {
+      await this.chatConnection.invoke('LeaveOrderRoom', orderRequestId);
+    }
+  }
+
+  onReceiveMessage(callback: (msg: SignalRIncomingMessage) => void): () => void {
+    if (!this.chatConnection) return () => {};
+
+    const handler = (
+      messageId: string,
+      orderRequestId: string,
+      senderAccountId: string,
+      senderRole: string,
+      message: string,
+      sentAt: string
+    ) => {
+      callback({
+        messageId,
+        orderRequestId,
+        senderAccountId,
+        senderRole,
+        message,
+        sentAt
+      });
+    };
+
+    this.chatConnection.on('ReceiveMessage', handler);
+    return () => this.chatConnection?.off('ReceiveMessage', handler);
+  }
+
+  onMessageRead(callback: (messageId: string, readAt: string) => void): () => void {
+    if (!this.chatConnection) return () => {};
+
+    const handler = (messageId: string, readAt: string) => {
+      callback(messageId, readAt);
+    };
+
+    this.chatConnection.on('MessageRead', handler);
+    return () => this.chatConnection?.off('MessageRead', handler);
   }
 
   // ============================================================

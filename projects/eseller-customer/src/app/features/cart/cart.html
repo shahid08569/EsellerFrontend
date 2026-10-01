@@ -1,1 +1,534 @@
-<p>cart works!</p>
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6">
+
+  <!-- ============================================================ -->
+  <!-- BREADCRUMBS -->
+  <!-- ============================================================ -->
+  <nav class="flex items-center gap-2 text-xs md:text-sm text-text-secondary" aria-label="Breadcrumb">
+    <a routerLink="/" class="hover:text-primary transition-colors">Home</a>
+    <span class="text-text-muted">/</span>
+    <span class="font-semibold text-text-primary">Shopping Cart</span>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- EMPTY CART STATE -->
+  <!-- ============================================================ -->
+  @if (cartService.items().length === 0) {
+    <div class="bg-white rounded-3xl border border-gray-200 p-8 sm:p-14 text-center shadow-xs">
+      <div class="max-w-md mx-auto space-y-4">
+        <div class="w-20 h-20 mx-auto rounded-full bg-primary-tint flex items-center justify-center text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+          </svg>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-text-primary tracking-tight">Your Cart is Empty</h2>
+        <p class="text-xs sm:text-sm text-text-secondary leading-relaxed">
+          Looks like you haven't added anything to your cart yet. Explore thousands of verified products from top sellers across Pakistan!
+        </p>
+        <div class="pt-2">
+          <a
+            routerLink="/products"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+          >
+            <span>Start Shopping</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- ACTIVE CART CONTENT (2-Column Grid) -->
+  <!-- ============================================================ -->
+  @else {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+      <!-- ======================================================== -->
+      <!-- LEFT COLUMN: CART ITEMS LIST (lg:col-span-8) -->
+      <!-- ======================================================== -->
+      <div class="lg:col-span-8 space-y-4">
+
+        <!-- Header Bar -->
+        <div class="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 flex items-center justify-between shadow-card">
+          <div>
+            <h1 class="text-lg sm:text-xl font-black text-text-primary tracking-tight">
+              Shopping Cart
+            </h1>
+            <p class="text-xs text-text-secondary mt-0.5">
+              {{ cartService.totalItemsCount() }} item(s) in your basket
+            </p>
+          </div>
+          <button
+            type="button"
+            (click)="openClearModal()"
+            class="text-xs font-semibold text-red-600 hover:text-red-700 hover:underline flex items-center gap-1 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+            </svg>
+            <span>Clear Cart</span>
+          </button>
+        </div>
+
+        <!-- Free Delivery Progress Bar -->
+        <div class="bg-white rounded-2xl border border-gray-200/90 p-4 shadow-card">
+          @if (cartService.shippingFee() === 0) {
+            <div class="flex items-center gap-2.5 text-xs text-emerald-700 font-bold">
+              <span class="w-6 h-6 rounded-full bg-emerald-100 flex items-center justify-center text-emerald-600 flex-shrink-0">
+                &check;
+              </span>
+              <span>Free Delivery Unlocked! Your order qualifies for free delivery.</span>
+            </div>
+          } @else {
+            <div class="space-y-2">
+              <div class="flex justify-between text-xs text-text-secondary">
+                <span>Add <strong class="text-text-primary">Rs. {{ (5000 - cartService.subtotal()) | number:'1.1-1' }}</strong> more for FREE delivery</span>
+                <span class="font-bold text-primary">{{ ((cartService.subtotal() / 5000) * 100) | number:'1.0-0' }}%</span>
+              </div>
+              <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-primary rounded-full transition-all duration-500"
+                  [style.width.%]="(cartService.subtotal() / 5000) * 100"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Items Card List -->
+        <div class="space-y-3">
+          @for (item of cartService.items(); track item.id) {
+            <div class="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-card hover:shadow-card-hover flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-gray-300">
+
+              <!-- Item Thumbnail -->
+              <a [routerLink]="['/products', item.productSlug]" class="w-20 h-20 rounded-xl bg-gray-50 border border-gray-100 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer group">
+                @if (getImageUrl(item.imageUrl); as img) {
+                  <img [src]="img" [alt]="item.name" class="w-full h-full object-contain group-hover:scale-105 transition-transform" loading="lazy" />
+                } @else {
+                  <span class="text-[10px] text-gray-400">No Image</span>
+                }
+              </a>
+
+              <!-- Item Details -->
+              <div class="flex-1 min-w-0 space-y-1.5">
+                <a [routerLink]="['/products', item.productSlug]" class="text-xs sm:text-sm font-bold text-text-primary hover:text-primary transition-colors line-clamp-2">
+                  {{ item.name }}
+                </a>
+                <div class="flex items-center gap-2 flex-wrap text-xs text-text-secondary">
+                  <span class="text-text-muted">Sold by:</span>
+                  <span class="font-semibold text-text-primary">{{ item.shopName }}</span>
+                  @if (item.variantName) {
+                    <span class="text-text-muted">&bull;</span>
+                    <span class="bg-primary-tint text-primary border border-primary/20 px-2 py-0.5 rounded text-[11px] font-semibold">
+                      {{ item.variantName }}
+                    </span>
+                  }
+                </div>
+
+                <!-- Interactive Size Selector in Cart -->
+                <div class="flex items-center gap-2 flex-wrap pt-0.5">
+                  <span class="text-[11px] font-bold text-text-secondary">Size:</span>
+                  <div class="inline-flex items-center gap-1 flex-wrap">
+                    @for (s of availableSizes; track s) {
+                      <button
+                        type="button"
+                        (click)="onSizeChange(item, s)"
+                        [class.bg-primary]="getItemSize(item) === s"
+                        [class.text-white]="getItemSize(item) === s"
+                        [class.border-primary]="getItemSize(item) === s"
+                        [class.shadow-xs]="getItemSize(item) === s"
+                        [class.bg-white]="getItemSize(item) !== s"
+                        [class.text-text-primary]="getItemSize(item) !== s"
+                        [class.border-gray-200]="getItemSize(item) !== s"
+                        [class.hover:border-primary]="getItemSize(item) !== s"
+                        class="px-2 py-0.5 rounded-lg text-[10px] sm:text-[11px] font-semibold border transition-all cursor-pointer"
+                        [title]="'Change size to ' + s"
+                      >
+                        {{ s }}
+                      </button>
+                    }
+                  </div>
+                </div>
+
+                <div class="text-xs font-bold text-primary tabular-nums">
+                  Rs. {{ item.price | number:'1.1-1' }}
+                </div>
+              </div>
+
+              <!-- Item Stepper & Item Total -->
+              <div class="flex items-center justify-between sm:justify-end gap-4 w-full sm:w-auto pt-2 sm:pt-0 border-t sm:border-0 border-gray-100">
+
+                <!-- Stepper -->
+                <div class="inline-flex items-center bg-gray-50 rounded-xl border border-gray-200 p-1">
+                  <button
+                    type="button"
+                    (click)="decrementQty(item)"
+                    class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-text-primary font-bold shadow-2xs hover:bg-gray-100 transition-colors cursor-pointer"
+                  >
+                    &minus;
+                  </button>
+                  <span class="w-9 text-center text-xs font-bold tabular-nums text-text-primary">
+                    {{ item.quantity }}
+                  </span>
+                  <button
+                    type="button"
+                    (click)="incrementQty(item)"
+                    class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-text-primary font-bold shadow-2xs hover:bg-gray-100 transition-colors cursor-pointer"
+                  >
+                    &#43;
+                  </button>
+                </div>
+
+                <!-- Item Total -->
+                <div class="text-right min-w-[90px]">
+                  <div class="text-xs sm:text-sm font-black text-text-primary tabular-nums">
+                    Rs. {{ (item.price * item.quantity) | number:'1.1-1' }}
+                  </div>
+                  <button
+                    type="button"
+                    (click)="removeItem(item.id)"
+                    class="text-[11px] text-red-500 hover:text-red-700 hover:underline mt-0.5 block ml-auto cursor-pointer"
+                  >
+                    Remove
+                  </button>
+                </div>
+
+              </div>
+
+            </div>
+          }
+        </div>
+
+        <!-- Back to Shopping Link -->
+        <div class="pt-2">
+          <a
+            routerLink="/products"
+            class="inline-flex items-center gap-2 text-xs font-bold text-primary hover:underline cursor-pointer"
+          >
+            &larr; Continue Shopping
+          </a>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- RIGHT COLUMN: DELIVERY DETAILS & CHAT CONFIRMATION (lg:col-span-4) -->
+      <!-- ======================================================== -->
+      <div class="lg:col-span-4 w-full sticky top-24 space-y-4">
+
+        <div id="delivery-form-container" class="bg-white rounded-3xl border border-gray-200/90 shadow-card p-5 sm:p-6 space-y-5">
+
+          <div>
+            <h2 class="text-base sm:text-lg font-black text-text-primary tracking-tight">
+              Delivery &amp; Checkout
+            </h2>
+            <p class="text-xs text-text-secondary mt-0.5">
+              Fill your shipping address to finalize via Chat
+            </p>
+          </div>
+
+          <!-- Error Alert Top -->
+          @if (orderError(); as err) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700 font-semibold">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <span>{{ err }}</span>
+            </div>
+          }
+
+          <!-- Saved Addresses Quick Selection -->
+          @if (savedAddresses().length > 0) {
+            <div class="p-3 rounded-2xl bg-gray-50 border border-gray-200 space-y-2">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-text-secondary uppercase tracking-wider">Saved Addresses</span>
+                <a routerLink="/dashboard" [queryParams]="{ tab: 'addresses' }" class="text-[11px] font-semibold text-primary hover:underline">
+                  Manage &rarr;
+                </a>
+              </div>
+              <div class="flex flex-wrap gap-1.5">
+                @for (addr of savedAddresses(); track addr.id) {
+                  <button
+                    type="button"
+                    (click)="selectSavedAddress(addr)"
+                    class="px-2.5 py-1 text-xs font-semibold rounded-lg border transition-all cursor-pointer flex items-center gap-1"
+                    [class.bg-primary]="selectedSavedAddressId() === addr.id"
+                    [class.text-white]="selectedSavedAddressId() === addr.id"
+                    [class.border-primary]="selectedSavedAddressId() === addr.id"
+                    [class.bg-white]="selectedSavedAddressId() !== addr.id"
+                    [class.text-text-primary]="selectedSavedAddressId() !== addr.id"
+                    [class.border-gray-200]="selectedSavedAddressId() !== addr.id"
+                  >
+                    <span>{{ addr.label }}</span>
+                    @if (addr.isDefault) {
+                      <span class="text-[9px] opacity-80 font-normal">(Default)</span>
+                    }
+                  </button>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Delivery Form Fields -->
+          <div class="space-y-3.5">
+
+            <!-- 1. Cascading Searchable Country & State Selectors (First) -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div>
+                <app-searchable-select
+                  label="Country"
+                  [options]="countryOptions()"
+                  [selectedValue]="selectedCountry()"
+                  [required]="true"
+                  [hasError]="!!countryError()"
+                  placeholder="Select Country..."
+                  searchPlaceholder="Search country..."
+                  (valueChange)="onCountryChange($event)"
+                />
+                @if (countryError(); as err) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                }
+              </div>
+
+              <div>
+                <app-searchable-select
+                  label="State / Province"
+                  [options]="stateOptions()"
+                  [selectedValue]="selectedState()"
+                  [required]="true"
+                  [hasError]="!!stateError()"
+                  placeholder="Select State/Province..."
+                  searchPlaceholder="Search state..."
+                  (valueChange)="onStateChange($event)"
+                />
+                @if (stateError(); as err) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                }
+              </div>
+            </div>
+
+            <!-- Full Name -->
+            <div>
+              <label class="block text-xs font-semibold text-text-secondary mb-1">
+                Full Name <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                [ngModel]="customerName()"
+                (ngModelChange)="customerName.set($event); nameError.set(null)"
+                placeholder="e.g. Muhammad Ali"
+                class="w-full text-xs px-3 py-2.5 rounded-xl border transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                [class.border-red-400]="nameError()"
+                [class.border-gray-300]="!nameError()"
+              />
+              @if (nameError(); as err) {
+                <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+              }
+            </div>
+
+            <!-- Phone Number with Country Dial Code Prefix -->
+            <div>
+              <label class="block text-xs font-semibold text-text-secondary mb-1">
+                Phone Number <span class="text-red-500">*</span>
+              </label>
+              <div
+                class="flex items-center rounded-xl border bg-white overflow-hidden transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+                [class.border-red-400]="phoneError()"
+                [class.border-gray-300]="!phoneError()"
+              >
+                <div class="flex items-center gap-1.5 px-3 py-2.5 bg-gray-50 border-r border-gray-200 text-xs font-bold text-text-primary select-none flex-shrink-0">
+                  <span class="text-base leading-none">{{ selectedFlag() }}</span>
+                  <span class="text-xs font-bold text-gray-700 tracking-tight">{{ selectedDialCode() }}</span>
+                </div>
+                <input
+                  type="tel"
+                  [ngModel]="customerPhone()"
+                  (ngModelChange)="customerPhone.set($event); phoneError.set(null)"
+                  [placeholder]="phonePlaceholder()"
+                  class="w-full text-xs px-3 py-2.5 bg-transparent border-0 focus:outline-none text-text-primary"
+                />
+              </div>
+              @if (phoneError(); as err) {
+                <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+              }
+            </div>
+
+            <!-- Street Address -->
+            <div>
+              <label class="block text-xs font-semibold text-text-secondary mb-1">
+                Street Address &amp; House # <span class="text-red-500">*</span>
+              </label>
+              <textarea
+                [ngModel]="deliveryAddress()"
+                (ngModelChange)="deliveryAddress.set($event); addressError.set(null)"
+                rows="2"
+                placeholder="House #, Street name, Sector / Area"
+                class="w-full text-xs px-3 py-2 rounded-xl border transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                [class.border-red-400]="addressError()"
+                [class.border-gray-300]="!addressError()"
+              ></textarea>
+              @if (addressError(); as err) {
+                <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+              }
+            </div>
+
+            <!-- City -->
+            <div>
+              <label class="block text-xs font-semibold text-text-secondary mb-1">
+                City <span class="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                [ngModel]="deliveryCity()"
+                (ngModelChange)="deliveryCity.set($event); cityError.set(null)"
+                placeholder="e.g. Lahore / Karachi / Islamabad"
+                class="w-full text-xs px-3 py-2.5 rounded-xl border transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                [class.border-red-400]="cityError()"
+                [class.border-gray-300]="!cityError()"
+              />
+              @if (cityError(); as err) {
+                <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+              }
+            </div>
+
+            <!-- Order Notes -->
+            <div>
+              <label class="block text-xs font-semibold text-text-secondary mb-1">
+                Order Notes (Optional)
+              </label>
+              <input
+                type="text"
+                [ngModel]="orderNotes()"
+                (ngModelChange)="orderNotes.set($event)"
+                placeholder="Nearby landmark, delivery timing instructions"
+                class="w-full text-xs px-3 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+            </div>
+          </div>
+
+          <!-- Order Summary Details -->
+          <div class="border-t border-gray-200 pt-4 space-y-2 text-xs">
+            <div class="flex justify-between text-text-secondary">
+              <span>Subtotal ({{ cartService.totalItemsCount() }} items):</span>
+              <span class="font-semibold text-text-primary tabular-nums">Rs. {{ cartService.formattedSubtotal() }}</span>
+            </div>
+            <div class="flex justify-between text-text-secondary">
+              <span>Estimated Shipping:</span>
+              <span class="font-semibold" [class.text-emerald-600]="cartService.shippingFee() === 0" [class.text-text-primary]="cartService.shippingFee() > 0">
+                {{ cartService.formattedShipping() }}
+              </span>
+            </div>
+            <div class="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold">
+              <span class="text-sm text-text-primary">Order Total:</span>
+              <span class="text-xl font-black text-primary tabular-nums">
+                Rs. {{ cartService.formattedTotal() }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Finalize via Chat Notice -->
+          <div class="p-3 bg-emerald-50 rounded-xl border border-emerald-200/80 flex items-start gap-2.5 text-xs text-emerald-800">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+            <div class="text-[11px] leading-relaxed">
+              <span class="font-bold">Chat Confirmation:</span> You will connect with the verified seller on Chat with this order pre-filled. You can confirm dispatch schedule and parcel verification before sending.
+            </div>
+          </div>
+
+          <!-- Error Alert directly above Button -->
+          @if (orderError(); as err) {
+            <div class="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700 font-semibold">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+              </svg>
+              <span>{{ err }}</span>
+            </div>
+          }
+
+          <!-- Finalize Button -->
+          <button
+            type="button"
+            (click)="finalizeOrderViaChat()"
+            [disabled]="isSubmitting()"
+            class="w-full py-3.5 px-4 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-black text-xs sm:text-sm rounded-2xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+            <span>Finalize Order via Chat with Seller</span>
+          </button>
+
+          <!-- Security Badges -->
+          <div class="text-[11px] text-text-muted space-y-1.5 pt-2 border-t border-gray-100">
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
+              </svg>
+              <span>100% Genuine and Verified Products</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+              </svg>
+              <span>Cash on delivery / Chat confirmation</span>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- CLEAR CART CONFIRMATION MODAL POP-UP -->
+  <!-- ============================================================ -->
+  @if (showClearModal()) {
+    <div
+      class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200"
+      (click)="closeClearModal()"
+    >
+      <div
+        class="bg-white rounded-3xl max-w-sm sm:max-w-md w-full p-6 sm:p-7 shadow-2xl border border-gray-100 text-center space-y-4 animate-in zoom-in-95 duration-200"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="w-14 h-14 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto border border-red-100">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+
+        <div class="space-y-1.5">
+          <h3 class="text-lg sm:text-xl font-black text-text-primary tracking-tight">
+            Clear Shopping Cart?
+          </h3>
+          <p class="text-xs sm:text-sm text-text-secondary leading-relaxed">
+            Are you sure you want to do this? It can't be undone.
+          </p>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3 pt-2">
+          <button
+            type="button"
+            (click)="closeClearModal()"
+            class="w-full py-2.5 px-4 rounded-xl border border-gray-200 text-xs sm:text-sm font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmClearCart()"
+            class="w-full py-2.5 px-4 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs sm:text-sm font-bold shadow-xs transition-colors cursor-pointer"
+          >
+            Yes, Clear
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

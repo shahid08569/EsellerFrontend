@@ -5,6 +5,9 @@
 // MODELS
 export * from './lib/models/auth/auth.models';
 export * from './lib/models/catalog/catalog.models';
+export * from './lib/models/dashboard/dashboard.models';
+export * from './lib/models/orders/order.models';
+export * from './lib/models/chat/chat.models';
 
 // SERVICES
 export * from './lib/services/api.service';
@@ -13,6 +16,13 @@ export * from './lib/services/auth.service';
 export * from './lib/services/auth-bootstrap.service';
 export * from './lib/services/signalr.service';
 export * from './lib/services/home.service';
+export * from './lib/services/cart.service';
+export * from './lib/services/wishlist.service';
+export * from './lib/services/compare.service';
+export * from './lib/services/toast.service';
+export * from './lib/services/dashboard.service';
+export * from './lib/services/order.service';
+export * from './lib/services/chat.service';
 
 // STATE
 export * from './lib/state/auth.store';

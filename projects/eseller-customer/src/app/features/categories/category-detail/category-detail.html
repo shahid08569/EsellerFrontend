@@ -1,0 +1,146 @@
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-5">
+
+  <!-- ============================================================ -->
+  <!-- 1. UNIFIED COMPACT HEADER & CONTROLS TOOLBAR                 -->
+  <!-- ============================================================ -->
+  <app-product-sort-bar
+    [title]="category()?.name || 'Category'"
+    [subtitle]="category() ? ('Browse authentic products in ' + category()!.name + ' with direct chat order confirmation') : 'Browse authentic products from verified sellers'"
+    [imageUrl]="getImageUrl(category()?.imageUrl)"
+    [totalCount]="totalCount()"
+    [pageNumber]="pageNumber()"
+    [pageSize]="pageSize()"
+    [sortBy]="sortBy()"
+    [viewMode]="viewMode()"
+    [activeChips]="activeChips()"
+    [activeFiltersCount]="activeFiltersCount()"
+    (sortChange)="onSortChange($event)"
+    (viewModeChange)="onViewModeChange($event)"
+    (removeChip)="onRemoveChip($event)"
+    (clearAllChips)="onClearAll()"
+    (openMobileFilter)="toggleMobileFilter()"
+  />
+
+  <!-- ============================================================ -->
+  <!-- 2. MAIN LAYOUT: SIDEBAR + PRODUCTS CATALOG                   -->
+  <!-- ============================================================ -->
+  <div id="catalog-section" class="flex flex-col lg:flex-row gap-6 md:gap-8 items-start">
+
+    <!-- DESKTOP FILTER SIDEBAR -->
+    <aside class="hidden lg:block w-72 flex-shrink-0 sticky top-24">
+      <app-product-filter-sidebar
+        [brands]="categoryBrands()"
+        [selectedCategoryId]="category()?.id ?? null"
+        [selectedBrandId]="selectedBrandId()"
+        [minPrice]="minPrice()"
+        [maxPrice]="maxPrice()"
+        [minRating]="minRating()"
+        [isFeatured]="isFeatured()"
+        [isMobileDrawer]="false"
+        (brandChange)="onBrandChange($event)"
+        (priceChange)="onPriceChange($event)"
+        (ratingChange)="onRatingChange($event)"
+        (featuredChange)="onFeaturedChange($event)"
+        (clearAll)="onClearAll()"
+      />
+    </aside>
+
+    <!-- PRODUCTS GRID / LIST -->
+    <main class="flex-1 min-w-0 w-full space-y-6 min-h-[600px]">
+
+      @if (loading() && products().length === 0) {
+        <!-- SKELETONS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 md:gap-6">
+          @for (i of [1,2,3,4,5,6]; track i) {
+            <div class="bg-white rounded-2xl border border-gray-100 p-4 space-y-3 animate-pulse shadow-xs">
+              <div class="aspect-square bg-gray-100 rounded-xl"></div>
+              <div class="space-y-2 pt-2">
+                <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+                <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+                <div class="h-5 bg-gray-200 rounded w-1/3"></div>
+              </div>
+            </div>
+          }
+        </div>
+      } @else if (!loading() && products().length === 0) {
+        <!-- EMPTY STATE -->
+        <es-empty-state
+          title="No products found in this category"
+          description="Try adjusting your filters or price range to find matching products."
+          icon="search"
+        >
+          <button
+            type="button"
+            (click)="onClearAll()"
+            class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary-hover transition-colors cursor-pointer"
+          >
+            Clear Filters
+          </button>
+        </es-empty-state>
+      } @else {
+        <!-- PRODUCT CARDS (GRID VIEW / LIST VIEW) -->
+        <div [class.opacity-50]="loading()" [class.pointer-events-none]="loading()" class="transition-opacity duration-200 space-y-6">
+          @if (viewMode() === 'grid') {
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-3 gap-5 md:gap-6">
+              @for (product of products(); track product.id) {
+                <es-product-card [product]="product" />
+              }
+            </div>
+          } @else {
+            <!-- PRODUCT CARDS (LIST VIEW) -->
+            <div class="space-y-4">
+              @for (product of products(); track product.id) {
+                <app-product-list-card [product]="product" />
+              }
+            </div>
+          }
+
+          <!-- PAGINATION -->
+          <div class="pt-2">
+            <app-product-pagination
+              [pageNumber]="pageNumber()"
+              [totalPages]="totalPages()"
+              [totalCount]="totalCount()"
+              (pageChange)="onPageChange($event)"
+            />
+          </div>
+        </div>
+      }
+
+    </main>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. MOBILE FILTER DRAWER                                      -->
+  <!-- ============================================================ -->
+  @if (mobileFilterOpen()) {
+    <div
+      class="fixed inset-0 bg-black/50 z-50 lg:hidden flex justify-end transition-opacity"
+      (click)="toggleMobileFilter()"
+    >
+      <div
+        class="w-full max-w-xs bg-white h-full overflow-y-auto p-4 shadow-xl"
+        (click)="$event.stopPropagation()"
+      >
+        <app-product-filter-sidebar
+          [brands]="categoryBrands()"
+          [selectedCategoryId]="category()?.id ?? null"
+          [selectedBrandId]="selectedBrandId()"
+          [minPrice]="minPrice()"
+          [maxPrice]="maxPrice()"
+          [minRating]="minRating()"
+          [isFeatured]="isFeatured()"
+          [isMobileDrawer]="true"
+          (brandChange)="onBrandChange($event)"
+          (priceChange)="onPriceChange($event)"
+          (ratingChange)="onRatingChange($event)"
+          (featuredChange)="onFeaturedChange($event)"
+          (clearAll)="onClearAll()"
+          (closeDrawer)="toggleMobileFilter()"
+        />
+      </div>
+    </div>
+  }
+
+</div>

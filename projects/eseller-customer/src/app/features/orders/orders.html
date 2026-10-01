@@ -1,1 +1,429 @@
-<p>orders works!</p>
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6">
+
+  <!-- ============================================================ -->
+  <!-- 1. BREADCRUMBS & PORTAL SWITCH BANNER                        -->
+  <!-- ============================================================ -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <nav class="flex items-center gap-2 text-xs md:text-sm text-text-secondary" aria-label="Breadcrumb">
+      <a routerLink="/" class="hover:text-primary transition-colors">Home</a>
+      <span class="text-text-muted">/</span>
+      <span class="font-semibold text-text-primary">My Orders</span>
+    </nav>
+
+    @if (authStore.isAuthenticated()) {
+      <a
+        routerLink="/dashboard"
+        [queryParams]="{ tab: 'orders' }"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary text-xs font-bold transition-all border border-primary/20 self-start sm:self-auto"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+        </svg>
+        <span>Open in Dedicated Customer Portal &rarr;</span>
+      </a>
+    }
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 2. HEADER & TOOLBAR                                          -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-3xl border border-gray-200/90 p-5 sm:p-6 shadow-2xs space-y-5">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div>
+        <h1 class="text-xl sm:text-2xl font-black text-text-primary tracking-tight">
+          My Orders &amp; Visual Tracking
+        </h1>
+        <p class="text-xs text-text-secondary mt-0.5">
+          View past order requests, track dispatch progress, and chat directly with sellers
+        </p>
+      </div>
+
+      <!-- Search Input -->
+      <div class="relative w-full sm:w-72">
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search by order ref..."
+          class="w-full pl-9 pr-4 py-2 text-xs rounded-xl border border-gray-200 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary bg-gray-50/50"
+        />
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+        </svg>
+      </div>
+    </div>
+
+    <!-- Status Filter Tabs -->
+    <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-t border-gray-100 pt-3">
+      @for (flt of ['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED']; track flt) {
+        <button
+          type="button"
+          (click)="setActiveTab(flt)"
+          class="px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+          [class.bg-gray-900]="activeTab() === flt"
+          [class.text-white]="activeTab() === flt"
+          [class.bg-gray-100]="activeTab() !== flt"
+          [class.text-text-secondary]="activeTab() !== flt"
+          [class.hover:bg-gray-200]="activeTab() !== flt"
+        >
+          {{ flt }}
+          @if (flt === 'ALL') {
+            <span>({{ allOrders().length }})</span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. ORDERS LIST                                               -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="bg-white rounded-3xl p-12 text-center space-y-3 border border-gray-200/90 shadow-2xs">
+      <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+      <p class="text-xs text-text-muted">Loading your orders...</p>
+    </div>
+  } @else if (filteredOrders().length === 0) {
+    <div class="bg-white rounded-3xl p-12 text-center space-y-4 border border-gray-200/90 shadow-2xs">
+      <div class="w-16 h-16 rounded-3xl bg-gray-100 text-gray-400 flex items-center justify-center mx-auto">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+        </svg>
+      </div>
+      <div class="space-y-1">
+        <h3 class="text-base font-bold text-text-primary">No Orders Found</h3>
+        <p class="text-xs text-text-muted max-w-sm mx-auto">
+          No past orders match your selected filter criteria. Browse authentic products and place your order today.
+        </p>
+      </div>
+      <a
+        routerLink="/products"
+        class="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white text-xs font-bold shadow-xs transition-colors"
+      >
+        <span>Browse Products</span>
+        <span>&rarr;</span>
+      </a>
+    </div>
+  } @else {
+    <div class="space-y-4">
+      @for (order of filteredOrders(); track order.id) {
+        <div class="bg-white rounded-3xl p-5 sm:p-6 border border-gray-200/90 shadow-2xs hover:shadow-md transition-all space-y-4">
+          
+          <!-- Order Card Header -->
+          <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+            <div>
+              <div class="flex items-center gap-2.5 flex-wrap">
+                <span class="text-xs font-black tracking-tight text-text-primary font-mono">
+                  #{{ order.id }}
+                </span>
+                <span class="text-[11px] font-bold px-2.5 py-0.5 rounded-full border" [class]="getStatusBadgeClass(order.status)">
+                  {{ getStatusDisplay(order.status) }}
+                </span>
+              </div>
+              <p class="text-[11px] text-text-muted mt-0.5">
+                Placed on {{ order.createdAt | date:'mediumDate' }} at {{ order.createdAt | date:'shortTime' }}
+              </p>
+            </div>
+
+            <!-- Price & Items -->
+            <div class="text-left sm:text-right">
+              <span class="text-base font-black text-primary">
+                Rs. {{ order.totalAmount | number:'1.2-2' }}
+              </span>
+              <p class="text-[11px] text-text-muted">
+                {{ order.totalItems }} item(s) &bull; {{ order.totalShops || 1 }} Shop
+              </p>
+            </div>
+          </div>
+
+          <!-- Actions Row -->
+          <div class="flex items-center justify-between flex-wrap gap-2 pt-1">
+            <div class="flex items-center gap-2">
+              
+              <!-- SLEEK BLACK TRACK BUTTON -->
+              <button
+                type="button"
+                (click)="openTrackOrder(order.id)"
+                class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gray-900 hover:bg-black text-white text-xs font-bold shadow-xs transition-colors cursor-pointer border border-gray-800"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                </svg>
+                <span>Track Order</span>
+              </button>
+
+              <!-- View Details -->
+              <button
+                type="button"
+                (click)="openOrderDetails(order.id)"
+                class="px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-50 hover:bg-gray-100 text-xs font-semibold text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              >
+                Invoice Details
+              </button>
+            </div>
+
+            <!-- Chat with seller -->
+            <button
+              type="button"
+              (click)="chatWithSeller(order.id)"
+              class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200 text-xs font-semibold transition-colors cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.898-.992l.966-2.22A8.17 8.17 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              <span>Seller Chat</span>
+            </button>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- 4. INTERACTIVE VISUAL ORDER TRACKING MODAL                   -->
+  <!-- ============================================================ -->
+  @if (trackingModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        
+        <!-- Header -->
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-900 text-white">
+          <div class="flex items-center gap-2.5">
+            <div class="w-8 h-8 rounded-xl bg-white/10 flex items-center justify-center text-emerald-400">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-bold text-white">
+                Live Order Tracker: <span class="font-mono text-emerald-400">#{{ selectedTrackingOrder()?.orderRequestId || 'ORD' }}</span>
+              </h3>
+              <p class="text-[11px] text-gray-400">Real-time status updates and delivery timeline</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            (click)="closeTrackingModal()"
+            class="w-7 h-7 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center text-gray-300 hover:text-white transition-colors cursor-pointer"
+          >
+            &times;
+          </button>
+        </div>
+
+        <!-- Body -->
+        <div class="p-6 overflow-y-auto space-y-6">
+          
+          @if (trackingLoading()) {
+            <div class="py-12 text-center space-y-2">
+              <div class="w-8 h-8 border-3 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p class="text-xs text-text-muted">Fetching live tracking milestones...</p>
+            </div>
+          } @else if (selectedTrackingOrder(); as tracking) {
+            
+            <!-- Current Status Hero Badge -->
+            <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 flex items-center justify-between">
+              <div>
+                <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Current Status</span>
+                <span class="text-sm font-black text-text-primary capitalize">{{ getStatusDisplay(tracking.currentStatus) }}</span>
+              </div>
+              <span class="px-3 py-1 rounded-full text-xs font-bold border" [class]="getStatusBadgeClass(tracking.currentStatus)">
+                Active Shipment
+              </span>
+            </div>
+
+            <!-- Step Progress Indicator -->
+            <div class="grid grid-cols-4 gap-2 pt-2 text-center">
+              
+              <!-- Step 1: Placed -->
+              <div class="space-y-1.5">
+                <div class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold bg-emerald-600 text-white shadow-xs">
+                  &check;
+                </div>
+                <p class="text-[11px] font-bold text-text-primary">Placed</p>
+              </div>
+
+              <!-- Step 2: Confirmed -->
+              <div class="space-y-1.5">
+                <div
+                  class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-colors"
+                  [class.bg-emerald-600]="getStepStatus(2, tracking.currentStatus) === 'completed' || getStepStatus(2, tracking.currentStatus) === 'active'"
+                  [class.text-white]="getStepStatus(2, tracking.currentStatus) === 'completed' || getStepStatus(2, tracking.currentStatus) === 'active'"
+                  [class.bg-gray-200]="getStepStatus(2, tracking.currentStatus) === 'pending'"
+                  [class.text-gray-500]="getStepStatus(2, tracking.currentStatus) === 'pending'"
+                >
+                  2
+                </div>
+                <p class="text-[11px] font-semibold text-text-secondary">Confirmed</p>
+              </div>
+
+              <!-- Step 3: Dispatched -->
+              <div class="space-y-1.5">
+                <div
+                  class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-colors"
+                  [class.bg-emerald-600]="getStepStatus(3, tracking.currentStatus) === 'completed' || getStepStatus(3, tracking.currentStatus) === 'active'"
+                  [class.text-white]="getStepStatus(3, tracking.currentStatus) === 'completed' || getStepStatus(3, tracking.currentStatus) === 'active'"
+                  [class.bg-gray-200]="getStepStatus(3, tracking.currentStatus) === 'pending'"
+                  [class.text-gray-500]="getStepStatus(3, tracking.currentStatus) === 'pending'"
+                >
+                  3
+                </div>
+                <p class="text-[11px] font-semibold text-text-secondary">Dispatched</p>
+              </div>
+
+              <!-- Step 4: Delivered -->
+              <div class="space-y-1.5">
+                <div
+                  class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-colors"
+                  [class.bg-emerald-600]="getStepStatus(4, tracking.currentStatus) === 'completed' || getStepStatus(4, tracking.currentStatus) === 'active'"
+                  [class.text-white]="getStepStatus(4, tracking.currentStatus) === 'completed' || getStepStatus(4, tracking.currentStatus) === 'active'"
+                  [class.bg-gray-200]="getStepStatus(4, tracking.currentStatus) === 'pending'"
+                  [class.text-gray-500]="getStepStatus(4, tracking.currentStatus) === 'pending'"
+                >
+                  4
+                </div>
+                <p class="text-[11px] font-semibold text-text-secondary">Delivered</p>
+              </div>
+
+            </div>
+
+            <!-- Detailed Event Timeline -->
+            <div class="space-y-3 pt-2">
+              <h4 class="text-xs font-bold text-text-primary uppercase tracking-wider">Tracking Timeline</h4>
+              
+              <div class="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-gray-200">
+                @for (ev of tracking.timeline; track ev.id) {
+                  <div class="relative space-y-0.5">
+                    <span class="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-white"></span>
+                    <div class="flex items-center justify-between">
+                      <p class="text-xs font-bold text-text-primary">{{ ev.newStatus }}</p>
+                      <span class="text-[10px] text-text-muted">{{ ev.changedAt | date:'medium' }}</span>
+                    </div>
+                    <p class="text-[11px] text-text-muted">Updated by {{ ev.changedByType || 'System' }}</p>
+                  </div>
+                }
+              </div>
+            </div>
+
+          }
+
+        </div>
+
+        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-end">
+          <button
+            type="button"
+            (click)="closeTrackingModal()"
+            class="px-4 py-2 rounded-xl bg-gray-900 text-white text-xs font-bold hover:bg-black transition-colors cursor-pointer"
+          >
+            Close Tracker
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- 5. ORDER DETAILS / INVOICE MODAL                             -->
+  <!-- ============================================================ -->
+  @if (detailsModalOpen()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/60 backdrop-blur-xs animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl shadow-2xl border border-gray-200 w-full max-w-xl max-h-[90vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+        
+        <div class="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+          <div>
+            <h3 class="text-sm font-bold text-text-primary">
+              Order Invoice: <span class="font-mono text-primary">#{{ selectedOrderDetails()?.id }}</span>
+            </h3>
+            <p class="text-[11px] text-text-muted">Item details and shipping information</p>
+          </div>
+          <button
+            type="button"
+            (click)="closeOrderDetailsModal()"
+            class="w-7 h-7 rounded-full bg-gray-200 hover:bg-gray-300 flex items-center justify-center text-text-secondary transition-colors cursor-pointer"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="p-6 overflow-y-auto space-y-5 text-xs">
+          @if (detailsLoading()) {
+            <div class="py-12 text-center space-y-2">
+              <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+              <p class="text-xs text-text-muted">Loading invoice details...</p>
+            </div>
+          } @else if (selectedOrderDetails(); as detail) {
+            
+            <!-- Delivery Info -->
+            <div class="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 space-y-1">
+              <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Shipping Destination</span>
+              <p class="font-bold text-text-primary">{{ detail.customerName || 'Customer' }} &bull; {{ detail.customerPhone }}</p>
+              <p class="text-text-secondary">{{ detail.shippingAddress }}, {{ detail.city }}, {{ detail.state ? detail.state + ', ' : '' }}{{ detail.country }}</p>
+              @if (detail.orderNotes) {
+                <p class="text-[11px] text-text-muted italic pt-1">Notes: {{ detail.orderNotes }}</p>
+              }
+            </div>
+
+            <!-- Items Table -->
+            <div class="space-y-2">
+              <span class="text-[10px] font-bold text-text-muted uppercase tracking-wider block">Order Items</span>
+              <div class="divide-y divide-gray-100 border border-gray-200 rounded-2xl overflow-hidden">
+                @for (it of detail.items; track it.id) {
+                  <div class="p-3 flex items-center justify-between gap-3 bg-white">
+                    <div class="space-y-0.5 min-w-0">
+                      <p class="font-bold text-text-primary truncate">{{ it.productNameSnapshot }}</p>
+                      <p class="text-[11px] text-text-muted">
+                        Shop: <span class="font-semibold text-text-secondary">{{ it.shopName }}</span> &bull; SKU: {{ it.sku }}
+                      </p>
+                      @if (it.variantAttributesSnapshot) {
+                        <p class="text-[10px] text-text-muted">{{ it.variantAttributesSnapshot }}</p>
+                      }
+                    </div>
+                    <div class="text-right shrink-0">
+                      <p class="font-bold text-text-primary">Rs. {{ (it.totalPriceSnapshot || it.priceAtOrder * it.quantity) | number:'1.2-2' }}</p>
+                      <p class="text-[10px] text-text-muted">Qty: {{ it.quantity }} &times; Rs. {{ it.priceAtOrder | number:'1.2-2' }}</p>
+                    </div>
+                  </div>
+                }
+              </div>
+            </div>
+
+            <!-- Totals Summary -->
+            <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200 space-y-1.5">
+              <div class="flex items-center justify-between text-text-secondary">
+                <span>Total Items</span>
+                <span>{{ detail.totalItems }}</span>
+              </div>
+              <div class="flex items-center justify-between text-sm font-bold text-text-primary pt-1 border-t border-gray-200">
+                <span>Grand Total</span>
+                <span class="text-primary font-black">Rs. {{ detail.totalAmount | number:'1.2-2' }}</span>
+              </div>
+            </div>
+
+          }
+        </div>
+
+        <div class="px-6 py-3 border-t border-gray-100 bg-gray-50 flex items-center justify-between">
+          @if (selectedOrderDetails(); as detail) {
+            <button
+              type="button"
+              (click)="reorder(detail)"
+              class="px-4 py-2 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover transition-colors cursor-pointer"
+            >
+              Reorder Items
+            </button>
+          }
+          <button
+            type="button"
+            (click)="closeOrderDetailsModal()"
+            class="px-4 py-2 rounded-xl border border-gray-300 text-xs font-semibold text-text-secondary hover:bg-gray-100 transition-colors cursor-pointer ml-auto"
+          >
+            Close
+          </button>
+        </div>
+
+      </div>
+    </div>
+  }
+
+</div>

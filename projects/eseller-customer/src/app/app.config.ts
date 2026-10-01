@@ -3,7 +3,8 @@ import {
   provideZonelessChangeDetection,
   provideAppInitializer
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { RouteReuseStrategy, provideRouter, withInMemoryScrolling } from '@angular/router';
+import { CustomRouteReuseStrategy } from './core/services/custom-route-reuse-strategy';
 import {
   provideHttpClient,
   withInterceptors,
@@ -26,7 +27,17 @@ import { routes } from './app.routes';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
-    provideRouter(routes),
+    provideRouter(
+      routes,
+      withInMemoryScrolling({
+        scrollPositionRestoration: 'disabled',
+        anchorScrolling: 'enabled'
+      })
+    ),
+    {
+      provide: RouteReuseStrategy,
+      useClass: CustomRouteReuseStrategy
+    },
 
     // ✅ Loading bar setup
     provideLoadingBar({ latencyThreshold: 100 }),

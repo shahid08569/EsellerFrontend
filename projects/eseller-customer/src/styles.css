@@ -126,3 +126,21 @@ body {
     animation: none;
   }
 }
+
+/* ============================================================
+   Swiper Card Sliders — Buffer padding to prevent shadow clipping
+   ============================================================ */
+.cat-swiper,
+.flash-swiper,
+.best-swiper,
+.hot-swiper,
+.featured-swiper {
+  padding-top: 8px !important;
+  padding-bottom: 20px !important;
+  padding-left: 6px !important;
+  padding-right: 6px !important;
+  margin-top: -8px !important;
+  margin-bottom: -20px !important;
+  margin-left: -6px !important;
+  margin-right: -6px !important;
+}
