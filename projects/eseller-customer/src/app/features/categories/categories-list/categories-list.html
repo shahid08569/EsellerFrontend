@@ -1,0 +1,166 @@
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-6 space-y-4 md:space-y-5">
+
+  <!-- ============================================================ -->
+  <!-- 1. UNIFIED COMPACT HEADER & SEARCH TOOLBAR                   -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs py-2.5 px-3.5 sm:px-4 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
+    
+    <!-- LEFT: Page Info -->
+    <div class="min-w-0">
+      <div class="flex items-center gap-2 flex-wrap">
+        <h1 class="text-base sm:text-lg font-bold text-text-primary tracking-tight truncate">
+          All Categories
+        </h1>
+        @if (filteredCategories().length > 0) {
+          <span class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-primary border border-rose-100/80 flex-shrink-0">
+            {{ filteredCategories().length }} {{ filteredCategories().length === 1 ? 'category' : 'categories' }}
+          </span>
+        }
+      </div>
+      <p class="text-[11px] sm:text-xs text-text-muted mt-0.5 truncate max-w-lg">
+        Explore high quality authentic products sourced directly from trusted shop partners across Pakistan.
+      </p>
+    </div>
+
+    <!-- RIGHT: Quick Search Input -->
+    <div class="w-full md:w-72 relative">
+      <input
+        type="text"
+        [ngModel]="searchQuery()"
+        (ngModelChange)="searchQuery.set($event)"
+        placeholder="Filter categories or subcategories..."
+        class="w-full pl-9 pr-8 py-2 text-xs bg-gray-50/80 hover:bg-gray-50 focus:bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+      />
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        class="w-3.5 h-3.5 text-text-muted absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none"
+        fill="none"
+        viewBox="0 0 24 24"
+        stroke="currentColor"
+        stroke-width="2"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+      </svg>
+      @if (searchQuery()) {
+        <button
+          type="button"
+          (click)="searchQuery.set('')"
+          class="absolute right-2.5 top-1/2 -translate-y-1/2 text-text-muted hover:text-text-primary text-xs"
+        >
+          &times;
+        </button>
+      }
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. CATEGORIES GRID -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 animate-pulse">
+          <div class="flex items-center gap-4">
+            <div class="w-16 h-16 rounded-full bg-gray-200 flex-shrink-0"></div>
+            <div class="space-y-2 flex-1">
+              <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+              <div class="h-3 bg-gray-200 rounded w-1/2"></div>
+            </div>
+          </div>
+          <div class="space-y-2 pt-2">
+            <div class="h-3 bg-gray-200 rounded w-full"></div>
+            <div class="h-3 bg-gray-200 rounded w-4/5"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (filteredCategories().length === 0) {
+    <es-empty-state
+      title="No categories found"
+      description="We couldn't find any category matching your filter."
+      icon="search"
+    >
+      <button
+        type="button"
+        (click)="searchQuery.set('')"
+        class="px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary-hover transition-colors"
+      >
+        Clear Search
+      </button>
+    </es-empty-state>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      @for (category of filteredCategories(); track category.id) {
+        <div class="bg-white rounded-2xl border border-gray-100 hover:border-primary/40 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 p-5 flex flex-col justify-between group">
+
+          <div>
+            <!-- Card Header: Image + Name -->
+            <a [routerLink]="['/categories', category.slug]" class="flex items-center gap-4 group/link">
+              <div class="w-16 h-16 rounded-full overflow-hidden bg-rose-50 border-2 border-white group-hover/link:border-primary shadow-xs flex items-center justify-center flex-shrink-0 p-1 transition-all duration-300">
+                @if (getImageUrl(category.imageUrl); as imgUrl) {
+                  <img
+                    [src]="imgUrl"
+                    [alt]="category.name"
+                    class="w-full h-full object-cover rounded-full group-hover/link:scale-110 transition-transform duration-300"
+                    loading="lazy"
+                  />
+                } @else {
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                  </svg>
+                }
+              </div>
+
+              <div class="min-w-0 flex-1">
+                <h2 class="text-base font-bold text-text-primary group-hover/link:text-primary transition-colors truncate">
+                  {{ category.name }}
+                </h2>
+                <span class="text-xs text-text-muted block">
+                  {{ category.children.length }} Subcategories
+                </span>
+              </div>
+            </a>
+
+            <!-- Subcategories Pills List -->
+            @if (category.children && category.children.length > 0) {
+              <div class="mt-4 pt-3 border-t border-gray-100 flex flex-wrap gap-1.5">
+                @for (sub of category.children.slice(0, 5); track sub.id) {
+                  <a
+                    [routerLink]="['/categories', sub.slug]"
+                    class="text-[11px] font-medium px-2.5 py-1 rounded-md bg-gray-50 hover:bg-primary-tint text-text-secondary hover:text-primary border border-gray-100 hover:border-primary/20 transition-colors"
+                  >
+                    {{ sub.name }}
+                  </a>
+                }
+                @if (category.children.length > 5) {
+                  <a
+                    [routerLink]="['/categories', category.slug]"
+                    class="text-[11px] font-bold px-2 py-1 text-primary hover:underline"
+                  >
+                    +{{ category.children.length - 5 }} more
+                  </a>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Card Bottom CTA -->
+          <div class="mt-4 pt-3 border-t border-gray-50 flex items-center justify-between">
+            <a
+              [routerLink]="['/categories', category.slug]"
+              class="text-xs font-bold text-primary group-hover:text-primary-hover inline-flex items-center gap-1.5 transition-colors"
+            >
+              <span>Explore Products</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 group-hover:translate-x-1 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+          </div>
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

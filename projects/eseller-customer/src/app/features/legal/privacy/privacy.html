@@ -1,0 +1,315 @@
+<div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 sm:py-10 space-y-8 animate-in fade-in duration-300">
+
+  <!-- ============================================================ -->
+  <!-- HERO HEADER BANNER                                           -->
+  <!-- ============================================================ -->
+  <div class="bg-gradient-to-r from-gray-950 via-slate-900 to-gray-950 rounded-3xl p-6 sm:p-10 text-white shadow-xl border border-gray-800 relative overflow-hidden">
+    <!-- Decorative background glow -->
+    <div class="absolute -right-10 -bottom-10 w-72 h-72 bg-blue-500/20 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-10 -top-10 w-60 h-60 bg-emerald-400/15 rounded-full blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 space-y-4 max-w-3xl">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 border border-white/15 text-emerald-300 text-xs font-bold uppercase tracking-wider backdrop-blur-xs">
+        <span>🛡️</span>
+        <span>Data Protection &amp; Security</span>
+      </div>
+
+      <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white">
+        Privacy Policy &amp; Data Safeguards
+      </h1>
+
+      <p class="text-xs sm:text-sm text-gray-300 leading-relaxed">
+        At <strong>Eseller</strong>, we prioritize the protection and security of your personal information. This Privacy Policy details how we handle information across our multi-vendor customer and merchant platforms.
+      </p>
+
+      <div class="flex flex-wrap items-center gap-4 pt-1 text-xs text-gray-400 font-medium">
+        <span class="flex items-center gap-1.5">
+          <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+          GDPR &amp; PECA Compliant Standards
+        </span>
+        <span class="hidden sm:inline">•</span>
+        <span>256-Bit SSL Enforced</span>
+        <span class="hidden sm:inline">•</span>
+        <span class="text-emerald-300 font-semibold">Zero Unsolicited Data Sharing</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- QUICK ANCHOR PILLS                                           -->
+  <!-- ============================================================ -->
+  <div class="flex items-center justify-between flex-wrap gap-3 pb-2 border-b border-gray-200">
+    <div class="flex items-center flex-wrap gap-2">
+      <button
+        type="button"
+        (click)="scrollTo('collection')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-all cursor-pointer"
+      >
+        📥 Data We Collect
+      </button>
+      <button
+        type="button"
+        (click)="scrollTo('usage')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-all cursor-pointer"
+      >
+        ⚙️ How We Use It
+      </button>
+      <button
+        type="button"
+        (click)="scrollTo('geolocation')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-all cursor-pointer"
+      >
+        📍 Location Services
+      </button>
+      <button
+        type="button"
+        (click)="scrollTo('merchants')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-all cursor-pointer"
+      >
+        🏪 Merchant Data
+      </button>
+      <button
+        type="button"
+        (click)="scrollTo('security')"
+        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gray-100 hover:bg-gray-200 text-gray-800 transition-all cursor-pointer"
+      >
+        🔒 Security Standards
+      </button>
+    </div>
+
+    <div class="text-xs text-text-secondary font-medium">
+      Related: <a routerLink="/terms" class="text-primary font-bold hover:underline">Terms of Service &rarr;</a>
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- PRIVACY SECTIONS                                             -->
+  <!-- ============================================================ -->
+  <div class="space-y-6">
+
+    <!-- Section 1: Data Collection -->
+    <div id="collection" class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4 scroll-mt-24">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-lg">
+          1
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-text-primary">
+            1. Information We Collect
+          </h2>
+          <p class="text-xs text-text-secondary">Transparency regarding buyer and merchant data</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+        <p>
+          We collect only information necessary to ensure seamless e-commerce transactions, timely parcel deliveries, and platform security:
+        </p>
+        <ul class="list-disc pl-5 space-y-2">
+          <li>
+            <strong>Identity &amp; Contact:</strong> Full name, verified email address, mobile phone number for courier dispatch notifications and order verification.
+          </li>
+          <li>
+            <strong>Delivery &amp; Shipping Details:</strong> Complete street address, city, district/province, and nearest landmark to assist riders in pinpointing your doorstep.
+          </li>
+          <li>
+            <strong>Transactional Records:</strong> Order items, tracking numbers, invoice amounts, payment methods (Cash on Delivery or Digital Gateway), and return requests.
+          </li>
+          <li>
+            <strong>Technical Log Data:</strong> IP addresses, browser types, and device signatures used strictly for detecting brute-force attempts and fraudulent checkout activities.
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 2: How We Use Data -->
+    <div id="usage" class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4 scroll-mt-24">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-lg">
+          2
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-text-primary">
+            2. Purpose &amp; Usage of Personal Data
+          </h2>
+          <p class="text-xs text-text-secondary">How your data powers your shopping experience</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-1">
+            <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+              <span>📦</span> Order Fulfillment
+            </span>
+            <p class="text-[11px] text-gray-600">
+              Sharing delivery details with verified sellers and logistics carriers (TCS, Leopards, Trax) to ship your packages.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-1">
+            <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+              <span>📧</span> Real Email &amp; OTP Alerts
+            </span>
+            <p class="text-[11px] text-gray-600">
+              Sending 6-digit security verification OTPs, password reset links, order confirmations, and dispatch tracking alerts via Google SMTP.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-1">
+            <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+              <span>💬</span> Direct Merchant Live Chat
+            </span>
+            <p class="text-[11px] text-gray-600">
+              Enabling real-time buyer-seller conversations for product inquiries, sizing, and post-purchase customer support via SignalR hubs.
+            </p>
+          </div>
+
+          <div class="p-4 rounded-2xl bg-gray-50 border border-gray-200/80 space-y-1">
+            <span class="font-bold text-xs text-gray-900 flex items-center gap-1.5">
+              <span>🛡️</span> Anti-Fraud &amp; Account Safety
+            </span>
+            <p class="text-[11px] text-gray-600">
+              Preventing fake orders, unauthorized logins, and safeguarding merchant stores against automated scrapers and bots.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Section 3: Geolocation Services -->
+    <div id="geolocation" class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4 scroll-mt-24">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center font-black text-lg">
+          3
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-text-primary">
+            3. Geolocation &amp; Device Location Access
+          </h2>
+          <p class="text-xs text-text-secondary">Understanding why we request your location</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+        <p>
+          During registration and order checkout, Eseller may request browser or device GPS location permissions. We use this strictly for:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li><strong>Pinpoint Delivery Accuracy:</strong> Verifying local delivery radius and assigning the nearest delivery depot.</li>
+          <li><strong>Fraudulent COD Prevention:</strong> Ensuring the order originated from within deliverable geographic boundaries.</li>
+        </ul>
+        <p>
+          Location data is never shared with third-party advertising networks and is stored securely in encrypted server records.
+        </p>
+      </div>
+    </div>
+
+    <!-- Section 4: Merchant & Seller Data Privacy -->
+    <div id="merchants" class="bg-gradient-to-br from-amber-500/10 via-amber-400/5 to-white rounded-3xl p-6 sm:p-8 border border-amber-300 shadow-xs space-y-4 scroll-mt-24">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gray-950 text-amber-400 flex items-center justify-center font-black text-lg">
+          4
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-gray-950">
+            4. Merchant Confidentiality &amp; Commercial Records
+          </h2>
+          <p class="text-xs text-amber-900">Safeguarding partner stores, business KYC and payout credentials</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-gray-800 space-y-3 leading-relaxed">
+        <p>
+          Eseller treats all merchant business details as strictly confidential:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li><strong>Banking &amp; Settlement Data:</strong> Merchant IBAN and payout details are stored using AES-256 encryption and are accessible solely for automated disbursements.</li>
+          <li><strong>KYC Documents:</strong> National identity cards (CNIC), NTN numbers, and store licenses are reviewed solely by the verification desk and never published publicly.</li>
+          <li><strong>Shopfront Analytics:</strong> Your store turnover, visitor analytics, and sales volume are private to your Merchant Admin Portal.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 5: Security Standards & Encryption -->
+    <div id="security" class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4 scroll-mt-24">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-black text-lg">
+          5
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-text-primary">
+            5. Security Architecture &amp; Data Safeguards
+          </h2>
+          <p class="text-xs text-text-secondary">Enterprise-grade protection across all endpoints</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+        <p>
+          We employ state-of-the-art technical and organizational safeguards:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li><strong>Data in Transit:</strong> All web traffic is forced over HTTPS with modern TLS 1.3 encryption.</li>
+          <li><strong>Password Protection:</strong> Passwords are never stored in plaintext; they are salted and hashed using cryptographic algorithms.</li>
+          <li><strong>Tokenized Authorization:</strong> User sessions leverage secure JSON Web Tokens (JWT) with strict expiration limits and refresh rotations.</li>
+          <li><strong>Strict Role-Based Access:</strong> Access to user database records is restricted to authorized platform personnel under confidentiality obligations.</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Section 6: User Rights & Data Deletion -->
+    <div class="bg-white rounded-3xl p-6 sm:p-8 border border-gray-200/80 shadow-xs space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-2xl bg-gray-100 text-gray-800 flex items-center justify-center font-black text-lg">
+          6
+        </div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-black text-text-primary">
+            6. Your Privacy Rights &amp; Contacting Us
+          </h2>
+          <p class="text-xs text-text-secondary">How to manage or delete your data</p>
+        </div>
+      </div>
+
+      <div class="prose prose-sm text-xs sm:text-sm text-text-secondary space-y-3 leading-relaxed">
+        <p>
+          You have full ownership of your data on Eseller. You may:
+        </p>
+        <ul class="list-disc pl-5 space-y-1.5">
+          <li>Update your profile, phone number, and delivery addresses anytime via your <a routerLink="/dashboard" class="text-primary font-bold hover:underline">Customer Dashboard</a>.</li>
+          <li>Request an export copy of all order histories and customer logs associated with your email.</li>
+          <li>Request account closure and permanent anonymization of personal records by contacting our Data Protection Officer at <strong class="text-text-primary">privacy@eseller.com</strong>.</li>
+        </ul>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- BOTTOM SUPPORT & ACTION CTA                                  -->
+  <!-- ============================================================ -->
+  <div class="bg-gray-50 border border-gray-200 rounded-3xl p-6 text-center space-y-3">
+    <h3 class="text-base sm:text-lg font-black text-text-primary">
+      Questions about your data or privacy settings?
+    </h3>
+    <p class="text-xs text-text-secondary max-w-lg mx-auto">
+      Reach out to our Data Protection Desk anytime at <strong class="text-text-primary">privacy@eseller.com</strong> or review our terms.
+    </p>
+    <div class="flex flex-wrap items-center justify-center gap-3 pt-2">
+      <a
+        routerLink="/terms"
+        class="px-4 py-2 bg-white border border-gray-300 hover:bg-gray-100 text-text-primary font-bold text-xs rounded-xl transition-all shadow-2xs"
+      >
+        Read Terms of Service
+      </a>
+      <a
+        routerLink="/"
+        class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl transition-all shadow-xs"
+      >
+        Return to Marketplace
+      </a>
+    </div>
+  </div>
+
+</div>

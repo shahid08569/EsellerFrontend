@@ -33,26 +33,54 @@
 
       <!-- Right icons -->
       <div class="flex items-center gap-1">
+        <!-- Mobile Compare -->
+        <a
+          routerLink="/compare"
+          (click)="closeMobileMenu()"
+          class="relative w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
+          aria-label="Compare"
+          title="Product Comparison"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+          </svg>
+          @if (compareService.totalCount() > 0) {
+            <span class="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-gray-900 font-black text-[10px] flex items-center justify-center tabular-nums shadow-2xs">
+              {{ compareService.totalCount() }}
+            </span>
+          }
+        </a>
+
         <a
           routerLink="/wishlist"
           (click)="closeMobileMenu()"
-          class="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
+          class="relative w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
           aria-label="Wishlist"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
           </svg>
+          @if (wishlistService.totalCount() > 0) {
+            <span class="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-gray-900 font-black text-[10px] flex items-center justify-center tabular-nums shadow-2xs">
+              {{ wishlistService.totalCount() }}
+            </span>
+          }
         </a>
 
         <a
           routerLink="/cart"
           (click)="closeMobileMenu()"
-          class="w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
+          class="relative w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
           aria-label="Cart"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
           </svg>
+          @if (cartService.totalItemsCount() > 0) {
+            <span class="absolute top-1.5 right-1.5 min-w-[16px] h-4 px-1 rounded-full bg-amber-400 text-gray-900 font-black text-[10px] flex items-center justify-center tabular-nums shadow-2xs">
+              {{ cartService.totalItemsCount() }}
+            </span>
+          }
         </a>
       </div>
 
@@ -65,12 +93,15 @@
       <div class="flex items-center">
         <div class="relative w-full max-w-md">
           <input
+            #desktopSearch
             type="text"
             placeholder="Search for products..."
+            (keyup.enter)="onSearch(desktopSearch.value)"
             class="w-full pl-4 pr-10 py-2.5 text-sm bg-white text-text-primary border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-white/40 transition-colors"
           />
           <button
             type="button"
+            (click)="onSearch(desktopSearch.value)"
             class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-primary hover:text-primary-hover transition-colors"
             aria-label="Search"
           >
@@ -88,26 +119,117 @@
         </a>
       </div>
 
-      <!-- RIGHT: Auth -->
+      <!-- RIGHT: Auth / Customer Menu -->
       <div class="flex items-center justify-end gap-3">
-        <a
-          routerLink="/auth/login"
-          class="text-sm font-medium text-white hover:text-white/80 transition-colors"
-        >
-          Login
-        </a>
-        <a
-          routerLink="/auth/register"
-          class="px-4 py-2 text-sm font-semibold !text-primary !bg-white rounded-md hover:!bg-white/90 transition-colors"
-        >
-          Register
-        </a>
-        <a
-          routerLink="/affiliate/register"
-          class="hidden lg:inline text-sm font-medium text-white hover:text-white/80 transition-colors"
-        >
-          Become Affiliate
-        </a>
+        @if (authStore.isAuthenticated()) {
+          <a
+            routerLink="/dashboard"
+            class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gray-950 hover:bg-black text-white text-xs font-bold shadow-md border border-gray-800 transition-all cursor-pointer"
+            title="Go to Customer Dashboard"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+            <span>Dashboard</span>
+          </a>
+
+          <div class="relative" (mouseleave)="closeUserMenu()">
+            <button
+              type="button"
+              (click)="toggleUserMenu()"
+              class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 border border-white/20 text-white text-xs font-semibold transition-all cursor-pointer"
+            >
+              <span class="w-6 h-6 rounded-full bg-white text-primary flex items-center justify-center font-bold text-xs">
+                {{ userInitial() }}
+              </span>
+              <span class="max-w-[110px] truncate">{{ authStore.currentAccount()?.username || 'My Account' }}</span>
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white/70" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+              </svg>
+            </button>
+
+            <!-- User Dropdown Menu -->
+            @if (isUserMenuOpen()) {
+              <div class="absolute right-0 top-full pt-2 z-50 w-56 animate-in fade-in zoom-in-95 duration-150">
+                <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-2 text-text-primary">
+                  <div class="px-3 py-2 border-b border-gray-100">
+                    <p class="text-xs font-bold text-text-primary truncate">{{ authStore.currentAccount()?.username }}</p>
+                    <p class="text-[11px] text-text-muted truncate">{{ authStore.currentAccount()?.email }}</p>
+                  </div>
+
+                  <div class="py-1">
+                    <a
+                      routerLink="/dashboard"
+                      (click)="closeUserMenu()"
+                      class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                      </svg>
+                      <span>Customer Dashboard</span>
+                    </a>
+
+                    <a
+                      routerLink="/orders"
+                      (click)="closeUserMenu()"
+                      class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                      </svg>
+                      <span>My Orders</span>
+                    </a>
+
+                    <a
+                      routerLink="/dashboard"
+                      [queryParams]="{ tab: 'addresses' }"
+                      (click)="closeUserMenu()"
+                      class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                      </svg>
+                      <span>Saved Addresses</span>
+                    </a>
+                  </div>
+
+                  <div class="pt-1 border-t border-gray-100">
+                    <button
+                      type="button"
+                      (click)="onLogout()"
+                      class="w-full flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors cursor-pointer"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+                      </svg>
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            }
+          </div>
+        } @else {
+          <a
+            routerLink="/auth/login"
+            class="text-sm font-medium text-white hover:text-white/80 transition-colors"
+          >
+            Login
+          </a>
+          <a
+            routerLink="/auth/register"
+            class="px-4 py-2 text-sm font-semibold !text-primary !bg-white rounded-md hover:!bg-white/90 transition-colors"
+          >
+            Register
+          </a>
+          <a
+            routerLink="/affiliate/register"
+            class="hidden xl:inline text-sm font-medium text-white hover:text-white/80 transition-colors"
+          >
+            Become Affiliate
+          </a>
+        }
       </div>
 
     </div>
@@ -120,12 +242,15 @@
   <div class="md:hidden px-3 pb-3">
     <div class="relative w-full">
       <input
+        #mobileSearch
         type="text"
         placeholder="Search products..."
+        (keyup.enter)="onSearch(mobileSearch.value)"
         class="w-full pl-4 pr-10 py-2 text-sm bg-white text-text-primary border border-transparent rounded-full focus:outline-none focus:ring-2 focus:ring-white/40"
       />
       <button
         type="button"
+        (click)="onSearch(mobileSearch.value)"
         class="absolute right-1 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center text-primary"
         aria-label="Search"
       >
@@ -140,25 +265,199 @@
   <!-- DESKTOP NAV LINE -->
   <!-- ============================================================ -->
   <nav class="hidden md:block border-t border-white/20">
-    <div class="max-w-7xl mx-auto px-4 flex items-center gap-8 py-3 text-sm font-medium text-white overflow-x-auto">
-      <a routerLink="/" class="text-white hover:text-white/80 transition-colors whitespace-nowrap">Home</a>
-      <a routerLink="/categories" class="text-white hover:text-white/80 transition-colors whitespace-nowrap">Categories</a>
-      <a routerLink="/brands" class="text-white hover:text-white/80 transition-colors whitespace-nowrap">Brands</a>
-      <a routerLink="/blogs" class="text-white hover:text-white/80 transition-colors whitespace-nowrap">Blogs</a>
-      <a routerLink="/products" class="text-white hover:text-white/80 transition-colors whitespace-nowrap">All Products</a>
+    <div class="max-w-7xl mx-auto px-4 flex items-center gap-8 py-2.5 text-sm font-medium text-white">
+      <a routerLink="/" class="relative text-white hover:text-white/80 transition-colors whitespace-nowrap py-1">Home</a>
+
+      <!-- CATEGORIES WITH HOVER MEGA-DROPDOWN -->
+      <div
+        class="relative"
+        (mouseenter)="openCategoriesDropdown()"
+        (mouseleave)="closeCategoriesDropdown()"
+      >
+        <a
+          routerLink="/categories"
+          class="relative text-white hover:text-white/90 transition-all whitespace-nowrap py-1 inline-flex items-center gap-1.5"
+          [class.font-bold]="isCategoriesActive()"
+        >
+          <span>Categories</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform duration-200" [class.rotate-180]="isCategoriesDropdownOpen()" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+          @if (isCategoriesActive()) {
+            <span class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2.5px] bg-white rounded-full"></span>
+          }
+        </a>
+
+        <!-- MEGA DROPDOWN (Multi-column: max 10 per column) -->
+        @if (isCategoriesDropdownOpen() && categories().length > 0) {
+          <div class="absolute left-0 top-full pt-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 text-text-primary min-w-[280px]">
+              
+              <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-100">
+                <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Browse Categories</span>
+                <a
+                  routerLink="/categories"
+                  (click)="closeCategoriesDropdown()"
+                  class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <span>All Categories</span>
+                  <span>→</span>
+                </a>
+              </div>
+
+              <!-- Multi-column Container -->
+              <div class="flex gap-6">
+                @for (col of categoryColumns(); track $index) {
+                  <div class="flex flex-col gap-1 min-w-[170px]">
+                    @for (cat of col; track cat.id) {
+                      <a
+                        [routerLink]="['/categories', cat.slug]"
+                        (click)="closeCategoriesDropdown()"
+                        class="group/item flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <span class="truncate">{{ cat.name }}</span>
+                        <span class="text-[10px] text-gray-300 group-hover/item:text-primary transition-colors">›</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- BRANDS WITH HOVER MEGA-DROPDOWN -->
+      <div
+        class="relative"
+        (mouseenter)="openBrandsDropdown()"
+        (mouseleave)="closeBrandsDropdown()"
+      >
+        <a
+          routerLink="/brands"
+          class="relative text-white hover:text-white/90 transition-all whitespace-nowrap py-1 inline-flex items-center gap-1.5"
+          [class.font-bold]="isBrandsActive()"
+        >
+          <span>Brands</span>
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform duration-200" [class.rotate-180]="isBrandsDropdownOpen()" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+          </svg>
+          @if (isBrandsActive()) {
+            <span class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2.5px] bg-white rounded-full"></span>
+          }
+        </a>
+
+        <!-- MEGA DROPDOWN (Multi-column: max 10 per column) -->
+        @if (isBrandsDropdownOpen() && brands().length > 0) {
+          <div class="absolute left-0 top-full pt-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+            <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-5 text-text-primary min-w-[280px]">
+              
+              <div class="flex items-center justify-between pb-2.5 mb-3 border-b border-gray-100">
+                <span class="text-[11px] font-bold text-text-muted uppercase tracking-wider">Browse Brands</span>
+                <a
+                  routerLink="/brands"
+                  (click)="closeBrandsDropdown()"
+                  class="text-xs font-semibold text-primary hover:underline inline-flex items-center gap-1"
+                >
+                  <span>All Brands</span>
+                  <span>&rarr;</span>
+                </a>
+              </div>
+
+              <!-- Multi-column Container -->
+              <div class="flex gap-6">
+                @for (col of brandColumns(); track $index) {
+                  <div class="flex flex-col gap-1 min-w-[170px]">
+                    @for (b of col; track b.id) {
+                      <a
+                        [routerLink]="['/brands', b.slug]"
+                        (click)="closeBrandsDropdown()"
+                        class="group/item flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <span class="truncate">{{ b.name }}</span>
+                        <span class="text-[10px] text-gray-300 group-hover/item:text-primary transition-colors">&rsaquo;</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+
+            </div>
+          </div>
+        }
+      </div>
+
+      <a
+        routerLink="/blogs"
+        class="relative text-white hover:text-white/80 transition-colors whitespace-nowrap py-1"
+        [class.font-bold]="isBlogsActive()"
+      >
+        <span>Blogs</span>
+        @if (isBlogsActive()) {
+          <span class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2.5px] bg-white rounded-full"></span>
+        }
+      </a>
+      
+      <a
+        routerLink="/products"
+        class="relative text-white hover:text-white/90 transition-all whitespace-nowrap py-1"
+        [class.font-bold]="isAllProductsActive()"
+      >
+        <span>All Products</span>
+        @if (isAllProductsActive()) {
+          <span class="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-1/2 h-[2.5px] bg-white rounded-full"></span>
+        }
+      </a>
 
       <div class="ml-auto flex items-center gap-5">
-        <a routerLink="/wishlist" class="flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap">
+        <a routerLink="/orders" class="flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
           </svg>
-          Wishlist
+          <span>Orders</span>
         </a>
-        <a routerLink="/cart" class="flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-          </svg>
-          Cart
+
+        <a routerLink="/compare" class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+            </svg>
+            @if (compareService.totalCount() > 0) {
+              <span class="absolute -top-2 -right-2 min-w-[15px] h-3.5 px-0.5 rounded-full bg-amber-400 text-gray-900 font-black text-[9px] flex items-center justify-center tabular-nums shadow-2xs">
+                {{ compareService.totalCount() }}
+              </span>
+            }
+          </div>
+          <span>Compare</span>
+        </a>
+
+        <a routerLink="/wishlist" class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+            </svg>
+            @if (wishlistService.totalCount() > 0) {
+              <span class="absolute -top-2 -right-2 min-w-[15px] h-3.5 px-0.5 rounded-full bg-amber-400 text-gray-900 font-black text-[9px] flex items-center justify-center tabular-nums shadow-2xs">
+                {{ wishlistService.totalCount() }}
+              </span>
+            }
+          </div>
+          <span>Wishlist</span>
+        </a>
+
+        <a routerLink="/cart" class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+          <div class="relative">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
+            @if (cartService.totalItemsCount() > 0) {
+              <span class="absolute -top-2 -right-2 min-w-[15px] h-3.5 px-0.5 rounded-full bg-amber-400 text-gray-900 font-black text-[9px] flex items-center justify-center tabular-nums shadow-2xs">
+                {{ cartService.totalItemsCount() }}
+              </span>
+            }
+          </div>
+          <span>Cart</span>
         </a>
       </div>
     </div>
@@ -179,44 +478,85 @@
       <a routerLink="/" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors">
         Home
       </a>
-      <a routerLink="/categories" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors">
+      <a routerLink="/categories" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors" [class.bg-white/15]="isCategoriesActive()" [class.font-bold]="isCategoriesActive()">
         Categories
       </a>
-      <a routerLink="/brands" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors">
+      <a routerLink="/brands" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors" [class.bg-white/15]="isBrandsActive()" [class.font-bold]="isBrandsActive()">
         Brands
       </a>
-      <a routerLink="/blogs" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors">
+      <a routerLink="/blogs" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors" [class.bg-white/15]="isBlogsActive()" [class.font-bold]="isBlogsActive()">
         Blogs
       </a>
-      <a routerLink="/products" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors">
+      <a routerLink="/products" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors" [class.bg-white/15]="isAllProductsActive()" [class.font-bold]="isAllProductsActive()">
         All Products
+      </a>
+      <a routerLink="/orders" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
+        <span>My Orders</span>
+        <span class="text-xs opacity-60">&rsaquo;</span>
+      </a>
+      <a routerLink="/compare" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
+        <span>Compare</span>
+        @if (compareService.totalCount() > 0) {
+          <span class="px-2 py-0.5 rounded-full bg-amber-400 text-gray-900 font-bold text-xs">
+            {{ compareService.totalCount() }}
+          </span>
+        }
+      </a>
+      <a routerLink="/wishlist" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
+        <span>Wishlist</span>
+        @if (wishlistService.totalCount() > 0) {
+          <span class="px-2 py-0.5 rounded-full bg-amber-400 text-gray-900 font-bold text-xs">
+            {{ wishlistService.totalCount() }}
+          </span>
+        }
       </a>
     </nav>
 
     <div class="border-t border-white/20"></div>
 
     <div class="px-4 py-4 flex flex-col gap-2">
-      <a
-        routerLink="/auth/login"
-        (click)="closeMobileMenu()"
-        class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors text-center"
-      >
-        Login
-      </a>
-      <a
-        routerLink="/auth/register"
-        (click)="closeMobileMenu()"
-        class="py-2.5 px-3 !text-primary !bg-white font-semibold rounded-md hover:!bg-white/90 transition-colors text-center"
-      >
-        Register
-      </a>
-      <a
-        routerLink="/affiliate/register"
-        (click)="closeMobileMenu()"
-        class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors text-center"
-      >
-        Become Affiliate
-      </a>
+      @if (authStore.isAuthenticated()) {
+        <a
+          routerLink="/dashboard"
+          (click)="closeMobileMenu()"
+          class="py-2.5 px-3 bg-white text-primary font-bold rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+          <span>Customer Dashboard</span>
+        </a>
+
+        <button
+          type="button"
+          (click)="onLogout(); closeMobileMenu()"
+          class="py-2.5 px-3 text-red-200 hover:text-white font-medium rounded-xl hover:bg-white/10 transition-colors text-center cursor-pointer"
+        >
+          Sign Out
+        </button>
+      } @else {
+        <a
+          routerLink="/auth/login"
+          (click)="closeMobileMenu()"
+          class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors text-center"
+        >
+          Login
+        </a>
+        <a
+          routerLink="/auth/register"
+          (click)="closeMobileMenu()"
+          class="py-2.5 px-3 !text-primary !bg-white font-semibold rounded-md hover:!bg-white/90 transition-colors text-center"
+        >
+          Register
+        </a>
+        <a
+          routerLink="/affiliate/register"
+          (click)="closeMobileMenu()"
+          class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors text-center"
+        >
+          Become Affiliate
+        </a>
+      }
     </div>
 
   </div>

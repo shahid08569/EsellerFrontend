@@ -1,1 +1,492 @@
-<p>compare works!</p>
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6">
+
+  <!-- ============================================================ -->
+  <!-- BREADCRUMBS -->
+  <!-- ============================================================ -->
+  <nav class="flex items-center gap-2 text-xs md:text-sm text-text-secondary" aria-label="Breadcrumb">
+    <a routerLink="/" class="hover:text-primary transition-colors">Home</a>
+    <span class="text-text-muted">/</span>
+    <span class="font-semibold text-text-primary">Product Comparison</span>
+  </nav>
+
+  <!-- ============================================================ -->
+  <!-- HEADER & TOOLBAR -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-3xl border border-gray-200/90 p-5 sm:p-6 shadow-xs flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2.5 flex-wrap">
+        <h1 class="text-xl sm:text-2xl font-black text-text-primary tracking-tight">
+          Product Comparison
+        </h1>
+        <span class="text-xs font-bold px-2.5 py-0.5 rounded-full bg-rose-50 text-primary border border-rose-100">
+          {{ compareService.totalCount() }}/{{ maxItems }} Products
+        </span>
+      </div>
+      <p class="text-xs text-text-secondary mt-1">
+        Compare prices, specifications, seller details, and customer ratings side-by-side
+      </p>
+    </div>
+
+    <!-- Quick Action Buttons -->
+    <div class="flex items-center gap-2.5 flex-wrap w-full sm:w-auto justify-end">
+      <a
+        routerLink="/products"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+        <span>Add More</span>
+      </a>
+
+      @if (compareService.totalCount() > 0) {
+        <button
+          type="button"
+          (click)="openClearModal()"
+          class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-red-600 bg-red-50 hover:bg-red-100 rounded-xl border border-red-100 transition-colors cursor-pointer"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
+          <span>Clear All</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 1. LOADING SKELETON STATE -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      @for (i of [1, 2, 3, 4]; track i) {
+        <div class="bg-white rounded-3xl border border-gray-200/90 p-5 shadow-card animate-pulse space-y-4">
+          <div class="aspect-square bg-gray-200 rounded-2xl"></div>
+          <div class="space-y-2">
+            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+            <div class="h-5 bg-gray-200 rounded w-1/3 pt-1"></div>
+          </div>
+          <div class="space-y-2 pt-3 border-t border-gray-100">
+            <div class="h-3 bg-gray-100 rounded w-full"></div>
+            <div class="h-3 bg-gray-100 rounded w-4/5"></div>
+            <div class="h-3 bg-gray-100 rounded w-3/4"></div>
+          </div>
+          <div class="h-10 bg-gray-200 rounded-xl w-full pt-2"></div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- 2. EMPTY STATE (0 PRODUCTS) -->
+  <!-- ============================================================ -->
+  @else if (compareService.totalCount() === 0) {
+    <div class="bg-white rounded-3xl border border-gray-200 p-8 sm:p-14 text-center shadow-xs">
+      <div class="max-w-md mx-auto space-y-4">
+        <div class="w-20 h-20 mx-auto rounded-full bg-rose-50 flex items-center justify-center text-primary">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+          </svg>
+        </div>
+        <h2 class="text-xl sm:text-2xl font-black text-text-primary tracking-tight">No Products to Compare</h2>
+        <p class="text-xs sm:text-sm text-text-secondary leading-relaxed">
+          You haven't selected any items for comparison yet. Browse our catalog and click the compare icon on product cards to view side-by-side differences.
+        </p>
+        <div class="pt-2">
+          <a
+            routerLink="/products"
+            class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
+          >
+            <span>Explore Products</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </a>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- 3. COMPARISON MATRIX (1 TO 4 PRODUCTS) -->
+  <!-- ============================================================ -->
+  @else {
+
+    <!-- 1-Item Notification Banner -->
+    @if (compareService.totalCount() === 1) {
+      <div class="bg-amber-50/90 border border-amber-200/80 rounded-2xl p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 text-xs">
+        <div class="flex items-center gap-2.5 text-amber-900 font-medium">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M11.25 11.25l.041-.02a.75.75 0 011.063.852l-.708 2.836a.75.75 0 001.063.853l.041-.021M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9-3.75h.008v.008H12V8.25z" />
+          </svg>
+          <span>You have selected <strong>1 item</strong>. Add at least 1 more product (up to 4) to compare differences side-by-side.</span>
+        </div>
+        <a
+          routerLink="/products"
+          class="px-3.5 py-1.5 bg-amber-600 hover:bg-amber-700 text-white font-bold rounded-xl transition-colors whitespace-nowrap cursor-pointer"
+        >
+          Add 2nd Product
+        </a>
+      </div>
+    }
+
+    <!-- Comparison Table Card Wrapper -->
+    <div class="bg-white rounded-3xl border border-gray-200/90 shadow-card overflow-hidden">
+      <div class="overflow-x-auto scrollbar-thin">
+        <table class="w-full border-collapse text-left min-w-[720px]">
+          <thead>
+            <tr>
+              <!-- Sticky Left Column: Attribute Title Header -->
+              <th class="w-48 sm:w-56 p-4 sm:p-5 bg-gray-50/90 border-b border-r border-gray-100 text-xs font-bold text-text-muted uppercase tracking-wider align-top">
+                Products
+              </th>
+
+              <!-- Product Columns (Up to 4) -->
+              @for (prod of compareService.items(); track prod.id) {
+                <th class="p-4 sm:p-5 border-b border-r last:border-r-0 border-gray-100 align-top min-w-[200px] max-w-[280px]">
+                  <div class="relative flex flex-col justify-between h-full space-y-3">
+
+                    <!-- Remove Column Button (Top-Right) -->
+                    <button
+                      type="button"
+                      (click)="removeFromCompare(prod.id)"
+                      class="absolute -top-1 -right-1 w-7 h-7 rounded-full bg-gray-100 hover:bg-red-50 text-gray-400 hover:text-red-600 border border-gray-200 flex items-center justify-center transition-colors cursor-pointer"
+                      title="Remove product from comparison"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </button>
+
+                    <!-- Product Image -->
+                    <div class="aspect-square bg-gray-50 rounded-2xl overflow-hidden p-3 flex items-center justify-center border border-gray-100 group">
+                      <a [routerLink]="['/products', prod.slug]" class="w-full h-full flex items-center justify-center">
+                        @if (getImageUrl(prod.primaryImageUrl); as img) {
+                          <img
+                            [src]="img"
+                            [alt]="prod.name"
+                            class="max-w-full max-h-full object-contain group-hover:scale-105 transition-transform duration-300"
+                            loading="lazy"
+                          />
+                        } @else {
+                          <span class="text-xs text-gray-400">No Image</span>
+                        }
+                      </a>
+                    </div>
+
+                    <!-- Product Title -->
+                    <div>
+                      <a
+                        [routerLink]="['/products', prod.slug]"
+                        class="text-xs sm:text-sm font-bold text-text-primary hover:text-primary transition-colors line-clamp-2 leading-snug"
+                        [title]="prod.name"
+                      >
+                        {{ prod.name }}
+                      </a>
+                    </div>
+
+                    <!-- Price & Discount -->
+                    <div class="space-y-0.5">
+                      <div class="text-base sm:text-lg font-black text-primary tabular-nums">
+                        Rs. {{ prod.basePrice | number:'1.0-0' }}
+                      </div>
+                      @if (hasDiscount(prod)) {
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                          <span class="text-xs text-text-muted line-through tabular-nums">
+                            Rs. {{ getOldPrice(prod) | number:'1.0-0' }}
+                          </span>
+                          <span class="text-[10px] font-bold px-1.5 py-0.2 bg-rose-50 text-primary border border-rose-100 rounded">
+                            -{{ getDiscountPercent(prod) }}%
+                          </span>
+                        </div>
+                      }
+                    </div>
+
+                    <!-- Action: Add to Cart -->
+                    <div class="pt-1">
+                      <button
+                        type="button"
+                        (click)="addToCart(prod)"
+                        class="w-full py-2 px-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors flex items-center justify-center gap-1.5 cursor-pointer"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                        </svg>
+                        <span>{{ isInCart(prod.id) ? 'Add More' : 'Add to Cart' }}</span>
+                      </button>
+                    </div>
+
+                  </div>
+                </th>
+              }
+            </tr>
+          </thead>
+
+          <tbody class="text-xs text-text-secondary divide-y divide-gray-100">
+
+            <!-- SECTION HEADER: GENERAL SPECIFICATIONS -->
+            <tr class="bg-gray-50/70">
+              <td [attr.colspan]="compareService.items().length + 1" class="px-5 py-2.5 font-black text-text-primary uppercase tracking-wider text-[11px]">
+                General Information
+              </td>
+            </tr>
+
+            <!-- Brand -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Brand
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
+                  {{ prod.brandName || 'Verified Brand' }}
+                </td>
+              }
+            </tr>
+
+            <!-- Category -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Category
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
+                  {{ prod.categoryName || 'General' }}
+                </td>
+              }
+            </tr>
+
+            <!-- Seller / Shop -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Sold By
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-semibold text-text-primary">
+                  {{ prod.shopName || 'Official Store' }}
+                </td>
+              }
+            </tr>
+
+            <!-- SECTION HEADER: PRICING & SAVINGS -->
+            <tr class="bg-gray-50/70">
+              <td [attr.colspan]="compareService.items().length + 1" class="px-5 py-2.5 font-black text-text-primary uppercase tracking-wider text-[11px]">
+                Pricing &amp; Offers
+              </td>
+            </tr>
+
+            <!-- Sale Price -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Current Price
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-black text-primary text-sm">
+                  Rs. {{ prod.basePrice | number:'1.0-0' }}
+                </td>
+              }
+            </tr>
+
+            <!-- Savings -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Total Savings
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
+                  @if (getSavings(prod) > 0) {
+                    <span class="text-emerald-600 font-bold">
+                      Save Rs. {{ getSavings(prod) | number:'1.0-0' }} ({{ getDiscountPercent(prod) }}%)
+                    </span>
+                  } @else {
+                    <span class="text-gray-400">Regular Price</span>
+                  }
+                </td>
+              }
+            </tr>
+
+            <!-- SECTION HEADER: RATINGS & REVIEWS -->
+            <tr class="bg-gray-50/70">
+              <td [attr.colspan]="compareService.items().length + 1" class="px-5 py-2.5 font-black text-text-primary uppercase tracking-wider text-[11px]">
+                Customer Reviews &amp; Ratings
+              </td>
+            </tr>
+
+            <!-- Rating -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Customer Rating
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100">
+                  @if ((prod.avgRating ?? 0) > 0) {
+                    <div class="flex items-center gap-1.5">
+                      <div class="flex items-center gap-1 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-500 fill-amber-500" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <span class="font-extrabold text-amber-700">{{ prod.avgRating | number:'1.1-1' }}</span>
+                      </div>
+                      <span class="text-text-muted">({{ prod.reviewsCount ?? 0 }} reviews)</span>
+                    </div>
+                  } @else {
+                    <span class="text-text-muted italic">No ratings yet</span>
+                  }
+                </td>
+              }
+            </tr>
+
+            <!-- SECTION HEADER: SERVICES & POLICIES -->
+            <tr class="bg-gray-50/70">
+              <td [attr.colspan]="compareService.items().length + 1" class="px-5 py-2.5 font-black text-text-primary uppercase tracking-wider text-[11px]">
+                Availability &amp; Guarantees
+              </td>
+            </tr>
+
+            <!-- Stock Availability -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Stock Status
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100">
+                  @if (prod.badges?.isOutOfStock) {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-gray-100 text-gray-600">
+                      <span class="w-1.5 h-1.5 rounded-full bg-gray-400"></span>
+                      Out of Stock
+                    </span>
+                  } @else if (prod.badges?.isLowStock) {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      Low Stock
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      In Stock &amp; Ready to Ship
+                    </span>
+                  }
+                </td>
+              }
+            </tr>
+
+            <!-- Payment Options -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Payment Options
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
+                  <div class="flex items-center gap-1.5 text-text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+                    </svg>
+                    <span>Cash on Delivery (COD) Available</span>
+                  </div>
+                </td>
+              }
+            </tr>
+
+            <!-- Return Policy -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Return Policy
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
+                  <div class="flex items-center gap-1.5 text-text-primary">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3" />
+                    </svg>
+                    <span>7 Days Easy Return Policy</span>
+                  </div>
+                </td>
+              }
+            </tr>
+
+            <!-- Delivery Time -->
+            <tr>
+              <td class="p-4 sm:p-5 font-bold text-text-primary bg-gray-50/40 border-r border-gray-100">
+                Delivery Timeline
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
+                  <span>Standard 2–4 Business Days</span>
+                </td>
+              }
+            </tr>
+
+            <!-- Final Action Row -->
+            <tr class="bg-gray-50/40">
+              <td class="p-4 sm:p-5 font-bold text-text-primary border-r border-gray-100">
+                Quick Actions
+              </td>
+              @for (prod of compareService.items(); track prod.id) {
+                <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100">
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="button"
+                      (click)="addToCart(prod)"
+                      class="flex-1 py-2 px-3 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer text-center"
+                    >
+                      Buy / Add
+                    </button>
+                    <button
+                      type="button"
+                      (click)="toggleWishlist(prod)"
+                      class="w-9 h-9 rounded-xl border border-gray-200 hover:border-primary text-text-secondary hover:text-primary flex items-center justify-center transition-colors bg-white cursor-pointer"
+                      [title]="isInWishlist(prod.id) ? 'In Wishlist' : 'Add to Wishlist'"
+                    >
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" [class.fill-current]="isInWishlist(prod.id)" [class.text-primary]="isInWishlist(prod.id)" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+                      </svg>
+                    </button>
+                  </div>
+                </td>
+              }
+            </tr>
+
+          </tbody>
+        </table>
+      </div>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- 4. CLEAR ALL CONFIRMATION MODAL -->
+  <!-- ============================================================ -->
+  @if (showClearModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+        <div class="w-12 h-12 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
+          </svg>
+        </div>
+        <div class="text-center space-y-1">
+          <h3 class="text-base font-bold text-text-primary">Clear Comparison List?</h3>
+          <p class="text-xs text-text-secondary leading-relaxed">
+            Are you sure you want to remove all {{ compareService.totalCount() }} products from your comparison list?
+          </p>
+        </div>
+        <div class="flex gap-2.5 pt-2">
+          <button
+            type="button"
+            (click)="closeClearModal()"
+            class="flex-1 py-2.5 rounded-xl border border-gray-200 text-xs font-semibold text-text-secondary hover:bg-gray-50 transition-colors cursor-pointer"
+          >
+            Cancel
+          </button>
+          <button
+            type="button"
+            (click)="confirmClearCompare()"
+            class="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-bold transition-colors shadow-xs cursor-pointer"
+          >
+            Yes, Clear All
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

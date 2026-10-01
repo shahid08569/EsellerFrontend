@@ -1,0 +1,1075 @@
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-8">
+
+  <!-- ============================================================ -->
+  <!-- BREADCRUMBS -->
+  <!-- ============================================================ -->
+  @if (product(); as prod) {
+    <nav class="flex items-center gap-2 text-xs md:text-sm text-text-secondary overflow-x-auto whitespace-nowrap" aria-label="Breadcrumb">
+      <a routerLink="/" class="hover:text-primary transition-colors">Home</a>
+      <span class="text-text-muted">/</span>
+      <a routerLink="/products" class="hover:text-primary transition-colors">Products</a>
+      <span class="text-text-muted">/</span>
+      <a [routerLink]="['/products']" [queryParams]="{ categoryId: prod.categoryId }" class="hover:text-primary transition-colors">{{ prod.categoryName }}</a>
+      <span class="text-text-muted">/</span>
+      <span class="font-semibold text-text-primary truncate max-w-xs">{{ prod.name }}</span>
+    </nav>
+  }
+
+  <!-- ============================================================ -->
+  <!-- LOADING SKELETON -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start animate-pulse">
+      <!-- Gallery Skeleton (col-5) -->
+      <div class="lg:col-span-5 space-y-4">
+        <div class="aspect-square bg-gray-200 rounded-3xl"></div>
+        <div class="flex gap-3">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="w-16 h-16 bg-gray-200 rounded-xl"></div>
+          }
+        </div>
+      </div>
+
+      <!-- Info Skeleton (col-4) -->
+      <div class="lg:col-span-4 space-y-4">
+        <div class="h-4 bg-gray-200 rounded w-1/3"></div>
+        <div class="h-8 bg-gray-200 rounded w-4/5"></div>
+        <div class="h-5 bg-gray-200 rounded w-1/2"></div>
+        <div class="h-10 bg-gray-200 rounded w-2/3"></div>
+        <div class="h-32 bg-gray-100 rounded-2xl"></div>
+      </div>
+
+      <!-- Buy Box Skeleton (col-3) -->
+      <div class="lg:col-span-3 h-80 bg-gray-100 rounded-2xl"></div>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- ERROR / NOT FOUND STATE -->
+  <!-- ============================================================ -->
+  @else if (error() || !product()) {
+    <div class="bg-white rounded-3xl border border-gray-200 p-12 text-center shadow-xs">
+      <es-empty-state
+        icon="box"
+        title="Product Not Found"
+        description="The product you are looking for may have been removed, deactivated, or is temporarily unavailable."
+      >
+        <a
+          routerLink="/products"
+          class="mt-4 inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white text-sm font-bold rounded-xl shadow-xs transition-colors"
+        >
+          Browse All Products
+        </a>
+      </es-empty-state>
+    </div>
+  }
+
+  <!-- ============================================================ -->
+  <!-- AMAZON-STYLE PRODUCT DETAIL LAYOUT (3 Columns on Desktop) -->
+  <!-- ============================================================ -->
+  @else if (product(); as prod) {
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 lg:gap-8 items-start">
+
+      <!-- ======================================================== -->
+      <!-- COLUMN 1: IMAGE GALLERY & VARIANTS - lg:col-span-5 -->
+      <!-- ======================================================== -->
+      <div class="lg:col-span-5 space-y-4">
+        <app-product-gallery
+          [images]="images()"
+          [primaryImageUrl]="images().length > 0 ? images()[0].imageUrl : null"
+          [productName]="prod.name"
+          [variantImageUrl]="variantImageUrl()"
+        />
+
+        <!-- PRODUCT VARIANTS (4-Box Grid with Spacing & See More Toggle) -->
+        @if (variants().length > 0) {
+          <div class="bg-white rounded-2xl border border-gray-200/80 p-4 shadow-card">
+            <div class="flex items-center justify-between mb-3">
+              <div class="flex items-center gap-2">
+                <span class="text-xs font-bold uppercase tracking-wider text-text-primary">
+                  Available Variants
+                </span>
+                <span class="text-[11px] font-semibold text-text-secondary bg-gray-100 px-2 py-0.5 rounded-full">
+                  {{ variants().length }}
+                </span>
+              </div>
+              @if (hasMoreVariants()) {
+                <button
+                  type="button"
+                  (click)="toggleShowAllVariants()"
+                  class="text-xs font-bold text-primary hover:text-primary-hover hover:underline transition-colors cursor-pointer flex items-center gap-1"
+                >
+                  <span>{{ showAllVariants() ? 'Show Less' : 'See More (+' + extraVariantsCount() + ')' }}</span>
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-transform" [class.rotate-180]="showAllVariants()" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                  </svg>
+                </button>
+              }
+            </div>
+
+            <!-- 4 Separate boxes with gap -->
+            <div class="grid grid-cols-4 gap-2.5 sm:gap-3">
+              @for (v of visibleVariants(); track v.id) {
+                <button
+                  type="button"
+                  (click)="selectVariant(v)"
+                  [disabled]="!v.isActive || v.stockQty <= 0"
+                  class="group relative flex flex-col items-center justify-between p-2 rounded-xl border text-center transition-all cursor-pointer overflow-hidden min-h-[96px]"
+                  [class.border-primary]="isVariantSelected(v)"
+                  [class.ring-2]="isVariantSelected(v)"
+                  [class.ring-primary/20]="isVariantSelected(v)"
+                  [class.bg-primary/5]="isVariantSelected(v)"
+                  [class.border-gray-200]="!isVariantSelected(v)"
+                  [class.hover:border-primary/50]="!isVariantSelected(v) && v.isActive && v.stockQty > 0"
+                  [class.hover:shadow-xs]="!isVariantSelected(v) && v.isActive && v.stockQty > 0"
+                  [class.bg-white]="!isVariantSelected(v)"
+                  [class.opacity-45]="!v.isActive || v.stockQty <= 0"
+                  [class.cursor-not-allowed]="!v.isActive || v.stockQty <= 0"
+                >
+                  <!-- Active Checkmark / Dot -->
+                  @if (isVariantSelected(v)) {
+                    <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary ring-2 ring-white"></span>
+                  }
+
+                  <!-- Thumbnail -->
+                  <div class="w-10 h-10 sm:w-11 sm:h-11 rounded-lg bg-gray-50 border border-gray-100 overflow-hidden flex items-center justify-center mb-1 flex-shrink-0">
+                    @if (getImageUrl(v.imageUrl); as vImg) {
+                      <img [src]="vImg" [alt]="getVariantLabel(v)" class="w-full h-full object-contain p-0.5 group-hover:scale-105 transition-transform" loading="lazy" />
+                    } @else if (images().length > 0 && getImageUrl(images()[0].imageUrl); as pImg) {
+                      <img [src]="pImg" [alt]="getVariantLabel(v)" class="w-full h-full object-contain p-0.5 opacity-60" loading="lazy" />
+                    } @else {
+                      <svg class="w-5 h-5 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                      </svg>
+                    }
+                  </div>
+
+                  <!-- Variant Label -->
+                  <span class="text-[11px] font-bold text-text-primary line-clamp-1 w-full leading-tight" [title]="getVariantLabel(v)">
+                    {{ getVariantLabel(v) }}
+                  </span>
+
+                  <!-- Price with 1 decimal digit -->
+                  <span class="text-[10px] font-extrabold text-primary mt-0.5 tabular-nums">
+                    Rs. {{ v.price.toLocaleString('en-PK', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}
+                  </span>
+
+                  <!-- Stock state -->
+                  @if (v.stockQty <= 0) {
+                    <span class="text-[9px] font-semibold text-red-500 uppercase mt-0.5">Out</span>
+                  }
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <!-- Trust Guarantee Strip (Reassurance) -->
+        <div class="grid grid-cols-2 gap-2 text-[11px] text-text-secondary pt-1">
+          <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200/80 p-2.5 shadow-2xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.746 3.746 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.746 3.746 0 013.296-1.043A3.746 3.746 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.746 3.746 0 013.296 1.043 3.746 3.746 0 011.043 3.296A3.745 3.745 0 0121 12z" />
+            </svg>
+            <span class="font-semibold text-text-primary">100% Authentic</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200/80 p-2.5 shadow-2xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.948c0-.621-.504-1.125-1.125-1.125H5.625a1.125 1.125 0 00-1.125 1.125v12.375" />
+            </svg>
+            <span class="font-semibold text-text-primary">Fast Dispatch</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200/80 p-2.5 shadow-2xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-500 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+            </svg>
+            <span class="font-semibold text-text-primary">7 Days Return</span>
+          </div>
+          <div class="flex items-center gap-2 bg-white rounded-xl border border-gray-200/80 p-2.5 shadow-2xs">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+            </svg>
+            <span class="font-semibold text-text-primary">Chat Finalize</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- COLUMN 2: PRODUCT DETAILS & SPECS - lg:col-span-4 -->
+      <!-- ======================================================== -->
+      <div class="lg:col-span-4 space-y-4">
+
+        <!-- Brand / Store Link -->
+        <div class="flex items-center gap-2 flex-wrap">
+          <a
+            [routerLink]="['/products']"
+            [queryParams]="{ brandId: prod.brandId }"
+            class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline uppercase tracking-wider bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/15"
+          >
+            <span>VISIT {{ (prod.brandName || prod.shopName) | uppercase }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
+            </svg>
+          </a>
+          <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
+            Verified Seller
+          </span>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-xl sm:text-2xl font-bold text-text-primary tracking-tight leading-snug">
+          {{ prod.name }}
+        </h1>
+
+        <!-- Rating Row (Stars + Rating value + Review count) -->
+        <div class="flex items-center gap-2 text-xs flex-wrap">
+          <div class="flex text-amber-400">
+            @for (i of stars; track i) {
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" [class.fill-current]="i <= (prod.avgRating || 5)" [class.text-gray-300]="i > (prod.avgRating || 5)" viewBox="0 0 20 20" fill="currentColor">
+                <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+              </svg>
+            }
+          </div>
+          <span class="font-bold text-text-primary tabular-nums">{{ (prod.avgRating || 5.0) | number:'1.1-1' }}</span>
+          <span class="text-text-muted">&bull;</span>
+          <button
+            type="button"
+            (click)="activeTab.set('reviews')"
+            class="text-primary hover:underline"
+          >
+            {{ reviews().length }} ratings
+          </button>
+        </div>
+
+        <div class="h-px bg-gray-200"></div>
+
+        <!-- Price Section -->
+        <div class="space-y-1">
+          <div class="flex items-baseline gap-2">
+            <span class="text-xs font-semibold text-red-600 bg-red-50 px-2 py-0.5 rounded-md border border-red-200">
+              Limited Deal
+            </span>
+            <div class="text-3xl font-extrabold text-text-primary tabular-nums tracking-tight">
+              <span class="text-lg font-bold text-primary mr-1">Rs.</span>{{ formattedPrice() }}
+            </div>
+          </div>
+          <p class="text-[11px] text-text-muted">Inclusive of all taxes &bull; Cash on delivery / Chat confirmation</p>
+        </div>
+
+        <div class="h-px bg-gray-200"></div>
+
+        <!-- Variants Attribute Selector (Amazon style boxes) -->
+        @if (attributeGroups().length > 0) {
+          <div class="space-y-3 pt-1">
+            @for (group of attributeGroups(); track group.name) {
+              <div class="space-y-1.5">
+                <div class="flex items-center gap-1.5 text-xs">
+                  <span class="text-text-secondary font-medium">{{ group.name }}:</span>
+                  <span class="font-bold text-text-primary">{{ selectedAttributes()[group.name] || 'Select' }}</span>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+                  @for (val of group.values; track val) {
+                    <button
+                      type="button"
+                      (click)="selectAttribute(group.name, val)"
+                      class="px-3.5 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer"
+                      [class.border-primary]="isAttributeSelected(group.name, val)"
+                      [class.bg-primary-tint]="isAttributeSelected(group.name, val)"
+                      [class.text-primary]="isAttributeSelected(group.name, val)"
+                      [class.ring-1]="isAttributeSelected(group.name, val)"
+                      [class.ring-primary]="isAttributeSelected(group.name, val)"
+                      [class.border-gray-200]="!isAttributeSelected(group.name, val)"
+                      [class.bg-white]="!isAttributeSelected(group.name, val)"
+                      [class.text-text-primary]="!isAttributeSelected(group.name, val)"
+                      [class.hover:border-gray-400]="!isAttributeSelected(group.name, val)"
+                    >
+                      {{ val }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
+          </div>
+
+          <div class="h-px bg-gray-200"></div>
+        } @else {
+          <!-- Size Selector fallback for products without backend attribute groups -->
+          <div class="space-y-1.5 pt-1">
+            <div class="flex items-center justify-between text-xs">
+              <span class="text-text-secondary font-medium">Select Size:</span>
+              <span class="font-bold text-text-primary">{{ customSelectedSize() }}</span>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              @for (size of defaultSizeOptions; track size) {
+                <button
+                  type="button"
+                  (click)="selectCustomSize(size)"
+                  class="px-3.5 py-1.5 text-xs font-semibold rounded-lg border transition-all cursor-pointer"
+                  [class.border-primary]="customSelectedSize() === size"
+                  [class.bg-primary-tint]="customSelectedSize() === size"
+                  [class.text-primary]="customSelectedSize() === size"
+                  [class.ring-1]="customSelectedSize() === size"
+                  [class.ring-primary]="customSelectedSize() === size"
+                  [class.border-gray-200]="customSelectedSize() !== size"
+                  [class.bg-white]="customSelectedSize() !== size"
+                  [class.text-text-primary]="customSelectedSize() !== size"
+                  [class.hover:border-gray-400]="customSelectedSize() !== size"
+                >
+                  {{ size }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <div class="h-px bg-gray-200"></div>
+        }
+
+        <!-- "About this item" Feature Bullets (Amazon style) -->
+        <div class="space-y-2 pt-1">
+          <h4 class="text-xs font-bold text-text-primary uppercase tracking-wider">About this item</h4>
+          <ul class="text-xs text-text-secondary space-y-1.5 list-disc pl-4 leading-relaxed">
+            <li>{{ prod.description || 'Authentic quality product verified by Eseller quality inspection.' }}</li>
+            <li>Guaranteed 100% genuine item from verified shop partner <strong>{{ prod.shopName }}</strong>.</li>
+            <li>Direct communication with seller enabled for any customization or size inquiries.</li>
+            <li>Easy inspection upon delivery and dedicated dispute support.</li>
+          </ul>
+        </div>
+
+      </div>
+
+      <!-- ======================================================== -->
+      <!-- COLUMN 3: AMAZON BUY BOX CARD - lg:col-span-3 -->
+      <!-- ======================================================== -->
+      <div class="lg:col-span-3 w-full">
+        <div class="bg-white rounded-2xl border border-gray-200/90 shadow-card p-5 space-y-4 sticky top-24">
+
+          <!-- Price in Buy Box -->
+          <div>
+            <span class="text-xs text-text-muted block">Buy New:</span>
+            <div class="text-2xl sm:text-3xl font-black text-primary tabular-nums tracking-tight">
+              Rs. {{ formattedPrice() }}
+            </div>
+            @if (selectedVariant()?.sku; as rawSku) {
+              @if (getFormattedSku(rawSku); as cleanSku) {
+                <span class="text-[11px] text-text-muted block mt-0.5">SKU: {{ cleanSku }}</span>
+              }
+            }
+            <div class="flex items-center gap-1.5 mt-2">
+              <span class="text-[11px] font-semibold text-text-secondary">Selected:</span>
+              <span class="text-[11px] font-bold text-primary bg-primary/10 border border-primary/20 px-2.5 py-0.5 rounded-md">
+                {{ activeSizeLabel() }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Delivery Estimate -->
+          <div class="text-xs text-text-secondary flex items-start gap-2 pt-1 border-t border-gray-100">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.948c0-.621-.504-1.125-1.125-1.125H5.625a1.125 1.125 0 00-1.125 1.125v12.375" />
+            </svg>
+            <div>
+              <span class="font-bold text-text-primary block">Fast Delivery</span>
+              <span class="text-[11px] text-text-muted">Estimated delivery within 2–4 business days</span>
+            </div>
+          </div>
+
+          <!-- Stock Status -->
+          <div>
+            @if (isOutOfStock()) {
+              <span class="text-xs font-bold text-red-600 block">
+                Currently Out of Stock.
+              </span>
+            } @else if (isLowStock()) {
+              <span class="text-xs font-bold text-amber-600 block">
+                Only {{ currentStock() }} left in stock - order soon.
+              </span>
+            } @else {
+              <span class="text-xs font-bold text-emerald-700 block">
+                In Stock ({{ currentStock() }} available)
+              </span>
+            }
+          </div>
+
+          <!-- Quantity Stepper -->
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-bold text-text-secondary uppercase">Quantity:</label>
+            <div class="flex items-center gap-3">
+              <div class="inline-flex items-center bg-gray-50 rounded-xl border border-gray-200 p-1">
+                <button
+                  type="button"
+                  (click)="decrementQty()"
+                  [disabled]="quantity() <= 1 || isOutOfStock()"
+                  class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-text-primary font-bold shadow-2xs hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  &minus;
+                </button>
+                <span class="w-10 text-center text-xs font-bold tabular-nums text-text-primary">
+                  {{ quantity() }}
+                </span>
+                <button
+                  type="button"
+                  (click)="incrementQty()"
+                  [disabled]="quantity() >= currentStock() || isOutOfStock()"
+                  class="w-7 h-7 rounded-lg bg-white flex items-center justify-center text-text-primary font-bold shadow-2xs hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                >
+                  &#43;
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- BUY BOX ACTION BUTTONS -->
+          <div class="space-y-2.5 pt-2">
+
+            <!-- 1. Add to Cart Button -->
+            <button
+              type="button"
+              (click)="addToCart()"
+              [disabled]="isOutOfStock()"
+              [class.bg-emerald-600]="isInCart()"
+              [class.hover:bg-emerald-700]="isInCart()"
+              [class.text-white]="isInCart()"
+              [class.border-emerald-600]="isInCart()"
+              class="w-full py-2.5 px-4 bg-[#FFD814] hover:bg-[#F7CA00] disabled:opacity-40 disabled:cursor-not-allowed text-[#0F1111] font-bold text-xs md:text-sm rounded-full shadow-2xs transition-colors flex items-center justify-center gap-2 cursor-pointer border border-[#FCD200]"
+            >
+              @if (isInCart()) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+                </svg>
+                <span>In Cart (Click to Remove)</span>
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                </svg>
+                <span>Add to Cart</span>
+              }
+            </button>
+
+            <!-- 2. Order Now / Buy Now Button -->
+            <button
+              type="button"
+              (click)="orderNow()"
+              [disabled]="isOutOfStock()"
+              class="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white font-extrabold text-xs md:text-sm rounded-full shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+              <span>Order Now</span>
+            </button>
+
+          </div>
+
+          <!-- Ships From / Sold By Table -->
+          <div class="text-[11px] space-y-1 pt-2 border-t border-gray-100 text-text-secondary">
+            <div class="flex justify-between">
+              <span class="text-text-muted">Ships from:</span>
+              <span class="font-medium text-text-primary">Eseller Platform</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-muted">Sold by:</span>
+              <span class="font-bold text-text-primary truncate max-w-[120px]">{{ prod.shopName }}</span>
+            </div>
+            <div class="flex justify-between">
+              <span class="text-text-muted">Payment:</span>
+              <span class="font-medium text-emerald-600">Chat finalization</span>
+            </div>
+          </div>
+
+          <!-- Secondary Actions (Wishlist & Compare) -->
+          <div class="flex items-center justify-center gap-4 pt-2 border-t border-gray-100 text-xs text-text-secondary">
+            <button
+              type="button"
+              (click)="addToWishlist()"
+              [class.text-primary]="isInWishlist()"
+              [class.font-bold]="isInWishlist()"
+              class="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 transition-colors" [class.fill-current]="isInWishlist()" [class.text-primary]="isInWishlist()" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
+              </svg>
+              <span>{{ isInWishlist() ? 'In Wishlist' : 'Add to Wishlist' }}</span>
+            </button>
+
+            <span>&bull;</span>
+
+            <button
+              type="button"
+              (click)="addToCompare()"
+              [class.text-primary]="isInCompare()"
+              [class.font-bold]="isInCompare()"
+              class="hover:text-primary transition-colors flex items-center gap-1 cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" [class.text-primary]="isInCompare()" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
+              </svg>
+              <span>{{ isInCompare() ? 'In Compare' : 'Compare' }}</span>
+            </button>
+          </div>
+
+          <!-- Trust Badges Footer -->
+          <div class="bg-gray-50/80 rounded-xl p-3 text-[11px] text-text-muted space-y-1.5 border border-gray-100">
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 flex-shrink-0" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd" />
+              </svg>
+              <span>Secure platform ordering</span>
+            </div>
+            <div class="flex items-center gap-2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              <span>Finalized via Chat at checkout</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- TABS SECTION: DESCRIPTION / REVIEWS / Q&A -->
+    <!-- ============================================================ -->
+    <div class="bg-white rounded-3xl border border-gray-200/80 shadow-card p-5 md:p-8 space-y-6 mt-10">
+
+      <!-- Tab Buttons Header -->
+      <div class="flex items-center gap-4 md:gap-8 border-b border-gray-200 overflow-x-auto">
+        <button
+          type="button"
+          (click)="activeTab.set('description')"
+          class="pb-3 text-sm md:text-base font-bold transition-all relative whitespace-nowrap cursor-pointer"
+          [class.text-primary]="activeTab() === 'description'"
+          [class.text-text-secondary]="activeTab() !== 'description'"
+        >
+          <span>Description</span>
+          @if (activeTab() === 'description') {
+            <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></span>
+          }
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('reviews')"
+          class="pb-3 text-sm md:text-base font-bold transition-all relative whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
+          [class.text-primary]="activeTab() === 'reviews'"
+          [class.text-text-secondary]="activeTab() !== 'reviews'"
+        >
+          <span>Customer Reviews</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-text-secondary">
+            {{ reviews().length }}
+          </span>
+          @if (activeTab() === 'reviews') {
+            <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></span>
+          }
+        </button>
+
+        <button
+          type="button"
+          (click)="activeTab.set('qa')"
+          class="pb-3 text-sm md:text-base font-bold transition-all relative whitespace-nowrap flex items-center gap-1.5 cursor-pointer"
+          [class.text-primary]="activeTab() === 'qa'"
+          [class.text-text-secondary]="activeTab() !== 'qa'"
+        >
+          <span>Questions &amp; Answers</span>
+          <span class="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-text-secondary">
+            {{ questions().length }}
+          </span>
+          @if (activeTab() === 'qa') {
+            <span class="absolute bottom-0 left-0 right-0 h-0.5 bg-primary rounded-full"></span>
+          }
+        </button>
+      </div>
+
+      <!-- Tab 1: Description & Specs -->
+      @if (activeTab() === 'description') {
+        <div class="space-y-6 animate-in fade-in duration-200">
+          <div>
+            <h3 class="text-base md:text-lg font-bold text-text-primary mb-3">Product Overview</h3>
+            <p class="text-xs md:text-sm text-text-secondary leading-relaxed whitespace-pre-line">
+              {{ prod.description || 'No detailed description provided for this product.' }}
+            </p>
+          </div>
+
+          <!-- Specifications Table -->
+          <div class="border-t border-gray-100 pt-6">
+            <h4 class="text-sm font-bold text-text-primary mb-4">Technical Details</h4>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-xl text-xs">
+              <div class="p-3 bg-gray-50 rounded-xl flex justify-between">
+                <span class="text-text-muted">Category</span>
+                <span class="font-semibold text-text-primary">{{ prod.categoryName }}</span>
+              </div>
+              @if (prod.brandName) {
+                <div class="p-3 bg-gray-50 rounded-xl flex justify-between">
+                  <span class="text-text-muted">Brand</span>
+                  <span class="font-semibold text-text-primary">{{ prod.brandName }}</span>
+                </div>
+              }
+              <div class="p-3 bg-gray-50 rounded-xl flex justify-between">
+                <span class="text-text-muted">Seller</span>
+                <span class="font-semibold text-text-primary">{{ prod.shopName }}</span>
+              </div>
+              <div class="p-3 bg-gray-50 rounded-xl flex justify-between">
+                <span class="text-text-muted">Views</span>
+                <span class="font-semibold text-text-primary tabular-nums">{{ prod.viewCount }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+
+      <!-- Tab 2: Reviews -->
+      @if (activeTab() === 'reviews') {
+        <div class="animate-in fade-in duration-200">
+          <app-product-reviews
+            [reviews]="reviews()"
+            [avgRating]="prod.avgRating"
+            [totalCount]="reviews().length"
+            (ratingFilterChange)="onFilterReviews($event)"
+          />
+        </div>
+      }
+
+      <!-- Tab 3: Q&A -->
+      @if (activeTab() === 'qa') {
+        <div class="animate-in fade-in duration-200">
+          <app-product-qa
+            [questions]="questions()"
+            [isAuthenticated]="authStore.isAuthenticated()"
+            (submitQuestion)="onSubmitQuestion($event)"
+          />
+        </div>
+      }
+
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- RELATED PRODUCTS (FIXED CARD DESIGN & SPACING) -->
+    <!-- ============================================================ -->
+    @if (relatedProducts().length > 0) {
+      <div class="pt-8 space-y-6">
+        <div class="flex items-center justify-between">
+          <h2 class="text-xl md:text-2xl font-bold text-text-primary tracking-tight">
+            Related Products
+          </h2>
+          <a
+            [routerLink]="['/products']"
+            [queryParams]="{ categoryId: prod.categoryId }"
+            class="text-xs md:text-sm font-semibold text-primary hover:underline"
+          >
+            View More in {{ prod.categoryName }} &rarr;
+          </a>
+        </div>
+
+        <!-- Generous 4-column layout on desktop so cards never get cramped -->
+        <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6">
+          @for (rel of relatedProducts(); track rel.id) {
+            <es-product-card [product]="rel" />
+          }
+        </div>
+      </div>
+    }
+
+    <!-- ============================================================ -->
+    <!-- DIRECT ORDER CHECKOUT MODAL (FINALIZED VIA CHAT) -->
+    <!-- ============================================================ -->
+    @if (isOrderModalOpen()) {
+      <div class="fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4 animate-in fade-in duration-200">
+        <div class="bg-white rounded-3xl shadow-2xl max-w-xl w-full border border-gray-100 overflow-hidden my-auto animate-in zoom-in-95 duration-200">
+
+          <!-- Modal Header -->
+          <div class="px-6 py-4 bg-gray-50/90 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h3 class="text-base sm:text-lg font-black text-text-primary tracking-tight">
+                Quick Order Checkout
+              </h3>
+              <p class="text-xs text-text-secondary">
+                Provide your delivery details &amp; finalize directly with {{ prod.shopName }}
+              </p>
+            </div>
+            <button
+              type="button"
+              (click)="closeOrderModal()"
+              class="w-8 h-8 rounded-full bg-white hover:bg-gray-200 border border-gray-200 flex items-center justify-center text-text-secondary hover:text-text-primary transition-colors cursor-pointer"
+              aria-label="Close"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
+
+          <div class="p-6 space-y-5 max-h-[75vh] overflow-y-auto">
+
+            <!-- Compact Side-by-Side: Product Summary & Size/Variant Selection -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 items-stretch">
+              <!-- Left: Product Item Summary & Quantity -->
+              <div class="flex flex-col justify-between p-3 bg-gray-50/90 rounded-2xl border border-gray-200/90 gap-2.5">
+                <div class="flex items-start gap-3">
+                  <div class="w-14 h-14 rounded-xl bg-white border border-gray-200 overflow-hidden flex-shrink-0 flex items-center justify-center shadow-2xs">
+                    @if (getImageUrl(variantImageUrl() || (images().length > 0 ? images()[0].imageUrl : null)); as img) {
+                      <img [src]="img" [alt]="prod.name" class="w-full h-full object-contain p-1" loading="lazy" />
+                    } @else {
+                      <div class="w-full h-full bg-gray-100 flex items-center justify-center text-gray-400 text-[10px]">No image</div>
+                    }
+                  </div>
+                  <div class="flex-1 min-w-0">
+                    <h4 class="text-xs font-bold text-text-primary truncate" [title]="prod.name">{{ prod.name }}</h4>
+                    <p class="text-[11px] text-text-secondary truncate mt-0.5">
+                      Sold by <span class="font-semibold text-text-primary">{{ prod.shopName }}</span>
+                    </p>
+                    <div class="flex items-center gap-1.5 mt-1 flex-wrap">
+                      <span class="text-xs font-black text-primary">Rs. {{ formattedPrice() }}</span>
+                      <span class="text-[10px] font-bold text-primary bg-primary/10 border border-primary/20 px-1.5 py-0.5 rounded-md truncate">
+                        {{ activeSizeLabel() }}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- Quantity Stepper compact -->
+                <div class="flex items-center justify-between pt-2 border-t border-gray-200/60 mt-auto">
+                  <span class="text-xs font-bold text-text-secondary">Quantity:</span>
+                  <div class="inline-flex items-center bg-white rounded-xl border border-gray-200 p-0.5 shadow-2xs">
+                    <button
+                      type="button"
+                      (click)="decrementQty()"
+                      [disabled]="quantity() <= 1"
+                      class="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-text-primary font-bold hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs cursor-pointer"
+                    >
+                      &minus;
+                    </button>
+                    <span class="w-8 text-center text-xs font-bold tabular-nums text-text-primary">
+                      {{ quantity() }}
+                    </span>
+                    <button
+                      type="button"
+                      (click)="incrementQty()"
+                      [disabled]="quantity() >= currentStock()"
+                      class="w-6 h-6 rounded-lg bg-gray-50 flex items-center justify-center text-text-primary font-bold hover:bg-gray-100 disabled:opacity-30 disabled:cursor-not-allowed transition-colors text-xs cursor-pointer"
+                    >
+                      &#43;
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Right: 1. Choose Size / Variant -->
+              <div class="bg-gray-50/90 rounded-2xl border border-gray-200/90 p-3 flex flex-col justify-between">
+                <div>
+                  <div class="flex items-center justify-between mb-2">
+                    <h4 class="text-xs font-bold text-text-primary uppercase tracking-wider flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-primary"></span>
+                      <span>1. Choose Size / Variant</span>
+                    </h4>
+                    <span class="text-[10px] font-bold text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+                      {{ activeSizeLabel() }}
+                    </span>
+                  </div>
+
+                  <!-- Case A: Product has attribute groups (e.g. Size, Color) -->
+                  @if (attributeGroups().length > 0) {
+                    <div class="space-y-2">
+                      @for (group of attributeGroups(); track group.name) {
+                        <div class="space-y-1">
+                          <div class="flex items-center justify-between text-[11px]">
+                            <span class="text-text-secondary font-medium">{{ group.name }}:</span>
+                            <span class="font-bold text-text-primary">{{ selectedAttributes()[group.name] || 'Select' }}</span>
+                          </div>
+                          <div class="flex flex-wrap gap-1.5">
+                            @for (val of group.values; track val) {
+                              <button
+                                type="button"
+                                (click)="selectAttribute(group.name, val)"
+                                class="px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer"
+                                [class.border-primary]="isAttributeSelected(group.name, val)"
+                                [class.bg-primary]="isAttributeSelected(group.name, val)"
+                                [class.text-white]="isAttributeSelected(group.name, val)"
+                                [class.shadow-2xs]="isAttributeSelected(group.name, val)"
+                                [class.border-gray-300]="!isAttributeSelected(group.name, val)"
+                                [class.bg-white]="!isAttributeSelected(group.name, val)"
+                                [class.text-text-primary]="!isAttributeSelected(group.name, val)"
+                                [class.hover:border-primary/50]="!isAttributeSelected(group.name, val)"
+                              >
+                                {{ val }}
+                              </button>
+                            }
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                  <!-- Case B: Product has variants but no explicit attribute groups -->
+                  @else if (variants().length > 0) {
+                    <div class="space-y-1">
+                      <div class="grid grid-cols-2 gap-1.5 max-h-28 overflow-y-auto pr-1">
+                        @for (v of variants(); track v.id) {
+                          <button
+                            type="button"
+                            (click)="selectVariant(v)"
+                            [disabled]="!v.isActive || v.stockQty <= 0"
+                            class="p-1.5 rounded-lg border text-center transition-all cursor-pointer text-xs font-bold flex flex-col items-center justify-between min-h-[46px]"
+                            [class.border-primary]="isVariantSelected(v)"
+                            [class.bg-primary]="isVariantSelected(v)"
+                            [class.text-white]="isVariantSelected(v)"
+                            [class.shadow-2xs]="isVariantSelected(v)"
+                            [class.border-gray-200]="!isVariantSelected(v)"
+                            [class.bg-white]="!isVariantSelected(v)"
+                            [class.text-text-primary]="!isVariantSelected(v)"
+                            [class.opacity-40]="!v.isActive || v.stockQty <= 0"
+                          >
+                            <span class="truncate w-full text-[11px]">{{ getVariantLabel(v) }}</span>
+                            <span class="text-[10px] tabular-nums" [class.text-white/90]="isVariantSelected(v)" [class.text-primary]="!isVariantSelected(v)">
+                              Rs. {{ v.price.toLocaleString('en-PK', { minimumFractionDigits: 1, maximumFractionDigits: 1 }) }}
+                            </span>
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                  <!-- Case C: Product has no backend variants (standard size options) -->
+                  @else {
+                    <div class="space-y-1">
+                      <div class="flex flex-wrap gap-1.5">
+                        @for (size of defaultSizeOptions; track size) {
+                          <button
+                            type="button"
+                            (click)="selectCustomSize(size)"
+                            class="px-2.5 py-1 text-xs font-bold rounded-lg border transition-all cursor-pointer"
+                            [class.border-primary]="customSelectedSize() === size"
+                            [class.bg-primary]="customSelectedSize() === size"
+                            [class.text-white]="customSelectedSize() === size"
+                            [class.shadow-2xs]="customSelectedSize() === size"
+                            [class.border-gray-300]="customSelectedSize() !== size"
+                            [class.bg-white]="customSelectedSize() !== size"
+                            [class.text-text-primary]="customSelectedSize() !== size"
+                            [class.hover:border-primary/50]="customSelectedSize() !== size"
+                          >
+                            {{ size }}
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Error Alert if validation fails -->
+            @if (orderError(); as err) {
+              <div class="p-3 bg-red-50 border border-red-200 rounded-xl flex items-center gap-2 text-xs text-red-700 font-semibold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 flex-shrink-0 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m9-.75a9 9 0 11-18 0 9 9 0 0118 0zm-9 3.75h.008v.008H12v-.008z" />
+                </svg>
+                <span>{{ err }}</span>
+              </div>
+            }
+
+            <!-- Delivery Form Fields -->
+            <div class="space-y-3.5">
+              <h4 class="text-xs font-bold text-text-primary uppercase tracking-wider">
+                2. Delivery Information
+              </h4>
+
+              <!-- 1. Cascading Searchable Country & State Selectors (First) -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <app-searchable-select
+                    label="Country"
+                    [options]="countryOptions()"
+                    [selectedValue]="selectedCountry()"
+                    [required]="true"
+                    [hasError]="!!countryError()"
+                    placeholder="Select Country..."
+                    searchPlaceholder="Search country..."
+                    (valueChange)="onCountryChange($event)"
+                  />
+                  @if (countryError(); as err) {
+                    <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                  }
+                </div>
+
+                <div>
+                  <app-searchable-select
+                    label="State / Province"
+                    [options]="stateOptions()"
+                    [selectedValue]="selectedState()"
+                    [required]="true"
+                    [hasError]="!!stateError()"
+                    placeholder="Select State/Province..."
+                    searchPlaceholder="Search state..."
+                    (valueChange)="onStateChange($event)"
+                  />
+                  @if (stateError(); as err) {
+                    <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                  }
+                </div>
+              </div>
+
+              <!-- Full Name & Phone Number with Country Dial Code -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div>
+                  <label class="block text-xs font-semibold text-text-secondary mb-1">
+                    Full Name <span class="text-red-500">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    [ngModel]="customerName()"
+                    (ngModelChange)="customerName.set($event); nameError.set(null)"
+                    placeholder="e.g. Muhammad Ali"
+                    class="w-full text-xs px-3 py-2.5 rounded-xl border transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                    [class.border-red-400]="nameError()"
+                    [class.border-gray-300]="!nameError()"
+                  />
+                  @if (nameError(); as err) {
+                    <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                  }
+                </div>
+
+                <div>
+                  <label class="block text-xs font-semibold text-text-secondary mb-1">
+                    Phone Number <span class="text-red-500">*</span>
+                  </label>
+                  <div
+                    class="flex items-center rounded-xl border bg-white overflow-hidden transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+                    [class.border-red-400]="phoneError()"
+                    [class.border-gray-300]="!phoneError()"
+                  >
+                    <div class="flex items-center gap-1.5 px-3 py-2.5 bg-gray-50 border-r border-gray-200 text-xs font-bold text-text-primary select-none flex-shrink-0">
+                      <span class="text-base leading-none">{{ selectedFlag() }}</span>
+                      <span class="text-xs font-bold text-gray-700 tracking-tight">{{ selectedDialCode() }}</span>
+                    </div>
+                    <input
+                      type="tel"
+                      [ngModel]="customerPhone()"
+                      (ngModelChange)="customerPhone.set($event); phoneError.set(null)"
+                      [placeholder]="phonePlaceholder()"
+                      class="w-full text-xs px-3 py-2.5 bg-transparent border-0 focus:outline-none text-text-primary"
+                    />
+                  </div>
+                  @if (phoneError(); as err) {
+                    <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                  }
+                </div>
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-text-secondary mb-1">
+                  Complete Street Address <span class="text-red-500">*</span>
+                </label>
+                <textarea
+                  [ngModel]="deliveryAddress()"
+                  (ngModelChange)="deliveryAddress.set($event); addressError.set(null)"
+                  rows="2"
+                  placeholder="House / Flat #, Street, Block, Area or Landmark"
+                  class="w-full text-xs px-3 py-2 rounded-xl border transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary resize-none"
+                  [class.border-red-400]="addressError()"
+                  [class.border-gray-300]="!addressError()"
+                ></textarea>
+                @if (addressError(); as err) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                }
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-text-secondary mb-1">
+                  City <span class="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="deliveryCity()"
+                  (ngModelChange)="deliveryCity.set($event); cityError.set(null)"
+                  placeholder="e.g. Lahore / Karachi / Islamabad"
+                  class="w-full text-xs px-3 py-2.5 rounded-xl border transition-colors focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                  [class.border-red-400]="cityError()"
+                  [class.border-gray-300]="!cityError()"
+                />
+                @if (cityError(); as err) {
+                  <p class="text-[11px] text-red-600 mt-1 font-medium">{{ err }}</p>
+                }
+              </div>
+
+              <div>
+                <label class="block text-xs font-semibold text-text-secondary mb-1">
+                  Order Notes / Landmark (Optional)
+                </label>
+                <input
+                  type="text"
+                  [ngModel]="orderNotes()"
+                  (ngModelChange)="orderNotes.set($event)"
+                  placeholder="Near landmark, preferred delivery timing, etc."
+                  class="w-full text-xs px-3 py-2.5 rounded-xl border border-gray-300 focus:outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+                />
+              </div>
+            </div>
+
+            <!-- Order Summary calculation -->
+            <div class="bg-gray-50 rounded-2xl p-4 border border-gray-200/80 space-y-2 text-xs">
+              <h4 class="font-bold text-text-primary uppercase tracking-wider mb-2">
+                2. Order Summary
+              </h4>
+              <div class="flex justify-between text-text-secondary">
+                <span>Items Total ({{ quantity() }} unit):</span>
+                <span class="font-semibold text-text-primary tabular-nums">Rs. {{ formattedOrderSubtotal() }}</span>
+              </div>
+              <div class="flex justify-between text-text-secondary">
+                <span>Shipping Fee:</span>
+                <span class="font-semibold" [class.text-emerald-600]="orderShipping() === 0" [class.text-text-primary]="orderShipping() > 0">
+                  {{ formattedOrderShipping() }}
+                </span>
+              </div>
+              @if (orderShipping() === 0) {
+                <div class="text-[11px] text-emerald-600 font-medium">
+                  &check; Free delivery applied (orders Rs. 5,000+)
+                </div>
+              }
+              <div class="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold">
+                <span class="text-sm text-text-primary">Total Amount:</span>
+                <span class="text-lg font-black text-primary tabular-nums">
+                  Rs. {{ formattedOrderTotal() }}
+                </span>
+              </div>
+            </div>
+
+            <!-- Finalize via Chat Notice -->
+            <div class="p-3 bg-emerald-50/80 border border-emerald-200/80 rounded-xl flex items-start gap-2.5 text-xs text-emerald-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              <div class="text-[11px] leading-relaxed">
+                <span class="font-bold">Chat Confirmation:</span> You will connect with the verified seller on Chat with this order pre-filled. You can confirm dispatch schedule and parcel verification before sending.
+              </div>
+            </div>
+
+          </div>
+
+          <!-- Modal Footer Actions -->
+          <div class="p-4 sm:p-5 bg-gray-50 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-3">
+            <button
+              type="button"
+              (click)="closeOrderModal()"
+              class="w-full sm:w-auto px-4 py-2.5 text-xs font-bold text-text-secondary hover:text-text-primary rounded-xl border border-gray-300 hover:bg-gray-100 transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+
+            <button
+              type="button"
+              (click)="confirmOrderViaChat()"
+              [disabled]="isSubmittingOrder()"
+              class="w-full sm:w-auto px-6 py-2.5 bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 text-white font-bold text-xs sm:text-sm rounded-xl shadow-xs transition-colors flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+              </svg>
+              <span>Finalize Order via Chat with Seller</span>
+            </button>
+          </div>
+
+        </div>
+      </div>
+    }
+
+  }
+
+</div>

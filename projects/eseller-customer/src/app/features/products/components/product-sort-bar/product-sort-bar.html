@@ -1,0 +1,168 @@
+<div class="space-y-3 mb-4">
+
+  <!-- ============================================================ -->
+  <!-- MAIN UNIFIED HEADER & TOOLBAR -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-2xl border border-gray-200/80 shadow-xs py-2.5 px-3.5 sm:px-4 flex flex-col md:flex-row md:items-center justify-between gap-2.5 sm:gap-3">
+
+    <!-- LEFT: Page / Category Info -->
+    <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+      @if (imageUrl()) {
+        <img
+          [src]="imageUrl()!"
+          alt="thumbnail"
+          class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg object-cover border border-gray-100 shadow-2xs flex-shrink-0"
+          loading="lazy"
+        />
+      }
+
+      <div class="min-w-0">
+        <div class="flex items-center gap-2 flex-wrap">
+          <h1 class="text-base sm:text-lg font-bold text-text-primary tracking-tight truncate">
+            {{ title() }}
+          </h1>
+          @if (totalCount() > 0) {
+            <span class="text-[10px] sm:text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-50 text-primary border border-rose-100/80 flex-shrink-0">
+              {{ totalCount() }} {{ totalCount() === 1 ? 'product' : 'products' }}
+            </span>
+          }
+        </div>
+        @if (subtitle()) {
+          <p class="text-[11px] sm:text-xs text-text-muted mt-0.5 truncate max-w-lg">
+            {{ subtitle() }}
+          </p>
+        }
+      </div>
+    </div>
+
+    <!-- RIGHT: Controls (Count, Sort, View Toggle) -->
+    <div class="flex items-center justify-between md:justify-end gap-2 md:gap-3 ml-auto w-full md:w-auto pt-2 md:pt-0 border-t md:border-t-0 border-gray-100">
+
+      <!-- Mobile Filter Button (hidden on desktop lg+) -->
+      <button
+        type="button"
+        (click)="openMobileFilter.emit()"
+        class="lg:hidden inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-text-primary bg-gray-100 hover:bg-gray-200 rounded-xl transition-colors cursor-pointer"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6h9.75M10.5 6a1.5 1.5 0 11-3 0m3 0a1.5 1.5 0 10-3 0M3.75 6H7.5m3 12h9.75m-9.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-3.75 0H7.5m9-6h3.75m-3.75 0a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m-9.75 0h9.75" />
+        </svg>
+        <span>Filters</span>
+        @if (activeFiltersCount() > 0) {
+          <span class="inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold text-white bg-primary rounded-full">
+            {{ activeFiltersCount() }}
+          </span>
+        }
+      </button>
+
+      <!-- Showing 1-12 of 25 (hidden on mobile, visible sm+) -->
+      <p class="hidden sm:inline text-xs text-text-secondary whitespace-nowrap">
+        @if (totalCount() > 0) {
+          Showing <span class="font-bold text-text-primary tabular-nums">{{ startItem() }}–{{ endItem() }}</span> of <span class="font-bold text-text-primary tabular-nums">{{ totalCount() }}</span>
+        } @else {
+          <span class="font-medium text-text-muted">No products</span>
+        }
+      </p>
+
+      <!-- Sort Dropdown -->
+      <div class="flex items-center gap-1.5">
+        <label for="product-sort" class="hidden md:inline text-xs font-medium text-text-muted whitespace-nowrap">Sort:</label>
+        <div class="relative">
+          <select
+            id="product-sort"
+            [value]="sortBy()"
+            (change)="onSortSelect($event)"
+            class="appearance-none bg-gray-50 hover:bg-gray-100 border border-gray-200 text-xs font-semibold text-text-primary rounded-xl pl-3 pr-7 py-2 focus:outline-none focus:ring-1 focus:ring-primary focus:bg-white transition-all cursor-pointer"
+          >
+            <option value="newest">Newest Arrivals</option>
+            <option value="popular">Most Popular</option>
+            <option value="price_asc">Price: Low to High</option>
+            <option value="price_desc">Price: High to Low</option>
+            <option value="rating">Customer Rating</option>
+          </select>
+          <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-2 text-text-muted">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Divider -->
+      <div class="h-6 w-px bg-gray-200 hidden sm:block"></div>
+
+      <!-- Grid / List Toggle -->
+      <div class="flex items-center bg-gray-100 p-0.5 rounded-xl border border-gray-200/60">
+        <button
+          type="button"
+          (click)="viewModeChange.emit('grid')"
+          class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+          [class.bg-white]="viewMode() === 'grid'"
+          [class.text-primary]="viewMode() === 'grid'"
+          [class.shadow-xs]="viewMode() === 'grid'"
+          [class.font-semibold]="viewMode() === 'grid'"
+          [class.text-text-muted]="viewMode() !== 'grid'"
+          [class.hover:text-text-primary]="viewMode() !== 'grid'"
+          aria-label="Grid view"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+          </svg>
+        </button>
+
+        <button
+          type="button"
+          (click)="viewModeChange.emit('list')"
+          class="w-7 h-7 sm:w-8 sm:h-8 rounded-lg flex items-center justify-center transition-all cursor-pointer"
+          [class.bg-white]="viewMode() === 'list'"
+          [class.text-primary]="viewMode() === 'list'"
+          [class.shadow-xs]="viewMode() === 'list'"
+          [class.font-semibold]="viewMode() === 'list'"
+          [class.text-text-muted]="viewMode() !== 'list'"
+          [class.hover:text-text-primary]="viewMode() !== 'list'"
+          aria-label="List view"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 sm:w-4 sm:h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+      </div>
+
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- ACTIVE FILTER PILLS (if any) -->
+  <!-- ============================================================ -->
+  @if (activeChips().length > 0) {
+    <div class="flex flex-wrap items-center gap-2 pt-1 px-1">
+      <span class="text-xs font-semibold text-text-muted">Active:</span>
+
+      @for (chip of activeChips(); track chip.id) {
+        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-medium bg-primary-tint text-primary border border-primary/20 rounded-full transition-all">
+          <span>{{ chip.label }}</span>
+          <button
+            type="button"
+            (click)="removeChip.emit(chip)"
+            class="w-3.5 h-3.5 rounded-full inline-flex items-center justify-center hover:bg-primary/20 transition-colors cursor-pointer"
+            aria-label="Remove filter"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd" />
+            </svg>
+          </button>
+        </span>
+      }
+
+      <button
+        type="button"
+        (click)="clearAllChips.emit()"
+        class="text-xs font-semibold text-text-secondary hover:text-primary hover:underline ml-1 cursor-pointer"
+      >
+        Clear all
+      </button>
+    </div>
+  }
+
+</div>

@@ -208,14 +208,9 @@ export class AuthService {
   ): Observable<T> {
     return from(this.location.requestLocation()).pipe(
       switchMap((coords) => {
-        if (!coords) {
-          throw new Error(
-            'Location is required but not available. Guard should have blocked this route.'
-          );
-        }
         return fn({
-          latitude: coords.latitude,
-          longitude: coords.longitude,
+          latitude: coords ? coords.latitude : 0,
+          longitude: coords ? coords.longitude : 0,
           deviceType: this.location.deviceType()
         });
       })

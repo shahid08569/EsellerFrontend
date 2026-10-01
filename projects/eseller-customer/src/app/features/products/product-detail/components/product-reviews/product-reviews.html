@@ -1,0 +1,158 @@
+<div class="space-y-6">
+
+  <!-- ============================================================ -->
+  <!-- RATING SUMMARY & BREAKDOWN -->
+  <!-- ============================================================ -->
+  <div class="bg-gray-50/70 rounded-3xl p-6 border border-gray-200/80 grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+
+    <!-- Overall Score -->
+    <div class="flex flex-col items-center justify-center text-center border-b md:border-b-0 md:border-r border-gray-200 pb-4 md:pb-0 md:pr-4">
+      <div class="text-4xl md:text-5xl font-extrabold text-text-primary tracking-tight">
+        {{ (avgRating() ?? 0) | number:'1.1-1' }}
+      </div>
+      <div class="flex text-amber-400 my-2">
+        @for (i of [1,2,3,4,5]; track i) {
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" [class.fill-current]="i <= (avgRating() ?? 0)" [class.text-gray-300]="i > (avgRating() ?? 0)" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+          </svg>
+        }
+      </div>
+      <span class="text-xs text-text-muted">Based on {{ totalCount() }} reviews</span>
+    </div>
+
+    <!-- Rating Distribution Bars -->
+    <div class="md:col-span-2 space-y-2">
+      @for (item of ratingBreakdown(); track item.stars) {
+        <div class="flex items-center gap-3 text-xs">
+          <span class="w-12 font-medium text-text-secondary">{{ item.stars }} stars</span>
+          <div class="flex-1 h-2.5 bg-gray-200 rounded-full overflow-hidden">
+            <div
+              class="h-full bg-amber-400 rounded-full transition-all duration-500"
+              [style.width.%]="item.percentage"
+            ></div>
+          </div>
+          <span class="w-8 text-right text-text-muted tabular-nums">{{ item.count }}</span>
+        </div>
+      }
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- RATING FILTER BUTTONS -->
+  <!-- ============================================================ -->
+  <div class="flex flex-wrap items-center gap-2 pt-2">
+    <button
+      type="button"
+      (click)="onSelectFilter(null)"
+      class="px-3.5 py-1.5 text-xs font-semibold rounded-xl border transition-all"
+      [class.bg-primary]="selectedRatingFilter() === null"
+      [class.text-white]="selectedRatingFilter() === null"
+      [class.border-primary]="selectedRatingFilter() === null"
+      [class.bg-white]="selectedRatingFilter() !== null"
+      [class.text-text-secondary]="selectedRatingFilter() !== null"
+      [class.border-gray-200]="selectedRatingFilter() !== null"
+      [class.hover:bg-gray-50]="selectedRatingFilter() !== null"
+    >
+      All ({{ totalCount() }})
+    </button>
+
+    @for (s of [5, 4, 3, 2, 1]; track s) {
+      <button
+        type="button"
+        (click)="onSelectFilter(s)"
+        class="px-3 py-1.5 text-xs font-semibold rounded-xl border transition-all flex items-center gap-1"
+        [class.bg-primary]="selectedRatingFilter() === s"
+        [class.text-white]="selectedRatingFilter() === s"
+        [class.border-primary]="selectedRatingFilter() === s"
+        [class.bg-white]="selectedRatingFilter() !== s"
+        [class.text-text-secondary]="selectedRatingFilter() !== s"
+        [class.border-gray-200]="selectedRatingFilter() !== s"
+        [class.hover:bg-gray-50]="selectedRatingFilter() !== s"
+      >
+        <span>{{ s }}</span>
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 fill-amber-400 text-amber-400" viewBox="0 0 20 20">
+          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+        </svg>
+      </button>
+    }
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- REVIEWS LIST -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="space-y-4">
+      @for (i of [1,2,3]; track i) {
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 animate-pulse space-y-3">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-gray-200"></div>
+            <div class="space-y-1.5">
+              <div class="h-4 w-28 bg-gray-200 rounded"></div>
+              <div class="h-3 w-20 bg-gray-200 rounded"></div>
+            </div>
+          </div>
+          <div class="h-4 w-3/4 bg-gray-200 rounded"></div>
+          <div class="h-3 w-full bg-gray-200 rounded"></div>
+        </div>
+      }
+    </div>
+  } @else if (reviews().length === 0) {
+    <div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-200/80">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M11.48 3.499a.562.562 0 011.04 0l2.125 5.111a.563.563 0 00.475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 00-.182.557l1.285 5.385a.562.562 0 01-.84.61l-4.725-2.885a.563.563 0 00-.586 0L6.982 20.54a.562.562 0 01-.84-.61l1.285-5.386a.562.562 0 00-.182-.557l-4.204-3.602a.563.563 0 01.321-.988l5.518-.442a.563.563 0 00.475-.345L11.48 3.5z" />
+      </svg>
+      <h4 class="text-sm font-bold text-text-primary">No reviews yet</h4>
+      <p class="text-xs text-text-muted mt-1">Be the first customer to review this product!</p>
+    </div>
+  } @else {
+    <div class="space-y-4 divide-y divide-gray-100">
+      @for (review of reviews(); track review.id) {
+        <div class="pt-4 first:pt-0 space-y-2">
+
+          <!-- Reviewer Info -->
+          <div class="flex items-center justify-between">
+            <div class="flex items-center gap-2.5">
+              <div class="w-9 h-9 rounded-full bg-primary-tint text-primary font-bold flex items-center justify-center text-xs">
+                {{ review.userName.charAt(0).toUpperCase() }}
+              </div>
+              <div>
+                <div class="flex items-center gap-2">
+                  <span class="text-xs font-bold text-text-primary">{{ review.userName }}</span>
+                  @if (review.isVerifiedPurchase) {
+                    <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                      </svg>
+                      Verified Purchase
+                    </span>
+                  }
+                </div>
+                <span class="text-[11px] text-text-muted">{{ review.createdAt | date:'mediumDate' }}</span>
+              </div>
+            </div>
+
+            <!-- Review Stars -->
+            <div class="flex text-amber-400">
+              @for (i of [1,2,3,4,5]; track i) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" [class.fill-current]="i <= review.rating" [class.text-gray-300]="i > review.rating" viewBox="0 0 20 20" fill="currentColor">
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              }
+            </div>
+          </div>
+
+          <!-- Review Title & Comment -->
+          @if (review.title) {
+            <h5 class="text-xs md:text-sm font-bold text-text-primary">{{ review.title }}</h5>
+          }
+          @if (review.comment) {
+            <p class="text-xs md:text-sm text-text-secondary leading-relaxed">{{ review.comment }}</p>
+          }
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

@@ -58,6 +58,8 @@ export interface ProductListDto {
   rejectionReason: string | null;
   createdAt: string; // ISO 8601
   badges: ProductBadgeDto | null;
+  reviewsCount?: number | null;
+  viewCount?: number | null;
 }
 //PRODUCT BADGE DTO
 export interface ProductBadgeDto {
@@ -168,3 +170,117 @@ export interface HomepageCategorySectionDto {
   displayOrder: number;
   products: ProductListDto[];
 }
+
+// PRODUCT IMAGE
+export interface ProductImageDto {
+  id: string;
+  productId: string;
+  imageUrl: string;
+  sortOrder: number;
+}
+
+// VARIANT ATTRIBUTE
+export interface VariantAttributeDto {
+  id: string;
+  attributeName: string;
+  attributeValue: string;
+}
+
+// PRODUCT VARIANT
+export interface ProductVariantDto {
+  id: string;
+  productId: string;
+  sku: string;
+  price: number;
+  stockQty: number;
+  lowStockThreshold: number;
+  imageUrl: string | null;
+  isActive: boolean;
+  attributes: VariantAttributeDto[];
+  createdAt: string;
+}
+
+// REVIEW
+export interface ReviewDto {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  orderRequestItemId: string | null;
+  isVerifiedPurchase: boolean;
+  rating: number;
+  title: string | null;
+  comment: string | null;
+  isApproved: boolean;
+  createdAt: string;
+}
+
+// PRODUCT QUESTION
+export interface ProductQuestionDto {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  question: string;
+  isApproved: boolean;
+  createdAt: string;
+  answer: string | null;
+  answeredByShopkeeperId: string | null;
+  answeredByName: string | null;
+  answeredAt: string | null;
+}
+
+// CATEGORY TO BRAND MAPPING
+export const CATEGORY_BRAND_MAP: Record<string, string[]> = {
+  'men-clothing': ['zara', 'forever-21', 'levis', 'nike', 'adidas', 'gucci', 'polo'],
+  'women-clothing': ['zara', 'forever-21', 'gucci', 'h-m', 'khaadi', 'sapphire'],
+  'shoes-bags': ['nike', 'adidas', 'zara', 'gucci', 'bata', 'service'],
+  'electronics': ['apple', 'samsung', 'sony', 'dell', 'hp', 'xiaomi', 'lenovo'],
+  'home-living': ['ikea', 'haier', 'dawlance', 'kenwood'],
+  'beauty-health': ['loreal', 'the-body-shop', 'garnier', 'nivea'],
+  'sports-outdoor': ['nike', 'adidas', 'puma', 'under-armour'],
+  'jewelry-watches': ['rolex', 'casio', 'fossil', 'titan'],
+  'automobile': ['toyota', 'honda', 'suzuki', 'yamaha', 'bosch'],
+  'books-stationery': ['oxford', 'faber-castell', 'dollar', 'piano'],
+  'kids-toys': ['lego', 'hasbro', 'barbie', 'hot-wheels', 'fisher-price']
+};
+
+export function filterBrandsForCategory(
+  allBrands: BrandDto[],
+  categorySlug: string | null | undefined,
+  products?: { brandName?: string | null }[]
+): BrandDto[] {
+  if (!categorySlug) return allBrands;
+
+  const slug = categorySlug.toLowerCase();
+  const allowed = CATEGORY_BRAND_MAP[slug];
+
+  const productBrands = new Set(
+    (products || [])
+      .map((p) => p.brandName?.toLowerCase())
+      .filter(Boolean)
+  );
+
+  if (allowed && allowed.length > 0) {
+    return allBrands.filter((b) => {
+      const bSlug = b.slug.toLowerCase();
+      const bName = b.name.toLowerCase();
+      return (
+        allowed.includes(bSlug) ||
+        allowed.includes(bName) ||
+        productBrands.has(bName) ||
+        productBrands.has(bSlug)
+      );
+    });
+  }
+
+  if (productBrands.size > 0) {
+    return allBrands.filter((b) => {
+      const bSlug = b.slug.toLowerCase();
+      const bName = b.name.toLowerCase();
+      return productBrands.has(bName) || productBrands.has(bSlug);
+    });
+  }
+
+  return allBrands;
+}

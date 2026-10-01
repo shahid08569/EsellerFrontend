@@ -7,7 +7,6 @@ import { Footer } from '../../shared/components/footer/footer';
 
 @Component({
   imports: [RouterOutlet, AnnouncementBar, Navbar, Footer],
-
   selector: 'app-main-layout',
   styleUrl: './main-layout.css',
   templateUrl: './main-layout.html',

@@ -1,0 +1,101 @@
+<div class="space-y-6">
+
+  <!-- ============================================================ -->
+  <!-- ASK QUESTION INPUT -->
+  <!-- ============================================================ -->
+  <div class="bg-gray-50/70 rounded-3xl p-5 md:p-6 border border-gray-200/80 space-y-3">
+    <div class="flex items-center gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" />
+      </svg>
+      <h4 class="text-sm md:text-base font-bold text-text-primary">Have a question about this product?</h4>
+    </div>
+    <p class="text-xs text-text-secondary">Get answers from the seller or verified buyers</p>
+
+    <div class="flex flex-col sm:flex-row gap-3">
+      <input
+        type="text"
+        [(ngModel)]="newQuestionText"
+        (keyup.enter)="onSubmit()"
+        placeholder="Type your question here (e.g. Is this genuine leather?)..."
+        class="flex-1 px-4 py-2.5 text-xs md:text-sm bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-colors"
+      />
+      <button
+        type="button"
+        (click)="onSubmit()"
+        [disabled]="!newQuestionText().trim() || submitting()"
+        class="px-5 py-2.5 bg-primary hover:bg-primary-hover disabled:opacity-40 disabled:cursor-not-allowed text-white text-xs md:text-sm font-bold rounded-xl shadow-xs transition-colors whitespace-nowrap"
+      >
+        Submit Question
+      </button>
+    </div>
+
+    @if (submittedSuccess()) {
+      <div class="p-3 bg-emerald-50 text-emerald-700 text-xs font-semibold rounded-xl border border-emerald-200 flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd" />
+        </svg>
+        <span>Your question has been submitted and will appear once answered by the seller.</span>
+      </div>
+    }
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- QUESTIONS LIST -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="space-y-4">
+      @for (i of [1,2]; track i) {
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 animate-pulse space-y-3">
+          <div class="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div class="h-10 bg-gray-100 rounded-xl"></div>
+        </div>
+      }
+    </div>
+  } @else if (questions().length === 0) {
+    <div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-200/80">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+      </svg>
+      <h4 class="text-sm font-bold text-text-primary">No questions yet</h4>
+      <p class="text-xs text-text-muted mt-1">Have a question? Ask above and the seller will reply!</p>
+    </div>
+  } @else {
+    <div class="space-y-4 divide-y divide-gray-100">
+      @for (q of questions(); track q.id) {
+        <div class="pt-4 first:pt-0 space-y-3">
+
+          <!-- Customer Question -->
+          <div class="flex items-start gap-2.5">
+            <span class="w-6 h-6 rounded-full bg-gray-200 text-text-primary text-[11px] font-bold flex items-center justify-center flex-shrink-0 mt-0.5">
+              Q
+            </span>
+            <div class="flex-1">
+              <p class="text-xs md:text-sm font-semibold text-text-primary">{{ q.question }}</p>
+              <span class="text-[11px] text-text-muted">By {{ q.userName }} &bull; {{ q.createdAt | date:'mediumDate' }}</span>
+            </div>
+          </div>
+
+          <!-- Seller Answer (if answered) -->
+          @if (q.answer) {
+            <div class="ml-4 sm:ml-8 pl-3 border-l-2 border-primary bg-primary-tint/40 p-3 rounded-r-xl space-y-1">
+              <div class="flex items-center gap-1.5">
+                <span class="text-[11px] font-bold text-primary uppercase tracking-wide">Seller Response</span>
+                @if (q.answeredByName) {
+                  <span class="text-[11px] text-text-muted">({{ q.answeredByName }})</span>
+                }
+              </div>
+              <p class="text-xs md:text-sm text-text-secondary">{{ q.answer }}</p>
+            </div>
+          } @else {
+            <div class="ml-8 text-xs text-text-muted italic">
+              Pending response from seller...
+            </div>
+          }
+
+        </div>
+      }
+    </div>
+  }
+
+</div>

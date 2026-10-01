@@ -34,7 +34,7 @@ export class Card {
 
     const borderClass = this.bordered() ? 'border border-gray-100' : '';
     const hoverClass = this.hoverable()
-      ? 'transition-shadow hover:shadow-md cursor-pointer'
+      ? 'transition-all duration-300 hover:shadow-card-hover hover:-translate-y-0.5 cursor-pointer'
       : '';
 
     return [

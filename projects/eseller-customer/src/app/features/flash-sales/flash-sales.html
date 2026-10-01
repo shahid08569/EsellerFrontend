@@ -1,0 +1,121 @@
+<div class="max-w-7xl mx-auto px-3 md:px-4 pt-2 md:pt-3 pb-6 md:pb-8 space-y-4 md:space-y-5">
+
+  <!-- ============================================================ -->
+  <!-- FLASH SALE COMPACT HERO BANNER WITH BACK BUTTON & COUNTDOWN   -->
+  <!-- ============================================================ -->
+  <div class="bg-gradient-to-r from-[#881337] via-[#9F1239] to-[#E11D48] rounded-2xl sm:rounded-3xl p-3.5 sm:p-5 md:py-4 md:px-6 shadow-md border border-rose-400/25 relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-4">
+
+    <!-- Decorative glow background -->
+    <div class="absolute -right-10 -bottom-10 w-60 h-60 bg-amber-400/15 rounded-full blur-3xl pointer-events-none"></div>
+    <div class="absolute -left-10 -top-10 w-60 h-60 bg-white/10 rounded-full blur-3xl pointer-events-none"></div>
+
+    <!-- Left: Back Button, Badges & Title -->
+    <div class="space-y-2 text-center md:text-left z-10 w-full md:w-auto">
+      <div class="flex flex-wrap items-center justify-center md:justify-start gap-2">
+        <!-- Back Button -->
+        <button
+          type="button"
+          (click)="goBack()"
+          class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white text-xs font-bold border border-white/30 backdrop-blur-xs transition-all cursor-pointer shadow-2xs hover:scale-105"
+          title="Go Back"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+          </svg>
+          <span>Back</span>
+        </button>
+
+        <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-white/15 backdrop-blur-md text-white text-[11px] font-bold uppercase tracking-wider border border-white/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amber-300 animate-bounce" viewBox="0 0 24 24" fill="currentColor">
+            <path d="M14.615 1.595a.75.75 0 01.359.852L12.982 9.75h7.268a.75.75 0 01.548 1.262l-10.5 11.25a.75.75 0 01-1.272-.71l1.992-7.302H3.75a.75.75 0 01-.548-1.262l10.5-11.25a.75.75 0 01.913-.143z" />
+          </svg>
+          Limited Event
+        </div>
+
+        <div class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-black/25 text-amber-300 text-[11px] font-bold border border-amber-400/20 backdrop-blur-xs">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400 animate-pulse"></span>
+          Deal Limit: Limited Stock
+        </div>
+      </div>
+
+      <div>
+        <h1 class="text-xl sm:text-2xl md:text-3xl font-black tracking-tight !text-white drop-shadow-xs">
+          Flash Sale Deals
+        </h1>
+        <p class="text-xs sm:text-sm text-rose-100/90 max-w-md font-medium leading-snug mt-0.5" style="font-size: 13px;">
+          Exclusive massive price cuts on trending items. Grab yours before countdown expires!
+        </p>
+      </div>
+    </div>
+
+    <!-- Right: Countdown Clock Box -->
+    <div class="bg-black/35 backdrop-blur-md rounded-2xl border border-white/20 px-3.5 py-2 sm:px-4 sm:py-2.5 text-center flex flex-col items-center gap-1.5 z-10 flex-shrink-0 shadow-md">
+      <span class="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-amber-300">Deals End In:</span>
+      <div class="flex items-center gap-1.5 text-white">
+        <div class="bg-black/50 border border-white/15 rounded-xl px-2.5 py-1 font-mono text-base sm:text-xl font-black !text-white shadow-inner">
+          {{ hours() }}
+          <span class="text-[8px] sm:text-[9px] block font-normal text-white/70">HOURS</span>
+        </div>
+        <span class="text-lg font-black !text-white">:</span>
+        <div class="bg-black/50 border border-white/15 rounded-xl px-2.5 py-1 font-mono text-base sm:text-xl font-black !text-white shadow-inner">
+          {{ minutes() }}
+          <span class="text-[8px] sm:text-[9px] block font-normal text-white/70">MINS</span>
+        </div>
+        <span class="text-lg font-black !text-white">:</span>
+        <div class="bg-black/50 border border-white/15 rounded-xl px-2.5 py-1 font-mono text-base sm:text-xl font-black !text-amber-300 shadow-inner">
+          {{ seconds() }}
+          <span class="text-[8px] sm:text-[9px] block font-normal text-white/70">SECS</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. FLASH SALE PRODUCTS GRID (4 Large Cards per row on Laptop) -->
+  <!-- ============================================================ -->
+  @if (loading()) {
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-5 md:gap-6">
+      @for (i of [1,2,3,4]; track i) {
+        <div class="bg-white rounded-2xl border border-gray-100 p-4 space-y-3 animate-pulse shadow-xs">
+          <div class="aspect-square bg-gray-100 rounded-xl"></div>
+          <div class="space-y-2 pt-2">
+            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
+            <div class="h-3 bg-gray-100 rounded w-1/2"></div>
+            <div class="h-5 bg-gray-200 rounded w-1/3"></div>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (products().length === 0) {
+    <es-empty-state
+      title="No active flash sale products"
+      description="Check back shortly for new upcoming flash promotions and limited deals."
+      icon="cart"
+    >
+      <a
+        routerLink="/products"
+        class="inline-block px-4 py-2 bg-primary text-white text-xs font-semibold rounded-lg hover:bg-primary-hover transition-colors"
+      >
+        Explore All Products
+      </a>
+    </es-empty-state>
+  } @else {
+    <div class="space-y-4">
+      <div class="flex items-center justify-between text-xs sm:text-sm text-text-secondary">
+        <span>Showing <strong>{{ products().length }}</strong> flash deals</span>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-4 gap-5 md:gap-6">
+        @for (product of products(); track product.id) {
+          <es-product-card
+            [product]="product"
+            [countdownTo]="getCountdown(product)"
+            [preferredBadge]="'flash_sale'"
+          />
+        }
+      </div>
+    </div>
+  }
+
+</div>

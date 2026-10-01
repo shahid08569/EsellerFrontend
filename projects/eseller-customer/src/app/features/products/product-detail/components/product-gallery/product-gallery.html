@@ -1,0 +1,195 @@
+<div class="w-full relative">
+
+  <!-- ============================================================ -->
+  <!-- MAIN IMAGE CARD (Fixed Size, Full Width of Column) -->
+  <!-- ============================================================ -->
+  <div
+    #imageFrame
+    (mouseenter)="onMouseEnter()"
+    (mouseleave)="onMouseLeave()"
+    (mousemove)="onMouseMove($event)"
+    (click)="openModal()"
+    class="relative w-full bg-white rounded-2xl border border-gray-200/90 overflow-hidden h-[360px] sm:h-[400px] md:h-[420px] flex items-center justify-center cursor-crosshair select-none shadow-xs group"
+  >
+
+    @if (getImageUrl(activeImageUrl()); as fullUrl) {
+      <!-- Main Selected Product Image (Expanded to fill card nicely) -->
+      <img
+        [src]="fullUrl"
+        [alt]="productName()"
+        class="max-w-full max-h-full object-contain p-2 md:p-3 transition-opacity duration-150"
+        [class.max-lg:opacity-0]="isHovering()"
+        [class.opacity-100]="!isHovering() || true"
+        loading="eager"
+      />
+
+      <!-- Amazon Magnifier Lens (Desktop) -->
+      @if (isHovering()) {
+        <div
+          class="hidden lg:block absolute pointer-events-none bg-amber-500/15 border-2 border-amber-500/70 rounded-xl shadow-xs z-20"
+          [style.width.px]="110"
+          [style.height.px]="110"
+          [style.left.px]="lensX()"
+          [style.top.px]="lensY()"
+        ></div>
+      }
+
+      <!-- Mobile / Tablet In-Frame Zoom (fallback for screens < lg) -->
+      <div
+        class="lg:hidden absolute inset-0 w-full h-full pointer-events-none bg-no-repeat transition-opacity duration-150"
+        [class.opacity-100]="isHovering()"
+        [class.opacity-0]="!isHovering()"
+        [style.backgroundImage]="'url(' + fullUrl + ')'"
+        [style.backgroundSize]="'280%'"
+        [style.backgroundPosition]="zoomX() + '% ' + zoomY() + '%'"
+      ></div>
+
+    } @else {
+      <div class="flex flex-col items-center justify-center text-text-muted p-8 text-center">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-16 h-16 mb-2 opacity-30" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+        </svg>
+        <span class="text-xs">No image available</span>
+      </div>
+    }
+
+    <!-- ============================================================ -->
+    <!-- THUMBNAILS STRIP ON TOP OF CARD (Inside on Left Side) -->
+    <!-- ============================================================ -->
+    @if (allImages().length > 1) {
+      <div
+        class="absolute left-3 top-3 bottom-12 z-30 flex flex-col gap-2 overflow-y-auto scrollbar-none py-1 pointer-events-auto"
+        (mouseenter)="$event.stopPropagation(); isHovering.set(false)"
+      >
+        @for (img of allImages(); track $index) {
+          <button
+            type="button"
+            (click)="selectImage($index); $event.stopPropagation()"
+            (mouseenter)="selectImage($index); $event.stopPropagation(); isHovering.set(false)"
+            class="relative w-12 h-12 md:w-14 md:h-14 rounded-xl overflow-hidden bg-white/95 backdrop-blur-md border-2 shadow-xs transition-transform flex items-center justify-center p-1 cursor-pointer hover:scale-105"
+            [class.border-primary]="selectedIndex() === $index"
+            [class.ring-2]="selectedIndex() === $index"
+            [class.ring-primary/40]="selectedIndex() === $index"
+            [class.border-gray-200/90]="selectedIndex() !== $index"
+            [class.hover:border-primary/60]="selectedIndex() !== $index"
+          >
+            @if (getImageUrl(img); as thumbUrl) {
+              <img
+                [src]="thumbUrl"
+                [alt]="productName() + ' thumbnail ' + ($index + 1)"
+                class="max-w-full max-h-full object-contain pointer-events-none"
+                loading="lazy"
+              />
+            }
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Badges (Top-Left, offset when multiple thumbnails are present) -->
+    @if (badges(); as b) {
+      <div
+        class="absolute top-3 flex flex-col gap-1.5 items-start z-20 pointer-events-none transition-all"
+        [class.left-18]="allImages().length > 1"
+        [class.md:left-20]="allImages().length > 1"
+        [class.left-3]="allImages().length <= 1"
+      >
+        @if (b.isOutOfStock) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-gray-600 text-white shadow-xs">
+            Out of Stock
+          </span>
+        }
+        @if (b.isFlashSale) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-red-600 text-white shadow-xs">
+            Flash Sale
+          </span>
+        }
+        @if (b.isBestSelling) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#8A9741] text-white shadow-xs">
+            Best Seller
+          </span>
+        }
+        @if (b.isHotSelling) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
+            Hot
+          </span>
+        }
+        @if (b.isNew) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-500 text-white shadow-xs">
+            New
+          </span>
+        }
+        @if (b.isFeatured) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-primary text-white shadow-xs">
+            Featured
+          </span>
+        }
+      </div>
+
+      <!-- Discount Tag (Top-Right) -->
+      @if ((b.discountPercent ?? 0) > 0 || (b.flashSaleDiscountPercent ?? 0) > 0) {
+        <div class="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded-md shadow-xs z-10 pointer-events-none">
+          -{{ (b.discountPercent ?? 0) > (b.flashSaleDiscountPercent ?? 0) ? b.discountPercent : b.flashSaleDiscountPercent }}%
+        </div>
+      }
+    }
+
+    <!-- Zoom indicator badge on bottom right -->
+    <div class="absolute bottom-3 right-3 bg-white/90 backdrop-blur-xs text-text-muted px-2.5 py-1 rounded-lg text-[10px] font-medium border border-gray-200/80 flex items-center gap-1 shadow-2xs pointer-events-none group-hover:text-primary group-hover:border-primary/40 transition-colors">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607zM10.5 7.5v6m3-3h-6" />
+      </svg>
+      <span>Roll over image to zoom</span>
+    </div>
+
+  </div>
+
+  <!-- Amazon Desktop Flyout Zoom Window (Positioned higher up and more compact) -->
+  @if (isHovering() && getImageUrl(activeImageUrl()); as fullUrl) {
+    <div
+      class="hidden lg:block absolute left-[calc(100%+16px)] top-0 w-[340px] h-[340px] xl:w-[380px] xl:h-[380px] bg-white rounded-3xl border border-gray-200/90 shadow-2xl z-50 overflow-hidden pointer-events-none animate-in fade-in duration-150 ring-1 ring-black/5"
+    >
+      <div
+        class="w-full h-full bg-no-repeat bg-white"
+        [style.backgroundImage]="'url(' + fullUrl + ')'"
+        [style.backgroundSize]="'280%'"
+        [style.backgroundPosition]="zoomX() + '% ' + zoomY() + '%'"
+      ></div>
+    </div>
+  }
+
+</div>
+
+  <!-- ============================================================ -->
+  <!-- 3. FULLSCREEN LIGHTBOX MODAL -->
+  <!-- ============================================================ -->
+  @if (isZoomModalOpen()) {
+    <div
+      class="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in duration-200"
+      (click)="closeModal()"
+    >
+      <div
+        class="relative max-w-4xl max-h-[90vh] bg-white rounded-3xl p-6 overflow-hidden flex items-center justify-center shadow-2xl"
+        (click)="$event.stopPropagation()"
+      >
+        <button
+          type="button"
+          (click)="closeModal()"
+          class="absolute top-4 right-4 w-10 h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-text-primary flex items-center justify-center z-10 transition-colors"
+          aria-label="Close modal"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+
+        @if (getImageUrl(activeImageUrl()); as modalUrl) {
+          <img
+            [src]="modalUrl"
+            [alt]="productName()"
+            class="max-w-full max-h-[80vh] object-contain rounded-xl"
+          />
+        }
+      </div>
+    </div>
+  }
