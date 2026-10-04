@@ -107,20 +107,31 @@ export class ApiService {
     return `${this.baseUrl}${cleanPath}`;
   }
 
-  private handleError(err: HttpErrorResponse): Observable<never> {
+  private handleError(err: unknown): Observable<never> {
+    // errorInterceptor already normalised — pass through
+    if (err && typeof err === 'object' && 'error' in err && 'errorCode' in err && !('status' in err)) {
+      return throwError(() => err as ApiErrorResponse);
+    }
+
+    const httpErr = err as HttpErrorResponse;
     let normalised: ApiErrorResponse;
 
-    if (err.error && typeof err.error === 'object') {
+    if (httpErr?.error && typeof httpErr.error === 'object') {
+      const body = httpErr.error as Partial<ApiErrorResponse>;
+      const firstFieldMsg = body.errors
+        ? Object.values(body.errors).flat().find((m) => !!m)
+        : undefined;
       normalised = {
-        error: err.error.error ?? err.message,
-        errorCode: err.error.errorCode ?? `HTTP_${err.status}`
+        error: body.error || firstFieldMsg || httpErr.message || 'Request failed.',
+        errorCode: body.errorCode ?? `HTTP_${httpErr.status}`,
+        errors: body.errors
       };
-    } else if (typeof err.error === 'string') {
-      normalised = { error: err.error, errorCode: `HTTP_${err.status}` };
+    } else if (typeof httpErr?.error === 'string') {
+      normalised = { error: httpErr.error, errorCode: `HTTP_${httpErr.status}` };
     } else {
       normalised = {
-        error: err.message || 'An unexpected error occurred.',
-        errorCode: `HTTP_${err.status}`
+        error: httpErr?.message || 'An unexpected error occurred.',
+        errorCode: `HTTP_${httpErr?.status ?? 0}`
       };
     }
 

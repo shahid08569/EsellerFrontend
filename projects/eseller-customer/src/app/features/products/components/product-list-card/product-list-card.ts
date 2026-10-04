@@ -1,7 +1,7 @@
 import { Component, input, output, computed, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { ProductListDto, CartService, WishlistService, CompareService, ToastService } from 'eseller-shared';
+import { ProductListDto, CartService, WishlistService, CompareService, ToastService, AuthActionService } from 'eseller-shared';
 
 @Component({
   selector: 'app-product-list-card',
@@ -15,6 +15,7 @@ export class ProductListCard {
   private readonly wishlistService = inject(WishlistService);
   private readonly compareService = inject(CompareService);
   private readonly toastService = inject(ToastService);
+  private readonly authAction = inject(AuthActionService);
 
   // Inputs
   readonly product = input.required<ProductListDto>();
@@ -35,8 +36,8 @@ export class ProductListCard {
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     })
   );
 
@@ -56,8 +57,8 @@ export class ProductListCard {
 
   readonly formattedOldPrice = computed(() =>
     this.oldPrice().toLocaleString('en-US', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     })
   );
 
@@ -71,9 +72,6 @@ export class ProductListCard {
     if (b.isFlashSale) {
       list.push({ label: 'Flash Sale', classes: 'bg-red-500 text-white', key: 'flash_sale' });
     }
-    if (b.isBestSelling) {
-      list.push({ label: 'Best Seller', classes: 'bg-[#8A9741] text-white', key: 'best_seller' });
-    }
     if (b.isHotSelling) {
       list.push({ label: 'Hot', classes: 'bg-orange-500 text-white', key: 'hot' });
     }
@@ -82,6 +80,9 @@ export class ProductListCard {
     }
     if (b.isFeatured) {
       list.push({ label: 'Featured', classes: 'bg-primary text-white', key: 'featured' });
+    }
+    if (b.isBestSelling) {
+      list.push({ label: 'Best Seller', classes: 'bg-[#8A9741] text-white', key: 'best_seller' });
     }
     if (b.isOutOfStock) {
       list.unshift({
@@ -96,10 +97,13 @@ export class ProductListCard {
 
   getImageUrl(imageUrl: string | null | undefined): string | null {
     if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : '';
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
     const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    if (path.startsWith('/uploads')) return `${host}${path}`;
     return `${host}/uploads${path}`;
   }
 
@@ -110,6 +114,7 @@ export class ProductListCard {
   onAddToCart(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.authAction.requireLogin('add items to your cart')) return;
     const p = this.product();
     if (this.isInCart()) {
       this.cartService.removeByProductId(p.id);
@@ -121,7 +126,7 @@ export class ProductListCard {
       productSlug: p.slug,
       name: p.name,
       imageUrl: this.getImageUrl(p.primaryImageUrl),
-      shopId: '',
+      shopId: (p as any).shopId || '',
       shopName: p.shopName,
       price: p.basePrice,
       quantity: 1
@@ -133,6 +138,7 @@ export class ProductListCard {
   onAddToWishlist(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.authAction.requireLogin('save items to your wishlist')) return;
     const p = this.product();
     const added = this.wishlistService.toggleItem(p);
     this.toastService.show(
@@ -145,6 +151,7 @@ export class ProductListCard {
   onAddToCompare(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.authAction.requireLogin('compare products')) return;
     const p = this.product();
     const result = this.compareService.toggleItem(p);
     this.toastService.show(result.message, result.added ? 'success' : 'info');

@@ -1,0 +1,546 @@
+<div class="space-y-6">
+  
+  <!-- TOP VIEW NAVIGATION BAR (DASHBOARD VS OPERATIONS & QUEUES) -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-gray-200">
+    <div class="inline-flex p-1 bg-gray-100 rounded-2xl border border-gray-200">
+      <!-- 1. Dashboard (Screenshot Design) -->
+      <button 
+        type="button" 
+        (click)="switchDashboardView('dashboard')"
+        [class.bg-white]="activeView() === 'dashboard'"
+        [class.text-gray-900]="activeView() === 'dashboard'"
+        [class.shadow-xs]="activeView() === 'dashboard'"
+        [class.font-black]="activeView() === 'dashboard'"
+        [class.text-gray-500]="activeView() !== 'dashboard'"
+        class="px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25a2.25 2.25 0 01-13.5 18v-2.25z" />
+        </svg>
+        <span>Dashboard</span>
+      </button>
+
+      <!-- 2. Operations & Queues -->
+      <button 
+        type="button" 
+        (click)="switchDashboardView('operations')"
+        [class.bg-white]="activeView() === 'operations'"
+        [class.text-gray-900]="activeView() === 'operations'"
+        [class.shadow-xs]="activeView() === 'operations'"
+        [class.font-black]="activeView() === 'operations'"
+        [class.text-gray-500]="activeView() !== 'operations'"
+        class="px-5 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25zM6.75 12h.008v.008H6.75V12zm0 3h.008v.008H6.75V15zm0 3h.008v.008H6.75V18z" />
+        </svg>
+        <span>Operations & Queues</span>
+        @if (pendingShops().length + pendingProducts().length > 0) {
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-400 text-slate-950">
+            {{ pendingShops().length + pendingProducts().length }}
+          </span>
+        }
+      </button>
+    </div>
+
+    <!-- Refresh Action -->
+    <button 
+      type="button" 
+      (click)="loadData()" 
+      title="Refresh Telemetry"
+      class="px-3 py-1.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 self-start sm:self-auto cursor-pointer">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+      </svg>
+      <span>Refresh Data</span>
+    </button>
+  </div>
+
+  <!-- ════════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 1: WELCOME + 4 METRIC CARDS + 3 FILTERABLE LIST PANELS -->
+  <!-- ════════════════════════════════════════════════════════════════════════════ -->
+  @if (activeView() === 'dashboard') {
+    <div class="space-y-6">
+
+      <!-- WELCOME HEADER (FROM SCREENSHOT) -->
+      <div>
+        <h2 class="text-2xl font-black text-gray-900 tracking-tight">
+          Welcome Back, {{ authStore.currentAccount()?.username || 'Sujan' }}
+        </h2>
+        <p class="text-xs text-gray-400 font-medium mt-1">
+          You have {{ platformStats()?.pendingOrders || 0 }} pending orders · {{ platformStats()?.totalOrders || 0 }} total orders.
+        </p>
+      </div>
+
+      <!-- 4 TOP METRIC CARDS (FROM SCREENSHOT) -->
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        
+        <!-- CARD 1: Total Revenue -->
+        <a routerLink="/finance" class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div class="space-y-1">
+            <span class="text-xs font-semibold text-gray-500 block">Total Revenue</span>
+            <div class="text-2xl font-black text-gray-900 tracking-tight">
+              $ {{ (platformStats()?.totalRevenue || 0) | number:'1.0-0' }}
+            </div>
+            <div class="flex items-center gap-1 text-xs font-bold"
+                 [class.text-emerald-600]="(platformStats()?.revenueGrowthPercent ?? 0) >= 0"
+                 [class.text-rose-500]="(platformStats()?.revenueGrowthPercent ?? 0) < 0">
+              <span>{{ (platformStats()?.revenueGrowthPercent ?? 0) >= 0 ? '↗' : '↘' }}</span>
+              <span>{{ (platformStats()?.revenueGrowthPercent ?? 0) >= 0 ? '+' : '' }}{{ platformStats()?.revenueGrowthPercent ?? 0 }}%</span>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center font-black text-lg shrink-0">
+            $
+          </div>
+        </a>
+
+        <!-- CARD 2: New Orders -->
+        <a routerLink="/orders" class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div class="space-y-1">
+            <span class="text-xs font-semibold text-gray-500 block">New Orders</span>
+            <div class="text-2xl font-black text-gray-900 tracking-tight">
+              {{ platformStats()?.totalOrders || 0 }}
+            </div>
+            <div class="flex items-center gap-1 text-xs font-bold text-emerald-600">
+              <span>↗</span>
+              <span>{{ platformStats()?.ordersGrowthPercent ?? 0 }} avg/day</span>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-teal-50 text-teal-700 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+            </svg>
+          </div>
+        </a>
+
+        <!-- CARD 3: Pending Shipments -->
+        <a routerLink="/orders" [queryParams]="{status: 'Pending'}" class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div class="space-y-1">
+            <span class="text-xs font-semibold text-gray-500 block">Pending Shipments</span>
+            <div class="text-2xl font-black text-gray-900 tracking-tight">
+              {{ platformStats()?.pendingOrders || 0 }}
+            </div>
+            <div class="flex items-center gap-1 text-xs font-bold text-rose-500">
+              <span>↘</span>
+              <span>{{ platformStats()?.shipmentsGrowthPercent ?? 0 }}%</span>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-cyan-50 text-cyan-700 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
+            </svg>
+          </div>
+        </a>
+
+        <!-- CARD 4: Total Customers -->
+        <a routerLink="/customers" class="bg-white rounded-3xl p-5 border border-gray-100 shadow-xs flex items-center justify-between hover:shadow-md transition-shadow cursor-pointer">
+          <div class="space-y-1">
+            <span class="text-xs font-semibold text-gray-500 block">Total Customers</span>
+            <div class="text-2xl font-black text-gray-900 tracking-tight">
+              {{ (platformStats()?.totalCustomers || 0) | number }}
+            </div>
+            <div class="flex items-center gap-1 text-xs font-bold text-emerald-600">
+              <span>↗</span>
+              <span>{{ platformStats()?.customersGrowthPercent ?? 0 }}%</span>
+            </div>
+          </div>
+          <div class="w-12 h-12 rounded-2xl bg-emerald-50 text-emerald-700 flex items-center justify-center shrink-0">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+            </svg>
+          </div>
+        </a>
+
+      </div>
+
+      <!-- 3 FILTERABLE LIST PANELS (no graphs) -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-5 items-stretch">
+
+        <!-- Monthly Revenue list -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col min-h-[320px]">
+          <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
+            <div class="min-w-0">
+              <h3 class="text-sm font-black text-slate-900">Monthly Revenue</h3>
+              <p class="text-[11px] text-slate-500 font-medium">Breakdown by month</p>
+            </div>
+            <select
+              class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-hidden cursor-pointer"
+              [ngModel]="revenueMonthsFilter()"
+              (ngModelChange)="revenueMonthsFilter.set($event)">
+              <option [ngValue]="6">Last 6 months</option>
+              <option [ngValue]="9">Last 9 months</option>
+              <option [ngValue]="12">Last 12 months</option>
+            </select>
+          </div>
+          <div class="flex-1 overflow-y-auto px-2 py-1">
+            @if (filteredMonthlyRevenue().length === 0) {
+              <div class="px-3 py-10 text-center text-xs text-slate-400 font-medium">No revenue data yet.</div>
+            } @else {
+              <ul class="divide-y divide-slate-50">
+                @for (row of filteredMonthlyRevenue(); track row.month) {
+                  <li class="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-slate-50/80 rounded-lg">
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-slate-900">{{ row.month }}</div>
+                      <div class="text-[10px] text-slate-400 font-medium mt-0.5">Monthly total</div>
+                    </div>
+                    <div class="text-right shrink-0">
+                      <div class="text-xs font-black text-slate-900">{{ formatMoney(row.revenue) }}</div>
+                      <div
+                        class="text-[10px] font-bold mt-0.5"
+                        [class.text-emerald-600]="row.growthPercent >= 0"
+                        [class.text-rose-600]="row.growthPercent < 0">
+                        {{ row.growthPercent >= 0 ? '+' : '' }}{{ row.growthPercent }}%
+                      </div>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+
+        <!-- Weekly Orders list -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col min-h-[320px]">
+          <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
+            <div class="min-w-0">
+              <h3 class="text-sm font-black text-slate-900">Weekly Orders</h3>
+              <p class="text-[11px] text-slate-500 font-medium">Orders by day</p>
+            </div>
+            <select
+              class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-hidden cursor-pointer"
+              [ngModel]="weeklyFilter()"
+              (ngModelChange)="weeklyFilter.set($event)">
+              <option value="this">This week</option>
+              <option value="busy">Busy days (10+)</option>
+              <option value="quiet">Quiet days (&lt;10)</option>
+            </select>
+          </div>
+          <div class="flex-1 overflow-y-auto px-2 py-1">
+            @if (filteredWeeklyOrders().length === 0) {
+              <div class="px-3 py-10 text-center text-xs text-slate-400 font-medium">No order data for this filter.</div>
+            } @else {
+              <ul class="divide-y divide-slate-50">
+                @for (row of filteredWeeklyOrders(); track row.day) {
+                  <li class="flex items-center justify-between gap-3 px-3 py-2.5 hover:bg-slate-50/80 rounded-lg">
+                    <div class="min-w-0">
+                      <div class="text-xs font-bold text-slate-900">{{ row.day }}</div>
+                      <div class="text-[10px] text-slate-400 font-medium mt-0.5">Day of week</div>
+                    </div>
+                    <span
+                      class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-bold border shrink-0"
+                      [class.bg-emerald-50]="row.orders >= 10"
+                      [class.text-emerald-700]="row.orders >= 10"
+                      [class.border-emerald-100]="row.orders >= 10"
+                      [class.bg-slate-50]="row.orders < 10"
+                      [class.text-slate-600]="row.orders < 10"
+                      [class.border-slate-200]="row.orders < 10">
+                      {{ row.orders }} orders
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+
+        <!-- Low Stock Alerts list -->
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-xs flex flex-col min-h-[320px]">
+          <div class="flex items-center justify-between gap-2 px-4 py-3 border-b border-slate-100">
+            <div class="min-w-0">
+              <h3 class="text-sm font-black text-slate-900">Low Stock Alerts</h3>
+              <p class="text-[11px] text-slate-500 font-medium">Inventory below threshold</p>
+            </div>
+            <select
+              class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-hidden cursor-pointer"
+              [ngModel]="lowStockMin()"
+              (ngModelChange)="lowStockMin.set($event)">
+              <option [ngValue]="5">Max 5 left</option>
+              <option [ngValue]="10">Max 10 left</option>
+              <option [ngValue]="20">Max 20 left</option>
+            </select>
+          </div>
+          <div class="flex-1 overflow-y-auto px-2 py-1">
+            @if (dynamicLowStockItems().length === 0) {
+              <div class="px-3 py-10 text-center text-xs text-slate-400 font-medium">No low-stock items for this filter.</div>
+            } @else {
+              <ul class="divide-y divide-slate-50">
+                @for (item of dynamicLowStockItems(); track item.code + item.name) {
+                  <li class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-50/80 rounded-lg">
+                    <div class="w-9 h-9 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center">
+                      @if (item.imageUrl) {
+                        <img [src]="formatImageUrl(item.imageUrl)" (error)="onImgError($event)" [alt]="item.name" class="w-full h-full object-cover">
+                        <span class="hidden text-[10px] font-black text-slate-400">{{ item.name.charAt(0) }}</span>
+                      } @else {
+                        <span class="text-[10px] font-black text-slate-400">{{ item.name.charAt(0) }}</span>
+                      }
+                    </div>
+                    <div class="min-w-0 flex-1">
+                      <div class="text-xs font-bold text-slate-900 truncate">{{ item.name }}</div>
+                      <div class="text-[10px] text-slate-400 font-mono mt-0.5 truncate">{{ item.code }} · {{ item.category }}</div>
+                    </div>
+                    <span class="shrink-0 px-2.5 py-1 rounded-full text-[11px] font-bold bg-rose-50 text-rose-600 border border-rose-100">
+                      {{ item.left }} left
+                    </span>
+                  </li>
+                }
+              </ul>
+            }
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- ════════════════════════════════════════════════════════════════════════════ -->
+  <!-- TAB 2: OPERATIONS & QUEUES (PENDING SHOPS, PRODUCTS, & MODERATION TABLES)   -->
+  <!-- ════════════════════════════════════════════════════════════════════════════ -->
+  @if (activeView() === 'operations') {
+    <div class="space-y-6">
+
+      <!-- Moderation Counters Summary -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-gray-500 block">Pending Stores</span>
+            <span class="text-2xl font-black text-amber-600">{{ pendingShops().length }}</span>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-amber-50 text-amber-700">Awaiting Review</span>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-gray-500 block">Pending Products</span>
+            <span class="text-2xl font-black text-rose-600">{{ pendingProducts().length }}</span>
+          </div>
+          <span class="px-3 py-1 rounded-full text-xs font-bold bg-rose-50 text-rose-700">Catalog Moderation</span>
+        </div>
+
+        <div class="bg-white rounded-2xl p-4 border border-gray-100 shadow-xs flex items-center justify-between">
+          <div>
+            <span class="text-xs font-bold text-gray-500 block">Active Marketplace Stores</span>
+            <span class="text-2xl font-black text-emerald-600">{{ totalShops() }}</span>
+          </div>
+          <a routerLink="/shops" class="text-xs font-bold text-orange-600 hover:text-orange-700">Manage All →</a>
+        </div>
+      </div>
+
+      <!-- SECTION 1: PENDING SHOPS QUEUE -->
+      <div class="bg-white border border-gray-100 rounded-3xl p-5 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-black text-gray-900">Pending Seller Registrations</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-amber-50 text-amber-700">{{ pendingShops().length }}</span>
+          </div>
+          <a routerLink="/shops" [queryParams]="{tab: 'pending'}" class="text-xs font-bold text-orange-600 hover:text-orange-700">View In Shops Hub →</a>
+        </div>
+
+        @if (pendingShops().length === 0) {
+          <div class="p-8 text-center text-xs text-gray-400 bg-gray-50/50 rounded-2xl">
+            No seller applications currently pending review. All caught up!
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[10px]">
+                <tr>
+                  <th class="py-3 px-3">Applicant / Store</th>
+                  <th class="py-3 px-3">Email</th>
+                  <th class="py-3 px-3">Location</th>
+                  <th class="py-3 px-3">Date</th>
+                  <th class="py-3 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (s of pendingShops(); track s.id) {
+                  <tr class="hover:bg-gray-50/60 transition-colors">
+                    <td class="py-3 px-3">
+                      <div class="font-bold text-gray-900">{{ s.storeName || s.name }}</div>
+                      <div class="text-[10px] text-gray-400">By {{ s.name }}</div>
+                    </td>
+                    <td class="py-3 px-3 text-gray-600">{{ s.email }}</td>
+                    <td class="py-3 px-3 text-gray-600">{{ s.city || 'N/A' }}, {{ s.country || 'PK' }}</td>
+                    <td class="py-3 px-3 text-gray-400">{{ s.createdAt | date:'shortDate' }}</td>
+                    <td class="py-3 px-3 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <button 
+                          type="button" 
+                          (click)="openApproveModal('shop', s.id, s.storeName || s.name, s)"
+                          class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs">
+                          ✓ Approve
+                        </button>
+                        <button 
+                          type="button" 
+                          (click)="openRejectModal('shop', s.id, s.storeName || s.name)"
+                          class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs cursor-pointer border border-rose-200">
+                          ✕ Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+      <!-- SECTION 2: PENDING PRODUCTS QUEUE -->
+      <div class="bg-white border border-gray-100 rounded-3xl p-5 shadow-xs space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+          <div class="flex items-center gap-2">
+            <span class="text-sm font-black text-gray-900">Pending Product Approvals</span>
+            <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700">{{ pendingProducts().length }}</span>
+          </div>
+          <a routerLink="/products" class="text-xs font-bold text-orange-600 hover:text-orange-700">View In Products Hub →</a>
+        </div>
+
+        @if (pendingProducts().length === 0) {
+          <div class="p-8 text-center text-xs text-gray-400 bg-gray-50/50 rounded-2xl">
+            No products currently awaiting moderation.
+          </div>
+        } @else {
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-gray-50 text-gray-500 font-bold uppercase text-[10px]">
+                <tr>
+                  <th class="py-3 px-3">Product</th>
+                  <th class="py-3 px-3">Store</th>
+                  <th class="py-3 px-3">Price</th>
+                  <th class="py-3 px-3">Submitted</th>
+                  <th class="py-3 px-3 text-right">Action</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (p of pendingProducts(); track p.id) {
+                  <tr class="hover:bg-gray-50/60 transition-colors">
+                    <td class="py-3 px-3">
+                      <div class="flex items-center gap-2.5">
+                        <div class="w-8 h-8 rounded-lg bg-gray-100 border border-gray-200 overflow-hidden shrink-0 flex items-center justify-center">
+                          @if (p.primaryImageUrl) {
+                            <img [src]="formatImageUrl(p.primaryImageUrl)" [alt]="p.name" class="w-full h-full object-cover">
+                          } @else {
+                            <span class="text-xs text-gray-400">📦</span>
+                          }
+                        </div>
+                        <div>
+                          <div class="font-bold text-gray-900">{{ p.name }}</div>
+                          <div class="text-[10px] text-gray-400">{{ p.categoryName || 'General' }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-3 px-3 text-gray-700 font-semibold">{{ p.shopName || 'Shop' }}</td>
+                    <td class="py-3 px-3 font-bold text-gray-900">$ {{ p.basePrice | number:'1.0-0' }}</td>
+                    <td class="py-3 px-3 text-gray-400">{{ p.createdAt | date:'shortDate' }}</td>
+                    <td class="py-3 px-3 text-right">
+                      <div class="flex items-center justify-end gap-2">
+                        <button 
+                          type="button" 
+                          (click)="openApproveModal('product', p.id, p.name, p)"
+                          class="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer shadow-xs">
+                          ✓ Approve
+                        </button>
+                        <button 
+                          type="button" 
+                          (click)="openRejectModal('product', p.id, p.name)"
+                          class="px-3 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs cursor-pointer border border-rose-200">
+                          ✕ Reject
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+
+    </div>
+  }
+
+</div>
+
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+<!-- APPROVAL CONFIRMATION MODAL (POINTS 4 & 5)                                   -->
+<!-- ════════════════════════════════════════════════════════════════════════════ -->
+@if (approveModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 text-center space-y-4">
+      <div class="w-14 h-14 mx-auto rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center border border-emerald-100 shadow-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <div>
+        <h3 class="text-base font-black text-gray-900 tracking-tight">
+          Approve {{ approveTarget()?.type === 'shop' ? 'Seller Store' : 'Product' }}?
+        </h3>
+        <p class="text-xs text-gray-500 mt-1">
+          Are you sure you want to approve <span class="font-bold text-gray-900">"{{ approveTarget()?.name }}"</span>?
+          @if (approveTarget()?.type === 'shop') {
+            This will activate the merchant account and allow them to start selling on the marketplace.
+          } @else {
+            This product will be published immediately and visible to all customers across the store.
+          }
+        </p>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <button 
+          type="button" 
+          (click)="closeApproveModal()"
+          class="flex-1 px-4 py-2.5 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmApprove()"
+          class="flex-1 px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-600/30 transition-all cursor-pointer">
+          Yes, Approve
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- REJECTION REASON MODAL -->
+@if (rejectModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-base font-bold text-gray-900">
+          Reject {{ rejectTarget()?.type === 'shop' ? 'Shop' : 'Product' }}
+        </h3>
+        <button (click)="closeRejectModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-xs text-gray-600">
+          Please provide a reason why <span class="font-bold text-gray-900">"{{ rejectTarget()?.name }}"</span> is being rejected. This reason will be communicated to the merchant.
+        </p>
+
+        <textarea 
+          [(ngModel)]="rejectReason"
+          rows="4" 
+          placeholder="e.g. Incomplete business documentation or copyright-infringing imagery..."
+          class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button 
+          type="button" 
+          (click)="closeRejectModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmReject()"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-xs">
+          Confirm Rejection
+        </button>
+      </div>
+    </div>
+  </div>
+}

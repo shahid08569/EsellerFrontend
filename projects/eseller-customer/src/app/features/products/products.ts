@@ -7,8 +7,8 @@ import {
   computed
 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { Router, ActivatedRoute, RouterLink, Params } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Router, ActivatedRoute, Data, Params } from '@angular/router';
+import { Subscription, combineLatest } from 'rxjs';
 
 import {
   HomeService,
@@ -59,7 +59,8 @@ export class Products implements OnInit, OnDestroy {
   readonly wishlistService = inject(WishlistService);
   readonly compareService = inject(CompareService);
 
-  private querySub: Subscription | null = null;
+  private routeSub: Subscription | null = null;
+  private productsSub: Subscription | null = null;
 
   // Data signals
   readonly products = signal<ProductListDto[]>([]);
@@ -146,11 +147,11 @@ export class Products implements OnInit, OnDestroy {
     if (min != null || max != null) {
       let label = 'Price: ';
       if (min != null && max != null) {
-        label += `Rs. ${min.toLocaleString()} – Rs. ${max.toLocaleString()}`;
+        label += `$ ${min.toLocaleString()} – $ ${max.toLocaleString()}`;
       } else if (min != null) {
-        label += `Above Rs. ${min.toLocaleString()}`;
+        label += `Above $ ${min.toLocaleString()}`;
       } else if (max != null) {
-        label += `Up to Rs. ${max.toLocaleString()}`;
+        label += `Up to $ ${max.toLocaleString()}`;
       }
       chips.push({ id: 'price', type: 'price', label });
     }
@@ -205,35 +206,52 @@ export class Products implements OnInit, OnDestroy {
   });
 
   ngOnInit(): void {
-    // Check route data for collection pages (e.g. /new-arrivals, /featured, /hot-selling, /best-selling)
-    const routeData = this.route.snapshot.data;
-    if (routeData && routeData['collection']) {
-      this.collectionType.set(routeData['collection']);
-      this.customCollectionTitle.set(routeData['title'] || null);
-      this.customCollectionSubtitle.set(routeData['subtitle'] || null);
-      if (routeData['collection'] === 'featured') {
-        this.isFeatured.set(true);
-      } else if (routeData['collection'] === 'new-arrivals') {
-        this.sortBy.set('newest');
-      } else if (routeData['collection'] === 'hot-selling' || routeData['collection'] === 'best-selling') {
-        this.sortBy.set('popular');
-      }
-    }
-
-    // 1. Fetch filter metadata (categories, brands)
     this.loadFilterMetadata();
 
-    // 2. Subscribe to query parameters
-    this.querySub = this.route.queryParams.subscribe((params) => {
-      this.syncStateFromParams(params);
-      this.loadProducts();
-    });
+    // Same Products component is reused across /featured, /hot-selling, /new-arrivals, etc.
+    // Must react to route.data changes — snapshot-only left the first collection stuck.
+    this.routeSub = combineLatest([this.route.data, this.route.queryParams]).subscribe(
+      ([data, params]) => {
+        this.applyCollectionFromRoute(data);
+        this.syncStateFromParams(params);
+        this.loadProducts();
+      }
+    );
   }
 
   ngOnDestroy(): void {
-    if (this.querySub) {
-      this.querySub.unsubscribe();
-      this.querySub = null;
+    this.routeSub?.unsubscribe();
+    this.routeSub = null;
+    this.productsSub?.unsubscribe();
+    this.productsSub = null;
+  }
+
+  private applyCollectionFromRoute(routeData: Data): void {
+    const collection =
+      (routeData['collection'] as
+        | 'new-arrivals'
+        | 'featured'
+        | 'hot-selling'
+        | 'best-selling'
+        | null
+        | undefined) || null;
+
+    this.collectionType.set(collection);
+    this.customCollectionTitle.set((routeData['title'] as string) || null);
+    this.customCollectionSubtitle.set((routeData['subtitle'] as string) || null);
+
+    if (collection === 'featured') {
+      this.isFeatured.set(true);
+      this.sortBy.set('newest');
+    } else if (collection === 'new-arrivals') {
+      this.isFeatured.set(null);
+      this.sortBy.set('newest');
+    } else if (collection === 'hot-selling' || collection === 'best-selling') {
+      this.isFeatured.set(null);
+      this.sortBy.set('popular');
+    } else {
+      // Leaving a collection page (e.g. /products) — do not keep sticky featured flag
+      this.isFeatured.set(null);
     }
   }
 
@@ -284,10 +302,14 @@ export class Products implements OnInit, OnDestroy {
 
     this.search.set(params['search'] || params['q'] || null);
     const col = this.collectionType();
+
+    // Query param can override, but must not leak featured=true onto other collections
     if (params['isFeatured'] != null) {
       this.isFeatured.set(params['isFeatured'] === 'true');
     } else if (col === 'featured') {
       this.isFeatured.set(true);
+    } else if (col) {
+      this.isFeatured.set(null);
     }
 
     if (params['sortBy']) {
@@ -307,8 +329,41 @@ export class Products implements OnInit, OnDestroy {
   // ============================================================
   loadProducts(): void {
     this.loading.set(true);
+    this.productsSub?.unsubscribe();
 
     const col = this.collectionType();
+    const limit = Math.max(this.pageSize(), 12);
+
+    // Dedicated homepage endpoints — avoid sticky isFeatured / wrong sort on reused component
+    if (col === 'hot-selling') {
+      this.productsSub = this.homeService.getHotSellingProducts(limit).subscribe({
+        next: (items) => this.applyListResult(items),
+        error: () => this.applyListResult([])
+      });
+      return;
+    }
+    if (col === 'best-selling') {
+      this.productsSub = this.homeService.getBestSellingProducts(limit).subscribe({
+        next: (items) => this.applyListResult(items),
+        error: () => this.applyListResult([])
+      });
+      return;
+    }
+    if (col === 'new-arrivals') {
+      this.productsSub = this.homeService.getNewArrivals(limit).subscribe({
+        next: (items) => this.applyListResult(items),
+        error: () => this.applyListResult([])
+      });
+      return;
+    }
+    if (col === 'featured') {
+      this.productsSub = this.homeService.getFeaturedProducts(limit).subscribe({
+        next: (res) => this.applyPagedResult(res),
+        error: () => this.applyListResult([])
+      });
+      return;
+    }
+
     const query: GetProductsQuery = {
       categoryId: this.selectedCategoryId(),
       brandId: this.selectedBrandId(),
@@ -316,27 +371,34 @@ export class Products implements OnInit, OnDestroy {
       maxPrice: this.maxPrice(),
       minRating: this.minRating(),
       search: this.search(),
-      isFeatured: col === 'featured' ? true : this.isFeatured(),
-      sortBy: (this.sortBy() as any) || (col === 'new-arrivals' ? 'newest' : col === 'hot-selling' || col === 'best-selling' ? 'popular' : 'newest'),
+      isFeatured: this.isFeatured(),
+      sortBy: (this.sortBy() as any) || 'newest',
       pageNumber: this.pageNumber(),
       pageSize: this.pageSize()
     };
 
-    this.homeService.getProducts(query).subscribe({
-      next: (res: PagedList<ProductListDto>) => {
-        this.products.set(res.items);
-        this.totalCount.set(res.totalCount);
-        this.pageNumber.set(res.pageNumber);
-        this.pageSize.set(res.pageSize);
-        this.totalPages.set(res.totalPages);
-        this.loading.set(false);
-      },
-      error: () => {
-        this.products.set([]);
-        this.totalCount.set(0);
-        this.loading.set(false);
-      }
+    this.productsSub = this.homeService.getProducts(query).subscribe({
+      next: (res: PagedList<ProductListDto>) => this.applyPagedResult(res),
+      error: () => this.applyListResult([])
     });
+  }
+
+  private applyPagedResult(res: PagedList<ProductListDto>): void {
+    this.products.set(res.items || []);
+    this.totalCount.set(res.totalCount);
+    this.pageNumber.set(res.pageNumber);
+    this.pageSize.set(res.pageSize);
+    this.totalPages.set(res.totalPages);
+    this.loading.set(false);
+  }
+
+  private applyListResult(items: ProductListDto[]): void {
+    const list = items || [];
+    this.products.set(list);
+    this.totalCount.set(list.length);
+    this.pageNumber.set(1);
+    this.totalPages.set(1);
+    this.loading.set(false);
   }
 
   // ============================================================

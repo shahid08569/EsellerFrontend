@@ -1,0 +1,269 @@
+<div class="space-y-6">
+
+  <!-- Header Banner -->
+  <div class="bg-slate-950 text-white rounded-2xl p-6 shadow-xl border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="space-y-1">
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-black text-white tracking-tight">
+          Product Warehouse (Master Catalog)
+        </h2>
+        <span class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-bold border border-slate-700">
+          Limit: {{ usedSlots() }} / {{ productLimit() }} Products
+        </span>
+      </div>
+      <p class="text-xs text-slate-400 max-w-xl">
+        All administrator-verified master warehouse products. Add products to your shop with a single click and earn a 
+        <strong class="text-emerald-400 font-extrabold">Flat 20% Commission</strong> on every sale.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2 shrink-0">
+      <a routerLink="/products" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-colors cursor-pointer">
+        View All My Products ({{ usedSlots() }} / {{ productLimit() }})
+      </a>
+    </div>
+  </div>
+
+  <!-- Search & Filter Controls -->
+  <div class="bg-white p-4 rounded-2xl border border-slate-200 shadow-xs flex flex-col sm:flex-row gap-3 items-center justify-between">
+    <!-- Search Query -->
+    <div class="relative w-full sm:w-80">
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()" 
+        (ngModelChange)="searchTerm.set($event); onFilterChange()"
+        placeholder="Search master warehouse products..."
+        class="w-full pl-3 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 transition-all"
+      />
+    </div>
+
+    <!-- Category & Brand Filters -->
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <select 
+        [ngModel]="selectedCategory()" 
+        (ngModelChange)="selectedCategory.set($event); onFilterChange()"
+        class="w-full sm:w-48 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
+        <option value="all">All Categories</option>
+        @for (cat of categories(); track cat.id) {
+          <option [value]="cat.name">{{ cat.name }}</option>
+        }
+      </select>
+
+      <select 
+        [ngModel]="selectedBrand()" 
+        (ngModelChange)="selectedBrand.set($event); onFilterChange()"
+        class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
+        <option value="all">All Brands</option>
+        @for (brand of brands(); track brand.id) {
+          <option [value]="brand.name">{{ brand.name }}</option>
+        }
+      </select>
+    </div>
+  </div>
+
+  <!-- Products Grid -->
+  @if (loading()) {
+    <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+      @for (i of [1,2,3,4,5,6,7,8]; track i) {
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 space-y-3 animate-pulse">
+          <div class="w-full h-40 bg-slate-200 rounded-xl"></div>
+          <div class="h-4 bg-slate-200 rounded w-3/4"></div>
+          <div class="h-3 bg-slate-100 rounded w-1/2"></div>
+          <div class="h-8 bg-slate-200 rounded-xl mt-2"></div>
+        </div>
+      }
+    </div>
+  } @else if (filteredProducts().length === 0) {
+    <div class="bg-white rounded-2xl border border-slate-200 p-10 text-center space-y-2">
+      <p class="text-sm font-bold text-slate-900">No matching warehouse products found</p>
+      <p class="text-xs text-slate-500">Try adjusting your filters or search keywords.</p>
+    </div>
+  } @else {
+    <div class="space-y-4">
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        @for (p of pagedProducts(); track p.id) {
+          <div class="bg-white rounded-2xl border border-slate-200 hover:border-slate-400 hover:shadow-md transition-all p-3.5 flex flex-col justify-between group">
+            
+            <!-- Thumbnail -->
+            <div class="w-full h-44 rounded-xl bg-slate-100 overflow-hidden relative mb-3">
+              <img 
+                [src]="(p.primaryImageUrl | imageUrl) || 'assets/placeholder-product.png'" 
+                [alt]="p.name" 
+                class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                (error)="$any($event.target).src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%22120%22 height=%22120%22%3E%3Crect fill=%22%23e2e8f0%22 width=%22120%22 height=%22120%22/%3E%3Ctext x=%2250%25%22 y=%2250%25%22 dominant-baseline=%22middle%22 text-anchor=%22middle%22 fill=%22%2364748b%22 font-size=%2212%22%3ENo Image%3C/text%3E%3C/svg%3E'"
+              />
+              
+              <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 text-[10px] font-bold text-white uppercase tracking-wider">
+                {{ p.categoryName || 'Warehouse' }}
+              </div>
+
+              <!-- 20% Tag -->
+              <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-emerald-600 text-white text-[10px] font-bold">
+                20% Net Commission
+              </div>
+            </div>
+
+            <!-- Product Details -->
+            <div class="space-y-1 flex-1">
+              <p class="text-[11px] font-semibold text-slate-400 truncate">{{ p.brandName || 'Verified Brand' }}</p>
+              <h4 class="text-xs font-bold text-slate-900 line-clamp-2 leading-tight">
+                {{ p.name }}
+              </h4>
+
+              <!-- Pricing -->
+              <div class="pt-2 border-t border-slate-100 space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-500">Retail Price:</span>
+                  <span class="font-extrabold text-slate-900 font-mono">$ {{ p.basePrice | number }}</span>
+                </div>
+                
+                <div class="flex items-center justify-between text-xs bg-slate-50 px-2 py-1 rounded-lg border border-slate-200/60">
+                  <span class="text-slate-700 font-bold text-[11px]">Your 20% Earning:</span>
+                  <span class="font-black text-emerald-700 font-mono text-xs">+$ {{ getCommission(p.basePrice) | number }}</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Action -->
+            <div class="pt-3 mt-2 space-y-1">
+              @if (isAddedToStore(p.id)) {
+                <div class="w-full py-2 px-3 bg-emerald-50 text-emerald-800 border border-emerald-300 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Live in Your Store
+                </div>
+              } @else if (isPendingApproval(p.id)) {
+                <div class="w-full py-2 px-3 bg-amber-50 text-amber-800 border border-amber-300 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    Approval In Progress
+                  </span>
+                  <span class="text-[10px] font-semibold text-amber-700/80">Awaiting Super Admin review</span>
+                </div>
+              } @else {
+                <button
+                  type="button"
+                  [disabled]="requestingProductId() === p.id"
+                  (click)="requestToSell(p)"
+                  class="w-full py-2 px-3 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-all flex items-center justify-center shadow-xs cursor-pointer active:scale-95 disabled:opacity-50">
+                  @if (requestingProductId() === p.id) {
+                    <span>Submitting Request…</span>
+                  } @else {
+                    <span>Request to List</span>
+                  }
+                </button>
+              }
+            </div>
+
+          </div>
+        }
+      </div>
+
+      <div class="bg-white rounded-2xl border border-slate-200 overflow-hidden">
+        <app-table-pagination
+          [page]="currentPage()"
+          [pageSize]="pageSize()"
+          [total]="filteredProducts().length"
+          [pageSizeOptions]="pageSizeOptions"
+          label="products"
+          (pageChange)="setPage($event)"
+          (pageSizeChange)="setPageSize($event)">
+        </app-table-pagination>
+      </div>
+    </div>
+  }
+
+</div>
+
+<!-- STORE VERIFICATION PENDING MODAL POPUP -->
+@if (showPendingVerificationModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 relative overflow-hidden animate-in zoom-in-95 duration-200 text-center space-y-4">
+      
+      <!-- Icon -->
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-1.5">
+        <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          Review In Progress
+        </div>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight">
+          Store Verification Pending
+        </h3>
+        <p class="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+          Your store verification is pending. You can add warehouse products to your store after Super Admin approves your verification documents.
+        </p>
+      </div>
+
+      <!-- Informational Hint Box -->
+      <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-700 text-left space-y-1">
+        <div class="font-bold text-slate-900 flex items-center gap-1">
+          <span>ℹ️</span>
+          <span>What should you do?</span>
+        </div>
+        <p class="text-slate-500 leading-snug">
+          Verifications are normally completed within 24 hours. You can track status or speak directly with the administrator in Live Support Chat.
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="grid grid-cols-2 gap-2.5 pt-2">
+        <button 
+          type="button" 
+          (click)="closePendingVerificationModal()"
+          class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer">
+          Understood
+        </button>
+        <button 
+          type="button" 
+          (click)="contactSupport()"
+          class="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+          <span>Live Support</span>
+          <span>&rarr;</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- LISTING REQUEST SUBMITTED -->
+@if (requestSuccessProduct()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center space-y-4">
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="space-y-1.5">
+        <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          Approval In Progress
+        </div>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight">Listing Request Submitted</h3>
+        <p class="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+          <span class="font-bold text-slate-900">“{{ requestSuccessProduct()!.name }}”</span>
+          has been sent to Super Admin. It goes
+          <span class="font-bold text-emerald-700">Live in Your Store</span>
+          after approval.
+        </p>
+      </div>
+      <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-600 text-left space-y-1.5">
+        <p class="font-bold text-slate-900">Status timeline</p>
+        <p>1. Request submitted ✓</p>
+        <p>2. Approval in progress…</p>
+        <p>3. Approved → active on your shop</p>
+      </div>
+      <button type="button" (click)="closeRequestSuccessModal()"
+        class="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl cursor-pointer">
+        Got it
+      </button>
+    </div>
+  </div>
+}

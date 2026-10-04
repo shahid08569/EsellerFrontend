@@ -1,0 +1,280 @@
+<div class="space-y-5">
+  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
+    <div>
+      <h1 class="text-xl font-black text-gray-900 tracking-tight">Homepage Showcase</h1>
+      <p class="text-xs text-gray-500 mt-1 font-medium">
+        Add Featured, Hot Selling, and Flash Sale products for the customer storefront — managed here.
+      </p>
+    </div>
+    <a routerLink="/categories" class="text-xs font-bold text-orange-600 hover:text-orange-700">
+      Homepage Categories →
+    </a>
+  </div>
+
+  <div class="flex flex-wrap gap-2">
+    @for (t of [
+      { id: 'catalog', label: 'All Catalog' },
+      { id: 'featured', label: 'Featured' },
+      { id: 'hot', label: 'Hot Selling' },
+      { id: 'flash', label: 'Flash Sales' }
+    ]; track t.id) {
+      <button type="button" (click)="setTab($any(t.id))"
+        class="px-3 py-1.5 rounded-xl text-xs font-bold border cursor-pointer transition-colors"
+        [class.bg-orange-600]="activeTab() === t.id"
+        [class.text-white]="activeTab() === t.id"
+        [class.border-orange-600]="activeTab() === t.id"
+        [class.bg-white]="activeTab() !== t.id"
+        [class.text-gray-700]="activeTab() !== t.id"
+        [class.border-gray-200]="activeTab() !== t.id">
+        {{ t.label }}
+      </button>
+    }
+  </div>
+
+  @if (activeTab() !== 'flash') {
+    <div class="flex flex-wrap items-center justify-between gap-3">
+      <div class="max-w-sm w-full sm:w-auto">
+        <input type="text" [ngModel]="searchTerm()" (ngModelChange)="onSearchChange($event)"
+          placeholder="Search products…"
+          class="w-full bg-white border border-gray-200 text-xs rounded-xl px-3.5 py-2.5 font-medium focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+      </div>
+
+      @if (selectedCount() > 0) {
+        <div class="flex items-center gap-1.5 flex-wrap bg-orange-50 border border-orange-200 rounded-xl px-3 py-2">
+          <span class="text-[11px] font-bold text-orange-800 mr-1">{{ selectedCount() }} selected</span>
+          <button type="button" (click)="bulkAddFeatured()" [disabled]="isBulkBusy()"
+            class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-emerald-600 hover:bg-emerald-700 text-white cursor-pointer disabled:opacity-50">
+            {{ isBulkBusy() ? 'Working…' : 'Add to Featured' }}
+          </button>
+          <button type="button" (click)="bulkRemoveFeatured()" [disabled]="isBulkBusy()"
+            class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 cursor-pointer disabled:opacity-50">
+            Remove Featured
+          </button>
+          <button type="button" (click)="bulkAddHotSelling()" [disabled]="isBulkBusy()"
+            class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-amber-500 hover:bg-amber-600 text-white cursor-pointer disabled:opacity-50">
+            {{ isBulkBusy() ? 'Working…' : 'Add Hot Selling' }}
+          </button>
+          <button type="button" (click)="bulkRemoveHotSelling()" [disabled]="isBulkBusy()"
+            class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold bg-rose-50 border border-rose-200 hover:bg-rose-100 text-rose-700 cursor-pointer disabled:opacity-50">
+            Remove Hot Selling
+          </button>
+          <button type="button" (click)="clearSelection()"
+            class="px-2 py-1.5 rounded-lg text-[11px] font-bold text-gray-500 hover:bg-gray-100 cursor-pointer">
+            Clear
+          </button>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- FLASH SALES TAB -->
+  @if (activeTab() === 'flash') {
+    <div class="flex items-center justify-between gap-3">
+      <p class="text-xs text-gray-500 font-medium">Create a flash sale and attach catalog products directly.</p>
+      <button type="button" (click)="openFlashForm()"
+        class="px-3.5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer">
+        + New Flash Sale
+      </button>
+    </div>
+
+    @if (flashFormOpen()) {
+      <div class="bg-white border border-orange-200 rounded-2xl p-5 space-y-4 shadow-sm">
+        <h3 class="text-sm font-black text-gray-900">Create Flash Sale</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div class="sm:col-span-2">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Campaign name *</label>
+            <input type="text" [ngModel]="fTitle()" (ngModelChange)="fTitle.set($event)"
+              placeholder="e.g. Weekend Mega Deal"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden" />
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Discount % *</label>
+            <input type="number" min="1" max="90" [ngModel]="fDiscount()" (ngModelChange)="fDiscount.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden" />
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Start</label>
+              <input type="datetime-local" [ngModel]="fStart()" (ngModelChange)="fStart.set($event)"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 text-xs outline-hidden" />
+            </div>
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">End</label>
+              <input type="datetime-local" [ngModel]="fEnd()" (ngModelChange)="fEnd.set($event)"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-2 py-2 text-xs outline-hidden" />
+            </div>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">
+            Products * <span class="text-gray-400 font-medium">({{ selectedFlashIds().length }} selected)</span>
+          </label>
+          <div class="max-h-56 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-50">
+            @for (p of products(); track p.id) {
+              <label class="flex items-center gap-3 px-3 py-2 text-xs cursor-pointer hover:bg-orange-50/50">
+                <input type="checkbox"
+                  [checked]="selectedFlashIds().includes(p.id)"
+                  (change)="toggleFlashProduct(p.id)"
+                  class="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+                @if (coverSrc(p.coverImageUrl); as img) {
+                  <img [src]="img" class="w-8 h-8 rounded-lg object-cover border border-gray-100" alt="" />
+                }
+                <span class="font-bold text-gray-800 truncate flex-1">{{ p.name }}</span>
+                <span class="text-gray-500 shrink-0">$ {{ p.basePrice | number:'1.0-0' }}</span>
+              </label>
+            } @empty {
+              <p class="p-4 text-center text-gray-400 text-xs">No catalog products available.</p>
+            }
+          </div>
+        </div>
+
+        <div class="flex justify-end gap-2 pt-2 border-t border-gray-100">
+          <button type="button" (click)="flashFormOpen.set(false)"
+            class="px-3 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
+          <button type="button" (click)="saveFlashSale()" [disabled]="isSavingFlash()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white cursor-pointer disabled:opacity-50">
+            {{ isSavingFlash() ? 'Saving…' : 'Launch Flash Sale' }}
+          </button>
+        </div>
+      </div>
+    }
+
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-xs text-gray-400 font-bold">Loading…</div>
+      } @else if (flashSales().length === 0) {
+        <div class="p-12 text-center">
+          <p class="text-sm font-bold text-gray-700">No flash sales yet</p>
+          <p class="text-xs text-gray-400 mt-1">Click “New Flash Sale” and pick products from the list.</p>
+        </div>
+      } @else {
+        <div class="divide-y divide-gray-50">
+          @for (f of flashSales(); track f.id) {
+            <div class="px-5 py-4 flex items-center justify-between gap-3">
+              <div>
+                <p class="text-sm font-bold text-gray-900">{{ f.name || f.title || 'Flash Sale' }}</p>
+                <p class="text-[11px] text-gray-400 font-medium mt-0.5">
+                  {{ f.startDate | date:'mediumDate' }} → {{ f.endDate | date:'mediumDate' }}
+                  @if (f.productCount != null) { · {{ f.productCount }} products }
+                </p>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-[10px] font-bold uppercase px-2 py-1 rounded-lg"
+                  [class.bg-emerald-50]="f.isActive !== false"
+                  [class.text-emerald-700]="f.isActive !== false"
+                  [class.bg-slate-50]="f.isActive === false"
+                  [class.text-slate-500]="f.isActive === false">
+                  {{ f.isActive !== false ? 'Live' : 'Ended' }}
+                </span>
+                <button type="button" (click)="deleteFlashSale(f.id)"
+                  class="text-[11px] font-bold text-rose-600 hover:bg-rose-50 px-2 py-1 rounded-lg cursor-pointer">Delete</button>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- PRODUCT TABLES -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-xs text-gray-400 font-bold">Loading…</div>
+      } @else if (filteredProducts().length === 0) {
+        <div class="p-12 text-center text-xs text-gray-400 font-bold">
+          @if (activeTab() === 'featured') {
+            No featured products — open All Catalog and click “Add to Featured”.
+          } @else if (activeTab() === 'hot') {
+            No hot selling pins — open All Catalog and click “Add to Hot Selling”.
+          } @else {
+            No products found.
+          }
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead>
+              <tr class="bg-slate-900 text-white text-[11px] uppercase tracking-wider">
+                <th class="py-3 px-4 w-10 text-center">
+                  <input type="checkbox" [checked]="isAllPageSelected()" (change)="toggleSelectAllOnPage()"
+                    title="Select / Deselect all on page"
+                    class="w-3.5 h-3.5 rounded text-orange-600 focus:ring-orange-500 border-gray-400 cursor-pointer accent-orange-600" />
+                </th>
+                <th class="py-3 px-4">Product</th>
+                <th class="py-3 px-4">Price</th>
+                <th class="py-3 px-4 text-center">Featured</th>
+                <th class="py-3 px-4 text-center">Hot Selling</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (p of pagedProducts(); track p.id) {
+                <tr class="hover:bg-slate-50/80" [class.bg-orange-50]="isProductSelected(p.id)">
+                  <td class="py-3 px-4 text-center">
+                    <input type="checkbox" [checked]="isProductSelected(p.id)" (change)="toggleSelectProduct(p.id)"
+                      class="w-3.5 h-3.5 rounded text-orange-600 focus:ring-orange-500 border-gray-300 cursor-pointer accent-orange-600" />
+                  </td>
+                  <td class="py-3 px-4">
+                    <div class="flex items-center gap-3">
+                      <div class="w-11 h-11 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                        @if (coverSrc(p.coverImageUrl); as img) {
+                          <img [src]="img" [alt]="p.name" class="w-full h-full object-cover" />
+                        }
+                      </div>
+                      <div>
+                        <p class="font-bold text-gray-900">{{ p.name }}</p>
+                        <p class="text-[10px] text-gray-400 font-mono">{{ p.slug }}</p>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-4 font-bold text-gray-800">$ {{ p.basePrice | number:'1.0-0' }}</td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
+                      [class.bg-emerald-50]="p.isFeatured" [class.text-emerald-700]="p.isFeatured" [class.border-emerald-200]="p.isFeatured"
+                      [class.bg-slate-50]="!p.isFeatured" [class.text-slate-500]="!p.isFeatured" [class.border-slate-200]="!p.isFeatured">
+                      {{ p.isFeatured ? 'Yes' : 'No' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-center">
+                    <span class="px-2 py-0.5 rounded-lg text-[10px] font-bold border"
+                      [class.bg-amber-50]="p.isHotSelling" [class.text-amber-700]="p.isHotSelling" [class.border-amber-200]="p.isHotSelling"
+                      [class.bg-slate-50]="!p.isHotSelling" [class.text-slate-500]="!p.isHotSelling" [class.border-slate-200]="!p.isHotSelling">
+                      {{ p.isHotSelling ? 'Yes' : 'No' }}
+                    </span>
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    <div class="inline-flex flex-wrap justify-end gap-1.5">
+                      <button type="button" (click)="toggleFeatured(p)" [disabled]="busyId() === p.id"
+                        class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border cursor-pointer disabled:opacity-50"
+                        [class.bg-orange-50]="!p.isFeatured" [class.text-orange-700]="!p.isFeatured" [class.border-orange-200]="!p.isFeatured"
+                        [class.bg-rose-50]="p.isFeatured" [class.text-rose-700]="p.isFeatured" [class.border-rose-200]="p.isFeatured">
+                        {{ p.isFeatured ? 'Remove Featured' : 'Add to Featured' }}
+                      </button>
+                      <button type="button" (click)="toggleHotSelling(p)" [disabled]="busyId() === p.id"
+                        class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border cursor-pointer disabled:opacity-50"
+                        [class.bg-amber-50]="!p.isHotSelling" [class.text-amber-800]="!p.isHotSelling" [class.border-amber-200]="!p.isHotSelling"
+                        [class.bg-rose-50]="p.isHotSelling" [class.text-rose-700]="p.isHotSelling" [class.border-rose-200]="p.isHotSelling">
+                        {{ p.isHotSelling ? 'Remove Hot Selling' : 'Add to Hot Selling' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- PAGINATION CONTROLS -->
+        <app-table-pagination
+          [page]="currentPage()"
+          [pageSize]="pageSize()"
+          [total]="filteredProducts().length"
+          [pageSizeOptions]="pageSizeOptions"
+          label="products"
+          (pageChange)="setPage($event)"
+          (pageSizeChange)="setPageSize($event)">
+        </app-table-pagination>
+      }
+    </div>
+  }
+</div>

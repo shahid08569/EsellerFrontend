@@ -156,7 +156,7 @@ export class Register implements OnInit {
     this.authService
       .registerCustomer({
         name: valName,
-        email: valEmail,
+        email: valEmail.toLowerCase(),
         phone: fullPhone,
         password: valPassword
       })
@@ -205,15 +205,36 @@ export class Register implements OnInit {
         },
         error: (err) => {
           this.isSubmitting.set(false);
-          const code = err?.error?.errorCode || err?.error || '';
-          let message = 'Registration could not be completed. Please check your details.';
+          // ApiService/errorInterceptor already normalises to { error, errorCode, errors? }
+          const code = err?.errorCode || '';
+          const fieldErrors = err?.errors as Record<string, string[]> | undefined;
 
-          if (code === 'EMAIL_TAKEN') {
+          if (fieldErrors) {
+            const map: Record<string, (msg: string) => void> = {
+              name: (m) => this.nameError.set(m),
+              email: (m) => this.emailError.set(m),
+              phone: (m) => this.phoneError.set(m),
+              password: (m) => this.passwordError.set(m),
+              confirmpassword: (m) => this.confirmPasswordError.set(m)
+            };
+            for (const [key, msgs] of Object.entries(fieldErrors)) {
+              const msg = msgs?.[0];
+              if (!msg) continue;
+              const setter = map[key.toLowerCase()];
+              if (setter) setter(msg);
+            }
+          }
+
+          let message = err?.error || 'Registration could not be completed. Please check your details.';
+
+          if (code === 'EMAIL_TAKEN' || String(message).toLowerCase().includes('already registered')) {
             message = 'An account with this email address already exists. Please sign in instead.';
+            this.emailError.set(message);
           } else if (code === 'LOCATION_REQUIRED') {
-            message = 'Location authorization is required for account security.';
-          } else if (err?.message && !err?.message.includes('Http failure')) {
-            message = err.message;
+            message = 'Location authorization is required for account security. Allow location and try again.';
+          } else if (code === 'VALIDATION_ERROR' && fieldErrors) {
+            const first = Object.values(fieldErrors).flat()[0];
+            if (first) message = first;
           }
 
           this.errorMessage.set(message);

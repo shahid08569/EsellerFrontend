@@ -62,9 +62,13 @@ export class CategoriesList implements OnInit {
 
   getImageUrl(url: string | null | undefined): string | null {
     if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : '';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:') || url.startsWith('blob:')) {
+      return url;
+    }
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '');
     const path = url.startsWith('/') ? url : `/${url}`;
     if (path.startsWith('/uploads/')) return `${host}${path}`;
     return `${host}/uploads${path}`;

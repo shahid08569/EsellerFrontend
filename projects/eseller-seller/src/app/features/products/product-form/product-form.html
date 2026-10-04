@@ -1,103 +1,294 @@
-<div class="max-w-4xl mx-auto space-y-6">
+<div class="max-w-5xl mx-auto space-y-6">
   
-  <div class="flex items-center gap-4">
-    <a routerLink=".." class="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-sm">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
-    </a>
-    <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Add New Product</h1>
-      <p class="text-sm text-gray-500 mt-0.5">List a new item in your store.</p>
+  <!-- Top Navigation & Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div class="flex items-center gap-3.5">
+      <a routerLink="/products" class="w-10 h-10 bg-white border border-gray-200 rounded-full flex items-center justify-center text-gray-500 hover:text-gray-900 hover:bg-gray-50 transition-colors shadow-xs cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+        </svg>
+      </a>
+      <div>
+        <h1 class="text-2xl font-black text-gray-900 tracking-tight">
+          {{ isEditMode() ? 'Edit Product' : 'Add New Product' }}
+        </h1>
+        <p class="text-xs text-gray-500 mt-0.5">
+          {{ isEditMode() ? 'Update existing product information, pricing, and media.' : 'Multi-step guided wizard to list a product with media, pricing, and variants.' }}
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <span class="text-xs font-bold text-gray-400">Step {{ currentStep() }} of 4:</span>
+      <span class="px-3 py-1 rounded-full text-xs font-bold bg-indigo-50 text-primary border border-indigo-100">
+        {{ steps[currentStep() - 1].label }}
+      </span>
     </div>
   </div>
 
-  <form (ngSubmit)="onSubmit()" novalidate>
-    <fieldset [disabled]="isSubmitting()" class="contents disabled:opacity-60 disabled:cursor-wait">
-      
-      <div class="grid lg:grid-cols-3 gap-6">
-        <!-- Left Column: Main Info -->
-        <div class="lg:col-span-2 space-y-6">
-          
-          <!-- Basic Info Card -->
-          <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm shadow-gray-200/50 space-y-4">
-            <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Basic Information</h2>
+  @if (isLoadingProduct() || isLoadingShop()) {
+    <div class="bg-white rounded-2xl border border-gray-100 p-12 text-center animate-pulse space-y-4 shadow-sm">
+      <div class="h-4 bg-gray-200 rounded w-1/3 mx-auto"></div>
+      <div class="h-10 bg-gray-200 rounded-xl max-w-md mx-auto"></div>
+      <div class="h-32 bg-gray-200 rounded-xl max-w-md mx-auto"></div>
+    </div>
+  } @else {
+    
+    <!-- STEPPER PROGRESS TABS (TOP BAR) -->
+    <div class="bg-white border border-gray-100 rounded-2xl p-3 sm:p-4 shadow-sm">
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+        @for (s of steps; track s.number) {
+          <button 
+            type="button" 
+            (click)="goToStep(s.number)"
+            class="flex items-center gap-3 p-2.5 rounded-xl transition-all cursor-pointer text-left"
+            [class.bg-indigo-50]="currentStep() === s.number"
+            [class.border]="currentStep() === s.number"
+            [class.border-indigo-100]="currentStep() === s.number"
+            [class.hover:bg-gray-50]="currentStep() !== s.number">
             
-            <div>
-              <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Product Title <span class="text-rose-500">*</span></label>
-              <input type="text" [ngModel]="name()" (ngModelChange)="name.set($event)" name="name" placeholder="e.g. Mens Cotton T-Shirt" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-              @if (nameError()) { <p class="text-[11px] text-rose-500 mt-1 font-bold">{{ nameError() }}</p> }
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Full Description</label>
-              <textarea [ngModel]="description()" (ngModelChange)="description.set($event)" name="description" rows="5" placeholder="Detailed product description, features, and specifications..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
-            </div>
-          </div>
-
-          <!-- Pricing -->
-          <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm shadow-gray-200/50 space-y-4">
-            <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Pricing</h2>
-            
-            <div class="w-full sm:w-1/2">
-              <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Base Price (Rs) <span class="text-rose-500">*</span></label>
-              <input type="number" [ngModel]="basePrice()" (ngModelChange)="basePrice.set($event)" name="basePrice" placeholder="0.00" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-              @if (priceError()) { <p class="text-[11px] text-rose-500 mt-1 font-bold">{{ priceError() }}</p> }
-            </div>
-            <p class="text-xs text-gray-400">You can manage specific variant prices and stock amounts in the next steps after product creation.</p>
-          </div>
-
-        </div>
-
-        <!-- Right Column: Organization & Status -->
-        <div class="space-y-6">
-          
-          <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm shadow-gray-200/50 space-y-4">
-            <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">Organization</h2>
-            
-            <div>
-              <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Category <span class="text-rose-500">*</span></label>
-              <select [ngModel]="categoryId()" (ngModelChange)="categoryId.set($event)" name="categoryId" class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-                <option value="" disabled>Select a category...</option>
-                @for (cat of categories(); track cat.id) {
-                  <option [value]="cat.id">{{ cat.name }}</option>
-                }
-              </select>
-              @if (categoryError()) { <p class="text-[11px] text-rose-500 mt-1 font-bold">{{ categoryError() }}</p> }
-            </div>
-          </div>
-          
-          <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm shadow-gray-200/50 space-y-4">
-            <h2 class="text-base font-bold text-gray-900 border-b border-gray-100 pb-2">SEO (Optional)</h2>
-            
-            <div>
-              <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">SEO Title</label>
-              <input type="text" [ngModel]="seoTitle()" (ngModelChange)="seoTitle.set($event)" name="seoTitle" placeholder="Search engine friendly title..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">SEO Description</label>
-              <textarea [ngModel]="seoDescription()" (ngModelChange)="seoDescription.set($event)" name="seoDescription" rows="3" placeholder="Meta description for search engines..." class="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-sm focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"></textarea>
-            </div>
-          </div>
-
-          <!-- Actions -->
-          <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm shadow-gray-200/50 space-y-3">
-            <button type="submit" class="w-full py-2.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-sm transition-all flex items-center justify-center gap-2">
-              @if (isSubmitting()) {
-                <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
-                Saving...
+            <!-- Step Number Badge -->
+            <div 
+              class="w-8 h-8 rounded-lg flex items-center justify-center text-xs font-black shrink-0 transition-colors shadow-2xs"
+              [class.bg-primary]="currentStep() === s.number"
+              [class.text-white]="currentStep() === s.number"
+              [class.bg-emerald-600]="currentStep() > s.number"
+              [class.text-white]="currentStep() > s.number"
+              [class.bg-gray-100]="currentStep() < s.number"
+              [class.text-gray-500]="currentStep() < s.number">
+              @if (currentStep() > s.number) {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd" />
+                </svg>
               } @else {
-                <span>💾</span> Save Product
+                {{ s.number }}
               }
-            </button>
-            <a routerLink=".." class="w-full py-2.5 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all flex items-center justify-center text-center">
-              Cancel
-            </a>
-          </div>
+            </div>
 
-        </div>
+            <!-- Step Label -->
+            <div class="min-w-0">
+              <p class="text-[10px] font-bold uppercase tracking-wider text-gray-400">Step {{ s.number }}</p>
+              <p class="text-xs font-black truncate"
+                 [class.text-primary]="currentStep() === s.number"
+                 [class.text-gray-900]="currentStep() !== s.number">
+                {{ s.label }}
+              </p>
+            </div>
+          </button>
+        }
       </div>
+    </div>
+
+    <!-- ACTIVE STEP COMPONENT BODY -->
+    <div>
+      @if (currentStep() === 1) {
+        <app-step-basic
+          [isEditMode]="isEditMode()"
+          [primaryImageUrl]="primaryImageUrl()"
+          [existingImagesCount]="existingImages().length"
+          (jumpToMedia)="goToStep(2)"
+          [name]="name()"
+          (nameChange)="name.set($event)"
+          [description]="description()"
+          (descriptionChange)="description.set($event)"
+          [basePrice]="basePrice()"
+          (basePriceChange)="basePrice.set($event)"
+          [categoryId]="categoryId()"
+          (categoryIdChange)="categoryId.set($event)"
+          [brandId]="brandId()"
+          (brandIdChange)="brandId.set($event)"
+          [seoTitle]="seoTitle()"
+          (seoTitleChange)="seoTitle.set($event)"
+          [seoDescription]="seoDescription()"
+          (seoDescriptionChange)="seoDescription.set($event)"
+          [categories]="categories()"
+          [brands]="brands()"
+          [nameError]="nameError()"
+          [priceError]="priceError()"
+          [categoryError]="categoryError()"
+        ></app-step-basic>
+      }
+
+      @if (currentStep() === 2) {
+        <app-step-media
+          [isEditMode]="isEditMode()"
+          [queuedImages]="queuedImages()"
+          [existingImages]="existingImages()"
+          [isLoadingImages]="isLoadingImages()"
+          [isUploadingNewImage]="isUploadingNewImage()"
+          (filesQueued)="onFilesQueued($event)"
+          (removeQueued)="onRemoveQueued($event)"
+          (clearAllQueued)="onClearAllQueued()"
+          (reorderCover)="onReorderCover($event)"
+          (directUploadFile)="onDirectUploadFile($event)"
+          (deleteExistingImage)="promptDeleteImage($event)"
+        ></app-step-media>
+      }
+
+      @if (currentStep() === 3) {
+        <app-step-variants
+          [hasVariants]="hasVariants()"
+          (hasVariantsChange)="hasVariants.set($event)"
+          [defaultPrice]="basePrice()"
+          [baseSkuPrefix]="name()"
+          [variants]="variants()"
+          (variantsChange)="variants.set($event)"
+        ></app-step-variants>
+      }
+
+      @if (currentStep() === 4) {
+        <app-step-review
+          [name]="name()"
+          [description]="description()"
+          [basePrice]="basePrice()"
+          [categoryName]="selectedCategoryName()"
+          [brandName]="selectedBrandName()"
+          [seoTitle]="seoTitle()"
+          [seoDescription]="seoDescription()"
+          [queuedImages]="queuedImages()"
+          [existingImages]="existingImages()"
+          [hasVariants]="hasVariants()"
+          [variants]="variants()"
+          (jumpToStep)="goToStep($event)"
+        ></app-step-review>
+      }
+    </div>
+
+    <!-- STEPPER FOOTER NAVIGATION ACTIONS -->
+    <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
       
-    </fieldset>
-  </form>
+      <!-- Back Button -->
+      <div>
+        @if (currentStep() > 1) {
+          <button 
+            type="button" 
+            (click)="prevStep()" 
+            [disabled]="isSubmitting()"
+            class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-all flex items-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 19.5L3 12m0 0l7.5-7.5M3 12h18" />
+            </svg>
+            Previous: {{ steps[currentStep() - 2].label }}
+          </button>
+        } @else {
+          <a routerLink="/products" class="px-5 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-500 font-bold text-xs rounded-xl transition-all inline-block cursor-pointer">
+            Cancel & Exit
+          </a>
+        }
+      </div>
+
+      <!-- Forward / Publish Button -->
+      <div class="flex items-center gap-3 w-full sm:w-auto">
+        @if (currentStep() < 4) {
+          <button 
+            type="button" 
+            (click)="nextStep()" 
+            class="w-full sm:w-auto px-6 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-md shadow-primary/25 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95">
+            <span class="text-white font-bold">Save & Continue to {{ steps[currentStep()].label }}</span>
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+            </svg>
+          </button>
+        } @else {
+          <button 
+            type="button" 
+            (click)="onFinalSubmit()" 
+            [disabled]="isSubmitting() || !currentShopId()"
+            class="w-full sm:w-auto px-8 py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-sm rounded-xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-95 disabled:opacity-50">
+            @if (isSubmitting()) {
+              <svg class="animate-spin w-5 h-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+              </svg>
+              <span class="text-white font-bold">{{ submittingStep() }}</span>
+            } @else {
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+              </svg>
+              <span class="text-white font-bold">
+                {{ isEditMode() ? 'Save & Update Product' : 'Publish Product Listing' }}
+              </span>
+            }
+          </button>
+        }
+      </div>
+
+    </div>
+
+  }
 
 </div>
+
+<!-- Delete Image Confirmation Modal (Closes on backdrop click) -->
+<app-confirm-modal
+  [isOpen]="!!imageToDelete()"
+  title="Delete Product Image?"
+  message="Are you sure you want to remove this photo from the product listing? This action cannot be reversed."
+  type="danger"
+  confirmText="Delete Image"
+  [isProcessing]="isDeletingImage()"
+  (confirmed)="confirmDeleteImage()"
+  (cancelled)="cancelDeleteImage()"
+></app-confirm-modal>
+
+<!-- Success Celebration Modal (Closes on backdrop click) -->
+@if (savedProduct()) {
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 backdrop-blur-xl p-4 transition-all duration-300"
+    (click)="closeSuccessModal()">
+    
+    <div 
+      class="bg-white rounded-[28px] border border-slate-100 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.3)] max-w-md w-full p-6 sm:p-8 text-center space-y-5 relative overflow-hidden animate-in zoom-in-95 duration-200"
+      (click)="$event.stopPropagation()">
+      
+      <!-- Top Glow Accent -->
+      <div class="absolute top-0 left-0 right-0 h-1.5 bg-emerald-500"></div>
+
+      <!-- Icon -->
+      <div class="w-20 h-20 rounded-3xl bg-emerald-600 text-white flex items-center justify-center mx-auto shadow-lg shadow-emerald-600/30 ring-8 ring-emerald-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
+        </svg>
+      </div>
+
+      <!-- Title & Text -->
+      <div class="space-y-1">
+        <h3 class="text-2xl font-black text-gray-900 tracking-tight">
+          {{ savedProduct()?.isEdit ? 'Product Updated!' : 'Product Published!' }}
+        </h3>
+        <p class="text-sm text-gray-500 font-medium">
+          "<span class="text-gray-900 font-bold">{{ savedProduct()?.name }}</span>" is now active in your storefront catalog.
+        </p>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="space-y-2 pt-2">
+        <button 
+          type="button" 
+          (click)="goToVariants()" 
+          class="w-full py-3.5 px-4 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-md shadow-primary/30 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-98">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.324.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 011.37.49l1.296 2.247a1.125 1.125 0 01-.26 1.431l-1.003.827c-.293.24-.438.613-.431.992a6.759 6.759 0 010 .255c-.007.378.138.75.43.99l1.005.828c.424.35.534.954.26 1.43l-1.298 2.247a1.125 1.125 0 01-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.57 6.57 0 01-.22.128c-.331.183-.581.495-.644.869l-.213 1.28c-.09.543-.56.941-1.11.941h-2.594c-.55 0-1.02-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 01-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 01-1.369-.49l-1.297-2.247a1.125 1.125 0 01.26-1.431l1.004-.827c.292-.24.437-.613.43-.992a6.932 6.932 0 010-.255c.007-.378-.138-.75-.43-.99l-1.004-.828a1.125 1.125 0 01-.26-1.43l1.297-2.247a1.125 1.125 0 011.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.087.22-.128.332-.183.582-.495.644-.869l.214-1.281z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+          <span class="text-white font-bold">Manage Variants & Stock</span>
+        </button>
+
+        <button 
+          type="button" 
+          (click)="goToCatalog()" 
+          class="w-full py-3 px-4 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-sm rounded-xl transition-all cursor-pointer">
+          Go to Product Catalog
+        </button>
+
+        <button 
+          type="button" 
+          (click)="resetForNewProduct()" 
+          class="w-full py-2.5 px-4 text-primary hover:underline font-bold text-xs transition-all cursor-pointer">
+          + Add Another Product
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

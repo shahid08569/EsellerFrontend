@@ -1,0 +1,176 @@
+<!-- FLOATING STATIC CHAT ICON ON BOTTOM-RIGHT -->
+<div class="fixed bottom-6 right-6 z-50 select-none">
+  
+  <!-- Floating Eseller Support Button -->
+  <button
+    type="button"
+    (click)="toggleChat()"
+    title="Live Chat with Super Admin"
+    class="w-14 h-14 rounded-full bg-slate-900 hover:bg-slate-800 text-white shadow-xl flex items-center justify-center transition-all duration-300 transform hover:scale-105 active:scale-95 cursor-pointer relative border-2 border-white">
+    
+    @if (!isOpen()) {
+      <!-- Eseller chat bubble icon -->
+      <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.898-.992l.966-2.22A8.17 8.17 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
+      </svg>
+    } @else {
+      <!-- Close icon -->
+      <svg class="w-6 h-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12" />
+      </svg>
+    }
+
+    <!-- Unread Badge -->
+    @if (!isOpen() && unreadCount() > 0) {
+      <span class="absolute -top-1 -right-1 bg-red-600 text-white font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-bounce">
+        {{ unreadCount() }}
+      </span>
+    }
+  </button>
+
+  <!-- WHATSAPP FLOATING CHAT WINDOW -->
+  @if (isOpen()) {
+    <div class="absolute bottom-16 right-0 w-[340px] sm:w-[380px] h-[520px] bg-slate-100 rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden animate-in slide-in-from-bottom-5 duration-200 z-50">
+      
+      <!-- WhatsApp Header -->
+      <div class="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between shrink-0 shadow-md">
+        <div class="flex items-center gap-3">
+          <!-- Super Admin Avatar -->
+          <div class="relative w-10 h-10 rounded-full bg-emerald-700 border border-emerald-400 flex items-center justify-center font-black text-sm shrink-0">
+            <span>👑</span>
+            <span class="absolute bottom-0 right-0 w-3 h-3 bg-[#25D366] border-2 border-[#075E54] rounded-full"></span>
+          </div>
+          <div>
+            <h3 class="font-extrabold text-sm tracking-tight leading-none text-white">
+              Super Admin Support
+            </h3>
+            <p class="text-[11px] text-emerald-200 mt-0.5 flex items-center gap-1 font-medium">
+              <span class="w-1.5 h-1.5 rounded-full bg-[#25D366]"></span>
+              <span>Online • Verification &amp; Tiers</span>
+            </p>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-1">
+          <button 
+            type="button" 
+            (click)="closeChat()" 
+            class="p-1.5 rounded-lg hover:bg-white/10 text-emerald-100 hover:text-white transition-colors cursor-pointer text-sm">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Quick Action Chips (Tiers & Payment) -->
+      <div class="bg-[#128C7E] px-3 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 border-t border-emerald-600/40">
+        <button
+          type="button"
+          (click)="sendQuickAction('gold')"
+          class="px-2.5 py-1 rounded-full bg-amber-400 hover:bg-amber-300 text-slate-900 font-extrabold text-[10px] whitespace-nowrap shadow-xs cursor-pointer transition-colors flex items-center gap-1">
+          <span>🥇</span>
+          <span>Gold Elite ($100)</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="sendQuickAction('diamond')"
+          class="px-2.5 py-1 rounded-full bg-cyan-400 hover:bg-cyan-300 text-slate-900 font-extrabold text-[10px] whitespace-nowrap shadow-xs cursor-pointer transition-colors flex items-center gap-1">
+          <span>💎</span>
+          <span>Diamond VIP ($150)</span>
+        </button>
+
+        <button
+          type="button"
+          (click)="sendQuickAction('payment')"
+          class="px-2.5 py-1 rounded-full bg-white/20 hover:bg-white/30 text-white font-bold text-[10px] whitespace-nowrap shadow-xs cursor-pointer transition-colors">
+          💳 Payment Slip
+        </button>
+      </div>
+
+      <!-- WhatsApp Messages Body -->
+      <div 
+        #messagesContainer
+        class="flex-1 overflow-y-auto p-3.5 space-y-3 bg-[#E5DDD5] whatsapp-bg">
+        
+        <!-- Welcome Security Notice -->
+        <div class="text-center my-1">
+          <span class="bg-[#FCF4CB] text-[#554D31] text-[10px] font-semibold px-3 py-1 rounded-lg shadow-2xs inline-block max-w-[90%] border border-amber-200">
+            🔒 Official End-to-End Encrypted Support Channel between Store &amp; Super Admin
+          </span>
+        </div>
+
+        @for (msg of messages(); track msg.id) {
+          <div 
+            class="flex flex-col"
+            [class.items-end]="msg.sender === 'seller'"
+            [class.items-start]="msg.sender === 'admin'">
+            
+            <div 
+              class="max-w-[85%] rounded-2xl px-3.5 py-2 shadow-xs text-xs relative break-words"
+              [class.bg-[#DCF8C6]]="msg.sender === 'seller'"
+              [class.text-slate-900]="msg.sender === 'seller'"
+              [class.rounded-tr-none]="msg.sender === 'seller'"
+              [class.bg-white]="msg.sender === 'admin'"
+              [class.text-slate-900]="msg.sender === 'admin'"
+              [class.rounded-tl-none]="msg.sender === 'admin'">
+              
+              @if (msg.sender === 'admin') {
+                <div class="text-[10px] font-extrabold text-[#075E54] mb-0.5">
+                  {{ msg.senderName }}
+                </div>
+              }
+
+              <p class="leading-relaxed whitespace-pre-wrap">{{ msg.message }}</p>
+
+              <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-400">
+                <span>{{ msg.timestamp }}</span>
+                @if (msg.sender === 'seller') {
+                  <span class="text-[#34B7F1] font-bold">✓✓</span>
+                }
+              </div>
+            </div>
+          </div>
+        }
+
+        <!-- Typing Indicator -->
+        @if (isTyping()) {
+          <div class="flex items-center gap-1.5 bg-white px-3 py-2 rounded-2xl rounded-tl-none max-w-[120px] shadow-xs">
+            <span class="text-[10px] font-bold text-slate-500">Admin is typing</span>
+            <div class="flex items-center gap-0.5">
+              <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse"></span>
+              <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse delay-100"></span>
+              <span class="w-1.5 h-1.5 bg-slate-400 rounded-full animate-pulse delay-200"></span>
+            </div>
+          </div>
+        }
+
+      </div>
+
+      <!-- WhatsApp Footer / Input Bar -->
+      <form 
+        (ngSubmit)="sendMessage()" 
+        class="bg-[#F0F2F5] p-2.5 flex items-center gap-2 border-t border-slate-200 shrink-0">
+        
+        <input
+          type="text"
+          [(ngModel)]="messageText"
+          name="chatInput"
+          placeholder="Type message to Super Admin..."
+          class="flex-1 px-3.5 py-2 rounded-full bg-white border border-slate-300 text-xs text-slate-900 focus:outline-none focus:ring-2 focus:ring-[#25D366]/40 focus:border-[#25D366] shadow-2xs"
+          autocomplete="off"
+        />
+
+        <button
+          type="submit"
+          [disabled]="!messageText().trim() || isSending()"
+          class="w-9 h-9 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white flex items-center justify-center shadow-md transition-all disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer shrink-0">
+          <svg class="w-4 h-4 fill-current transform rotate-45 -ml-0.5" viewBox="0 0 24 24">
+            <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+          </svg>
+        </button>
+      </form>
+
+    </div>
+  }
+
+</div>

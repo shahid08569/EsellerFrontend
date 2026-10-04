@@ -14,8 +14,6 @@ import {
   RegisterAffiliateCommand,
   RegisterAffiliateResponse,
   RefreshTokenResponse,
-  VerifyEmailCommand,
-  ResendVerificationEmailCommand,
   SendPhoneOtpCommand,
   VerifyPhoneOtpCommand,
   ForgotPasswordCommand,
@@ -91,10 +89,15 @@ export class AuthService {
     password: string;
     storeName: string;
     storeUrl: string;
-    storeDescription: string;
+    storeDescription?: string | null;
     address: string;
     city: string;
     country: string;
+    documentType?: string | null;
+    documentNumber?: string | null;
+    cnicFrontUrl?: string | null;
+    cnicBackUrl?: string | null;
+    documentUrl?: string | null;
   }): Observable<RegisterSellerResponse> {
     return this.withLocation((loc) =>
       this.api.post<RegisterSellerResponse>('/Auth/register/seller', {
@@ -104,15 +107,29 @@ export class AuthService {
         password: payload.password,
         storeName: payload.storeName,
         storeUrl: payload.storeUrl,
-        storeDescription: payload.storeDescription,
+        storeDescription: payload.storeDescription || '',
         address: payload.address,
         city: payload.city,
         country: payload.country,
+        documentType: payload.documentType || null,
+        documentNumber: payload.documentNumber || null,
+        cnicFrontUrl: payload.cnicFrontUrl || null,
+        cnicBackUrl: payload.cnicBackUrl || null,
+        documentUrl: payload.documentUrl || null,
         latitude: loc.latitude,
         longitude: loc.longitude,
         deviceType: loc.deviceType
       } satisfies RegisterSellerCommand)
     );
+  }
+
+  // ============================================================
+  // UPLOAD VERIFICATION DOCUMENT
+  // ============================================================
+  uploadVerificationDocument(file: File): Observable<{ documentUrl: string; fileName: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.api.post<{ documentUrl: string; fileName: string }>('/Auth/upload-document', formData);
   }
 
   // ============================================================
@@ -152,26 +169,18 @@ export class AuthService {
   }
 
   // ============================================================
-  // EMAIL VERIFICATION
+  // PHONE OTP (optional seller profile)
   // ============================================================
-  verifyEmail(payload: VerifyEmailCommand): Observable<{ message: string }> {
-    return this.api.post<{ message: string }>('/Auth/verify-email', payload);
-  }
-
-  resendVerificationEmail(
-    payload: ResendVerificationEmailCommand
-  ): Observable<{ message: string }> {
-    return this.api.post<{ message: string }>(
-      '/Auth/resend-verification-email',
-      payload
-    );
-  }
-
-  // ============================================================
-  // PHONE OTP
-  // ============================================================
-  sendPhoneOtp(payload: SendPhoneOtpCommand): Observable<{ message: string }> {
-    return this.api.post<{ message: string }>('/Auth/send-phone-otp', payload);
+  sendPhoneOtp(payload: SendPhoneOtpCommand): Observable<{
+    message: string;
+    maskedPhone?: string | null;
+    debugOtp?: string | null;
+  }> {
+    return this.api.post<{
+      message: string;
+      maskedPhone?: string | null;
+      debugOtp?: string | null;
+    }>('/Auth/send-phone-otp', payload);
   }
 
   verifyPhoneOtp(payload: VerifyPhoneOtpCommand): Observable<{ message: string }> {
@@ -208,9 +217,11 @@ export class AuthService {
   ): Observable<T> {
     return from(this.location.requestLocation()).pipe(
       switchMap((coords) => {
+        const lat = coords && (coords.latitude !== 0 || coords.longitude !== 0) ? coords.latitude : 31.5204;
+        const lng = coords && (coords.latitude !== 0 || coords.longitude !== 0) ? coords.longitude : 74.3587;
         return fn({
-          latitude: coords ? coords.latitude : 0,
-          longitude: coords ? coords.longitude : 0,
+          latitude: lat,
+          longitude: lng,
           deviceType: this.location.deviceType()
         });
       })

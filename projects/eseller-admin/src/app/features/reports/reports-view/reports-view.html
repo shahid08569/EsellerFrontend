@@ -1,0 +1,115 @@
+<div class="space-y-6">
+  <!-- UNIFIED PAGE HEADER BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg shrink-0">
+        📊
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
+          Platform Sales & Analytics
+        </h1>
+        <p class="text-orange-100 text-xs font-medium">
+          Cross-vendor marketplace business reports, order metrics, and data export.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-3">
+      <select 
+        [ngModel]="selectedPeriod()"
+        (ngModelChange)="selectedPeriod.set($event); loadReport()"
+        class="bg-white/20 border border-white/30 rounded-xl px-3 py-2 text-xs font-bold text-white outline-hidden backdrop-blur-xs cursor-pointer">
+        <option value="7d" class="text-gray-900 font-medium">Last 7 Days</option>
+        <option value="30d" class="text-gray-900 font-medium">Last 30 Days</option>
+        <option value="90d" class="text-gray-900 font-medium">Last 90 Days</option>
+        <option value="year" class="text-gray-900 font-medium">Past Year</option>
+      </select>
+      <button 
+        type="button" 
+        (click)="exportCsv()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white text-orange-700 hover:bg-orange-50 font-bold text-xs shadow-xs hover:shadow transition-all cursor-pointer">
+        <span>📥 Export CSV</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs">
+      <span class="text-xs font-bold text-gray-400 uppercase">Gross Platform Sales</span>
+      <h3 class="text-2xl font-black text-gray-900 mt-2">$ {{ salesSummary().grossSales | number:'1.0-0' }}</h3>
+      <p class="text-[11px] text-emerald-600 font-bold mt-1">Recorded Order Intake</p>
+    </div>
+    <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs">
+      <span class="text-xs font-bold text-gray-400 uppercase">Delivered Revenue</span>
+      <h3 class="text-2xl font-black text-emerald-600 mt-2">$ {{ salesSummary().deliveredRevenue | number:'1.0-0' }}</h3>
+      <p class="text-[11px] text-gray-400 mt-1">Settled and fulfilled</p>
+    </div>
+    <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs">
+      <span class="text-xs font-bold text-gray-400 uppercase">Total Orders</span>
+      <h3 class="text-2xl font-black text-blue-600 mt-2">{{ salesSummary().ordersCount }}</h3>
+      <p class="text-[11px] text-gray-400 mt-1">Transactions processed</p>
+    </div>
+    <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs">
+      <span class="text-xs font-bold text-gray-400 uppercase">Avg Order Value (AOV)</span>
+      <h3 class="text-2xl font-black text-purple-600 mt-2">$ {{ salesSummary().averageOrderValue | number:'1.0-0' }}</h3>
+      <p class="text-[11px] text-gray-400 mt-1">Basket size average</p>
+    </div>
+  </div>
+
+  <!-- TOP PRODUCTS & TOP SELLERS -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- TOP PRODUCTS -->
+    <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs space-y-4">
+      <h3 class="font-bold text-base text-gray-900 flex items-center justify-between">
+        <span>🏆 Top Selling Products</span>
+        <span class="text-xs font-medium text-gray-400">By units sold</span>
+      </h3>
+      @if (topProducts().length === 0) {
+        <p class="text-xs text-gray-400 py-6 text-center">No sales data recorded for products in this period.</p>
+      } @else {
+        <div class="divide-y divide-gray-50">
+          @for (p of topProducts(); track p.id) {
+            <div class="py-3 flex items-center justify-between text-xs">
+              <div>
+                <div class="font-bold text-gray-900">{{ p.name }}</div>
+                <div class="text-gray-400">{{ p.shopName }}</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-gray-900">{{ p.unitsSold }} sold</div>
+                <div class="text-gray-400">$ {{ p.revenue | number:'1.0-0' }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <!-- TOP SELLERS -->
+    <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs space-y-4">
+      <h3 class="font-bold text-base text-gray-900 flex items-center justify-between">
+        <span>🏪 Top Performing Merchants</span>
+        <span class="text-xs font-medium text-gray-400">By fulfilled volume</span>
+      </h3>
+      @if (topSellers().length === 0) {
+        <p class="text-xs text-gray-400 py-6 text-center">No merchant orders recorded in this period.</p>
+      } @else {
+        <div class="divide-y divide-gray-50">
+          @for (s of topSellers(); track s.id) {
+            <div class="py-3 flex items-center justify-between text-xs">
+              <div>
+                <div class="font-bold text-gray-900">{{ s.name }}</div>
+                <div class="text-gray-400">{{ s.city }}</div>
+              </div>
+              <div class="text-right">
+                <div class="font-bold text-emerald-600">$ {{ s.revenue | number:'1.0-0' }}</div>
+                <div class="text-gray-400">{{ s.ordersCount }} orders</div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</div>

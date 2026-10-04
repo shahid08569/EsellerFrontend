@@ -23,9 +23,20 @@ import { Navigation } from 'swiper/modules';
 })
 export class CategoryProductsSection implements OnDestroy {
   readonly categoryName = input<string>('');
+  readonly categoryImageUrl = input<string | null>(null);
   readonly products = input<ProductListDto[]>([]);
   readonly viewMoreLink = input<string>('/products');
   readonly loading = input<boolean>(false);
+
+  getImageUrl(imageUrl: string | null | undefined): string | null {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+    const apiBase = ((window as any).__ESELLER_API_URL__ as string) || '';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '');
+    const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    if (path.startsWith('/uploads')) return `${host}${path}`;
+    return `${host}/uploads${path}`;
+  }
 
   /** Unique ID for this section's swiper — prevents conflicts */
   readonly sectionId = `cat-section-${Math.random().toString(36).substring(2, 9)}`;

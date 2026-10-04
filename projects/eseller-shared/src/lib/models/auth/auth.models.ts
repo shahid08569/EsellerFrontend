@@ -67,10 +67,15 @@ export interface RegisterSellerCommand {
   password: string;
   storeName: string;
   storeUrl: string;
-  storeDescription: string;
+  storeDescription?: string | null;
   address: string;
   city: string;
   country: string;
+  documentType?: string | null;
+  documentNumber?: string | null;
+  cnicFrontUrl?: string | null;
+  cnicBackUrl?: string | null;
+  documentUrl?: string | null;
   latitude: number;
   longitude: number;
   deviceType: string;
@@ -142,11 +147,12 @@ export interface ResendVerificationEmailCommand {
 // PHONE OTP
 // ============================================================
 export interface SendPhoneOtpCommand {
-  phone: string;
+  /** Account email — backend looks up phone from User/Shopkeeper profile */
+  email: string;
 }
 
 export interface VerifyPhoneOtpCommand {
-  phone: string;
+  email: string;
   code: string;
 }
 
@@ -174,4 +180,6 @@ export interface ChangePasswordCommand {
 export interface ApiErrorResponse {
   error: string;
   errorCode: string;
+  /** FluentValidation field map: PropertyName → messages */
+  errors?: Record<string, string[]>;
 }

@@ -26,7 +26,8 @@ export const appConfig: ApplicationConfig = {
       routes,
       withInMemoryScrolling({
         scrollPositionRestoration: 'top',
-        anchorScrolling: 'enabled'
+        // Keep disabled: #auth=... handoff must not be treated as an anchor id
+        anchorScrolling: 'disabled'
       })
     ),
     provideHttpClient(

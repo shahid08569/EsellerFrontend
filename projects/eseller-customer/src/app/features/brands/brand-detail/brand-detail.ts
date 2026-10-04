@@ -98,11 +98,11 @@ export class BrandDetail implements OnInit, OnDestroy {
     if (min != null || max != null) {
       let label = 'Price: ';
       if (min != null && max != null) {
-        label += `Rs. ${min.toLocaleString()} – Rs. ${max.toLocaleString()}`;
+        label += `$ ${min.toLocaleString()} – $ ${max.toLocaleString()}`;
       } else if (min != null) {
-        label += `Above Rs. ${min.toLocaleString()}`;
+        label += `Above $ ${min.toLocaleString()}`;
       } else if (max != null) {
-        label += `Up to Rs. ${max.toLocaleString()}`;
+        label += `Up to $ ${max.toLocaleString()}`;
       }
       chips.push({ id: 'price', type: 'price', label });
     }
@@ -327,9 +327,13 @@ export class BrandDetail implements OnInit, OnDestroy {
 
   getLogoUrl(logoUrl: string | null | undefined): string | null {
     if (!logoUrl) return null;
-    if (logoUrl.startsWith('http')) return logoUrl;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : '';
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://') || logoUrl.startsWith('data:') || logoUrl.startsWith('blob:')) {
+      return logoUrl;
+    }
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '');
     const path = logoUrl.startsWith('/') ? logoUrl : `/${logoUrl}`;
     if (path.startsWith('/uploads/')) return `${host}${path}`;
     return `${host}/uploads${path}`;

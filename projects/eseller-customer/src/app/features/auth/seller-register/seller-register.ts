@@ -1,8 +1,18 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, ActivatedRoute, RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { AuthService, AuthStore, ToastService } from 'eseller-shared';
+import { COUNTRIES_DATA, CountryStateData } from '../../../shared/data/countries-states.data';
+
+export interface VerificationDocOption {
+  id: string;
+  name: string;
+  label: string;
+  placeholder: string;
+  hint: string;
+  requiresBackSide: boolean;
+}
 
 @Component({
   selector: 'app-seller-register',
@@ -15,12 +25,32 @@ export class SellerRegister implements OnInit {
   readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
   private readonly toastService = inject(ToastService);
+  private readonly elementRef = inject(ElementRef);
+
+  // Available Countries
+  readonly allCountries = COUNTRIES_DATA;
 
   // Merchant Personal Details
   readonly name = signal<string>('');
   readonly email = signal<string>('');
   readonly phone = signal<string>('');
-  readonly selectedDialCode = signal<string>('+92');
+
+  // Country Code Picker
+  readonly selectedCountryCode = signal<string>('+92');
+  readonly selectedCountryFlag = signal<string>('🇵🇰');
+  readonly countryCodeSearch = signal<string>('');
+  readonly isCountryCodeDropdownOpen = signal<boolean>(false);
+
+  readonly filteredCountryCodes = computed(() => {
+    const query = this.countryCodeSearch().trim().toLowerCase();
+    if (!query) return this.allCountries;
+    return this.allCountries.filter(
+      (c) =>
+        c.name.toLowerCase().includes(query) ||
+        c.phoneCode.toLowerCase().includes(query) ||
+        c.code.toLowerCase().includes(query)
+    );
+  });
 
   // Shop & Brand Details
   readonly storeName = signal<string>('');
@@ -28,10 +58,84 @@ export class SellerRegister implements OnInit {
   readonly isCustomSlug = signal<boolean>(false);
   readonly storeDescription = signal<string>('');
 
-  // Business Location & Warehouse
+  // Location & Warehouse Details
+  readonly selectedCountry = signal<string>('');
+  readonly selectedState = signal<string>('');
+  readonly city = signal<string>('');
   readonly address = signal<string>('');
-  readonly city = signal<string>('Lahore');
-  readonly country = signal<string>('Pakistan');
+
+  readonly sortedCountries = computed(() =>
+    [...this.allCountries].sort((a, b) =>
+      a.name.localeCompare(b.name, undefined, { sensitivity: 'base' })
+    )
+  );
+
+  readonly availableStates = computed(() => {
+    const countryName = this.selectedCountry();
+    if (!countryName) return [];
+    const found = this.allCountries.find(
+      (c) => c.name.toLowerCase() === countryName.toLowerCase()
+    );
+    return found
+      ? [...found.states].sort((a, b) =>
+          a.localeCompare(b, undefined, { sensitivity: 'base' })
+        )
+      : [];
+  });
+
+  // Document Verification Options
+  readonly docOptions: VerificationDocOption[] = [
+    {
+      id: 'cnic',
+      name: 'Identity Card (CNIC / National ID)',
+      label: 'CNIC / National ID Card',
+      placeholder: '35201-1234567-1 or CNIC Number',
+      hint: 'Upload clear Front & Back scans or photos of your official Government Identity Card.',
+      requiresBackSide: true
+    },
+    {
+      id: 'passport',
+      name: 'Passport',
+      label: 'International Passport',
+      placeholder: 'AB1234567 or Passport Number',
+      hint: 'Upload clear scan of the main photo and identity data page of your valid Passport.',
+      requiresBackSide: false
+    },
+    {
+      id: 'license',
+      name: 'Driving License',
+      label: "Driver's License",
+      placeholder: 'DL-12345678 or License Number',
+      hint: 'Upload clear Front & Back photos of your valid government-issued Driving License.',
+      requiresBackSide: true
+    },
+    {
+      id: 'security-card',
+      name: 'Security Card (SSN / National ID Proof)',
+      label: 'Security Identification / SSN Card',
+      placeholder: 'SSN / Security Card ID Number',
+      hint: 'Upload official Government Security Identification Card or National SSN document.',
+      requiresBackSide: true
+    }
+  ];
+
+  readonly selectedDocType = signal<string>('cnic');
+  readonly docNumber = signal<string>('');
+  readonly passportExpiryDate = signal<string>('');
+
+  // Front Document Upload State
+  readonly docFrontFile = signal<File | null>(null);
+  readonly docFrontFileName = signal<string>('');
+  readonly docFrontUrl = signal<string>('');
+  readonly docFrontPreview = signal<string | null>(null);
+  readonly isUploadingFrontDoc = signal<boolean>(false);
+
+  // Back Document Upload State
+  readonly docBackFile = signal<File | null>(null);
+  readonly docBackFileName = signal<string>('');
+  readonly docBackUrl = signal<string>('');
+  readonly docBackPreview = signal<string | null>(null);
+  readonly isUploadingBackDoc = signal<boolean>(false);
 
   // Security Credentials
   readonly password = signal<string>('');
@@ -42,49 +146,43 @@ export class SellerRegister implements OnInit {
   readonly showPassword = signal<boolean>(false);
   readonly showConfirmPassword = signal<boolean>(false);
 
-  // State signals
+  // Submission & Progress States
   readonly isSubmitting = signal<boolean>(false);
   readonly errorMessage = signal<string | null>(null);
   readonly registrationSuccess = signal<boolean>(false);
   readonly registeredStoreName = signal<string>('');
   readonly registeredStoreSlug = signal<string>('');
 
-  // Field errors
+  // Field Errors
   readonly nameError = signal<string | null>(null);
   readonly emailError = signal<string | null>(null);
   readonly phoneError = signal<string | null>(null);
   readonly storeNameError = signal<string | null>(null);
   readonly storeUrlError = signal<string | null>(null);
-  readonly addressError = signal<string | null>(null);
-  readonly cityError = signal<string | null>(null);
   readonly countryError = signal<string | null>(null);
+  readonly stateError = signal<string | null>(null);
+  readonly cityError = signal<string | null>(null);
+  readonly addressError = signal<string | null>(null);
+  readonly docNumberError = signal<string | null>(null);
+  readonly docFrontError = signal<string | null>(null);
+  readonly docBackError = signal<string | null>(null);
   readonly passwordError = signal<string | null>(null);
   readonly confirmPasswordError = signal<string | null>(null);
   readonly termsError = signal<string | null>(null);
 
-  // Real-time password criteria
-  readonly hasMinLength = computed(() => this.password().length >= 8);
-  readonly hasUpperCase = computed(() => /[A-Z]/.test(this.password()));
-  readonly hasLowerCase = computed(() => /[a-z]/.test(this.password()));
-  readonly hasNumber = computed(() => /[0-9]/.test(this.password()));
-  readonly hasSpecial = computed(() => /[^a-zA-Z0-9]/.test(this.password()));
+  // Current selected document config
+  readonly currentDocConfig = computed(() => {
+    const selected = this.selectedDocType();
+    return this.docOptions.find((d) => d.id === selected) || this.docOptions[0];
+  });
 
-  readonly isPasswordFullyValid = computed(
-    () =>
-      this.hasMinLength() &&
-      this.hasUpperCase() &&
-      this.hasLowerCase() &&
-      this.hasNumber() &&
-      this.hasSpecial()
-  );
-
-  readonly countryCodes = [
-    { label: '🇵🇰 Pakistan (+92)', code: '+92', placeholder: '300 1234567' },
-    { label: '🇦🇪 UAE (+971)', code: '+971', placeholder: '50 123 4567' },
-    { label: '🇸🇦 Saudi Arabia (+966)', code: '+966', placeholder: '50 123 4567' },
-    { label: '🇬🇧 UK (+44)', code: '+44', placeholder: '7911 123456' },
-    { label: '🇺🇸 USA (+1)', code: '+1', placeholder: '(555) 000-0000' }
-  ];
+  @HostListener('document:click', ['$event'])
+  onDocumentClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement;
+    if (!this.elementRef.nativeElement.querySelector('.country-code-picker-container')?.contains(target)) {
+      this.isCountryCodeDropdownOpen.set(false);
+    }
+  }
 
   ngOnInit(): void {
     if (this.authStore.isAuthenticated()) {
@@ -94,6 +192,41 @@ export class SellerRegister implements OnInit {
         this.email.set(user.email || '');
       }
     }
+  }
+
+  toggleCountryCodeDropdown(): void {
+    this.isCountryCodeDropdownOpen.update((v) => !v);
+    if (this.isCountryCodeDropdownOpen()) {
+      this.countryCodeSearch.set('');
+    }
+  }
+
+  selectCountryCode(country: CountryStateData): void {
+    this.selectedCountryCode.set(country.phoneCode);
+    this.selectedCountryFlag.set(country.flag);
+    this.isCountryCodeDropdownOpen.set(false);
+    this.countryCodeSearch.set('');
+  }
+
+  onCountryChange(countryName: string): void {
+    this.selectedCountry.set(countryName);
+    this.countryError.set(null);
+    this.selectedState.set('');
+    this.city.set('');
+
+    const match = this.allCountries.find(
+      (c) => c.name.toLowerCase() === countryName.toLowerCase()
+    );
+
+    if (match) {
+      this.selectedCountryCode.set(match.phoneCode);
+      this.selectedCountryFlag.set(match.flag);
+    }
+  }
+
+  onStateChange(stateName: string): void {
+    this.selectedState.set(stateName);
+    this.stateError.set(null);
   }
 
   onStoreNameChange(val: string): void {
@@ -111,11 +244,134 @@ export class SellerRegister implements OnInit {
 
   onStoreUrlChange(val: string): void {
     this.isCustomSlug.set(true);
-    const sanitized = val
-      .toLowerCase()
-      .replace(/[^a-z0-9-]/g, '');
+    const sanitized = val.toLowerCase().replace(/[^a-z0-9-]/g, '');
     this.storeUrl.set(sanitized);
     this.storeUrlError.set(null);
+  }
+
+  onDocTypeSelect(typeId: string): void {
+    this.selectedDocType.set(typeId);
+    this.docNumberError.set(null);
+    this.docFrontError.set(null);
+    this.docBackError.set(null);
+  }
+
+  onFrontFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    const maxSizeBytes = 10 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type.toLowerCase()) && !file.name.match(/\.(jpg|jpeg|png|webp|pdf)$/i)) {
+      this.docFrontError.set('Please upload JPG, PNG, WEBP, or PDF format.');
+      this.toastService.show('Invalid file format', 'error');
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      this.docFrontError.set('File size exceeds 10 MB limit.');
+      this.toastService.show('File is too large (max 10 MB)', 'error');
+      return;
+    }
+
+    this.docFrontError.set(null);
+    this.docFrontFile.set(file);
+    this.docFrontFileName.set(file.name);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => this.docFrontPreview.set(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      this.docFrontPreview.set(null);
+    }
+
+    this.isUploadingFrontDoc.set(true);
+    this.authService.uploadVerificationDocument(file).subscribe({
+      next: (res) => {
+        this.isUploadingFrontDoc.set(false);
+        this.docFrontUrl.set(res.documentUrl);
+        this.toastService.show('Front document uploaded successfully.', 'success');
+      },
+      error: (err) => {
+        this.isUploadingFrontDoc.set(false);
+        this.docFrontUrl.set('');
+        this.docFrontError.set(
+          (typeof err?.error === 'string' ? err.error : '') ||
+            'Front document upload failed. Please try again.'
+        );
+        this.toastService.show('Front document upload failed. Re-upload required.', 'error');
+      }
+    });
+  }
+
+  removeFrontFile(): void {
+    this.docFrontFile.set(null);
+    this.docFrontFileName.set('');
+    this.docFrontUrl.set('');
+    this.docFrontPreview.set(null);
+    this.docFrontError.set(null);
+  }
+
+  onBackFileChange(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+
+    const file = input.files[0];
+    const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'application/pdf'];
+    const maxSizeBytes = 10 * 1024 * 1024;
+
+    if (!allowedTypes.includes(file.type.toLowerCase()) && !file.name.match(/\.(jpg|jpeg|png|webp|pdf)$/i)) {
+      this.docBackError.set('Please upload JPG, PNG, WEBP, or PDF format.');
+      this.toastService.show('Invalid file format', 'error');
+      return;
+    }
+
+    if (file.size > maxSizeBytes) {
+      this.docBackError.set('File size exceeds 10 MB limit.');
+      this.toastService.show('File is too large (max 10 MB)', 'error');
+      return;
+    }
+
+    this.docBackError.set(null);
+    this.docBackFile.set(file);
+    this.docBackFileName.set(file.name);
+
+    if (file.type.startsWith('image/')) {
+      const reader = new FileReader();
+      reader.onload = (e) => this.docBackPreview.set(e.target?.result as string);
+      reader.readAsDataURL(file);
+    } else {
+      this.docBackPreview.set(null);
+    }
+
+    this.isUploadingBackDoc.set(true);
+    this.authService.uploadVerificationDocument(file).subscribe({
+      next: (res) => {
+        this.isUploadingBackDoc.set(false);
+        this.docBackUrl.set(res.documentUrl);
+        this.toastService.show('Back document uploaded successfully.', 'success');
+      },
+      error: (err) => {
+        this.isUploadingBackDoc.set(false);
+        this.docBackUrl.set('');
+        this.docBackError.set(
+          (typeof err?.error === 'string' ? err.error : '') ||
+            'Back document upload failed. Please try again.'
+        );
+        this.toastService.show('Back document upload failed. Re-upload required.', 'error');
+      }
+    });
+  }
+
+  removeBackFile(): void {
+    this.docBackFile.set(null);
+    this.docBackFileName.set('');
+    this.docBackUrl.set('');
+    this.docBackPreview.set(null);
+    this.docBackError.set(null);
   }
 
   togglePasswordVisibility(): void {
@@ -127,153 +383,168 @@ export class SellerRegister implements OnInit {
   }
 
   onSubmit(): void {
+    
     this.errorMessage.set(null);
     this.nameError.set(null);
     this.emailError.set(null);
     this.phoneError.set(null);
     this.storeNameError.set(null);
     this.storeUrlError.set(null);
-    this.addressError.set(null);
-    this.cityError.set(null);
     this.countryError.set(null);
+    this.cityError.set(null);
+    this.addressError.set(null);
+    this.docNumberError.set(null);
+    this.docFrontError.set(null);
+    this.docBackError.set(null);
     this.passwordError.set(null);
     this.confirmPasswordError.set(null);
-    this.termsError.set(null);
 
-    const valName = this.name().trim();
-    const valEmail = this.email().trim();
-    const rawPhone = this.phone().trim();
-    const valStoreName = this.storeName().trim();
-    const valStoreUrl = this.storeUrl().trim();
-    const valAddress = this.address().trim();
-    const valCity = this.city().trim();
-    const valCountry = this.country().trim();
-    const valPassword = this.password().trim();
-    const valConfirm = this.confirmPassword().trim();
+    let hasError = false;
 
-    let hasErrors = false;
-
-    if (!valName || valName.length < 2) {
-      this.nameError.set('Please provide merchant full legal name.');
-      hasErrors = true;
+    if (!this.name().trim()) {
+      this.nameError.set('Legal full name is required.');
+      hasError = true;
     }
-
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!valEmail || !emailRegex.test(valEmail)) {
-      this.emailError.set('Please enter a valid business email.');
-      hasErrors = true;
+    if (!this.email().trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.email().trim())) {
+      this.emailError.set('Valid business email address is required.');
+      hasError = true;
     }
-
-    if (!rawPhone || rawPhone.length < 7) {
-      this.phoneError.set('Please enter a valid mobile number for merchant notifications.');
-      hasErrors = true;
+    if (!this.phone().trim()) {
+      this.phoneError.set('Contact phone number is required.');
+      hasError = true;
     }
-
-    if (!valStoreName || valStoreName.length < 2) {
-      this.storeNameError.set('Store or Brand Name is required.');
-      hasErrors = true;
+    if (!this.storeName().trim()) {
+      this.storeNameError.set('Store name is required.');
+      hasError = true;
     }
-
-    const slugRegex = /^[a-z0-9-]+$/;
-    if (!valStoreUrl || !slugRegex.test(valStoreUrl)) {
-      this.storeUrlError.set('Store URL can only contain lowercase letters, numbers, and hyphens.');
-      hasErrors = true;
+    if (!this.storeUrl().trim()) {
+      this.storeUrlError.set('Store URL handle is required.');
+      hasError = true;
     }
-
-    if (!valAddress || valAddress.length < 5) {
-      this.addressError.set('Please provide physical warehouse or dispatch address.');
-      hasErrors = true;
+    if (!this.city().trim()) {
+      this.cityError.set('City name is required.');
+      hasError = true;
     }
-
-    if (!valCity) {
-      this.cityError.set('Warehouse / Store city is required.');
-      hasErrors = true;
+    if (!this.address().trim()) {
+      this.addressError.set('Warehouse / Store address is required.');
+      hasError = true;
     }
-
-    if (!valCountry) {
-      this.countryError.set('Country is required.');
-      hasErrors = true;
+    if (!this.docNumber().trim()) {
+      this.docNumberError.set(`Please enter your ${this.currentDocConfig().label} number.`);
+      hasError = true;
     }
-
-    if (!this.isPasswordFullyValid()) {
-      this.passwordError.set('Password must fulfill all 5 security criteria.');
-      hasErrors = true;
+    if (!this.docFrontFileName()) {
+      this.docFrontError.set(`Please upload the Front view of your ${this.currentDocConfig().label}.`);
+      hasError = true;
     }
-
-    if (valPassword !== valConfirm) {
-      this.confirmPasswordError.set('Passwords do not match.');
-      hasErrors = true;
+    const frontReady = !!this.docFrontUrl() && !this.docFrontUrl().startsWith('local-');
+    if (this.docFrontFileName() && (!frontReady || this.isUploadingFrontDoc())) {
+      this.docFrontError.set('Front document upload incomplete. Please wait or re-upload.');
+      hasError = true;
     }
-
-    if (!this.agreeToTerms()) {
-      this.termsError.set('You must accept the Merchant Agreement and Code of Conduct.');
-      hasErrors = true;
+    if (this.currentDocConfig().requiresBackSide && !this.docBackFileName()) {
+      this.docBackError.set(`Please upload the Back view of your ${this.currentDocConfig().label}.`);
+      hasError = true;
     }
-
-    if (hasErrors) {
-      if (typeof window !== 'undefined') {
-        window.scrollTo({ top: 100, behavior: 'smooth' });
+    const backReady = !!this.docBackUrl() && !this.docBackUrl().startsWith('local-');
+    if (this.currentDocConfig().requiresBackSide && this.docBackFileName() && (!backReady || this.isUploadingBackDoc())) {
+      this.docBackError.set('Back document upload incomplete. Please wait or re-upload.');
+      hasError = true;
+    }
+    if (!this.authStore.isAuthenticated()) {
+      if (!this.password() || this.password().length < 8) {
+        this.passwordError.set('Password must be at least 8 characters.');
+        hasError = true;
       }
+      if (this.password() !== this.confirmPassword()) {
+        this.confirmPasswordError.set('Passwords do not match.');
+        hasError = true;
+      }
+    }
+    if (!this.agreeToTerms()) {
+      this.termsError.set('You must accept the Seller Terms of Service to register.');
+      hasError = true;
+    }
+
+    if (hasError) {
+      this.toastService.show('Please fill in all mandatory fields correctly.', 'error');
       return;
     }
 
     this.isSubmitting.set(true);
 
-    const fullPhone = rawPhone.startsWith('+')
-      ? rawPhone
-      : `${this.selectedDialCode()} ${rawPhone}`;
+    const fullPhone = `${this.selectedCountryCode()} ${this.phone().trim()}`;
+    const frontUrl = this.docFrontUrl().startsWith('local-') ? '' : this.docFrontUrl();
+    const backUrl = this.docBackUrl().startsWith('local-') ? '' : this.docBackUrl();
+    if (!frontUrl) {
+      this.docFrontError.set('Front document must be uploaded to the server before registering.');
+      this.toastService.show('Please re-upload your identity documents.', 'error');
+      this.isSubmitting.set(false);
+      return;
+    }
 
-    this.authService
-      .registerSeller({
-        name: valName,
-        email: valEmail,
-        phone: fullPhone,
-        password: valPassword,
-        storeName: valStoreName,
-        storeUrl: valStoreUrl,
-        storeDescription: this.storeDescription().trim(),
-        address: valAddress,
-        city: valCity,
-        country: valCountry
-      })
-      .subscribe({
-        next: (res) => {
-          this.isSubmitting.set(false);
-          this.registeredStoreName.set(res.storeName || valStoreName);
-          this.registeredStoreSlug.set(res.storeUrl || valStoreUrl);
-          this.registrationSuccess.set(true);
-          this.toastService.show(
-            `Store "${valStoreName}" registered successfully! Welcome to Eseller Merchant Network.`,
-            'success'
-          );
-        },
-        error: (err) => {
-          this.isSubmitting.set(false);
-          const code = err?.error?.errorCode || err?.error || '';
-          let message = 'Seller registration could not be processed. Please check your data.';
+    const payload = {
+      name: this.name().trim(),
+      email: this.email().trim(),
+      phone: fullPhone,
+      password: this.password() || 'Password123!',
+      storeName: this.storeName().trim(),
+      storeUrl: this.storeUrl().trim(),
+      storeDescription: this.storeDescription().trim() || undefined,
+      address: this.address().trim(),
+      city: this.city().trim(),
+      country: this.selectedCountry(),
+      documentType: this.currentDocConfig().name,
+      documentNumber: this.docNumber().trim(),
+      cnicFrontUrl: frontUrl,
+      cnicBackUrl: backUrl,
+      // Single-sided docs (e.g. passport) also keep a generic DocumentUrl
+      documentUrl: frontUrl
+    };
 
-          if (code === 'EMAIL_TAKEN') {
-            message = 'An account with this email address already exists. Please sign in instead.';
-          } else if (code === 'STORE_URL_TAKEN' || code?.includes('URL')) {
-            message = 'This Store URL handle is already claimed by another merchant. Please pick another URL.';
-          } else if (code === 'LOCATION_REQUIRED') {
-            message = 'Location authorization is required for merchant onboarding.';
-          } else if (err?.message && !err?.message.includes('Http failure')) {
-            message = err.message;
-          }
+    this.authService.registerSeller(payload).subscribe({
+      next: () => {
+        this.isSubmitting.set(false);
+        this.registeredStoreName.set(this.storeName());
+        this.registeredStoreSlug.set(this.storeUrl());
+        this.registrationSuccess.set(true);
+        this.toastService.show('Merchant registration submitted for review!', 'success');
+      },
+      error: (err) => {
+        this.isSubmitting.set(false);
+        // ApiService/errorInterceptor already normalises to { error, errorCode, errors? }
+        const code = (err?.errorCode as string | undefined) || '';
+        const fieldErrors = err?.errors as Record<string, string[]> | undefined;
+        let msg = (typeof err?.error === 'string' ? err.error : '')
+          || 'Registration failed. Please review your details.';
 
-          this.errorMessage.set(message);
-          this.toastService.show(message, 'error');
-          if (typeof window !== 'undefined') {
-            window.scrollTo({ top: 100, behavior: 'smooth' });
+        if (code === 'EMAIL_TAKEN') {
+          this.emailError.set(msg || 'Email is already registered.');
+        } else if (code === 'STORE_URL_TAKEN') {
+          this.storeUrlError.set(msg || 'Store URL is already taken.');
+        } else if (fieldErrors) {
+          const firstFieldErrors = Object.values(fieldErrors).flat().filter(Boolean);
+          if (firstFieldErrors.length) msg = firstFieldErrors[0];
+
+          const map: Record<string, (m: string) => void> = {
+            email: (m) => this.emailError.set(m),
+            storeurl: (m) => this.storeUrlError.set(m),
+            password: (m) => this.passwordError.set(m),
+            name: (m) => this.nameError.set(m),
+            phone: (m) => this.phoneError.set(m),
+            storename: (m) => this.storeNameError.set(m),
+            address: (m) => this.addressError.set(m),
+            city: (m) => this.cityError.set(m)
+          };
+          for (const [key, msgs] of Object.entries(fieldErrors)) {
+            const setter = map[key.toLowerCase()];
+            if (setter && msgs?.[0]) setter(msgs[0]);
           }
         }
-      });
-  }
 
-  goToDashboard(): void {
-    if (typeof window !== 'undefined') {
-      window.location.href = 'http://localhost:54007/dashboard';
-    }
+        this.errorMessage.set(msg);
+        this.toastService.show(msg, 'error');
+      }
+    });
   }
 }

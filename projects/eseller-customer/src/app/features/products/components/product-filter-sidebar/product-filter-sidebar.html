@@ -75,14 +75,21 @@
         <button
           type="button"
           (click)="onBrandSelect(brand.id)"
-          class="w-full text-left px-3 py-2 text-sm rounded-lg flex items-center justify-between transition-colors cursor-pointer"
+          class="w-full text-left px-3 py-2 text-sm rounded-lg flex items-center gap-2.5 transition-colors cursor-pointer"
           [class.bg-primary-tint]="selectedBrandId() === brand.id"
           [class.text-primary]="selectedBrandId() === brand.id"
           [class.font-semibold]="selectedBrandId() === brand.id"
           [class.text-text-secondary]="selectedBrandId() !== brand.id"
           [class.hover:bg-gray-50]="selectedBrandId() !== brand.id"
         >
-          <span class="truncate">{{ brand.name }}</span>
+          <span class="w-7 h-7 rounded-lg bg-gray-50 border border-gray-200 flex items-center justify-center overflow-hidden shrink-0">
+            @if (getLogoUrl(brand.logoUrl); as logo) {
+              <img [src]="logo" [alt]="brand.name" class="w-full h-full object-contain p-0.5" loading="lazy" />
+            } @else {
+              <span class="text-[10px] font-black text-gray-400">{{ brand.name.charAt(0) }}</span>
+            }
+          </span>
+          <span class="truncate flex-1">{{ brand.name }}</span>
           @if (selectedBrandId() === brand.id) {
             <span class="w-2 h-2 rounded-full bg-primary flex-shrink-0"></span>
           }
@@ -137,7 +144,7 @@
     <div class="pt-2 border-t border-gray-100 space-y-2">
       <div class="grid grid-cols-2 gap-2">
         <div>
-          <label class="block text-[11px] font-medium text-text-muted mb-1">Min (Rs.)</label>
+          <label class="block text-[11px] font-medium text-text-muted mb-1">Min ($)</label>
           <input
             type="number"
             min="0"
@@ -147,7 +154,7 @@
           />
         </div>
         <div>
-          <label class="block text-[11px] font-medium text-text-muted mb-1">Max (Rs.)</label>
+          <label class="block text-[11px] font-medium text-text-muted mb-1">Max ($)</label>
           <input
             type="number"
             min="0"

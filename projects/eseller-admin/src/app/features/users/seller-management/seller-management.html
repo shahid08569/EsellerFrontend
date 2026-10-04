@@ -1,0 +1,584 @@
+<div class="space-y-6">
+
+  <!-- UNIFIED ORANGE HERO BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl py-3.5 px-4 sm:px-6 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3">
+      <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-base shrink-0">
+        🏪
+      </div>
+      <div>
+        <h1 class="text-sm sm:text-base font-black text-white tracking-tight drop-shadow-xs">
+          Merchant & Seller Management
+        </h1>
+        <p class="text-orange-100 text-[11px] leading-tight font-medium">
+          Vendor lifecycle verifications, store credentials, sales throughput, and geolocation security auditing.
+        </p>
+      </div>
+    </div>
+
+    <!-- Quick Refresh Button -->
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        (click)="loadSellers()" 
+        title="Refresh Sellers"
+        class="px-3 py-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors cursor-pointer border border-white/20 shadow-xs flex items-center gap-1.5 text-xs font-bold">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
+        </svg>
+        <span>Refresh</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- STATS TILES -->
+  <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Total Merchants</span>
+        <span class="p-1.5 bg-orange-50 text-orange-600 rounded-lg text-xs">👥</span>
+      </div>
+      <div class="text-xl font-black text-slate-900">{{ totalSellersCount() }}</div>
+      <p class="text-[11px] text-slate-400 mt-1">Platform-wide vendors</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Approved Stores</span>
+        <span class="p-1.5 bg-emerald-50 text-emerald-600 rounded-lg text-xs">✅</span>
+      </div>
+      <div class="text-xl font-black text-emerald-600">{{ approvedCount() }}</div>
+      <p class="text-[11px] text-slate-400 mt-1">Active verified storefronts</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Pending Review</span>
+        <span class="p-1.5 bg-amber-50 text-amber-600 rounded-lg text-xs">⏳</span>
+      </div>
+      <div class="text-xl font-black text-amber-600">{{ pendingCount() }}</div>
+      <p class="text-[11px] text-slate-400 mt-1">Requires admin approval</p>
+    </div>
+
+    <div class="bg-white rounded-2xl p-4 border border-slate-100 shadow-xs">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-semibold text-slate-500 uppercase">Merchant Volume</span>
+        <span class="p-1.5 bg-blue-50 text-blue-600 rounded-lg text-xs">💰</span>
+      </div>
+      <div class="text-xl font-black text-slate-900">$ {{ totalRevenue() | number:'1.0-0' }}</div>
+      <p class="text-[11px] text-slate-400 mt-1">Total cumulative sales</p>
+    </div>
+  </div>
+
+  <!-- TABLE CONTAINER & FILTERS -->
+  <div class="bg-white border border-slate-100 rounded-2xl shadow-xs overflow-hidden">
+    <!-- Header Controls -->
+    <div class="p-4 border-b border-slate-100 flex flex-col md:flex-row md:items-center justify-between gap-3 bg-slate-50/50">
+      <!-- Search Input -->
+      <div class="relative w-full md:w-80">
+        <input 
+          type="text" 
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearch($event)"
+          placeholder="Search by store, merchant name, email..." 
+          class="w-full pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 transition-all" />
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+
+      <!-- Status Filters -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+        <button 
+          type="button" 
+          (click)="onFilterStatus('ALL')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
+          [class.bg-slate-900]="statusFilter() === 'ALL'"
+          [class.text-white]="statusFilter() === 'ALL'"
+          [class.border-slate-900]="statusFilter() === 'ALL'"
+          [class.bg-white]="statusFilter() !== 'ALL'"
+          [class.text-slate-600]="statusFilter() !== 'ALL'"
+          [class.border-slate-200]="statusFilter() !== 'ALL'">
+          All ({{ totalSellersCount() }})
+        </button>
+
+        <button 
+          type="button" 
+          (click)="onFilterStatus('Approved')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
+          [class.bg-emerald-600]="statusFilter() === 'Approved'"
+          [class.text-white]="statusFilter() === 'Approved'"
+          [class.border-emerald-600]="statusFilter() === 'Approved'"
+          [class.bg-white]="statusFilter() !== 'Approved'"
+          [class.text-emerald-700]="statusFilter() !== 'Approved'"
+          [class.border-emerald-200]="statusFilter() !== 'Approved'">
+          Approved ({{ approvedCount() }})
+        </button>
+
+        <button 
+          type="button" 
+          (click)="onFilterStatus('Pending')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
+          [class.bg-amber-500]="statusFilter() === 'Pending'"
+          [class.text-white]="statusFilter() === 'Pending'"
+          [class.border-amber-500]="statusFilter() === 'Pending'"
+          [class.bg-white]="statusFilter() !== 'Pending'"
+          [class.text-amber-700]="statusFilter() !== 'Pending'"
+          [class.border-amber-200]="statusFilter() !== 'Pending'">
+          Pending ({{ pendingCount() }})
+        </button>
+
+        <button 
+          type="button" 
+          (click)="onFilterStatus('Rejected')"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
+          [class.bg-rose-600]="statusFilter() === 'Rejected'"
+          [class.text-white]="statusFilter() === 'Rejected'"
+          [class.border-rose-600]="statusFilter() === 'Rejected'"
+          [class.bg-white]="statusFilter() !== 'Rejected'"
+          [class.text-rose-700]="statusFilter() !== 'Rejected'"
+          [class.border-rose-200]="statusFilter() !== 'Rejected'">
+          Rejected
+        </button>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="overflow-x-auto">
+      <table class="w-full text-left text-xs text-slate-600">
+        <thead class="bg-slate-900 text-[11px] font-extrabold text-white uppercase tracking-wider border-b border-slate-800">
+          <tr>
+            <th class="px-4 py-3.5 font-extrabold">Store & Merchant</th>
+            <th class="px-4 py-3.5 font-extrabold text-center">Performance</th>
+            <th class="px-4 py-3.5 font-extrabold text-center">Verification</th>
+            <th class="px-4 py-3.5 font-extrabold text-center">Account Status</th>
+            <th class="px-4 py-3.5 font-extrabold text-right">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-slate-100">
+          @if (isLoading()) {
+            <tr>
+              <td colspan="5" class="py-12 text-center text-slate-400 font-medium">
+                <div class="inline-block animate-spin rounded-full h-7 w-7 border-2 border-orange-500 border-t-transparent mb-2"></div>
+                <div>Loading merchant profiles...</div>
+              </td>
+            </tr>
+          } @else if (pagedSellers().length === 0) {
+            <tr>
+              <td colspan="5" class="py-12 text-center text-slate-400">
+                <div class="font-bold text-slate-600">No merchants found</div>
+                <div class="text-xs text-slate-400">Try adjusting your search criteria or status filter.</div>
+              </td>
+            </tr>
+          } @else {
+            @for (seller of pagedSellers(); track seller.id) {
+              <tr class="hover:bg-slate-50/80 transition-colors">
+                <!-- Store & Merchant -->
+                <td class="px-4 py-3.5">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-orange-500 to-amber-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-xs">
+                      {{ (seller.storeName || seller.name).slice(0, 2).toUpperCase() }}
+                    </div>
+                    <div>
+                      <div class="font-bold text-slate-900 text-xs">{{ seller.storeName || 'Unnamed Store' }}</div>
+                      <div class="text-[11px] text-slate-500">{{ seller.name }} • <span class="text-slate-400">{{ seller.email }}</span></div>
+                      @if (seller.phone) {
+                        <div class="text-[10px] text-slate-400 font-mono">{{ seller.phone }}</div>
+                      }
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Performance Metrics -->
+                <td class="px-4 py-3.5 text-center">
+                  <div class="inline-flex flex-col items-center">
+                    <span class="font-bold text-slate-900 text-xs">$ {{ (seller.totalRevenue || 0) | number:'1.0-0' }}</span>
+                    <span class="text-[10px] text-slate-400">
+                      {{ seller.totalOrders || 0 }} orders • {{ seller.totalProducts || 0 }} items
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Approval Status -->
+                <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                  <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide border shadow-2xs"
+                        [class.bg-emerald-50]="seller.status === 'Approved'"
+                        [class.text-emerald-700]="seller.status === 'Approved'"
+                        [class.border-emerald-200]="seller.status === 'Approved'"
+                        [class.bg-amber-50]="seller.status === 'Pending'"
+                        [class.text-amber-700]="seller.status === 'Pending'"
+                        [class.border-amber-200]="seller.status === 'Pending'"
+                        [class.bg-rose-50]="seller.status === 'Rejected'"
+                        [class.text-rose-700]="seller.status === 'Rejected'"
+                        [class.border-rose-200]="seller.status === 'Rejected'">
+                    {{ seller.status }}
+                  </span>
+                </td>
+
+                <!-- Account Status -->
+                <td class="px-4 py-3.5 text-center whitespace-nowrap">
+                  <span class="px-2.5 py-1 rounded-full text-[10px] font-bold border"
+                        [class.bg-emerald-50]="seller.isActive !== false"
+                        [class.text-emerald-700]="seller.isActive !== false"
+                        [class.border-emerald-200]="seller.isActive !== false"
+                        [class.bg-rose-50]="seller.isActive === false"
+                        [class.text-rose-700]="seller.isActive === false"
+                        [class.border-rose-200]="seller.isActive === false">
+                    {{ seller.isActive !== false ? 'Active' : 'Suspended' }}
+                  </span>
+                </td>
+
+                <!-- Actions -->
+                <td class="px-4 py-3.5 text-right whitespace-nowrap">
+                  <div class="inline-flex items-center gap-1.5">
+                    <!-- View Details Modal Trigger -->
+                    <button 
+                      type="button" 
+                      (click)="openDetailsModal(seller)"
+                      title="View Merchant Details & Location Audit"
+                      class="px-2.5 py-1.5 bg-orange-50 hover:bg-orange-100 text-orange-700 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-orange-200/60">
+                      View Details
+                    </button>
+
+                    <!-- Approve (if pending) -->
+                    @if (seller.status === 'Pending') {
+                      <button 
+                        type="button" 
+                        (click)="approveSeller(seller)"
+                        [disabled]="actionInProgress() === seller.id"
+                        class="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold transition-colors cursor-pointer shadow-xs">
+                        Approve
+                      </button>
+                      <button 
+                        type="button" 
+                        (click)="openRejectModal(seller)"
+                        [disabled]="actionInProgress() === seller.id"
+                        class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-rose-200">
+                        Reject
+                      </button>
+                    }
+
+                    <!-- Suspend / Activate Toggle -->
+                    <button 
+                      type="button" 
+                      (click)="toggleAccountStatus(seller)"
+                      [disabled]="actionInProgress() === seller.id"
+                      class="px-2.5 py-1.5 rounded-lg text-xs font-bold transition-colors cursor-pointer border"
+                      [class.bg-rose-50]="seller.isActive !== false"
+                      [class.text-rose-700]="seller.isActive !== false"
+                      [class.border-rose-200]="seller.isActive !== false"
+                      [class.hover:bg-rose-100]="seller.isActive !== false"
+                      [class.bg-emerald-50]="seller.isActive === false"
+                      [class.text-emerald-700]="seller.isActive === false"
+                      [class.border-emerald-200]="seller.isActive === false"
+                      [class.hover:bg-emerald-100]="seller.isActive === false"
+                      [title]="seller.isActive !== false ? 'Suspend Vendor Account' : 'Activate Vendor Account'">
+                      {{ seller.isActive !== false ? 'Suspend' : 'Activate' }}
+                    </button>
+
+                    <!-- Direct Live Chat with Seller -->
+                    <button 
+                      type="button" 
+                      (click)="openChatWithSeller(seller)"
+                      title="Chat directly with this merchant"
+                      class="px-2.5 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-blue-200 flex items-center gap-1">
+                      💬 Chat
+                    </button>
+
+                    <!-- Delete Seller Button -->
+                    <button 
+                      type="button" 
+                      (click)="openDeleteModal(seller)"
+                      title="Permanently remove seller account"
+                      class="px-2.5 py-1.5 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-xs font-bold transition-colors cursor-pointer border border-rose-200 flex items-center gap-1">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Delete
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Pagination Footer -->
+    @if (totalPages() > 1) {
+      <div class="px-4 py-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
+        <div>
+          Showing page <span class="font-bold text-slate-800">{{ currentPage() }}</span> of <span class="font-bold text-slate-800">{{ totalPages() }}</span> ({{ filteredSellers().length }} total merchants)
+        </div>
+        <div class="flex items-center gap-1.5">
+          <button 
+            type="button" 
+            (click)="setPage(currentPage() - 1)" 
+            [disabled]="currentPage() === 1"
+            class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors">
+            Prev
+          </button>
+          @for (p of [].constructor(totalPages()); track $index) {
+            <button 
+              type="button" 
+              (click)="setPage($index + 1)"
+              class="w-7 h-7 rounded-lg text-xs font-bold transition-all"
+              [class.bg-orange-600]="currentPage() === ($index + 1)"
+              [class.text-white]="currentPage() === ($index + 1)"
+              [class.bg-white]="currentPage() !== ($index + 1)"
+              [class.text-slate-600]="currentPage() !== ($index + 1)"
+              [class.border]="currentPage() !== ($index + 1)"
+              [class.border-slate-200]="currentPage() !== ($index + 1)">
+              {{ $index + 1 }}
+            </button>
+          }
+          <button 
+            type="button" 
+            (click)="setPage(currentPage() + 1)" 
+            [disabled]="currentPage() === totalPages()"
+            class="px-2.5 py-1 rounded-lg border border-slate-200 bg-white text-slate-600 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors">
+            Next
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- SELLER DETAILS & GEOLOCATION MODAL -->
+  @if (detailsModalOpen() && selectedSeller()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fade-in">
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-2xl w-full max-h-[90vh] flex flex-col overflow-hidden animate-scale-up">
+        
+        <!-- Modal Header -->
+        <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 px-6 py-4 text-white flex items-center justify-between shrink-0">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-2xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-sm">
+              🏪
+            </div>
+            <div>
+              <h2 class="text-base font-black">{{ selectedSeller()!.storeName || selectedSeller()!.name }}</h2>
+              <p class="text-xs text-orange-100 font-medium">Merchant Profile & Geolocation Activity Log</p>
+            </div>
+          </div>
+          <button 
+            type="button" 
+            (click)="closeDetailsModal()"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white flex items-center justify-center transition-colors cursor-pointer text-sm font-bold">
+            ✕
+          </button>
+        </div>
+
+        <!-- Modal Body (Scrollable) -->
+        <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-600">
+          
+          <!-- Vendor Summary Cards -->
+          <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Owner Name</span>
+              <span class="font-bold text-slate-800 text-xs">{{ selectedSeller()!.name }}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Email Address</span>
+              <span class="font-bold text-slate-800 text-xs truncate block" [title]="selectedSeller()!.email">{{ selectedSeller()!.email }}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Phone</span>
+              <span class="font-bold text-slate-800 text-xs">{{ selectedSeller()!.phone || 'N/A' }}</span>
+            </div>
+            <div class="bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <span class="text-[10px] text-slate-400 font-bold uppercase block">Store Verification</span>
+              <span class="font-black text-xs" 
+                    [class.text-emerald-600]="selectedSeller()!.status === 'Approved'"
+                    [class.text-amber-600]="selectedSeller()!.status === 'Pending'"
+                    [class.text-rose-600]="selectedSeller()!.status === 'Rejected'">
+                {{ selectedSeller()!.status }}
+              </span>
+            </div>
+          </div>
+
+          <!-- Store Performance Overview -->
+          <div class="bg-orange-50/60 p-4 rounded-2xl border border-orange-200/50 flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <span class="text-[10px] font-bold text-orange-800 uppercase tracking-wider block">Store Performance Snapshot</span>
+              <span class="text-sm font-black text-orange-950">$ {{ (selectedSeller()!.totalRevenue || 0) | number:'1.0-0' }} Generated Revenue</span>
+            </div>
+            <div class="flex items-center gap-3">
+              <span class="px-2.5 py-1 rounded-xl bg-white text-orange-800 font-bold text-xs shadow-2xs border border-orange-200">
+                📦 {{ selectedSeller()!.totalProducts || 0 }} Listed Products
+              </span>
+              <span class="px-2.5 py-1 rounded-xl bg-white text-orange-800 font-bold text-xs shadow-2xs border border-orange-200">
+                📑 {{ selectedSeller()!.totalOrders || 0 }} Total Orders
+              </span>
+            </div>
+          </div>
+
+          <!-- GEOLOCATION & LOGIN AUDIT TIMELINE -->
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-extrabold text-slate-900 text-xs flex items-center gap-1.5 uppercase tracking-wide">
+                <span>📍 Geolocation & Login Activity Log</span>
+                <span class="px-1.5 py-0.2 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                  {{ sellerLoginLogs().length }} entries
+                </span>
+              </h3>
+            </div>
+
+            @if (isLoadingLogs()) {
+              <div class="py-8 text-center text-slate-400">
+                <div class="inline-block animate-spin rounded-full h-5 w-5 border-2 border-orange-500 border-t-transparent mb-1"></div>
+                <div>Fetching geolocation coordinates...</div>
+              </div>
+            } @else if (sellerLoginLogs().length === 0) {
+              <div class="p-6 bg-slate-50 rounded-2xl text-center text-slate-400 border border-slate-100">
+                No recorded login telemetry yet for this vendor account.
+              </div>
+            } @else {
+              <div class="space-y-2 max-h-60 overflow-y-auto pr-1">
+                @for (log of sellerLoginLogs(); track log.id) {
+                  <div class="p-3 bg-white rounded-xl border border-slate-100 hover:border-orange-200 transition-colors shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div class="space-y-0.5">
+                      <div class="flex items-center gap-2">
+                        <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold"
+                              [class.bg-emerald-50]="log.action === 'Login'"
+                              [class.text-emerald-700]="log.action === 'Login'"
+                              [class.bg-blue-50]="log.action !== 'Login'"
+                              [class.text-blue-700]="log.action !== 'Login'">
+                          {{ log.action }}
+                        </span>
+                        <span class="font-semibold text-slate-900 text-xs">
+                          {{ log.city || 'Unknown City' }}@if (log.country) {, {{ log.country }}}
+                        </span>
+                        @if (log.deviceType) {
+                          <span class="px-1.5 py-0.2 rounded bg-slate-100 text-slate-600 text-[10px] font-mono">
+                            {{ log.deviceType }}
+                          </span>
+                        }
+                      </div>
+                      <div class="text-[11px] text-slate-400">
+                        {{ log.recordedAt | date:'medium' }} • IP: <span class="font-mono text-slate-600">{{ log.ipAddress || '127.0.0.1' }}</span>
+                      </div>
+                    </div>
+
+                    <!-- Geolocation Coordinates & Maps Link -->
+                    @if (log.latitude && log.longitude) {
+                      <a 
+                        [href]="getGoogleMapsUrl(log.latitude, log.longitude)" 
+                        target="_blank" 
+                        rel="noopener"
+                        class="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-[11px] transition-colors border border-orange-200/60 shrink-0 inline-flex items-center gap-1">
+                        <span>🗺️ View on Maps</span>
+                        <span class="text-[10px] font-mono text-orange-500">({{ log.latitude | number:'1.2-2' }}, {{ log.longitude | number:'1.2-2' }})</span>
+                      </a>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-100 flex items-center justify-between shrink-0">
+          <div class="text-[11px] text-slate-400">
+            Account ID: <span class="font-mono text-slate-600">{{ selectedSeller()!.accountId }}</span>
+          </div>
+          <div class="flex items-center gap-2">
+            @if (selectedSeller()!.status === 'Pending') {
+              <button 
+                type="button" 
+                (click)="approveSeller(selectedSeller()!)"
+                class="px-3.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-xs transition-colors cursor-pointer">
+                Approve Vendor
+              </button>
+            }
+            <button 
+              type="button" 
+              (click)="closeDetailsModal()"
+              class="px-3.5 py-1.5 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer">
+              Close
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  }
+
+  <!-- REJECTION REASON MODAL -->
+  @if (rejectModalOpen() && sellerToReject()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="font-extrabold text-slate-900 text-sm">Reject Store Application</h3>
+          <button (click)="closeRejectModal()" class="text-slate-400 hover:text-slate-600">✕</button>
+        </div>
+        <p class="text-xs text-slate-500">
+          Please state the reason for rejecting <strong>{{ sellerToReject()!.storeName || sellerToReject()!.name }}</strong>.
+        </p>
+        <textarea 
+          [(ngModel)]="rejectReason" 
+          rows="3" 
+          placeholder="e.g. Incomplete business verification documents..." 
+          class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"></textarea>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button 
+            type="button" 
+            (click)="closeRejectModal()" 
+            class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            (click)="confirmReject()" 
+            class="px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs">
+            Confirm Reject
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- DELETE SELLER CONFIRMATION MODAL -->
+  @if (deleteSellerModalOpen() && sellerToDelete()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+      <div class="bg-white rounded-3xl shadow-2xl border border-slate-100 max-w-md w-full p-6 space-y-4">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center gap-2">
+            <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold">🗑️</span>
+            <h3 class="font-extrabold text-slate-900 text-sm">Permanently Delete Seller</h3>
+          </div>
+          <button (click)="closeDeleteModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer">✕</button>
+        </div>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Are you sure you want to delete <strong class="text-slate-900">"{{ sellerToDelete()!.name }}"</strong> (Store: {{ sellerToDelete()!.storeName || 'N/A' }})? This will deactivate the seller account and their associated store listings.
+        </p>
+        <div>
+          <label class="block text-[11px] font-bold text-slate-700 mb-1">Reason for Deletion *</label>
+          <textarea 
+            [ngModel]="deleteSellerReason()" 
+            (ngModelChange)="deleteSellerReason.set($event)"
+            rows="3" 
+            placeholder="e.g. Terms violation, requested closure, fraudulent activity..." 
+            class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-hidden focus:ring-2 focus:ring-rose-500/20 focus:border-rose-500"></textarea>
+        </div>
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button 
+            type="button" 
+            (click)="closeDeleteModal()" 
+            class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            (click)="confirmDeleteSeller()" 
+            class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer">
+            Delete Account
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

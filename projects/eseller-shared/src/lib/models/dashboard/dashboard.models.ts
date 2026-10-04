@@ -21,6 +21,8 @@ export interface UserProfileDto {
   isPhoneVerified: boolean;
   lastLoginAt: string | null;
   createdAt: string;
+  /** Pending | Approved | Rejected — SuperAdmin gate */
+  approvalStatus?: string;
 }
 
 export interface UpdateProfileRequest {

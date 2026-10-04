@@ -1,182 +1,244 @@
-<div class="space-y-6 max-w-3xl">
+<div class="max-w-4xl mx-auto space-y-6">
 
   <!-- Header -->
-  <div>
-    <h1 class="text-2xl font-black text-gray-900 tracking-tight">Shop Settings</h1>
-    <p class="text-sm text-gray-500 mt-1">Update your shop profile, logo and banner image.</p>
+  <div class="flex items-center justify-between pb-2 border-b border-gray-100">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Shop Settings</h1>
+      <p class="text-sm text-gray-500">Manage your merchant store profile, branding, and contact details</p>
+    </div>
   </div>
 
   <!-- Loading Skeleton -->
   @if (loading()) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 animate-pulse space-y-4">
-      <div class="h-4 bg-gray-200 rounded w-1/3"></div>
-      <div class="h-24 bg-gray-200 rounded-xl w-full"></div>
-      <div class="h-4 bg-gray-200 rounded w-1/4"></div>
-      <div class="h-10 bg-gray-200 rounded-xl w-full"></div>
-      <div class="h-10 bg-gray-200 rounded-xl w-full"></div>
+    <div class="space-y-6 animate-pulse">
+      <div class="bg-white rounded-2xl border border-gray-100 p-6 space-y-4">
+        <div class="h-6 bg-gray-100 rounded-lg w-1/3"></div>
+        <div class="h-24 bg-gray-100 rounded-xl"></div>
+        <div class="grid grid-cols-2 gap-4">
+          <div class="h-10 bg-gray-100 rounded-xl"></div>
+          <div class="h-10 bg-gray-100 rounded-xl"></div>
+        </div>
+      </div>
     </div>
   }
 
   @if (!loading() && shop()) {
 
-    <!-- Approval Status Banner -->
-    @if (!shop().isApproved) {
-      <div class="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-2xl px-5 py-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-amber-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-        </svg>
-        <div>
-          <p class="text-sm font-bold text-amber-800">Shop Pending Review</p>
-          <p class="text-xs text-amber-600 mt-0.5">Your shop is under review by our team. You can still update details.</p>
+    <!-- Store Profile Header Card -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+      <div class="flex items-center gap-4">
+        <div class="w-16 h-16 rounded-2xl bg-white border border-gray-100 shadow-sm overflow-hidden flex items-center justify-center font-black text-2xl text-primary shrink-0 relative">
+          @if (shop()!.logoUrl | imageUrl) {
+            <img [src]="shop()!.logoUrl | imageUrl" alt="Logo" appFallback class="absolute inset-0 w-full h-full object-cover z-10" />
+          }
+          <span class="z-0">{{ (shop()!.name || 'S').charAt(0) | uppercase }}</span>
         </div>
-        <span class="ml-auto px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-amber-100 text-amber-700">Pending</span>
-      </div>
-    } @else {
-      <div class="flex items-center gap-3 bg-emerald-50 border border-emerald-200 rounded-2xl px-5 py-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-emerald-500 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12c0 1.268-.63 2.39-1.593 3.068a3.745 3.745 0 01-1.043 3.296 3.745 3.745 0 01-3.296 1.043A3.745 3.745 0 0112 21c-1.268 0-2.39-.63-3.068-1.593a3.745 3.745 0 01-3.296-1.043 3.745 3.745 0 01-1.043-3.296A3.745 3.745 0 013 12c0-1.268.63-2.39 1.593-3.068a3.745 3.745 0 011.043-3.296 3.745 3.745 0 013.296-1.043A3.745 3.745 0 0112 3c1.268 0 2.39.63 3.068 1.593a3.745 3.745 0 013.296 1.043 3.745 3.745 0 011.043 3.296A3.745 3.745 0 0121 12z" />
-        </svg>
         <div>
-          <p class="text-sm font-bold text-emerald-800">Shop Approved</p>
-          <p class="text-xs text-emerald-600 mt-0.5">Your shop is live and visible to customers.</p>
+          <div class="flex items-center gap-2">
+            <h2 class="text-lg font-black text-gray-900">{{ shop()!.name }}</h2>
+            @if (shop()!.isApproved) {
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60 text-[10px] font-bold uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Approved
+              </span>
+            } @else {
+              <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60 text-[10px] font-bold uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Pending Review
+              </span>
+            }
+          </div>
+          <p class="text-xs text-gray-400 mt-0.5">
+            Registered on {{ shop()!.createdAt | date:'mediumDate' }} • Slug: <span class="font-mono text-gray-600">{{ shop()!.slug }}</span>
+          </p>
         </div>
-        <span class="ml-auto px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-100 text-emerald-700">Approved</span>
       </div>
-    }
 
-    <!-- Images Card -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5">
-      <h2 class="text-base font-bold text-gray-900">Shop Images</h2>
+      <!-- Quick Metrics -->
+      <div class="flex items-center gap-4 border-t sm:border-t-0 sm:border-l border-gray-100 pt-3 sm:pt-0 sm:pl-6 text-xs text-gray-500">
+        <div>
+          <span class="block text-gray-400 font-medium">Products</span>
+          <span class="font-black text-base text-gray-900">{{ shop()!.totalProducts }}</span>
+        </div>
+        <div>
+          <span class="block text-gray-400 font-medium">Orders</span>
+          <span class="font-black text-base text-gray-900">{{ shop()!.totalOrders }}</span>
+        </div>
+        <div>
+          <span class="block text-gray-400 font-medium">Revenue</span>
+          <span class="font-black text-base text-emerald-600">$ {{ shop()!.totalRevenue | number:'1.2-2' }}</span>
+        </div>
+      </div>
+    </div>
 
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+    <!-- Branding & Media -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <div>
+        <h3 class="text-base font-black text-gray-900">Store Branding & Media</h3>
+        <p class="text-xs text-gray-400">Upload a high-quality logo and storefront banner.</p>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
 
         <!-- Logo Upload -->
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Shop Logo</label>
+        <div class="p-4 bg-gray-50/70 border border-gray-100 rounded-2xl space-y-3">
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider">Store Logo</label>
           <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-xl bg-gray-100 overflow-hidden flex items-center justify-center shrink-0">
-              @if (shop().logoUrl) {
-                <img [src]="shop().logoUrl" alt="Logo" class="w-full h-full object-cover" />
-              } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                </svg>
+            <div class="w-20 h-20 rounded-2xl bg-white border border-gray-200 shadow-sm overflow-hidden flex items-center justify-center shrink-0 relative">
+              @if (shop()!.logoUrl | imageUrl) {
+                <img [src]="shop()!.logoUrl | imageUrl" alt="Logo" appFallback class="absolute inset-0 w-full h-full object-cover z-10" />
               }
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-300 z-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+              </svg>
             </div>
-            <div class="flex-1">
+            <div class="space-y-1.5">
               <input id="logoInput" type="file" accept="image/*" class="hidden" (change)="onLogoSelected($event)" />
               <button
                 type="button"
                 (click)="triggerLogoUpload()"
                 [disabled]="uploadingLogo()"
-                class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-60">
+                class="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-60 cursor-pointer">
                 @if (uploadingLogo()) {
-                  <svg class="animate-spin w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <svg class="animate-spin w-3.5 h-3.5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                     <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                     <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                   </svg>
-                  Uploading…
+                  Uploading Logo…
                 } @else {
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                     <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
                   </svg>
-                  Upload Logo
+                  Change Logo
                 }
               </button>
-              <p class="text-[10px] text-gray-400 mt-1">PNG, JPG. Recommended: 200×200px</p>
+              <p class="text-[11px] text-gray-400">PNG, JPG or WebP (max 5MB)</p>
             </div>
           </div>
         </div>
 
         <!-- Banner Upload -->
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Shop Banner</label>
-          <div class="rounded-xl overflow-hidden bg-gray-100 h-20 relative flex items-center justify-center mb-2">
-            @if (shop().bannerUrl) {
-              <img [src]="shop().bannerUrl" alt="Banner" class="w-full h-full object-cover" />
-            } @else {
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+        <div class="p-4 bg-gray-50/70 border border-gray-100 rounded-2xl space-y-3">
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider">Store Banner</label>
+          <div class="rounded-xl overflow-hidden bg-slate-100 border border-gray-200 shadow-sm h-28 relative flex items-center justify-center">
+            @if (shop()!.bannerUrl | imageUrl) {
+              <img [src]="shop()!.bannerUrl | imageUrl" alt="Banner" appFallback class="absolute inset-0 w-full h-full object-cover z-10" />
+            }
+            <div class="flex items-center gap-2 text-gray-400 z-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 15.75l5.159-5.159a2.25 2.25 0 013.182 0l5.159 5.159m-1.5-1.5l1.409-1.409a2.25 2.25 0 013.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 001.5-1.5V6a1.5 1.5 0 00-1.5-1.5H3.75A1.5 1.5 0 002.25 6v12a1.5 1.5 0 001.5 1.5zm10.5-11.25h.008v.008h-.008V8.25zm.375 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
               </svg>
-            }
+              <span class="text-xs font-semibold">No banner uploaded</span>
+            </div>
           </div>
           <input id="bannerInput" type="file" accept="image/*" class="hidden" (change)="onBannerSelected($event)" />
-          <button
-            type="button"
-            (click)="triggerBannerUpload()"
-            [disabled]="uploadingBanner()"
-            class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5 disabled:opacity-60">
-            @if (uploadingBanner()) {
-              <svg class="animate-spin w-3.5 h-3.5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-              </svg>
-              Uploading…
-            } @else {
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
-              </svg>
-              Upload Banner
-            }
-          </button>
-          <p class="text-[10px] text-gray-400 mt-1">PNG, JPG. Recommended: 1200×300px</p>
+          <div class="flex items-center justify-between">
+            <button
+              type="button"
+              (click)="triggerBannerUpload()"
+              [disabled]="uploadingBanner()"
+              class="px-4 py-2 bg-white hover:bg-gray-50 border border-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-all shadow-sm flex items-center gap-1.5 disabled:opacity-60 cursor-pointer">
+              @if (uploadingBanner()) {
+                <svg class="animate-spin w-3.5 h-3.5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                </svg>
+                Uploading Banner…
+              } @else {
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                Change Banner
+              }
+            </button>
+            <p class="text-[11px] text-gray-400">1200×300px recommended</p>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Shop Info Form -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 space-y-5">
-      <h2 class="text-base font-bold text-gray-900">Shop Information</h2>
+    <!-- Store Information Form -->
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
+      <div>
+        <h3 class="text-base font-black text-gray-900">General Information</h3>
+        <p class="text-xs text-gray-400">Update your store identity visible to customers.</p>
+      </div>
 
-      <div class="space-y-4">
-        <!-- Name -->
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Shop Name</label>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <!-- Shop Name -->
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">
+            Shop Name <span class="text-rose-500">*</span>
+          </label>
           <input
             type="text"
             [(ngModel)]="form.name"
-            placeholder="Enter shop name"
-            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
+            placeholder="My Awesome Store"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm font-semibold text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+          />
         </div>
 
         <!-- Description -->
-        <div>
-          <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Description</label>
+        <div class="sm:col-span-2">
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Description</label>
           <textarea
             [(ngModel)]="form.description"
-            rows="4"
-            placeholder="Describe your shop…"
-            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all resize-none"></textarea>
+            rows="3"
+            placeholder="Tell customers what your store is about..."
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none resize-none"
+          ></textarea>
         </div>
 
-        <!-- City & Country -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">City</label>
-            <input
-              type="text"
-              [(ngModel)]="form.city"
-              placeholder="e.g. Karachi"
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-500 uppercase tracking-wider mb-1.5">Country</label>
-            <input
-              type="text"
-              [(ngModel)]="form.country"
-              placeholder="e.g. Pakistan"
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary outline-none transition-all" />
-          </div>
+        <!-- Phone -->
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Contact Phone</label>
+          <input
+            type="tel"
+            [(ngModel)]="form.phone"
+            placeholder="+92 300 1234567"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+          />
+        </div>
+
+        <!-- Address -->
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Street Address</label>
+          <input
+            type="text"
+            [(ngModel)]="form.address"
+            placeholder="Shop #12, Main Bazaar"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+          />
+        </div>
+
+        <!-- City -->
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">City</label>
+          <input
+            type="text"
+            [(ngModel)]="form.city"
+            placeholder="Skardu"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+          />
+        </div>
+
+        <!-- Country -->
+        <div>
+          <label class="block text-xs font-bold text-gray-600 uppercase tracking-wider mb-1">Country</label>
+          <input
+            type="text"
+            [(ngModel)]="form.country"
+            placeholder="Pakistan"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
+          />
         </div>
       </div>
 
-      <!-- Save Button -->
-      <div class="flex justify-end pt-2">
+      <!-- Action Button -->
+      <div class="flex justify-end pt-4 border-t border-gray-100">
         <button
           type="button"
-          (click)="saveShop()"
+          (click)="promptSaveShop()"
           [disabled]="saving()"
-          class="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl transition-colors flex items-center gap-2 disabled:opacity-60 shadow-sm">
+          class="px-6 py-3 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-md shadow-primary/25 transition-all flex items-center gap-2 disabled:opacity-60 cursor-pointer active:scale-95">
           @if (saving()) {
             <svg class="animate-spin w-4 h-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -184,8 +246,8 @@
             </svg>
             Saving…
           } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
             </svg>
             Save Changes
           }
@@ -197,13 +259,43 @@
 
   <!-- No shop data -->
   @if (!loading() && !shop()) {
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-12 h-12 text-gray-300 mx-auto mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5A.75.75 0 0114.25 12h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
-      </svg>
-      <h3 class="text-sm font-bold text-gray-900">No shop found</h3>
-      <p class="text-xs text-gray-400 mt-1">Your shop profile could not be loaded.</p>
+    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-12 text-center max-w-md mx-auto">
+      <div class="w-16 h-16 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto mb-3 text-gray-400">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5A.75.75 0 0114.25 12h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
+        </svg>
+      </div>
+      <h3 class="text-base font-bold text-gray-900">No shop found</h3>
+      <p class="text-xs text-gray-500 mt-1">Your merchant account is not linked to a shop yet or loading failed.</p>
+      <button (click)="loadShop()" class="mt-4 px-4 py-2 bg-primary text-white text-xs font-bold rounded-xl">Retry Loading</button>
     </div>
   }
+
+  <!-- Confirmation Modal before Saving Settings -->
+  <app-confirm-modal
+    [isOpen]="showConfirmUpdateModal()"
+    title="Save Store Settings?"
+    message="Are you sure you want to update your store profile details and location? These changes will be published live across the marketplace immediately."
+    [itemHighlight]="form.name + ' • ' + (form.city || 'Skardu') + ', ' + (form.country || 'Pakistan')"
+    confirmText="Yes, Save Settings"
+    cancelText="Keep Editing"
+    type="info"
+    [isProcessing]="saving()"
+    (confirmed)="confirmSaveShop()"
+    (cancelled)="cancelSaveShop()">
+  </app-confirm-modal>
+
+  <!-- Eye-Catching Shop Update Success Modal -->
+  <app-confirm-modal
+    [isOpen]="showSuccessModal()"
+    title="Store Profile Updated!"
+    message="Your storefront branding, contact information, and address changes have been successfully saved and published live across the platform."
+    [itemHighlight]="(shop()?.name || 'Shop') + ' • ' + (shop()?.city || '') + ', ' + (shop()?.country || '')"
+    confirmText="Awesome, Continue"
+    type="success"
+    [singleButton]="true"
+    (confirmed)="showSuccessModal.set(false)"
+    (cancelled)="showSuccessModal.set(false)">
+  </app-confirm-modal>
 
 </div>

@@ -1,5 +1,6 @@
-import { Component, signal } from '@angular/core';
+import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
+import { AuthStore, ToastService, safeDecodeHandoff } from 'eseller-shared';
 
 @Component({
   imports: [RouterOutlet],
@@ -7,6 +8,34 @@ import { RouterOutlet } from '@angular/router';
   styleUrl: './app.css',
   templateUrl: './app.html',
 })
-export class App {
+export class App implements OnInit {
   protected readonly title = signal('eseller-admin');
+  private readonly authStore = inject(AuthStore);
+  readonly toastService = inject(ToastService);
+
+  ngOnInit(): void {
+    if (typeof window !== 'undefined' && window.location.hash) {
+      const match = window.location.hash.match(/#auth=([^&]+)/);
+      if (match && match[1]) {
+        try {
+          const payload = safeDecodeHandoff<any>(match[1]);
+          if (payload && payload.accessToken && payload.accountId) {
+            this.authStore.setAuth({
+              accessToken: payload.accessToken,
+              accessTokenExpiresAt: payload.accessTokenExpiresAt,
+              account: {
+                accountId: payload.accountId,
+                username: payload.username,
+                email: payload.email,
+                roleType: payload.roleType
+              }
+            });
+            window.history.replaceState(null, '', window.location.pathname);
+          }
+        } catch (e) {
+          console.error('Failed to parse auth handoff', e);
+        }
+      }
+    }
+  }
 }

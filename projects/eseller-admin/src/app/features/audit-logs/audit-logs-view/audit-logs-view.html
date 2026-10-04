@@ -1,0 +1,66 @@
+<div class="space-y-6">
+  <!-- HEADER -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Security & Audit Timeline</h1>
+      <p class="text-xs text-gray-500 mt-1">Trace platform modifications, merchant approvals, status changes, and operator events.</p>
+    </div>
+    <div class="relative w-full sm:w-72">
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)"
+        placeholder="Filter by action or email..." 
+        class="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden shadow-2xs">
+    </div>
+  </div>
+
+  <!-- AUDIT LOGS TABLE -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-xs text-gray-400">Loading audit history...</div>
+    } @else if (filteredLogs().length === 0) {
+      <div class="p-12 text-center text-gray-400">
+        <p class="text-sm font-bold text-gray-600">No audit events found</p>
+        <p class="text-xs mt-1">Platform actions will be logged here in chronological order.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-gray-100 text-[11px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50/50">
+              <th class="py-3 px-4">Action</th>
+              <th class="py-3 px-4">Entity</th>
+              <th class="py-3 px-4">Performed By</th>
+              <th class="py-3 px-4">Details</th>
+              <th class="py-3 px-4 text-right">Timestamp</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (log of filteredLogs(); track log.id) {
+              <tr class="hover:bg-orange-50/20 transition-colors">
+                <td class="py-3.5 px-4">
+                  <span class="px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 font-bold text-[10px] uppercase border border-orange-200">
+                    {{ log.action }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 font-bold text-gray-900 text-xs">
+                  {{ log.entityType }} #{{ log.entityId ? log.entityId.slice(0, 8) : 'N/A' }}
+                </td>
+                <td class="py-3.5 px-4 text-xs text-gray-700">
+                  {{ log.userEmail || 'System Admin' }}
+                </td>
+                <td class="py-3.5 px-4 text-xs text-gray-500 max-w-xs truncate">
+                  {{ log.details || '-' }}
+                </td>
+                <td class="py-3.5 px-4 text-xs text-gray-400 text-right font-mono">
+                  {{ (log.createdAt || log.timestamp) | date:'medium' }}
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

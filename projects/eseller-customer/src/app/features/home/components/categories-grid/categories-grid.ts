@@ -230,9 +230,13 @@ export class CategoriesGrid implements OnDestroy {
 
   getImageUrl(imageUrl: string | null | undefined): string | null {
     if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : '';
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:') || imageUrl.startsWith('blob:')) {
+      return imageUrl;
+    }
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '');
     const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
     if (path.startsWith('/uploads/')) return `${host}${path}`;
     return `${host}/uploads${path}`;

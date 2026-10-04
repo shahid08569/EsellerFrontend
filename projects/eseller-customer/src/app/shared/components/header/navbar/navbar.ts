@@ -10,7 +10,9 @@ import {
   WishlistService,
   CompareService,
   AuthStore,
-  ToastService
+  AuthService,
+  ToastService,
+  AuthActionService
 } from 'eseller-shared';
 
 @Component({
@@ -22,11 +24,16 @@ import {
 export class Navbar implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly homeService = inject(HomeService);
+  private readonly authService = inject(AuthService);
   readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
   readonly compareService = inject(CompareService);
   readonly authStore = inject(AuthStore);
   private readonly toastService = inject(ToastService);
+  private readonly authAction = inject(AuthActionService);
+
+  /** Signed-in customer — used to show Orders and allow commerce pages. */
+  readonly canShop = () => this.authAction.canShop();
 
   readonly mobileMenuOpen = signal(false);
   readonly categories = signal<CategoryTreeDto[]>([]);
@@ -134,11 +141,37 @@ export class Navbar implements OnInit, OnDestroy {
     this.isUserMenuOpen.set(false);
   }
 
-  onLogout(): void {
-    this.authStore.clearAuth();
+  readonly logoutModalOpen = signal(false);
+
+  openLogoutModal(): void {
     this.closeUserMenu();
-    this.toastService.show('You have been signed out successfully.', 'info');
-    this.router.navigateByUrl('/');
+    this.closeMobileMenu();
+    this.logoutModalOpen.set(true);
+  }
+
+  cancelLogout(): void {
+    this.logoutModalOpen.set(false);
+  }
+
+  /** Opens confirm popup — actual sign-out runs from confirmLogout(). */
+  onLogout(): void {
+    this.openLogoutModal();
+  }
+
+  confirmLogout(): void {
+    this.logoutModalOpen.set(false);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.authStore.clearAuth();
+        this.toastService.show('You have been signed out successfully.', 'info');
+        this.router.navigate(['/auth/login'], { queryParams: { logout: 'true' } });
+      },
+      error: () => {
+        this.authStore.clearAuth();
+        this.toastService.show('You have been signed out successfully.', 'info');
+        this.router.navigate(['/auth/login'], { queryParams: { logout: 'true' } });
+      }
+    });
   }
 
   toggleMobileMenu(): void {
@@ -155,5 +188,16 @@ export class Navbar implements OnInit, OnDestroy {
       this.closeMobileMenu();
       this.router.navigate(['/products'], { queryParams: { search: trimmed } });
     }
+  }
+
+  /**
+   * Compare / Wishlist / Cart: visible to visitors, but click → login
+   * with returnUrl set to the destination page.
+   */
+  onProtectedNav(event: Event, path: string, actionLabel: string): void {
+    this.closeMobileMenu();
+    if (this.authAction.canShop()) return;
+    event.preventDefault();
+    this.authAction.requireLoginFor(path, actionLabel);
   }
 }

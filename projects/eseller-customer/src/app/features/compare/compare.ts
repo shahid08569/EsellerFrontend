@@ -5,6 +5,7 @@ import {
   CompareService,
   CartService,
   WishlistService,
+  AuthActionService,
   ProductListDto,
   MAX_COMPARE_ITEMS,
   ToastService
@@ -21,6 +22,7 @@ export class Compare implements OnInit {
   readonly compareService = inject(CompareService);
   private readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
+  private readonly authAction = inject(AuthActionService);
   private readonly toastService = inject(ToastService);
 
   readonly maxItems = MAX_COMPARE_ITEMS;
@@ -59,6 +61,7 @@ export class Compare implements OnInit {
   }
 
   addToCart(product: ProductListDto): void {
+    if (!this.authAction.requireLogin('add items to your cart')) return;
     const img = this.getImageUrl(product.primaryImageUrl);
     this.cartService.addItem({
       productId: product.id,
@@ -76,6 +79,7 @@ export class Compare implements OnInit {
   }
 
   toggleWishlist(product: ProductListDto): void {
+    if (!this.authAction.requireLogin('save items to your wishlist')) return;
     const added = this.wishlistService.toggleItem(product);
     this.showFeedback(
       added ? `Added "${product.name}" to wishlist!` : `Removed "${product.name}" from wishlist!`,
@@ -114,14 +118,14 @@ export class Compare implements OnInit {
 
   getImageUrl(imageUrl: string | null | undefined): string | null {
     if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const apiBase = (typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string;
-    if (apiBase) {
-      const host = apiBase.replace(/\/api\/v1\/?$/, '');
-      const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-      return `${host}/uploads${path}`;
-    }
-    return imageUrl;
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+    const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    if (path.startsWith('/uploads')) return `${host}${path}`;
+    return `${host}/uploads${path}`;
   }
 
   showFeedback(msg: string, type: 'success' | 'info' | 'error' | 'warning' = 'info'): void {

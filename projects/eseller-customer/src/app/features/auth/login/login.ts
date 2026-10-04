@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { AuthService, AuthStore, ToastService } from 'eseller-shared';
+import { AuthService, AuthStore, ToastService, safeEncodeHandoff } from 'eseller-shared';
 
 @Component({
   selector: 'app-login',
@@ -47,10 +47,56 @@ export class Login implements OnInit {
   private returnUrl: string = '/dashboard';
 
   ngOnInit(): void {
-    // If already authenticated, redirect to dashboard
-    if (this.authStore.isAuthenticated()) {
-      this.router.navigate(['/dashboard']);
+    const isLogout = this.route.snapshot.queryParamMap.get('logout') === 'true' ||
+                     (typeof window !== 'undefined' && window.location.search.includes('logout=true'));
+    if (isLogout) {
+      this.authStore.clearAuth();
+      this.toastService.show('You have been signed out successfully.', 'info');
+      try {
+        window.history.replaceState(null, '', '/auth/login');
+      } catch {}
       return;
+    }
+
+    // If already authenticated, check expiry and redirect with handoff token
+    if (this.authStore.isAuthenticated()) {
+      const token = this.authStore.accessToken();
+      const expiresAt = this.authStore.accessTokenExpiresAt();
+      const isExpired = !token || (expiresAt ? expiresAt.getTime() <= Date.now() : false);
+
+      if (isExpired) {
+        // Token expired, clear it so user can cleanly sign in again
+        this.authStore.clearAuth();
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.removeItem('eseller_auth_session');
+        }
+      } else {
+        const role = this.authStore.currentAccount()?.roleType;
+        const account = this.authStore.currentAccount()!;
+        const handoff = safeEncodeHandoff({
+          accessToken: token,
+          accessTokenExpiresAt: expiresAt?.toISOString() || new Date(Date.now() + 3600000).toISOString(),
+          accountId: account.accountId,
+          username: account.username,
+          email: account.email,
+          roleType: role
+        });
+
+        if (role === 'Shopkeeper') {
+          if (typeof window !== 'undefined') {
+            window.location.href = `http://localhost:54007/dashboard#auth=${encodeURIComponent(handoff)}`;
+            return;
+          }
+        }
+        if (role === 'SuperAdmin' || role === 'Partner') {
+          if (typeof window !== 'undefined') {
+            window.location.href = `http://localhost:4201/dashboard#auth=${encodeURIComponent(handoff)}`;
+            return;
+          }
+        }
+        this.router.navigate(['/dashboard']);
+        return;
+      }
     }
 
     // Capture returnUrl
@@ -140,15 +186,27 @@ export class Login implements OnInit {
         if (res.roleType === 'Shopkeeper') {
           if (typeof window !== 'undefined') {
             // Encode auth handoff in URL hash (hash never sent to server, more secure)
-            const handoff = btoa(JSON.stringify({
+            const handoff = safeEncodeHandoff({
               accessToken: res.accessToken,
               accessTokenExpiresAt: res.accessTokenExpiresAt,
               accountId: res.accountId,
               username: res.username,
               email: res.email,
               roleType: res.roleType
-            }));
-            window.location.href = `http://localhost:54007/dashboard#auth=${handoff}`;
+            });
+            window.location.href = `http://localhost:54007/dashboard#auth=${encodeURIComponent(handoff)}`;
+          }
+        } else if (res.roleType === 'SuperAdmin' || res.roleType === 'Partner') {
+          if (typeof window !== 'undefined') {
+            const handoff = safeEncodeHandoff({
+              accessToken: res.accessToken,
+              accessTokenExpiresAt: res.accessTokenExpiresAt,
+              accountId: res.accountId,
+              username: res.username,
+              email: res.email,
+              roleType: res.roleType
+            });
+            window.location.href = `http://localhost:4201/dashboard#auth=${encodeURIComponent(handoff)}`;
           }
         } else {
           this.router.navigateByUrl(this.returnUrl);
@@ -156,17 +214,18 @@ export class Login implements OnInit {
       },
       error: (err) => {
         this.isSubmitting.set(false);
-        const code = err?.error?.errorCode || err?.error || '';
+        const code = err?.errorCode || err?.error?.errorCode || (typeof err?.error === 'string' ? err.error : '') || '';
+        const errMsg = (typeof err?.error === 'string' ? err.error : '') || err?.error?.error || err?.message || '';
         let message = 'Unable to sign in. Please verify your credentials and try again.';
 
-        if (code === 'INVALID_CREDENTIALS') {
+        if (code === 'INVALID_CREDENTIALS' || errMsg.toLowerCase().includes('invalid credentials')) {
           message = 'Invalid email/username or password. Please try again.';
-        } else if (code === 'ACCOUNT_INACTIVE') {
+        } else if (code === 'ACCOUNT_INACTIVE' || errMsg.toLowerCase().includes('inactive')) {
           message = 'Your account has been deactivated. Please contact platform support.';
-        } else if (code === 'LOCATION_REQUIRED') {
+        } else if (code === 'LOCATION_REQUIRED' || errMsg.toLowerCase().includes('location')) {
           message = 'Location authorization is required for account security.';
-        } else if (err?.message && !err?.message.includes('Http failure')) {
-          message = err.message;
+        } else if (errMsg && typeof errMsg === 'string' && !errMsg.includes('Http failure')) {
+          message = errMsg;
         }
 
         this.errorMessage.set(message);
@@ -258,7 +317,10 @@ export class Login implements OnInit {
       },
       error: (err) => {
         this.forgotSubmitting.set(false);
-        const msg = err?.error?.error || 'Invalid or expired verification code. Please check and try again.';
+        const msg =
+          (typeof err?.error === 'string' ? err.error : '') ||
+          err?.message ||
+          'Invalid or expired verification code. Please check and try again.';
         this.forgotErrorMsg.set(msg);
         this.toastService.show(msg, 'error');
       }

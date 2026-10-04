@@ -6,6 +6,7 @@ import {
   CartService,
   CartItem,
   AuthStore,
+  AuthActionService,
   ToastService,
   DashboardService,
   AddressDto,
@@ -31,6 +32,7 @@ export class Cart implements OnInit {
   private readonly route = inject(ActivatedRoute);
   readonly cartService = inject(CartService);
   readonly authStore = inject(AuthStore);
+  private readonly authAction = inject(AuthActionService);
   private readonly toastService = inject(ToastService);
   private readonly dashboardService = inject(DashboardService);
   private readonly orderService = inject(OrderService);
@@ -39,9 +41,9 @@ export class Cart implements OnInit {
   readonly customerName = signal<string>('');
   readonly customerPhone = signal<string>('');
   readonly deliveryAddress = signal<string>('');
-  readonly selectedCountry = signal<string>('Pakistan');
-  readonly selectedState = signal<string>('Punjab');
-  readonly deliveryCity = signal<string>('Lahore');
+  readonly selectedCountry = signal<string>('');
+  readonly selectedState = signal<string>('');
+  readonly deliveryCity = signal<string>('');
   readonly orderNotes = signal<string>('');
 
   // Field-level error validation signals
@@ -67,15 +69,17 @@ export class Cart implements OnInit {
   );
 
   readonly selectedCountryData = computed(() => {
-    return COUNTRIES_DATA.find((x) => x.name === this.selectedCountry()) || COUNTRIES_DATA[0];
+    const name = this.selectedCountry();
+    if (!name) return null;
+    return COUNTRIES_DATA.find((x) => x.name === name) || null;
   });
 
   readonly selectedDialCode = computed(() => {
-    return this.selectedCountryData()?.phoneCode || '+92';
+    return this.selectedCountryData()?.phoneCode || '';
   });
 
   readonly selectedFlag = computed(() => {
-    return this.selectedCountryData()?.flag || '🇵🇰';
+    return this.selectedCountryData()?.flag || '🌍';
   });
 
   readonly phonePlaceholder = computed(() => {
@@ -153,29 +157,9 @@ export class Cart implements OnInit {
   onCountryChange(countryName: string): void {
     this.selectedCountry.set(countryName);
     this.countryError.set(null);
-
-    const found = COUNTRIES_DATA.find((c) => c.name === countryName);
-    if (found && found.states && found.states.length > 0) {
-      this.selectedState.set(found.states[0]);
-    } else {
-      this.selectedState.set('');
-    }
+    this.selectedState.set('');
     this.stateError.set(null);
-
-    // Contextual city defaults
-    if (countryName === 'Pakistan') {
-      if (!this.deliveryCity() || this.deliveryCity() === 'Dubai' || this.deliveryCity() === 'Riyadh') {
-        this.deliveryCity.set('Lahore');
-      }
-    } else if (countryName === 'United Arab Emirates') {
-      this.deliveryCity.set('Dubai');
-    } else if (countryName === 'Saudi Arabia') {
-      this.deliveryCity.set('Riyadh');
-    } else if (countryName === 'United States') {
-      this.deliveryCity.set('New York');
-    } else if (countryName === 'United Kingdom') {
-      this.deliveryCity.set('London');
-    }
+    this.deliveryCity.set('');
   }
 
   onStateChange(stateName: string): void {
@@ -239,6 +223,8 @@ export class Cart implements OnInit {
   }
 
   finalizeOrderViaChat(): void {
+    if (!this.authAction.requireLogin('checkout')) return;
+
     const items = this.cartService.items();
     if (items.length === 0) {
       this.orderError.set('Your cart is empty. Please add products to proceed.');
@@ -312,7 +298,7 @@ export class Cart implements OnInit {
       shippingAddress: this.deliveryAddress().trim(),
       city: this.deliveryCity().trim(),
       state: this.selectedState()?.trim() || '',
-      country: this.selectedCountry()?.trim() || 'Pakistan',
+      country: this.selectedCountry()?.trim() || '',
       orderNotes: this.orderNotes().trim(),
       referralCode: null
     };
@@ -329,7 +315,7 @@ export class Cart implements OnInit {
           address: this.deliveryAddress().trim(),
           city: this.deliveryCity().trim(),
           state: this.selectedState()?.trim() || '',
-          country: this.selectedCountry()?.trim() || 'Pakistan',
+          country: this.selectedCountry()?.trim() || '',
           province: this.selectedState()?.trim() || '',
           notes: this.orderNotes().trim()
         },
@@ -355,16 +341,21 @@ export class Cart implements OnInit {
       this.cartService.clearCart();
       this.isSubmitting.set(false);
 
+      const displayRef = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalOrderRef)
+        ? `ORD-${finalOrderRef.substring(0, 8).toUpperCase()}`
+        : finalOrderRef;
+
       if (isApiCreated) {
-        this.toastService.show(`Order placed successfully! Reference: ${finalOrderRef}`, 'success');
+        this.toastService.show(`Order placed! Reference: ${displayRef}. Opening Super Admin chat...`, 'success');
       } else {
-        this.toastService.show(`Order generated! Connecting you with seller on chat...`, 'success');
+        this.toastService.show(`Order ready. Opening Super Admin chat with your order template...`, 'success');
       }
 
       this.router.navigate(['/chat'], {
         queryParams: {
-          shopId: primaryShopId,
-          orderRef: finalOrderRef
+          support: '1',
+          orderRef: finalOrderRef,
+          autosend: '1'
         }
       });
     };
@@ -378,10 +369,9 @@ export class Cart implements OnInit {
       const executeCreateOrder = () => {
         this.orderService.createOrder(orderPayload).subscribe({
           next: (res) => {
-            const confirmedRef = res.orderId
-              ? `ORD-${res.orderId.substring(0, 8).toUpperCase()}`
-              : generatedRef;
-            saveAndRedirect(confirmedRef, true);
+            // Pass the real OrderRequest GUID so chat joins the seller order room
+            const confirmedRef = res.orderId || generatedRef;
+            saveAndRedirect(confirmedRef, !!res.orderId);
           },
           error: (err) => {
             console.warn('Backend order placement error, proceeding with local fallback:', err);

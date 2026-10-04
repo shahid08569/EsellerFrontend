@@ -1,0 +1,103 @@
+/* ══════════════════════════════════════════════════════════════
+ * Pinterest 3D Depth Zoom & Massive Product Showcase Animation
+ * ══════════════════════════════════════════════════════════════ */
+
+/* Continuous Gentle Idle Floating (Comfortable inside viewport, zero clipping) */
+@keyframes hero3DFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  50% {
+    transform: translateY(-8px) rotate(-0.8deg);
+  }
+}
+
+.hero-text-shadow-light {
+  text-shadow: 0 2px 16px rgba(0, 0, 0, 0.8), 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.hero-text-shadow-dark {
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+}
+
+/* Floor Shadow Breathing in sync with product float */
+@keyframes hero3DShadow {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.55;
+    filter: blur(14px);
+  }
+  50% {
+    transform: scale(0.84);
+    opacity: 0.3;
+    filter: blur(20px);
+  }
+}
+
+/* 3D Depth Zoom: Outgoing product zooms towards camera and dissolves */
+.product-zoom-out {
+  transform: scale(1.35) translateY(-30px) !important;
+  opacity: 0 !important;
+  filter: blur(10px) !important;
+  transition: transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.5s ease-out, filter 0.5s ease-out !important;
+}
+
+/* 3D Depth Zoom: Incoming product bursts from deep background into foreground */
+.product-zoom-in-start {
+  transform: scale(0.18) translateY(60px) !important;
+  opacity: 0 !important;
+  filter: blur(16px) !important;
+}
+
+.product-zoom-in-active {
+  transform: scale(1) translateY(0) !important;
+  opacity: 1 !important;
+  filter: blur(0px) !important;
+  transition: transform 0.75s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.6s ease-out, filter 0.6s ease-out !important;
+}
+
+.hero-idle-float {
+  animation: hero3DFloat 5.2s ease-in-out infinite;
+  will-change: transform;
+}
+
+.hero-idle-shadow {
+  animation: hero3DShadow 5.2s ease-in-out infinite;
+  will-change: transform, opacity;
+}
+
+/* Text slide up transition */
+.text-slide-up {
+  animation: textSlideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes textSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Glassmorphic styling */
+.hero-glass-pill {
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+}
+
+.hero-glass-pill-dark {
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* Radial Stage Spotlight */
+.hero-stage-spotlight {
+  background: radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.22) 0%, rgba(255, 255, 255, 0.05) 45%, transparent 70%);
+}

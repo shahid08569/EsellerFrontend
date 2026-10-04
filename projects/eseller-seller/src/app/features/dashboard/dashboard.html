@@ -1,219 +1,498 @@
 <div class="space-y-6">
 
-  <!-- Page Header -->
-  <div class="flex items-center justify-between">
-    <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Merchant Dashboard</h1>
-      <p class="text-sm text-gray-500 mt-1">Overview of your store's performance.</p>
+  <!-- ============================================================ -->
+  <!-- 1. TOP STORE STATUS & EXECUTIVE BANNER -->
+  <!-- ============================================================ -->
+  <div class="bg-slate-950 text-white rounded-2xl p-6 shadow-xl border border-slate-800">
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+      
+      <div class="space-y-1.5">
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="font-extrabold text-white text-base tracking-tight">
+            {{ shop()?.name || 'My Merchant Store' }}
+          </span>
+
+          <!-- Verification Badge -->
+          @if (shop()?.isApproved) {
+            <span class="px-2.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-[10px] font-bold uppercase tracking-wider">
+              Verified Store
+            </span>
+          } @else {
+            <span class="px-2.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 border border-amber-500/30 text-[10px] font-bold uppercase tracking-wider">
+              Pending Verification
+            </span>
+          }
+
+          <!-- Current Package Badge -->
+          <span class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 text-[10px] font-bold">
+            Plan: {{ currentTier() }} (Limit: {{ maxProductLimit() }} Products)
+          </span>
+
+          @if (pendingTierUpgrade(); as upgrade) {
+            <span class="px-2.5 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300 border border-cyan-500/30 text-[10px] font-bold uppercase animate-pulse">
+              Upgrade to {{ upgrade.tier }} Requested
+            </span>
+          }
+        </div>
+
+        <p class="text-xs text-slate-400 max-w-xl">
+          Select products from the Master Product Warehouse. Earn a flat 20% net commission on every fulfilled customer order.
+        </p>
+      </div>
+
+      <!-- Quick Actions -->
+      <div class="flex items-center gap-2 shrink-0">
+        <button 
+          type="button" 
+          (click)="openTierModal()"
+          class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-colors cursor-pointer">
+          Change / Upgrade Plan
+        </button>
+
+        <a routerLink="/products/catalog" class="px-4 py-2 bg-white text-slate-950 hover:bg-slate-100 font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer">
+          Product Warehouse &rarr;
+        </a>
+      </div>
+
     </div>
-    <a routerLink="/products/new"
-       class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-sm transition-colors flex items-center gap-2">
-      <!-- Plus icon -->
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.75v14.5M4.75 12h14.5" />
-      </svg>
-      Add Product
-    </a>
   </div>
 
-  <!-- Loading Skeleton -->
-  @if (loading()) {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-      @for (n of [1,2,3,4]; track n) {
-        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm animate-pulse">
-          <div class="h-3 bg-gray-200 rounded w-1/2 mb-4"></div>
-          <div class="h-7 bg-gray-200 rounded w-1/3 mb-3"></div>
-          <div class="h-2 bg-gray-100 rounded w-2/3"></div>
-        </div>
-      }
-    </div>
-
-    <!-- Welcome card skeleton -->
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 animate-pulse">
-      <div class="flex items-center gap-4">
-        <div class="w-16 h-16 rounded-xl bg-gray-200"></div>
-        <div class="space-y-2">
-          <div class="h-4 bg-gray-200 rounded w-40"></div>
-          <div class="h-3 bg-gray-100 rounded w-24"></div>
-        </div>
+  <!-- ============================================================ -->
+  <!-- 2. METRIC BOXES (TOP) -->
+  <!-- ============================================================ -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    
+    <!-- 1. Total Gross Sales -> /earnings -->
+    <div 
+      (click)="navigateTo('/earnings')"
+      class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-shadow cursor-pointer group select-none">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Gross Order Sales</span>
+        <span class="text-slate-400 group-hover:text-slate-700 transition-colors text-xs font-bold">&rarr;</span>
+      </div>
+      <div>
+        <p class="text-2xl font-black text-slate-900 font-mono">
+          $ {{ totalGrossSales() | number }}
+        </p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Click to view earnings ledger</p>
       </div>
     </div>
-  }
 
-  <!-- Real Data -->
-  @if (!loading()) {
+    <!-- 2. Net 20% Commission -> /earnings (same style, no highlight) -->
+    <div 
+      (click)="navigateTo('/earnings')"
+      class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-shadow cursor-pointer group select-none">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Your Net Earnings (20%)</span>
+        <span class="text-slate-400 group-hover:text-slate-700 transition-colors text-xs font-bold">&rarr;</span>
+      </div>
+      <div>
+        <p class="text-2xl font-black text-slate-900 font-mono">
+          $ {{ totalNetCommission() | number }}
+        </p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Today: $ {{ todayCommission() | number }} commission</p>
+      </div>
+    </div>
 
-    <!-- Welcome / Shop Card -->
-    @if (shop()) {
-      <div class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col sm:flex-row items-start sm:items-center gap-4">
-        <!-- Logo -->
-        <div class="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 shrink-0 flex items-center justify-center">
-          @if (shop().logoUrl) {
-            <img [src]="shop().logoUrl" [alt]="shop().name" class="w-full h-full object-cover" />
+    <!-- 3. Active Products in Store -> /products -->
+    <div 
+      (click)="navigateTo('/products')"
+      class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-shadow cursor-pointer group select-none">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Active In Store</span>
+        <span class="text-slate-400 group-hover:text-slate-700 transition-colors text-xs font-bold">&rarr;</span>
+      </div>
+      <div>
+        <p class="text-2xl font-black text-slate-900 font-mono">
+          {{ myProducts().length }} / {{ maxProductLimit() }}
+        </p>
+        <p class="text-[11px] text-slate-400 mt-0.5">Capacity: {{ maxProductLimit() - myProducts().length }} available</p>
+      </div>
+    </div>
+
+    <!-- 4. Total Orders -> /orders -->
+    <div 
+      (click)="navigateTo('/orders')"
+      class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs hover:shadow-md transition-shadow cursor-pointer group select-none">
+      <div class="flex items-center justify-between mb-2">
+        <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Total Store Orders</span>
+        <span class="text-slate-400 group-hover:text-slate-700 transition-colors text-xs font-bold">&rarr;</span>
+      </div>
+      <div>
+        <p class="text-2xl font-black text-slate-900 font-mono">
+          {{ recentOrders().length }}
+        </p>
+        <p class="text-[11px] text-slate-400 mt-0.5">
+          @if (pendingOrders() > 0) {
+            <span class="text-slate-500 font-semibold">{{ pendingOrders() }} pending fulfillment</span>
           } @else {
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5A.75.75 0 0114.25 12h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016 2.993 2.993 0 002.25-1.016 3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 2.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
-            </svg>
+            <span>All orders fulfilled</span>
           }
-        </div>
+        </p>
+      </div>
+    </div>
 
-        <!-- Info -->
-        <div class="flex-1 min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h2 class="text-lg font-black text-gray-900 truncate">{{ shop().name }}</h2>
-            @if (shop().isApproved) {
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-emerald-50 text-emerald-600">
-                ✓ Approved
-              </span>
-            } @else {
-              <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold uppercase bg-amber-50 text-amber-600">
-                ⏳ Pending Review
-              </span>
-            }
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. WAREHOUSE SLIDER (AFTER BOXES) -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+      <div>
+        <div class="flex items-center gap-2 flex-wrap">
+          <span class="text-xs font-bold text-slate-500 uppercase tracking-wider">Master Warehouse</span>
+          <span class="text-xs font-semibold text-slate-400">
+            Capacity: {{ myProducts().length }} / {{ maxProductLimit() }}
+          </span>
+        </div>
+        <h3 class="text-base font-black text-slate-900 tracking-tight mt-1">
+          Top Warehouse Products
+        </h3>
+        <p class="text-xs text-slate-500">
+          Add products from the master catalog. Flat 20% commission on every sale.
+        </p>
+      </div>
+      <div class="flex items-center gap-2 shrink-0">
+        <button type="button" (click)="scrollSliderLeft()"
+          class="w-8 h-8 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
+          title="Scroll Left">&larr;</button>
+        <button type="button" (click)="scrollSliderRight()"
+          class="w-8 h-8 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold flex items-center justify-center transition-colors cursor-pointer"
+          title="Scroll Right">&rarr;</button>
+        <a routerLink="/products/catalog"
+          class="px-3.5 py-1.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors cursor-pointer">
+          Full Warehouse &rarr;
+        </a>
+      </div>
+    </div>
+
+    @if (topWarehouseProducts().length === 0) {
+      <div class="p-8 text-center text-slate-400">
+        <p class="text-xs font-bold text-slate-700">Loading warehouse inventory...</p>
+      </div>
+    } @else {
+      <div #warehouseSlider class="flex gap-4 overflow-x-auto p-4 pb-5 scroll-smooth snap-x snap-mandatory" style="scrollbar-width: thin;">
+        @for (product of topWarehouseProducts(); track product.id) {
+          <div class="w-64 shrink-0 snap-start bg-slate-50 rounded-2xl border border-slate-200 hover:shadow-md transition-shadow p-3 flex flex-col justify-between">
+            <div class="w-full h-36 rounded-xl bg-slate-200 overflow-hidden relative mb-2.5">
+              <img [src]="product.primaryImageUrl | imageUrl" [alt]="product.name" class="w-full h-full object-cover" />
+              <div class="absolute top-2 left-2 px-2 py-0.5 rounded bg-slate-950/80 text-[10px] font-bold text-white uppercase tracking-wider">
+                {{ product.categoryName || 'Warehouse' }}
+              </div>
+              <div class="absolute bottom-2 right-2 px-2 py-0.5 rounded bg-slate-900 text-white text-[10px] font-bold">
+                20% Flat Net
+              </div>
+            </div>
+
+            <div class="space-y-1 flex-1">
+              <p class="text-[10px] font-semibold text-slate-400 truncate">{{ product.brandName || 'Verified Brand' }}</p>
+              <h4 class="text-xs font-bold text-slate-900 line-clamp-2 leading-tight" [title]="product.name">{{ product.name }}</h4>
+              <div class="pt-2 border-t border-slate-200 space-y-1">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-500">Retail Price:</span>
+                  <span class="font-extrabold text-slate-900 font-mono">$ {{ product.basePrice | number }}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs bg-white px-2 py-1 rounded-lg border border-slate-200/80">
+                  <span class="text-slate-700 font-bold text-[10px]">Your 20% Cut:</span>
+                  <span class="font-black text-slate-900 font-mono text-xs">+$ {{ getCommission(product.basePrice) | number }}</span>
+                </div>
+              </div>
+            </div>
+
+            <div class="pt-2.5 mt-1.5 space-y-1.5">
+              @if (isAddedToStore(product.id)) {
+                <div class="w-full py-1.5 px-2.5 bg-emerald-50 text-emerald-800 border border-emerald-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
+                  <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                  Live in Your Store
+                </div>
+              } @else if (isPendingApproval(product.id)) {
+                <div class="w-full py-1.5 px-2.5 bg-amber-50 text-amber-800 border border-amber-200 rounded-xl text-xs font-bold flex flex-col items-center justify-center gap-0.5">
+                  <span class="flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                    Approval In Progress
+                  </span>
+                  <span class="text-[10px] font-semibold text-amber-700/80">Awaiting Super Admin review</span>
+                </div>
+              } @else {
+                <button type="button" [disabled]="isAddingProduct() === product.id"
+                  (click)="addToStoreFromWarehouse(product)"
+                  class="w-full py-1.5 px-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors cursor-pointer disabled:opacity-50">
+                  {{ isAddingProduct() === product.id ? 'Submitting Request…' : 'Request to List' }}
+                </button>
+              }
+            </div>
           </div>
-          <p class="text-sm text-gray-500 mt-0.5">{{ shop().city }}{{ shop().country ? ', ' + shop().country : '' }}</p>
-        </div>
-
-        <!-- Quick Actions -->
-        <div class="flex items-center gap-2 shrink-0">
-          <a routerLink="/orders"
-             class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5">
-            <!-- Clipboard icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-            </svg>
-            View Orders
-          </a>
-          <a routerLink="/settings"
-             class="px-3 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl transition-colors flex items-center gap-1.5">
-            <!-- Cog icon -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
-              <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-            </svg>
-            Settings
-          </a>
-        </div>
+        }
       </div>
     }
+  </div>
 
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-
-      <!-- Total Revenue -->
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Revenue</p>
-          <span class="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818l.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </span>
-        </div>
-        <p class="text-2xl font-black text-gray-900 mt-3">
-          Rs. {{ (shop()?.totalRevenue ?? 0) | number:'1.0-0' }}
-        </p>
-        <div class="mt-2 text-xs text-gray-400">Lifetime earnings</div>
-      </div>
-
-      <!-- Total Orders -->
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Total Orders</p>
-          <span class="w-9 h-9 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01" />
-            </svg>
-          </span>
-        </div>
-        <p class="text-2xl font-black text-gray-900 mt-3">{{ shop()?.totalOrders ?? 0 }}</p>
-        <div class="mt-2 text-xs text-gray-400">All time</div>
-      </div>
-
-      <!-- Total Products -->
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Active Products</p>
-          <span class="w-9 h-9 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z" />
-            </svg>
-          </span>
-        </div>
-        <p class="text-2xl font-black text-gray-900 mt-3">{{ shop()?.totalProducts ?? 0 }}</p>
-        <div class="mt-2 text-xs text-gray-400">Currently listed</div>
-      </div>
-
-      <!-- Pending Orders -->
-      <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm">
-        <div class="flex items-center justify-between">
-          <p class="text-xs font-bold text-gray-400 uppercase tracking-wider">Pending Orders</p>
-          <span class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-          </span>
-        </div>
-        <p class="text-2xl font-black text-gray-900 mt-3">{{ pendingOrders() }}</p>
-        <div class="mt-2 text-xs">
-          @if (pendingOrders() > 0) {
-            <a routerLink="/orders" class="text-amber-500 font-bold hover:underline">Needs processing →</a>
-          } @else {
-            <span class="text-gray-400">All caught up!</span>
-          }
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions Row -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <a routerLink="/products/new"
-         class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:border-primary/30 hover:shadow-md transition-all group cursor-pointer">
-        <span class="w-10 h-10 rounded-xl bg-primary/10 text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-white transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.75v14.5M4.75 12h14.5" />
-          </svg>
-        </span>
+  <!-- ============================================================ -->
+  <!-- 4. CATEGORY-WISE PRODUCT DISTRIBUTION & STORE PLAN INFO -->
+  <!-- ============================================================ -->
+  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    
+    <!-- Category-wise Distribution (lg:col-span-8) -->
+    <div class="lg:col-span-8 bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-3">
         <div>
-          <p class="text-sm font-bold text-gray-900">Add New Product</p>
-          <p class="text-xs text-gray-400 mt-0.5">List a product for sale</p>
-        </div>
-      </a>
-
-      <a routerLink="/orders"
-         class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:border-blue-200 hover:shadow-md transition-all group cursor-pointer">
-        <span class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 18.75a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h6m-9 0H3.375a1.125 1.125 0 01-1.125-1.125V14.25m17.25 4.5a1.5 1.5 0 01-3 0m3 0a1.5 1.5 0 00-3 0m3 0h1.125c.621 0 1.129-.504 1.09-1.124a17.902 17.902 0 00-3.213-9.193 2.056 2.056 0 00-1.58-.86H14.25M16.5 18.75h-2.25m0-11.177v-.958c0-.568-.422-1.048-.987-1.106a48.554 48.554 0 00-10.026 0 1.106 1.106 0 00-.987 1.106v7.635m12-6.677v6.677m0 4.5v-4.5m0 0h-12" />
-          </svg>
-        </span>
-        <div>
-          <p class="text-sm font-bold text-gray-900">Manage Orders</p>
-          <p class="text-xs text-gray-400 mt-0.5">
-            @if (pendingOrders() > 0) {
-              <span class="text-amber-500 font-bold">{{ pendingOrders() }} pending</span>
-            } @else {
-              Process & ship orders
-            }
+          <h3 class="text-sm font-black text-slate-900 uppercase tracking-wider">
+            Category-wise Product Distribution
+          </h3>
+          <p class="text-xs text-slate-500">
+            Category-wise breakdown of products currently active in your store.
           </p>
         </div>
-      </a>
+        <a routerLink="/products" class="text-xs font-bold text-slate-700 hover:text-slate-900 hover:underline">
+          View All &rarr;
+        </a>
+      </div>
 
-      <a routerLink="/settings"
-         class="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex items-center gap-4 hover:border-violet-200 hover:shadow-md transition-all group cursor-pointer">
-        <span class="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center group-hover:bg-violet-600 group-hover:text-white transition-colors">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 011.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.56.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.893.149c-.425.07-.765.383-.93.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 01-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.397.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 01-.12-1.45l.527-.737c.25-.35.273-.806.108-1.204-.165-.397-.505-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.107-1.204l-.527-.738a1.125 1.125 0 01.12-1.45l.773-.773a1.125 1.125 0 011.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894z" />
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-          </svg>
-        </span>
-        <div>
-          <p class="text-sm font-bold text-gray-900">Shop Settings</p>
-          <p class="text-xs text-gray-400 mt-0.5">Update shop info & logo</p>
+      <div class="space-y-3">
+        @if (categoryStats().length === 0) {
+          <p class="text-xs text-slate-400 py-4 text-center">No approved store products yet for category breakdown.</p>
+        } @else {
+          @for (cat of categoryStats(); track cat.name) {
+            <div class="space-y-1">
+              <div class="flex items-center justify-between text-xs gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center shrink-0">
+                    @if (cat.imageUrl | imageUrl; as img) {
+                      <img [src]="img" [alt]="cat.name" class="w-full h-full object-contain p-0.5" />
+                    } @else {
+                      <span class="text-[10px] font-black text-slate-400">{{ cat.name.charAt(0) }}</span>
+                    }
+                  </span>
+                  <span class="font-bold text-slate-800 truncate">{{ cat.name }}</span>
+                </div>
+                <span class="font-mono text-slate-500 shrink-0">{{ cat.count }} items ({{ cat.percentage }}%)</span>
+              </div>
+              <div class="w-full h-2 bg-slate-100 rounded-full overflow-hidden">
+                <div
+                  class="h-full bg-slate-900 rounded-full transition-all duration-500"
+                  [style.width.%]="cat.percentage || 4">
+                </div>
+              </div>
+            </div>
+          }
+        }
+      </div>
+    </div>
+
+    <!-- Current Package Details (lg:col-span-4) -->
+    <div class="lg:col-span-4 bg-slate-50 rounded-2xl border border-slate-200 p-5 flex flex-col justify-between space-y-4">
+      <div class="space-y-2">
+        <span class="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider">Active Subscription</span>
+        <h4 class="text-lg font-black text-slate-900">
+          {{ currentTier() }}
+        </h4>
+        <p class="text-xs text-slate-600 leading-relaxed">
+          Standard merchant tier with 200 product capacity from the master catalog and 20% flat commission on every sale.
+        </p>
+      </div>
+
+      <div class="pt-3 border-t border-slate-200/80 space-y-2 text-xs">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">Listed Capacity:</span>
+          <span class="font-bold text-slate-900 font-mono">{{ myProducts().length }} / {{ maxProductLimit() }}</span>
         </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">Commission Rate:</span>
+          <span class="font-bold text-emerald-700">20% Flat</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-500">Store Verification:</span>
+          <span class="font-bold" [class.text-emerald-700]="shop()?.isApproved" [class.text-amber-700]="!shop()?.isApproved">
+            {{ shop()?.isApproved ? 'Verified' : 'Pending' }}
+          </span>
+        </div>
+
+        <button 
+          type="button" 
+          (click)="openTierModal()"
+          class="w-full mt-2 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors cursor-pointer">
+          Upgrade Package (Gold / Diamond)
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 4. RECENT STORE ORDERS TABLE (EXECUTIVE CLEAN NO ICON CLUTTER) -->
+  <!-- ============================================================ -->
+  <div class="bg-white rounded-2xl border border-slate-200 shadow-xs overflow-hidden">
+    <div class="p-5 border-b border-slate-100 flex items-center justify-between">
+      <div>
+        <h3 class="text-sm font-black text-slate-900 tracking-tight uppercase">
+          Recent Store Orders &amp; Commissions
+        </h3>
+        <p class="text-xs text-slate-500">
+          Customer orders for your listed products with 20% flat commission details.
+        </p>
+      </div>
+      <a routerLink="/orders" class="text-xs font-bold text-slate-700 hover:text-slate-900 hover:underline">
+        View All Orders &rarr;
       </a>
     </div>
 
-  }
+    @if (loading()) {
+      <div class="p-8 text-center text-slate-400 space-y-2">
+        <div class="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs">Loading recent orders...</p>
+      </div>
+    } @else if (recentOrders().length === 0) {
+      <div class="p-10 text-center space-y-1 text-slate-400">
+        <p class="text-xs font-bold text-slate-700">No orders received yet</p>
+        <p class="text-[11px] text-slate-400">As soon as customers place orders for your products, order details and your 20% net commission will appear here.</p>
+      </div>
+    } @else {
+      <div class="seller-table-wrap">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th>Customer</th>
+              <th class="text-right">Amount</th>
+              <th class="text-center">Status</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (order of recentOrders(); track order.id) {
+              <tr>
+                <td>
+                  <p class="cell-mono">#{{ order.id.substring(0, 8).toUpperCase() }}</p>
+                  <p class="cell-sub">{{ formatDate(order.createdAt) }}</p>
+                </td>
+                <td>
+                  <p class="cell-title">{{ order.customerName || 'Customer' }}</p>
+                  <p class="cell-sub">{{ order.items.length || 1 }} item(s)</p>
+                </td>
+                <td class="text-right">
+                  <p class="cell-mono">$ {{ order.totalAmount | number }}</p>
+                  <p class="cell-sub">Net 20%: $ {{ getCommission(order.totalAmount) | number }}</p>
+                </td>
+                <td class="text-center">
+                  <span class="badge">{{ order.status }}</span>
+                </td>
+                <td class="text-right">
+                  <a routerLink="/orders" class="btn-quiet">Open</a>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
 
 </div>
+
+<!-- ============================================================ -->
+<!-- STORE VERIFICATION PENDING MODAL POPUP -->
+<!-- ============================================================ -->
+@if (showPendingVerificationModal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 relative overflow-hidden animate-in zoom-in-95 duration-200 text-center space-y-4">
+      
+      <!-- Icon -->
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto shadow-inner">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+
+      <!-- Content -->
+      <div class="space-y-1.5">
+        <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          Review In Progress
+        </div>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight">
+          Store Verification Pending
+        </h3>
+        <p class="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+          Your store verification is pending. You can add warehouse products to your store after Super Admin approves your verification documents.
+        </p>
+      </div>
+
+      <!-- Informational Hint Box -->
+      <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-700 text-left space-y-1">
+        <div class="font-bold text-slate-900 flex items-center gap-1">
+          <span>ℹ️</span>
+          <span>What should you do?</span>
+        </div>
+        <p class="text-slate-500 leading-snug">
+          Verifications are normally completed within 24 hours. You can track status or speak directly with the administrator in Live Support Chat.
+        </p>
+      </div>
+
+      <!-- Actions -->
+      <div class="grid grid-cols-2 gap-2.5 pt-2">
+        <button 
+          type="button" 
+          (click)="closePendingVerificationModal()"
+          class="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs rounded-xl transition-colors cursor-pointer">
+          Understood
+        </button>
+        <button 
+          type="button" 
+          (click)="contactSupport()"
+          class="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl shadow-sm transition-colors cursor-pointer flex items-center justify-center gap-1.5">
+          <span>Live Support</span>
+          <span>&rarr;</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- LISTING REQUEST SUBMITTED -->
+@if (requestSuccessProduct()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-xs">
+    <div class="bg-white rounded-3xl max-w-md w-full p-6 sm:p-7 shadow-2xl border border-slate-100 text-center space-y-4">
+      <div class="w-16 h-16 rounded-2xl bg-amber-50 text-amber-600 border border-amber-200 flex items-center justify-center mx-auto">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      </div>
+      <div class="space-y-1.5">
+        <div class="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-amber-50 text-amber-800 border border-amber-200 text-[10px] font-black uppercase tracking-wider">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+          Approval In Progress
+        </div>
+        <h3 class="text-xl font-black text-slate-900 tracking-tight">Listing Request Submitted</h3>
+        <p class="text-xs text-slate-600 leading-relaxed max-w-sm mx-auto">
+          <span class="font-bold text-slate-900">“{{ requestSuccessProduct()!.name }}”</span>
+          has been sent to Super Admin for review. It will become
+          <span class="font-bold text-emerald-700">Live in Your Store</span>
+          once approved.
+        </p>
+      </div>
+      <div class="p-3 bg-slate-50 border border-slate-200/80 rounded-2xl text-[11px] text-slate-600 text-left space-y-1.5">
+        <p class="font-bold text-slate-900">Status timeline</p>
+        <p>1. Request submitted ✓</p>
+        <p>2. Approval in progress…</p>
+        <p>3. Approved → active on your shop</p>
+      </div>
+      <button type="button" (click)="closeRequestSuccessModal()"
+        class="w-full py-2.5 px-4 bg-slate-900 hover:bg-black text-white font-bold text-xs rounded-xl cursor-pointer">
+        Got it
+      </button>
+    </div>
+  </div>
+}
+
+<!-- ============================================================ -->
+<!-- TIER UPGRADE MODAL -->
+<!-- ============================================================ -->
+<app-tier-modal
+  [isOpen]="isTierModalOpen()"
+  [currentTier]="currentTier()"
+  (close)="closeTierModal()"
+  (tierRequested)="onTierRequested($event)">
+</app-tier-modal>
+

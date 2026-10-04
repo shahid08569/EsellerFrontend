@@ -87,45 +87,22 @@
     }
 
     <!-- Badges (Top-Left, offset when multiple thumbnails are present) -->
-    @if (badges(); as b) {
+    @if (displayBadges().length > 0) {
       <div
         class="absolute top-3 flex flex-col gap-1.5 items-start z-20 pointer-events-none transition-all"
         [class.left-18]="allImages().length > 1"
         [class.md:left-20]="allImages().length > 1"
         [class.left-3]="allImages().length <= 1"
       >
-        @if (b.isOutOfStock) {
-          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-gray-600 text-white shadow-xs">
-            Out of Stock
-          </span>
-        }
-        @if (b.isFlashSale) {
-          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-red-600 text-white shadow-xs">
-            Flash Sale
-          </span>
-        }
-        @if (b.isBestSelling) {
-          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-[#8A9741] text-white shadow-xs">
-            Best Seller
-          </span>
-        }
-        @if (b.isHotSelling) {
-          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-orange-500 text-white shadow-xs">
-            Hot
-          </span>
-        }
-        @if (b.isNew) {
-          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-blue-500 text-white shadow-xs">
-            New
-          </span>
-        }
-        @if (b.isFeatured) {
-          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md bg-primary text-white shadow-xs">
-            Featured
+        @for (badge of displayBadges(); track badge.label) {
+          <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-md shadow-xs {{ badge.classes }}">
+            {{ badge.label }}
           </span>
         }
       </div>
+    }
 
+    @if (badges(); as b) {
       <!-- Discount Tag (Top-Right) -->
       @if ((b.discountPercent ?? 0) > 0 || (b.flashSaleDiscountPercent ?? 0) > 0) {
         <div class="absolute top-3 right-3 bg-red-600 text-white text-xs font-black px-2 py-0.5 rounded-md shadow-xs z-10 pointer-events-none">

@@ -1,0 +1,259 @@
+<div class="space-y-6">
+  <!-- UNIFIED PAGE HEADER BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-bold text-white shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+        </svg>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
+            Platform Partners & Co-Admins
+          </h1>
+          <span class="px-2.5 py-0.5 rounded-full text-xs font-black"
+                [class.bg-emerald-500]="canAddPartner()"
+                [class.bg-rose-500]="!canAddPartner()">
+            {{ activePartnersCount() }} / {{ maxPartners }} Active
+          </span>
+        </div>
+        <p class="text-orange-100 text-xs font-medium">
+          SuperAdmin can onboard a maximum of 3 Co-Admin Partners who hold identical platform control powers.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        (click)="openAddModal()"
+        [disabled]="!canAddPartner()"
+        [title]="!canAddPartner() ? 'Maximum limit of 3 active partners reached' : 'Add new platform partner'"
+        class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-xs transition-all cursor-pointer shadow-xs border"
+        [class.bg-white]="canAddPartner()"
+        [class.text-orange-700]="canAddPartner()"
+        [class.hover:bg-orange-50]="canAddPartner()"
+        [class.border-white/30]="canAddPartner()"
+        [class.bg-white/20]="!canAddPartner()"
+        [class.text-white/60]="!canAddPartner()"
+        [class.border-white/10]="!canAddPartner()"
+        [class.cursor-not-allowed]="!canAddPartner()">
+        <span>+ Add Partner</span>
+        @if (!canAddPartner()) {
+          <span class="text-[10px] bg-rose-600/80 text-white px-1.5 py-0.5 rounded-md">Max 3</span>
+        }
+      </button>
+    </div>
+  </div>
+
+  <!-- MAX QUOTA ALERT IF FULL -->
+  @if (!canAddPartner()) {
+    <div class="bg-amber-50 border border-amber-200 rounded-2xl p-4 flex items-center gap-3 text-amber-800 text-xs shadow-2xs">
+      <div class="w-8 h-8 rounded-xl bg-amber-100 text-amber-700 flex items-center justify-center shrink-0 font-bold">
+        !
+      </div>
+      <div>
+        <strong class="font-bold">Maximum Partner Quota Reached (3 of 3):</strong>
+        <p class="text-[11px] text-amber-700 mt-0.5">
+          By marketplace governance rules, a maximum of 3 Partners can have active SuperAdmin privileges. To grant access to a new partner, deactivate an existing partner below.
+        </p>
+      </div>
+    </div>
+  }
+
+  <!-- PARTNERS TABLE -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-xs text-gray-400">Loading partners...</div>
+    } @else if (partners().length === 0) {
+      <div class="p-12 text-center text-gray-400">
+        <p class="text-sm font-bold text-gray-600">No partner accounts created</p>
+        <p class="text-xs mt-1">SuperAdmin can create up to 3 partner accounts with co-admin authority.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+              <th class="py-3.5 px-4 font-extrabold">Partner Identity</th>
+              <th class="py-3.5 px-4 font-extrabold">Assigned Permissions</th>
+              <th class="py-3.5 px-4 font-extrabold">Account Status</th>
+              <th class="py-3.5 px-4 font-extrabold">Created Date</th>
+              <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (p of partners(); track p.id) {
+              <tr class="hover:bg-orange-50/20 transition-colors">
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-full bg-slate-900 text-white font-bold flex items-center justify-center text-xs">
+                      {{ (p.name || p.email).slice(0, 2).toUpperCase() }}
+                    </div>
+                    <div>
+                      <div class="font-bold text-gray-900">{{ p.name || p.email }}</div>
+                      <div class="text-xs text-gray-400">{{ p.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <div class="flex flex-wrap gap-1">
+                    @for (perm of p.permissions; track perm) {
+                      <span class="px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 text-[10px] font-bold uppercase border border-orange-200">
+                        {{ perm }}
+                      </span>
+                    }
+                  </div>
+                </td>
+                <td class="py-3.5 px-4">
+                  <span [class]="p.isActive !== false ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800' : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800'">
+                    {{ p.isActive !== false ? 'Active' : 'Disabled' }}
+                  </span>
+                </td>
+                <td class="py-3.5 px-4 text-xs text-gray-500">
+                  {{ p.createdAt | date:'mediumDate' }}
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  @if (p.isActive !== false) {
+                    <button 
+                      type="button" 
+                      (click)="promptDeactivatePartner(p)"
+                      class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs cursor-pointer transition-colors border border-rose-200">
+                      Deactivate
+                    </button>
+                  } @else {
+                    <span class="text-xs text-gray-400 italic">Inactive</span>
+                  }
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- ADD PARTNER MODAL -->
+@if (modalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeModal()"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-base font-bold text-gray-900">Add Platform Partner</h3>
+        <button (click)="closeModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Partner Email *</label>
+          <input 
+            type="email" 
+            [ngModel]="formEmail()"
+            (ngModelChange)="formEmail.set($event)"
+            placeholder="partner@eseller.com" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Temporary Password *</label>
+          <input 
+            type="password" 
+            [ngModel]="formPassword()"
+            (ngModelChange)="formPassword.set($event)"
+            placeholder="Minimum 8 characters" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-2">Permissions Granted</label>
+          <div class="grid grid-cols-2 gap-2 text-xs">
+            <label class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+              <input type="checkbox" [checked]="formPermissions()['shops']" (change)="togglePermission('shops')" class="rounded text-orange-600">
+              <span class="font-bold text-gray-700">Shops Approval</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+              <input type="checkbox" [checked]="formPermissions()['products']" (change)="togglePermission('products')" class="rounded text-orange-600">
+              <span class="font-bold text-gray-700">Products Catalog</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+              <input type="checkbox" [checked]="formPermissions()['orders']" (change)="togglePermission('orders')" class="rounded text-orange-600">
+              <span class="font-bold text-gray-700">Orders Dispatch</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+              <input type="checkbox" [checked]="formPermissions()['finance']" (change)="togglePermission('finance')" class="rounded text-orange-600">
+              <span class="font-bold text-gray-700">Finance & Payouts</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+              <input type="checkbox" [checked]="formPermissions()['content']" (change)="togglePermission('content')" class="rounded text-orange-600">
+              <span class="font-bold text-gray-700">CMS & Content</span>
+            </label>
+            <label class="flex items-center gap-2 p-2 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+              <input type="checkbox" [checked]="formPermissions()['settings']" (change)="togglePermission('settings')" class="rounded text-orange-600">
+              <span class="font-bold text-gray-700">System Settings</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="savePartner()"
+          [disabled]="isSaving()"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white transition-colors cursor-pointer shadow-xs disabled:opacity-50">
+          {{ isSaving() ? 'Creating...' : 'Create Partner Account' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DEACTIVATE PARTNER CONFIRMATION MODAL -->
+@if (deactivateModalOpen() && partnerToDeactivate()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="cancelDeactivatePartner()"></div>
+    <div class="relative bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl border border-gray-100 space-y-4 animate-in fade-in zoom-in-95 duration-150">
+      <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center text-xl mx-auto">
+        ⚠️
+      </div>
+      <div class="text-center space-y-1">
+        <h3 class="text-base font-black text-gray-900">Deactivate Partner</h3>
+        <p class="text-xs text-gray-500">
+          Are you sure you want to deactivate partner access for <span class="font-bold text-gray-900">"{{ partnerToDeactivate()!.email }}"</span>? Their administrative access will be revoked immediately.
+        </p>
+      </div>
+      <div class="flex items-center justify-end gap-2.5 pt-2">
+        <button 
+          type="button" 
+          (click)="cancelDeactivatePartner()" 
+          [disabled]="isDeactivating()"
+          class="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmDeactivatePartner()" 
+          [disabled]="isDeactivating()"
+          class="flex-1 px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer flex items-center justify-center gap-1.5 disabled:opacity-50">
+          @if (isDeactivating()) {
+            <svg class="animate-spin h-3.5 w-3.5 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            Deactivating...
+          } @else {
+            Deactivate
+          }
+        </button>
+      </div>
+    </div>
+  </div>
+}

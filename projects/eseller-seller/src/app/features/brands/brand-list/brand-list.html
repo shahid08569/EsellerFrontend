@@ -1,0 +1,106 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Marketplace Brands</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Explore certified manufacturer brands you can tag on your product listings.</p>
+    </div>
+    <button 
+      type="button" 
+      (click)="openRequestModal()"
+      class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer">
+      <span>+ Request New Brand</span>
+    </button>
+  </div>
+
+  <!-- Search & Stats Bar -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="relative w-full sm:w-80">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm" 
+        placeholder="Search brands by title..."
+        class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+      <span class="absolute left-3 top-2 text-gray-400 text-xs">🔍</span>
+    </div>
+    <span class="text-xs text-gray-500 font-semibold">
+      Total Available Brands: <span class="text-gray-900 font-bold">{{ filteredBrands().length }}</span>
+    </span>
+  </div>
+
+  <!-- Brands Grid -->
+  @if (isLoading()) {
+    <div class="p-12 text-center text-xs text-gray-400">Loading catalog brands...</div>
+  } @else if (filteredBrands().length === 0) {
+    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100">
+      <p class="text-sm font-bold text-gray-800">No Brands Found</p>
+      <p class="text-xs text-gray-400 mt-1">Try modifying your search or submit a request for a new brand.</p>
+    </div>
+  } @else {
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      @for (brand of filteredBrands(); track brand.id) {
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:border-primary/30 transition-all flex items-center gap-3">
+          <div class="w-12 h-12 rounded-xl bg-slate-100 border border-slate-200 flex items-center justify-center font-black text-sm text-slate-700 shrink-0 overflow-hidden relative">
+            @if (brand.logoUrl | imageUrl; as logo) {
+              <img [src]="logo" [alt]="brand.name" appFallback class="absolute inset-0 w-full h-full object-contain p-1.5 z-10" />
+            }
+            <span class="z-0">{{ brand.name.slice(0, 2).toUpperCase() }}</span>
+          </div>
+          <div class="min-w-0 flex-1">
+            <h3 class="font-bold text-sm text-gray-900 truncate">{{ brand.name }}</h3>
+            <p class="text-[11px] text-gray-400 truncate">{{ brand.description || 'Verified Brand' }}</p>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Request Brand Modal -->
+  @if (requestModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 class="text-base font-bold text-gray-900">Request New Brand</h3>
+          <button (click)="closeRequestModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xs p-1">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Brand Name *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="newBrandName" 
+              placeholder="e.g. Sony, Nike, Local Artisan..."
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Brand Notes / Website URL (Optional)</label>
+            <textarea 
+              [(ngModel)]="newBrandNote" 
+              rows="3"
+              placeholder="Provide official brand website or trademark details..."
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+          <button 
+            type="button" 
+            (click)="closeRequestModal()" 
+            class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            (click)="submitBrandRequest()" 
+            class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer">
+            Submit Request
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

@@ -1,5 +1,60 @@
 <div class="space-y-6">
 
+  <!-- WRITE A REVIEW -->
+  @if (canReview()) {
+    <div class="bg-white rounded-3xl p-5 border border-gray-200 space-y-4">
+      <div>
+        <h4 class="text-sm font-bold text-text-primary">Write a review</h4>
+        <p class="text-xs text-text-muted mt-0.5">Your rating updates this product instantly.</p>
+      </div>
+
+      <div class="flex items-center gap-1">
+        @for (i of [1,2,3,4,5]; track i) {
+          <button
+            type="button"
+            (click)="setDraftRating(i)"
+            class="p-0.5 cursor-pointer"
+            [attr.aria-label]="'Rate ' + i + ' stars'">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6"
+              [class.text-amber-400]="i <= draftRating()"
+              [class.fill-current]="i <= draftRating()"
+              [class.text-gray-300]="i > draftRating()"
+              viewBox="0 0 20 20" fill="currentColor">
+              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            </svg>
+          </button>
+        }
+        <span class="text-xs text-text-muted ml-2">{{ draftRating() }} / 5</span>
+      </div>
+
+      <input
+        type="text"
+        [ngModel]="draftTitle()"
+        (ngModelChange)="draftTitle.set($event)"
+        maxlength="120"
+        placeholder="Review title (optional)"
+        class="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/15" />
+
+      <textarea
+        [ngModel]="draftComment()"
+        (ngModelChange)="draftComment.set($event)"
+        rows="3"
+        maxlength="1000"
+        placeholder="Share your experience with this product..."
+        class="w-full px-3 py-2.5 rounded-xl border border-gray-200 bg-gray-50 text-sm outline-hidden focus:border-primary focus:ring-2 focus:ring-primary/15 resize-y"></textarea>
+
+      <div class="flex justify-end">
+        <button
+          type="button"
+          (click)="onSubmit()"
+          [disabled]="submitting()"
+          class="px-5 py-2.5 rounded-xl bg-primary text-white text-xs font-bold hover:bg-primary-hover disabled:opacity-60 cursor-pointer">
+          {{ submitting() ? 'Publishing…' : 'Submit review' }}
+        </button>
+      </div>
+    </div>
+  }
+
   <!-- ============================================================ -->
   <!-- RATING SUMMARY & BREAKDOWN -->
   <!-- ============================================================ -->

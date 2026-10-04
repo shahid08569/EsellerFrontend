@@ -17,6 +17,18 @@ export class ProductFilterSidebar {
   // Inputs
   readonly categories = input<CategoryTreeDto[]>([]);
   readonly brands = input<BrandDto[]>([]);
+
+  getLogoUrl(url: string | null | undefined): string | null {
+    if (!url) return null;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
+    const path = url.startsWith('/') ? url : `/${url}`;
+    if (path.startsWith('/uploads')) return `${host}${path}`;
+    return `${host}/uploads${path}`;
+  }
   readonly selectedCategoryId = input<string | null>(null);
   readonly selectedBrandId = input<string | null>(null);
   readonly minPrice = input<number | null>(null);
@@ -40,10 +52,10 @@ export class ProductFilterSidebar {
 
   // Price presets
   readonly pricePresets = [
-    { label: 'Under Rs. 2,000', min: null, max: 2000 },
-    { label: 'Rs. 2,000 – Rs. 5,000', min: 2000, max: 5000 },
-    { label: 'Rs. 5,000 – Rs. 10,000', min: 5000, max: 10000 },
-    { label: 'Rs. 10,000+', min: 10000, max: null }
+    { label: 'Under $ 2,000', min: null, max: 2000 },
+    { label: '$ 2,000 – $ 5,000', min: 2000, max: 5000 },
+    { label: '$ 5,000 – $ 10,000', min: 5000, max: 10000 },
+    { label: '$ 10,000+', min: 10000, max: null }
   ];
 
   // Rating stars list

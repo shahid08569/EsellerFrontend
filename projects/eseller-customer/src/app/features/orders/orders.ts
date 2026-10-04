@@ -137,12 +137,8 @@ export class Orders implements OnInit {
     this.selectedOrderDetails.set(null);
   }
 
-  chatWithSeller(orderId: string): void {
-    this.router.navigate(['/chat'], {
-      queryParams: {
-        orderRef: orderId
-      }
-    });
+  chatWithSeller(_orderId?: string): void {
+    this.router.navigate(['/chat'], { queryParams: { support: '1' } });
   }
 
   reorder(order: OrderRequestDto): void {

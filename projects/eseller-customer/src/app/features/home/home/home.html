@@ -1,9 +1,10 @@
-<div class="max-w-7xl mx-auto px-3 md:px-4 py-6 md:py-8 space-y-10 md:space-y-14">
+<!-- 1. Hero Carousel (Full-Width Edge-to-Edge Flush under Top Nav) -->
+<app-hero-carousel [banners]="banners()" />
 
-  <!-- 1. Hero Carousel -->
-  <app-hero-carousel [banners]="banners()" />
+<!-- 2. Storefront Main Content (Contained Layout) -->
+<div class="max-w-7xl mx-auto px-3 md:px-4 py-8 md:py-12 space-y-10 md:space-y-14">
 
-  <!-- 2. Categories Grid -->
+  <!-- Categories Grid -->
   <app-categories-grid [categories]="categories()" />
 
   <!-- 3. Flash Sale -->
@@ -43,6 +44,7 @@
     @for (section of categorySections(); track section.id) {
       <app-category-products-section
         [categoryName]="section.name"
+        [categoryImageUrl]="section.imageUrl"
         [viewMoreLink]="'/categories/' + section.slug"
         [products]="section.products"
         [loading]="false"

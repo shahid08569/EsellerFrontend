@@ -49,7 +49,10 @@ export interface ProductListDto {
   primaryImageUrl: string | null;
   shopName: string;
   shopSlug: string;
+  categoryId?: string;
   categoryName: string;
+  categorySlug?: string;
+  brandId?: string | null;
   brandName: string | null;
   avgRating: number | null;
   isFeatured: boolean;
@@ -60,6 +63,8 @@ export interface ProductListDto {
   badges: ProductBadgeDto | null;
   reviewsCount?: number | null;
   viewCount?: number | null;
+  sourceProductId?: string | null;
+  shopId?: string | null;
 }
 //PRODUCT BADGE DTO
 export interface ProductBadgeDto {
@@ -93,6 +98,8 @@ export interface CategoryTreeDto {
   slug: string;
   imageUrl: string | null;
   children: CategoryTreeDto[];
+  isFeaturedOnHomepage?: boolean;
+  homepageDisplayOrder?: number;
 }
 // BRAND
 export interface BrandDto {
@@ -113,6 +120,15 @@ export interface HomepageBannerDto {
   isCurrentlyActive: boolean;
   startDate: string | null;
   endDate: string | null;
+  title?: string | null;
+  subtitle?: string | null;
+  description?: string | null;
+  price?: number | null;
+  originalPrice?: number | null;
+  buttonText?: string | null;
+  backgroundColor?: string | null;
+  textColor?: string | null;
+  availableSizes?: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -177,6 +193,7 @@ export interface ProductImageDto {
   productId: string;
   imageUrl: string;
   sortOrder: number;
+  isCover?: boolean;
 }
 
 // VARIANT ATTRIBUTE
@@ -283,4 +300,4 @@ export function filterBrandsForCategory(
   }
 
   return allBrands;
-}
+}

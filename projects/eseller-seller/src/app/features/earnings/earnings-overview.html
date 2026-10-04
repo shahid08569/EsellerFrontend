@@ -1,0 +1,104 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-black text-slate-900 tracking-tight">
+          Seller Earnings &amp; 20% Commissions
+        </h2>
+        <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold">
+          20% Flat Commission Active
+        </span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">
+        You earn a flat 20% commission on store orders. Profit moves to your wallet when Super Admin marks the order Delivered — then you can withdraw.
+      </p>
+    </div>
+
+    <a routerLink="/withdrawals" class="px-4 py-2 bg-gradient-to-r from-slate-950 via-slate-900 to-slate-950 hover:bg-black text-white text-xs font-bold rounded-xl shadow-md transition-all cursor-pointer border border-slate-800">
+      <span>💳 Request Payout Withdrawal</span>
+    </a>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="grid sm:grid-cols-4 gap-4">
+    <!-- Total Gross Sales -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gross Order Sales</span>
+      <p class="text-2xl font-black text-slate-900 font-mono">$ {{ totalGrossSales() | number }}</p>
+      <p class="text-[10px] text-slate-400">Total customer transaction volume</p>
+    </div>
+
+    <!-- Total 20% Net Commission -->
+    <div class="bg-emerald-950 text-white rounded-2xl border border-emerald-800 p-4 shadow-md space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">Your Net 20% Earnings</span>
+        <span class="px-1.5 py-0.2 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-black uppercase">20%</span>
+      </div>
+      <p class="text-2xl font-black text-white font-mono">$ {{ totalSellerEarnings() | number }}</p>
+      <p class="text-[10px] text-emerald-200/80">Flat commission earned across all orders</p>
+    </div>
+
+    <!-- Settled Earnings -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Delivered &amp; Settled</span>
+      <p class="text-2xl font-black text-emerald-600 font-mono">$ {{ settledEarnings() | number }}</p>
+      <p class="text-[10px] text-slate-400">Available for immediate withdrawal</p>
+    </div>
+
+    <!-- Pending Earnings -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Orders Commission</span>
+      <p class="text-2xl font-black text-amber-600 font-mono">$ {{ pendingEarnings() | number }}</p>
+      <p class="text-[10px] text-slate-400">Will clear upon order delivery</p>
+    </div>
+  </div>
+
+  <!-- Transactions Ledger Table -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
+    <div class="p-4 border-b border-slate-100 flex items-center justify-between">
+      <h3 class="text-sm font-bold text-slate-900">Order-by-Order Commission Ledger</h3>
+      <span class="text-xs text-slate-500">{{ transactions().length }} Transactions</span>
+    </div>
+
+    @if (isLoading()) {
+      <div class="p-8 text-center text-slate-400">
+        <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs mt-2">Loading ledger...</p>
+      </div>
+    } @else if (transactions().length === 0) {
+      <div class="p-10 text-center space-y-2 text-slate-400">
+        <span class="text-3xl">💵</span>
+        <p class="text-xs font-bold text-slate-700">No transaction records yet</p>
+      </div>
+    } @else {
+      <div class="seller-table-wrap">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>Order</th>
+              <th class="text-right">Gross</th>
+              <th class="text-right">Your 20%</th>
+              <th class="text-center">Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (tx of transactions(); track tx.id) {
+              <tr>
+                <td>
+                  <p class="cell-mono">#{{ tx.orderId.toUpperCase() }}</p>
+                  <p class="cell-sub">{{ formatDate(tx.date) }}</p>
+                </td>
+                <td class="text-right cell-mono">$ {{ tx.grossAmount | number }}</td>
+                <td class="text-right cell-mono">$ {{ tx.sellerCommission | number }}</td>
+                <td class="text-center"><span class="badge badge-muted">{{ tx.status }}</span></td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+</div>

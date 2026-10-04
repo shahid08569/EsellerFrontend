@@ -23,8 +23,6 @@ const PUBLIC_AUTH_PATHS = [
   '/Auth/logout',
   '/Auth/forgot-password',
   '/Auth/reset-password',
-  '/Auth/verify-email',
-  '/Auth/resend-verification-email',
   '/Auth/send-phone-otp',
   '/Auth/verify-phone-otp'
 ];

@@ -1,4 +1,6 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import {
   HomeService,
@@ -72,15 +74,21 @@ export class Home implements OnInit {
   // LIFECYCLE
   // ============================================================
   ngOnInit(): void {
-    // Banners
-    this.homeService.getHomepageBanners().subscribe({
-      next: (b) => this.banners.set(b),
-      error: (e) => console.error('Banners failed', e)
+    // Banners (force refresh so admin publishes appear after cache)
+    this.homeService.getHomepageBanners(true).subscribe({
+      next: (b) => this.banners.set(Array.isArray(b) ? b : []),
+      error: (e) => {
+        console.error('Banners failed', e);
+        this.banners.set([]);
+      }
     });
 
-    // Categories (for grid at top)
+    // Categories (for grid at top - filtered by SuperAdmin homepage selection)
     this.homeService.getCategories().subscribe({
-      next: (c) => this.categories.set(c),
+      next: (c) => {
+        const featured = (c || []).filter(cat => cat.isFeaturedOnHomepage);
+        this.categories.set(featured.length > 0 ? featured : (c || []));
+      },
       error: (e) => console.error('Categories failed', e)
     });
 
@@ -114,15 +122,22 @@ export class Home implements OnInit {
       }
     });
 
-    // Featured
+    // Featured — prefer the dedicated /Products?isFeatured=true endpoint. If the admin
+    // hasn't flagged any products as featured yet, fall back to the other dedicated
+    // homepage section endpoints (best-selling / hot-selling) so the slider isn't empty.
     this.homeService.getFeaturedProducts(8).subscribe({
       next: (r) => {
-        this.featuredProducts.set(r.items);
-        this.loadingFeatured.set(false);
+        const items = r?.items || [];
+        if (items.length > 0) {
+          this.featuredProducts.set(items);
+          this.loadingFeatured.set(false);
+        } else {
+          this.loadFeaturedFallback();
+        }
       },
       error: (e) => {
         console.error('Featured failed', e);
-        this.loadingFeatured.set(false);
+        this.loadFeaturedFallback();
       }
     });
 
@@ -159,6 +174,35 @@ export class Home implements OnInit {
       error: (e) => {
         console.error('Homepage categories failed', e);
         this.loadingCategorySections.set(false);
+      }
+    });
+  }
+
+  /**
+   * Fallback for the Featured section when /Products?isFeatured=true returns nothing yet.
+   * Merges the other dedicated homepage endpoints (best-selling + hot-selling) so the
+   * storefront still shows a populated "Featured" slider.
+   */
+  private loadFeaturedFallback(): void {
+    forkJoin({
+      bestSelling: this.homeService.getBestSellingProducts(8).pipe(catchError(() => of([] as ProductListDto[]))),
+      hotSelling: this.homeService.getHotSellingProducts(8).pipe(catchError(() => of([] as ProductListDto[])))
+    }).subscribe({
+      next: ({ bestSelling, hotSelling }) => {
+        const merged: ProductListDto[] = [];
+        const seen = new Set<string>();
+        for (const p of [...(bestSelling || []), ...(hotSelling || [])]) {
+          if (p?.id && !seen.has(p.id)) {
+            seen.add(p.id);
+            merged.push(p);
+          }
+        }
+        this.featuredProducts.set(merged.slice(0, 8));
+        this.loadingFeatured.set(false);
+      },
+      error: () => {
+        this.featuredProducts.set([]);
+        this.loadingFeatured.set(false);
       }
     });
   }
