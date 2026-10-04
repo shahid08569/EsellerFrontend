@@ -61,15 +61,14 @@ export class Dashboard implements OnInit {
   readonly notifications = signal<DashboardNotificationDto[]>([]);
   readonly unreadOnly = signal<boolean>(false);
 
-  // Email verification banner state (Daraz / Amazon Style)
-  readonly isBannerResending = signal<boolean>(false);
-  readonly bannerCooldown = signal<number>(0);
-  private bannerTimer: any = null;
-
-  readonly isEmailVerified = computed(() => {
-    const prof = this.profile();
-    return prof ? prof.isEmailVerified : false;
+  readonly approvalStatus = computed(() => {
+    const status = this.profile()?.approvalStatus;
+    return status || 'Approved';
   });
+
+  readonly isApprovalPending = computed(() => this.approvalStatus() === 'Pending');
+  readonly isApprovalApproved = computed(() => this.approvalStatus() === 'Approved');
+  readonly isApprovalRejected = computed(() => this.approvalStatus() === 'Rejected');
 
   // Orders Data & Filter signals
   readonly orders = signal<OrderRequestListDto[]>([]);
@@ -119,9 +118,9 @@ export class Dashboard implements OnInit {
   readonly addrPhone = signal<string>('');
   readonly addrLine1 = signal<string>('');
   readonly addrLine2 = signal<string>('');
-  readonly addrCountry = signal<string>('Pakistan');
-  readonly addrState = signal<string>('Punjab');
-  readonly addrCity = signal<string>('Lahore');
+  readonly addrCountry = signal<string>('');
+  readonly addrState = signal<string>('');
+  readonly addrCity = signal<string>('');
   readonly addrPostalCode = signal<string>('');
   readonly addrIsDefault = signal<boolean>(false);
 
@@ -165,11 +164,13 @@ export class Dashboard implements OnInit {
   );
 
   readonly selectedCountryData = computed(() => {
-    return COUNTRIES_DATA.find((x) => x.name === this.addrCountry()) || COUNTRIES_DATA[0];
+    const name = this.addrCountry();
+    if (!name) return null;
+    return COUNTRIES_DATA.find((x) => x.name === name) || null;
   });
 
   readonly selectedDialCode = computed(() => {
-    return this.selectedCountryData()?.phoneCode || '+92';
+    return this.selectedCountryData()?.phoneCode || '';
   });
 
   readonly stateOptions = computed<SelectOption[]>(() => {
@@ -211,9 +212,21 @@ export class Dashboard implements OnInit {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
 
-    if (this.authStore.isAuthenticated() && this.authStore.currentAccount()?.roleType === 'Shopkeeper') {
+    if (!this.authStore.isAuthenticated()) {
+      this.router.navigate(['/auth/login']);
+      return;
+    }
+
+    const role = this.authStore.currentAccount()?.roleType;
+    if (role === 'Shopkeeper') {
       if (typeof window !== 'undefined') {
         window.location.href = 'http://localhost:54007/dashboard';
+        return;
+      }
+    }
+    if (role === 'SuperAdmin' || role === 'Partner') {
+      if (typeof window !== 'undefined') {
+        window.location.href = 'http://localhost:4201/dashboard';
         return;
       }
     }
@@ -268,7 +281,8 @@ export class Dashboard implements OnInit {
             isEmailVerified: true,
             isPhoneVerified: false,
             lastLoginAt: new Date().toISOString(),
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            approvalStatus: 'Approved'
           };
           this.profile.set(fallback);
           this.profileName.set(fallback.name);
@@ -318,45 +332,6 @@ export class Dashboard implements OnInit {
   }
 
   // ============================================================
-  // EMAIL VERIFICATION BANNER HANDLERS (Daraz / Amazon Style)
-  // ============================================================
-  resendVerificationFromBanner(): void {
-    const email = this.profile()?.email || this.authStore.currentAccount()?.email;
-    if (!email) return;
-
-    if (this.bannerCooldown() > 0) return;
-
-    this.isBannerResending.set(true);
-
-    this.authService.resendVerificationEmail({ email }).subscribe({
-      next: () => {
-        this.isBannerResending.set(false);
-        this.toastService.show(`Verification code sent to ${email}!`, 'success');
-        this.startBannerCooldown(60);
-      },
-      error: () => {
-        this.isBannerResending.set(false);
-        this.toastService.show('Failed to resend email. Please try again.', 'error');
-      }
-    });
-  }
-
-  private startBannerCooldown(seconds: number): void {
-    this.bannerCooldown.set(seconds);
-    if (this.bannerTimer) clearInterval(this.bannerTimer);
-
-    this.bannerTimer = setInterval(() => {
-      const current = this.bannerCooldown();
-      if (current <= 1) {
-        clearInterval(this.bannerTimer);
-        this.bannerCooldown.set(0);
-      } else {
-        this.bannerCooldown.set(current - 1);
-      }
-    }, 1000);
-  }
-
-  // ============================================================
   // ADDRESS ACTIONS (CRUD)
   // ============================================================
   openAddAddressModal(): void {
@@ -399,19 +374,8 @@ export class Dashboard implements OnInit {
   onAddrCountryChange(countryName: string): void {
     this.addrCountry.set(countryName);
     this.addrCountryError.set(null);
-    const found = COUNTRIES_DATA.find((c) => c.name === countryName);
-    if (found && found.states && found.states.length > 0) {
-      this.addrState.set(found.states[0]);
-    } else {
-      this.addrState.set('');
-    }
-    if (countryName === 'Pakistan' && (!this.addrCity() || this.addrCity() === 'Dubai' || this.addrCity() === 'Riyadh')) {
-      this.addrCity.set('Lahore');
-    } else if (countryName === 'United Arab Emirates') {
-      this.addrCity.set('Dubai');
-    } else if (countryName === 'Saudi Arabia') {
-      this.addrCity.set('Riyadh');
-    }
+    this.addrState.set('');
+    this.addrCity.set('');
   }
 
   onAddrStateChange(stateName: string): void {
@@ -605,9 +569,9 @@ export class Dashboard implements OnInit {
     this.addrPhone.set('');
     this.addrLine1.set('');
     this.addrLine2.set('');
-    this.addrCountry.set('Pakistan');
-    this.addrState.set('Punjab');
-    this.addrCity.set('Lahore');
+    this.addrCountry.set('');
+    this.addrState.set('');
+    this.addrCity.set('');
     this.addrPostalCode.set('');
     this.addrIsDefault.set(false);
   }
@@ -639,8 +603,12 @@ export class Dashboard implements OnInit {
 
     this.dashboardService.updateProfile(req).subscribe({
       next: () => {
-        this.profile.update((curr) => (curr ? { ...curr, name: req.name, phone: req.phone } : null));
-        this.toastService.show('Profile information updated successfully!', 'success');
+        this.profile.update((curr) =>
+          curr
+            ? { ...curr, name: req.name, phone: req.phone }
+            : null
+        );
+        this.toastService.show('Profile updated.', 'success');
         this.isSavingProfile.set(false);
       },
       error: (err) => {
@@ -806,13 +774,9 @@ export class Dashboard implements OnInit {
     }
   }
 
-  chatWithSeller(orderId: string, shopId?: string): void {
-    this.router.navigate(['/chat'], {
-      queryParams: {
-        orderRef: orderId,
-        shopId: shopId || undefined
-      }
-    });
+  chatWithSeller(_orderId?: string, _shopId?: string): void {
+    // Customers chat with Super Admin only
+    this.router.navigate(['/chat'], { queryParams: { support: '1' } });
   }
 
   reorder(order: OrderRequestDto): void {
@@ -889,10 +853,30 @@ export class Dashboard implements OnInit {
     this.sidebarMobileOpen.set(false);
   }
 
-  // Logout
+  // Logout confirmation popup
+  readonly logoutModalOpen = signal(false);
+
   onLogout(): void {
-    this.authStore.clearAuth();
-    this.toastService.show('You have been signed out.', 'info');
-    this.router.navigateByUrl('/');
+    this.logoutModalOpen.set(true);
+  }
+
+  cancelLogout(): void {
+    this.logoutModalOpen.set(false);
+  }
+
+  confirmLogout(): void {
+    this.logoutModalOpen.set(false);
+    this.authService.logout().subscribe({
+      next: () => {
+        this.authStore.clearAuth();
+        this.toastService.show('You have been signed out successfully.', 'info');
+        this.router.navigate(['/auth/login'], { queryParams: { logout: 'true' } });
+      },
+      error: () => {
+        this.authStore.clearAuth();
+        this.toastService.show('You have been signed out successfully.', 'info');
+        this.router.navigate(['/auth/login'], { queryParams: { logout: 'true' } });
+      }
+    });
   }
 }

@@ -4,7 +4,13 @@
   "scripts": {
     "ng": "ng",
     "start": "ng serve",
+    "start:admin": "ng serve eseller-admin",
+    "start:seller": "ng serve eseller-seller",
+    "start:customer": "ng serve eseller-customer",
     "build": "ng build",
+    "build:admin": "ng build eseller-admin",
+    "build:seller": "ng build eseller-seller",
+    "build:customer": "ng build eseller-customer",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

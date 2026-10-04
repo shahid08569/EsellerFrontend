@@ -1,0 +1,160 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Product Questions & Answers</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Respond to buyer inquiries regarding product specifications, sizes, and compatibility.</p>
+    </div>
+  </div>
+
+  <!-- Filter & Search Bar -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+    
+    <!-- Tabs -->
+    <div class="flex items-center gap-1.5 p-1 bg-gray-50 border border-gray-200 rounded-xl w-full md:w-auto">
+      <button 
+        type="button" 
+        (click)="activeTab.set('all')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+        [class.bg-white]="activeTab() === 'all'"
+        [class.text-primary]="activeTab() === 'all'"
+        [class.shadow-2xs]="activeTab() === 'all'"
+        [class.text-gray-500]="activeTab() !== 'all'">
+        All ({{ countAll() }})
+      </button>
+
+      <button 
+        type="button" 
+        (click)="activeTab.set('unanswered')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+        [class.bg-white]="activeTab() === 'unanswered'"
+        [class.text-amber-700]="activeTab() === 'unanswered'"
+        [class.shadow-2xs]="activeTab() === 'unanswered'"
+        [class.text-gray-500]="activeTab() !== 'unanswered'">
+        <span>❓ Needs Answer</span>
+        <span class="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px]">{{ countUnanswered() }}</span>
+      </button>
+
+      <button 
+        type="button" 
+        (click)="activeTab.set('answered')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+        [class.bg-white]="activeTab() === 'answered'"
+        [class.text-emerald-700]="activeTab() === 'answered'"
+        [class.shadow-2xs]="activeTab() === 'answered'"
+        [class.text-gray-500]="activeTab() !== 'answered'">
+        <span>✓ Answered</span>
+        <span class="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">{{ countAnswered() }}</span>
+      </button>
+    </div>
+
+    <!-- Search -->
+    <div class="relative w-full md:w-80">
+      <input 
+        type="text" 
+        [(ngModel)]="searchTerm"
+        placeholder="Search questions or product name..."
+        class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+      <span class="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
+    </div>
+
+  </div>
+
+  <!-- Questions List -->
+  @if (isLoading()) {
+    <div class="p-12 text-center text-xs text-gray-400">Loading customer questions...</div>
+  } @else if (filteredQuestions().length === 0) {
+    <div class="p-12 text-center bg-white rounded-2xl border border-gray-100">
+      <p class="text-sm font-bold text-gray-800">No Questions Found</p>
+      <p class="text-xs text-gray-400 mt-1">Questions asked by shoppers on your products will be listed here.</p>
+    </div>
+  } @else {
+    <div class="space-y-4">
+      @for (q of filteredQuestions(); track q.id) {
+        <div class="bg-white p-5 rounded-2xl border border-gray-100 shadow-sm space-y-3">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-primary">{{ q.productName }}</span>
+            <span class="text-[10px] text-gray-400">{{ q.createdAt | date:'mediumDate' }}</span>
+          </div>
+
+          <!-- Question Body -->
+          <div class="flex items-start gap-2.5 text-xs text-gray-900 font-semibold">
+            <span class="w-5 h-5 rounded-md bg-amber-100 text-amber-800 flex items-center justify-center font-black text-[10px] shrink-0">
+              Q
+            </span>
+            <p class="pt-0.5 leading-relaxed">{{ q.question }}</p>
+          </div>
+
+          <!-- Answer Body -->
+          @if (q.answer) {
+            <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 text-xs flex items-start gap-2.5">
+              <span class="w-5 h-5 rounded-md bg-emerald-100 text-emerald-800 flex items-center justify-center font-black text-[10px] shrink-0">
+                A
+              </span>
+              <div class="space-y-1">
+                <p class="text-gray-800 leading-relaxed">{{ q.answer }}</p>
+                <p class="text-[10px] text-gray-400">Answered by Store • {{ q.answeredAt | date:'short' }}</p>
+              </div>
+            </div>
+          } @else {
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs text-amber-600 font-bold">Awaiting your response</span>
+              <button 
+                type="button" 
+                (click)="openAnswerModal(q)"
+                class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors cursor-pointer">
+                Write Answer
+              </button>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+
+  <!-- Answer Modal -->
+  @if (answerModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 class="text-base font-bold text-gray-900">Reply to Customer Question</h3>
+          <button (click)="closeAnswerModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xs p-1">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3 bg-gray-50 rounded-xl text-xs space-y-1">
+            <span class="text-[10px] font-bold text-gray-400 uppercase">Customer Asked:</span>
+            <p class="font-semibold text-gray-900">{{ selectedQuestion()?.question }}</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Your Store's Answer *</label>
+            <textarea 
+              [(ngModel)]="answerText" 
+              rows="4"
+              placeholder="Provide accurate specifications or advice to assist the shopper..."
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden"></textarea>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+          <button 
+            type="button" 
+            (click)="closeAnswerModal()" 
+            class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            (click)="submitAnswer()" 
+            [disabled]="isSubmitting() || !answerText().trim()"
+            class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50">
+            {{ isSubmitting() ? 'Submitting...' : 'Post Answer' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

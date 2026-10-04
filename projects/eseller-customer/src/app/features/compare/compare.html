@@ -189,12 +189,12 @@
                     <!-- Price & Discount -->
                     <div class="space-y-0.5">
                       <div class="text-base sm:text-lg font-black text-primary tabular-nums">
-                        Rs. {{ prod.basePrice | number:'1.0-0' }}
+                        $ {{ prod.basePrice | number:'1.0-0' }}
                       </div>
                       @if (hasDiscount(prod)) {
                         <div class="flex items-center gap-1.5 flex-wrap">
                           <span class="text-xs text-text-muted line-through tabular-nums">
-                            Rs. {{ getOldPrice(prod) | number:'1.0-0' }}
+                            $ {{ getOldPrice(prod) | number:'1.0-0' }}
                           </span>
                           <span class="text-[10px] font-bold px-1.5 py-0.2 bg-rose-50 text-primary border border-rose-100 rounded">
                             -{{ getDiscountPercent(prod) }}%
@@ -282,7 +282,7 @@
               </td>
               @for (prod of compareService.items(); track prod.id) {
                 <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-black text-primary text-sm">
-                  Rs. {{ prod.basePrice | number:'1.0-0' }}
+                  $ {{ prod.basePrice | number:'1.0-0' }}
                 </td>
               }
             </tr>
@@ -296,7 +296,7 @@
                 <td class="p-4 sm:p-5 border-r last:border-r-0 border-gray-100 font-medium">
                   @if (getSavings(prod) > 0) {
                     <span class="text-emerald-600 font-bold">
-                      Save Rs. {{ getSavings(prod) | number:'1.0-0' }} ({{ getDiscountPercent(prod) }}%)
+                      Save $ {{ getSavings(prod) | number:'1.0-0' }} ({{ getDiscountPercent(prod) }}%)
                     </span>
                   } @else {
                     <span class="text-gray-400">Regular Price</span>

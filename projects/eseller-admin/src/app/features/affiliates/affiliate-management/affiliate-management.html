@@ -1,0 +1,152 @@
+<div class="space-y-6">
+  <!-- HEADER -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Affiliate Marketing Program</h1>
+      <p class="text-xs text-gray-500 mt-1">Track promotional referral links, partner conversions, and affiliate commission earnings.</p>
+    </div>
+    <div class="text-xs font-bold text-gray-600 bg-white border border-gray-100 px-3.5 py-2 rounded-xl shadow-2xs">
+      Active Affiliates: <span class="text-orange-600 font-extrabold">{{ affiliates().length }}</span>
+    </div>
+  </div>
+
+  <!-- AFFILIATES TABLE -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-xs text-gray-400">Loading affiliate accounts...</div>
+    } @else if (affiliates().length === 0) {
+      <div class="p-12 text-center text-gray-400">
+        <p class="text-sm font-bold text-gray-600">No active affiliates registered</p>
+        <p class="text-xs mt-1">Users who apply to the affiliate referral network will be listed here.</p>
+      </div>
+    } @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+          <thead>
+            <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+              <th class="py-3.5 px-4 font-extrabold">Affiliate</th>
+              <th class="py-3.5 px-4 font-extrabold">Referral Code</th>
+              <th class="py-3.5 px-4 font-extrabold">Conversions</th>
+              <th class="py-3.5 px-4 font-extrabold">Total Earned</th>
+              <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-50">
+            @for (a of affiliates(); track a.id) {
+              <tr class="hover:bg-orange-50/20 transition-colors">
+                <td class="py-3.5 px-4">
+                  <div class="font-bold text-gray-900">{{ a.name || a.email }}</div>
+                  <div class="text-xs text-gray-400">{{ a.email }}</div>
+                </td>
+                <td class="py-3.5 px-4 font-mono font-bold text-orange-600 text-xs">
+                  {{ a.referralCode || 'REF-' + a.id.slice(0, 6) }}
+                </td>
+                <td class="py-3.5 px-4 font-bold text-gray-800 text-xs">
+                  {{ a.totalConversions || 0 }} sales
+                </td>
+                <td class="py-3.5 px-4 font-bold text-gray-900 text-xs">
+                  $ {{ (a.totalEarnings || a.totalEarned || 0) | number:'1.2-2' }}
+                </td>
+                <td class="py-3.5 px-4 text-right">
+                  <button 
+                    type="button" 
+                    (click)="openDetails(a)"
+                    class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors">
+                    View Details
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>
+
+<!-- DETAILS MODAL -->
+@if (detailsModalOpen() && selectedAffiliate()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeDetails()"></div>
+    <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 border border-gray-100 max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div>
+          <h3 class="text-base font-black text-gray-900">Affiliate Profile Details</h3>
+          <p class="text-xs text-gray-500 mt-0.5">{{ selectedAffiliate().name || selectedAffiliate().email }}</p>
+        </div>
+        <button type="button" (click)="closeDetails()" class="text-gray-400 hover:text-gray-600 cursor-pointer text-lg font-bold">✕</button>
+      </div>
+
+      <div class="grid grid-cols-2 gap-4">
+        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Referral Code</span>
+          <span class="text-sm font-mono font-black text-orange-600 mt-1 block">
+            {{ selectedAffiliate().referralCode || 'N/A' }}
+          </span>
+        </div>
+        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Commission Rate</span>
+          <span class="text-sm font-black text-gray-800 mt-1 block">
+            {{ selectedAffiliate().commissionRate ? selectedAffiliate().commissionRate + '%' : 'Default (5%)' }}
+          </span>
+        </div>
+        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Link Clicks</span>
+          <span class="text-sm font-black text-gray-800 mt-1 block">
+            {{ selectedAffiliate().totalClicks || 0 }} clicks
+          </span>
+        </div>
+        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Conversions</span>
+          <span class="text-sm font-black text-emerald-600 mt-1 block">
+            {{ selectedAffiliate().totalConversions || 0 }} sales
+          </span>
+        </div>
+        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Lifetime Earned</span>
+          <span class="text-sm font-black text-gray-900 mt-1 block">
+            $ {{ (selectedAffiliate().totalEarnings || selectedAffiliate().totalEarned || 0) | number:'1.2-2' }}
+          </span>
+        </div>
+        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Pending Balance</span>
+          <span class="text-sm font-black text-amber-600 mt-1 block">
+            $ {{ (selectedAffiliate().unpaidBalance || 0) | number:'1.2-2' }}
+          </span>
+        </div>
+      </div>
+
+      <div class="space-y-2 pt-2 border-t border-gray-100 text-xs">
+        <div class="flex justify-between py-1">
+          <span class="text-gray-400">Account Email:</span>
+          <span class="font-bold text-gray-800">{{ selectedAffiliate().email }}</span>
+        </div>
+        <div class="flex justify-between py-1">
+          <span class="text-gray-400">Account Status:</span>
+          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
+                [class.bg-emerald-100]="selectedAffiliate().isActive !== false"
+                [class.text-emerald-800]="selectedAffiliate().isActive !== false"
+                [class.bg-rose-100]="selectedAffiliate().isActive === false"
+                [class.text-rose-800]="selectedAffiliate().isActive === false">
+            {{ selectedAffiliate().isActive !== false ? 'Active' : 'Disabled' }}
+          </span>
+        </div>
+        @if (selectedAffiliate().createdAt) {
+          <div class="flex justify-between py-1">
+            <span class="text-gray-400">Joined Program:</span>
+            <span class="font-bold text-gray-800">{{ selectedAffiliate().createdAt | date:'mediumDate' }}</span>
+          </div>
+        }
+      </div>
+
+      <div class="pt-3 border-t border-gray-100 flex justify-end">
+        <button 
+          type="button" 
+          (click)="closeDetails()" 
+          class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer transition-colors">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+}

@@ -36,7 +36,7 @@
         <!-- Mobile Compare -->
         <a
           routerLink="/compare"
-          (click)="closeMobileMenu()"
+          (click)="onProtectedNav($event, '/compare', 'compare products')"
           class="relative w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
           aria-label="Compare"
           title="Product Comparison"
@@ -53,7 +53,7 @@
 
         <a
           routerLink="/wishlist"
-          (click)="closeMobileMenu()"
+          (click)="onProtectedNav($event, '/wishlist', 'save items to your wishlist')"
           class="relative w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
           aria-label="Wishlist"
         >
@@ -69,7 +69,7 @@
 
         <a
           routerLink="/cart"
-          (click)="closeMobileMenu()"
+          (click)="onProtectedNav($event, '/cart', 'view your cart')"
           class="relative w-10 h-10 flex items-center justify-center text-white hover:bg-white/10 rounded-md transition-colors"
           aria-label="Cart"
         >
@@ -122,16 +122,34 @@
       <!-- RIGHT: Auth / Customer Menu -->
       <div class="flex items-center justify-end gap-3">
         @if (authStore.isAuthenticated()) {
-          <a
-            routerLink="/dashboard"
-            class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gray-950 hover:bg-black text-white text-xs font-bold shadow-md border border-gray-800 transition-all cursor-pointer"
-            title="Go to Customer Dashboard"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-            </svg>
-            <span>Dashboard</span>
-          </a>
+          @if (authStore.currentAccount()?.roleType === 'Shopkeeper') {
+            <a
+              href="http://localhost:54007/dashboard"
+              class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-xs font-black shadow-md transition-all cursor-pointer"
+              title="Go to Seller Dashboard"
+            >
+              <span>🏪 Seller Dashboard</span>
+            </a>
+          } @else if (authStore.currentAccount()?.roleType === 'SuperAdmin' || authStore.currentAccount()?.roleType === 'Partner') {
+            <a
+              href="http://localhost:4201/dashboard"
+              class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-md transition-all cursor-pointer"
+              title="Go to Admin Panel"
+            >
+              <span>⚙️ Admin Panel</span>
+            </a>
+          } @else {
+            <a
+              routerLink="/dashboard"
+              class="hidden sm:inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-gray-950 hover:bg-black text-white text-xs font-bold shadow-md border border-gray-800 transition-all cursor-pointer"
+              title="Go to Customer Dashboard"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+              </svg>
+              <span>Dashboard</span>
+            </a>
+          }
 
           <div class="relative" (mouseleave)="closeUserMenu()">
             <button
@@ -155,43 +173,88 @@
                   <div class="px-3 py-2 border-b border-gray-100">
                     <p class="text-xs font-bold text-text-primary truncate">{{ authStore.currentAccount()?.username }}</p>
                     <p class="text-[11px] text-text-muted truncate">{{ authStore.currentAccount()?.email }}</p>
+                    @if (authStore.currentAccount()?.roleType === 'Shopkeeper') {
+                      <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-amber-100 text-amber-800">
+                        Merchant
+                      </span>
+                    } @else if (authStore.currentAccount()?.roleType === 'SuperAdmin' || authStore.currentAccount()?.roleType === 'Partner') {
+                      <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-orange-100 text-orange-800">
+                        Administrator
+                      </span>
+                    } @else {
+                      <span class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-blue-100 text-blue-800">
+                        Customer
+                      </span>
+                    }
                   </div>
 
                   <div class="py-1">
-                    <a
-                      routerLink="/dashboard"
-                      (click)="closeUserMenu()"
-                      class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-                      </svg>
-                      <span>Customer Dashboard</span>
-                    </a>
+                    @if (authStore.currentAccount()?.roleType === 'Shopkeeper') {
+                      <a
+                        href="http://localhost:54007/dashboard"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-amber-700 hover:bg-amber-50 transition-colors"
+                      >
+                        <span>🏪 Open Seller Dashboard</span>
+                      </a>
+                      <a
+                        href="http://localhost:54007/products"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <span>📦 Manage Products</span>
+                      </a>
+                      <a
+                        href="http://localhost:54007/settings"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <span>⚙️ Shop Settings</span>
+                      </a>
+                    } @else if (authStore.currentAccount()?.roleType === 'SuperAdmin' || authStore.currentAccount()?.roleType === 'Partner') {
+                      <a
+                        href="http://localhost:4201/dashboard"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-bold text-orange-600 hover:bg-orange-50 transition-colors"
+                      >
+                        <span>⚙️ Open SuperAdmin Panel</span>
+                      </a>
+                    } @else {
+                      <a
+                        routerLink="/dashboard"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+                        </svg>
+                        <span>Customer Dashboard</span>
+                      </a>
 
-                    <a
-                      routerLink="/orders"
-                      (click)="closeUserMenu()"
-                      class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-                      </svg>
-                      <span>My Orders</span>
-                    </a>
+                      <a
+                        routerLink="/orders"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+                        </svg>
+                        <span>My Orders</span>
+                      </a>
 
-                    <a
-                      routerLink="/dashboard"
-                      [queryParams]="{ tab: 'addresses' }"
-                      (click)="closeUserMenu()"
-                      class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
-                    >
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
-                      </svg>
-                      <span>Saved Addresses</span>
-                    </a>
+                      <a
+                        routerLink="/dashboard"
+                        [queryParams]="{ tab: 'addresses' }"
+                        (click)="closeUserMenu()"
+                        class="flex items-center gap-2 px-3 py-2 rounded-xl text-xs font-medium text-text-secondary hover:text-primary hover:bg-rose-50/80 transition-colors"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+                        </svg>
+                        <span>Saved Addresses</span>
+                      </a>
+                    }
                   </div>
 
                   <div class="pt-1 border-t border-gray-100">
@@ -411,14 +474,20 @@
       </a>
 
       <div class="ml-auto flex items-center gap-5">
-        <a routerLink="/orders" class="flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
-          </svg>
-          <span>Orders</span>
-        </a>
+        @if (canShop()) {
+          <a routerLink="/orders" class="flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007zM8.625 10.5a.375.375 0 11-.75 0 .375.375 0 01.75 0zm7.5 0a.375.375 0 11-.75 0 .375.375 0 01.75 0z" />
+            </svg>
+            <span>Orders</span>
+          </a>
+        }
 
-        <a routerLink="/compare" class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+        <a
+          routerLink="/compare"
+          (click)="onProtectedNav($event, '/compare', 'compare products')"
+          class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1"
+        >
           <div class="relative">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M7.5 21L3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5" />
@@ -432,7 +501,11 @@
           <span>Compare</span>
         </a>
 
-        <a routerLink="/wishlist" class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+        <a
+          routerLink="/wishlist"
+          (click)="onProtectedNav($event, '/wishlist', 'save items to your wishlist')"
+          class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1"
+        >
           <div class="relative">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z" />
@@ -446,7 +519,11 @@
           <span>Wishlist</span>
         </a>
 
-        <a routerLink="/cart" class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1">
+        <a
+          routerLink="/cart"
+          (click)="onProtectedNav($event, '/cart', 'view your cart')"
+          class="relative flex items-center gap-1.5 text-white hover:text-white/80 transition-colors whitespace-nowrap text-xs font-semibold py-1"
+        >
           <div class="relative">
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
@@ -490,11 +567,13 @@
       <a routerLink="/products" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors" [class.bg-white/15]="isAllProductsActive()" [class.font-bold]="isAllProductsActive()">
         All Products
       </a>
-      <a routerLink="/orders" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
-        <span>My Orders</span>
-        <span class="text-xs opacity-60">&rsaquo;</span>
-      </a>
-      <a routerLink="/compare" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
+      @if (canShop()) {
+        <a routerLink="/orders" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
+          <span>My Orders</span>
+          <span class="text-xs opacity-60">&rsaquo;</span>
+        </a>
+      }
+      <a routerLink="/compare" (click)="onProtectedNav($event, '/compare', 'compare products')" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
         <span>Compare</span>
         @if (compareService.totalCount() > 0) {
           <span class="px-2 py-0.5 rounded-full bg-amber-400 text-gray-900 font-bold text-xs">
@@ -502,7 +581,7 @@
           </span>
         }
       </a>
-      <a routerLink="/wishlist" (click)="closeMobileMenu()" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
+      <a routerLink="/wishlist" (click)="onProtectedNav($event, '/wishlist', 'save items to your wishlist')" class="py-2.5 px-3 text-white font-medium rounded-md hover:bg-white/10 transition-colors flex items-center justify-between">
         <span>Wishlist</span>
         @if (wishlistService.totalCount() > 0) {
           <span class="px-2 py-0.5 rounded-full bg-amber-400 text-gray-900 font-bold text-xs">
@@ -516,16 +595,34 @@
 
     <div class="px-4 py-4 flex flex-col gap-2">
       @if (authStore.isAuthenticated()) {
-        <a
-          routerLink="/dashboard"
-          (click)="closeMobileMenu()"
-          class="py-2.5 px-3 bg-white text-primary font-bold rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
-          </svg>
-          <span>Customer Dashboard</span>
-        </a>
+        @if (authStore.currentAccount()?.roleType === 'Shopkeeper') {
+          <a
+            href="http://localhost:54007/dashboard"
+            (click)="closeMobileMenu()"
+            class="py-2.5 px-3 bg-amber-500 text-slate-950 font-black rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
+          >
+            <span>🏪 Open Seller Dashboard</span>
+          </a>
+        } @else if (authStore.currentAccount()?.roleType === 'SuperAdmin' || authStore.currentAccount()?.roleType === 'Partner') {
+          <a
+            href="http://localhost:4201/dashboard"
+            (click)="closeMobileMenu()"
+            class="py-2.5 px-3 bg-orange-600 text-white font-bold rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
+          >
+            <span>⚙️ Open Admin Panel</span>
+          </a>
+        } @else {
+          <a
+            routerLink="/dashboard"
+            (click)="closeMobileMenu()"
+            class="py-2.5 px-3 bg-white text-primary font-bold rounded-xl transition-colors text-center shadow-sm flex items-center justify-center gap-2"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z" />
+            </svg>
+            <span>Customer Dashboard</span>
+          </a>
+        }
 
         <button
           type="button"
@@ -562,3 +659,34 @@
   </div>
 
 </header>
+
+<!-- Logout confirmation popup -->
+@if (logoutModalOpen()) {
+  <div class="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden p-6 text-center">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
+        </svg>
+      </div>
+      <h3 class="text-lg font-black text-slate-900 tracking-tight mb-2">Confirm Sign Out</h3>
+      <p class="text-xs text-slate-500 mb-6">Are you sure you want to sign out of your Eseller account?</p>
+      <div class="flex items-center justify-center gap-3">
+        <button
+          type="button"
+          (click)="cancelLogout()"
+          class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmLogout()"
+          class="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition-all cursor-pointer"
+        >
+          Yes, Sign Out
+        </button>
+      </div>
+    </div>
+  </div>
+}

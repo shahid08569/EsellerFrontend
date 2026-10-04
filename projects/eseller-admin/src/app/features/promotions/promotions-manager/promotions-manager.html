@@ -1,0 +1,782 @@
+<div class="space-y-6">
+  <!-- UNIFIED PAGE HEADER BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg shrink-0">
+        🎟️
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
+          Promotions & Campaigns Control
+        </h1>
+        <p class="text-orange-100 text-xs font-medium">
+          Configure site-wide voucher codes, promotional flash sales, and storefront banners.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABS & ACTIONS -->
+  <div class="bg-white border border-gray-100 rounded-2xl p-3 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        (click)="activeTab.set('coupons')"
+        [class]="activeTab() === 'coupons' 
+          ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200' 
+          : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+        Coupons & Vouchers ({{ coupons().length }})
+      </button>
+      <button 
+        type="button" 
+        (click)="activeTab.set('flash-sales')"
+        [class]="activeTab() === 'flash-sales' 
+          ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200' 
+          : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+        Flash Sales ({{ flashSales().length }})
+      </button>
+      <button 
+        type="button" 
+        (click)="activeTab.set('banners')"
+        [class]="activeTab() === 'banners' 
+          ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200' 
+          : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+        Homepage Banners ({{ banners().length }})
+      </button>
+    </div>
+
+    <div>
+      @if (activeTab() === 'coupons') {
+        <button 
+          type="button" 
+          (click)="openCouponModal()"
+          class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-2xs cursor-pointer">
+          + New Coupon
+        </button>
+      } @else if (activeTab() === 'flash-sales') {
+        <button 
+          type="button" 
+          (click)="openFlashModal()"
+          class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-2xs cursor-pointer">
+          + Launch Flash Sale
+        </button>
+      } @else {
+        <button 
+          type="button" 
+          (click)="openBannerModal()"
+          class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-2xs cursor-pointer">
+          + Add Banner
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (activeTab() === 'coupons') {
+    <!-- COUPONS TABLE -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      @if (coupons().length === 0) {
+        <div class="p-12 text-center text-gray-400">
+          <p class="text-sm font-bold text-gray-600">No active coupons</p>
+          <p class="text-xs mt-1">Create promotional discount codes for platform shoppers.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-gray-100 text-[11px] font-bold uppercase tracking-wider text-gray-400 bg-gray-50/50">
+                <th class="py-3 px-4">Coupon Code</th>
+                <th class="py-3 px-4">Discount</th>
+                <th class="py-3 px-4">Min Order</th>
+                <th class="py-3 px-4">Expires</th>
+                <th class="py-3 px-4 text-center">Status</th>
+                <th class="py-3 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (c of coupons(); track c.id) {
+                <tr class="hover:bg-orange-50/20 transition-colors">
+                  <td class="py-3.5 px-4 font-mono font-bold text-orange-600 text-xs">
+                    {{ c.code }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-gray-900">
+                    {{ c.value }}{{ c.discountType === 'Percentage' ? '%' : ' Rs' }} OFF
+                  </td>
+                  <td class="py-3.5 px-4 text-xs text-gray-600">
+                    $ {{ (c.minOrderAmount || 0) | number:'1.0-0' }}
+                  </td>
+                  <td class="py-3.5 px-4 text-xs text-gray-500">
+                    {{ c.expiresAt ? (c.expiresAt | date:'mediumDate') : 'No Expiry' }}
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <span [class]="c.isActive !== false ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800' : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-600'">
+                      {{ c.isActive !== false ? 'Active' : 'Expired' }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <button 
+                      type="button" 
+                      (click)="deleteCoupon(c)"
+                      class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 cursor-pointer">
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  } @else if (activeTab() === 'flash-sales') {
+    <!-- FLASH SALES -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      @if (flashSales().length === 0) {
+        <div class="col-span-full p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100">
+          <p class="text-sm font-bold text-gray-600">No active flash sale campaigns</p>
+          <p class="text-xs mt-1">Launch a flash sale with countdown for platform homepage.</p>
+        </div>
+      } @else {
+        @for (f of flashSales(); track f.id) {
+          <div class="bg-white border border-gray-100 rounded-2xl p-5 shadow-2xs space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="px-2.5 py-0.5 rounded-full bg-rose-100 text-rose-800 text-xs font-bold">
+                ⚡ {{ f.name || f.title || 'Flash Sale' }}
+              </span>
+              <span [class]="f.isActive !== false ? 'text-emerald-600 font-bold text-xs' : 'text-gray-400 text-xs'">
+                {{ f.isActive !== false ? '● Live' : 'Ended' }}
+              </span>
+            </div>
+            <h3 class="text-base font-black text-gray-900">{{ f.name || f.title }}</h3>
+            <div class="text-xs text-gray-500 space-y-1">
+              <div>Start: {{ f.startDate | date:'medium' }}</div>
+              <div>End: {{ f.endDate | date:'medium' }}</div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  } @else {
+    <!-- HOMEPAGE BANNERS (SUPERADMIN 3D HERO SHOWCASE CONTROLS) -->
+    <div class="space-y-4">
+      <div class="bg-amber-50 border border-amber-200/70 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div class="flex items-center gap-3">
+          <div class="w-9 h-9 rounded-xl bg-amber-500/10 text-amber-700 flex items-center justify-center font-bold text-lg">
+            ✨
+          </div>
+          <div>
+            <h4 class="text-sm font-bold text-amber-950">Storefront 3D Showcase Hero Sliders</h4>
+            <p class="text-xs text-amber-800">
+              Control which products appear 1st, 2nd, and 3rd on the homepage hero showcase. Reorder with ↑ / ↓ buttons.
+            </p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          (click)="openBannerModal()"
+          class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs cursor-pointer flex items-center gap-1.5 self-start sm:self-auto shrink-0">
+          <span>+</span> Add New Banner
+        </button>
+      </div>
+
+      @if (banners().length === 0) {
+        <div class="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100">
+          <p class="text-sm font-bold text-gray-600">No banners configured</p>
+          <p class="text-xs mt-1">Add promotional 3D showcase sliders for the customer homepage.</p>
+        </div>
+      } @else {
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
+          @for (b of banners(); track b.id; let idx = $index) {
+            <div class="bg-white border border-gray-200 rounded-2xl overflow-hidden shadow-xs hover:shadow-md transition-all flex flex-col justify-between">
+              
+              <!-- Card Top Bar: Priority & Quick Reorder Controls -->
+              <div class="p-3.5 bg-gray-50 border-b border-gray-100 flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2">
+                  <span class="px-2.5 py-1 rounded-lg bg-orange-600 text-white font-black text-xs shadow-2xs">
+                    #{{ idx + 1 }}
+                  </span>
+                  <span class="text-xs font-bold text-gray-700">
+                    Sort Order: <span class="font-mono text-orange-600">{{ b.sortOrder ?? idx + 1 }}</span>
+                  </span>
+                  <button
+                    type="button"
+                    (click)="toggleBannerVisibility(b)"
+                    [disabled]="busyBannerId() === b.id"
+                    title="Toggle Live / Hidden on storefront"
+                    [class]="b.isActive !== false
+                      ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-200 cursor-pointer hover:bg-emerald-200 disabled:opacity-50'
+                      : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-gray-100 text-gray-500 border border-gray-200 cursor-pointer hover:bg-gray-200 disabled:opacity-50'">
+                    {{ busyBannerId() === b.id ? '…' : (b.isActive !== false ? '● Live' : 'Hidden') }}
+                  </button>
+                </div>
+
+                <!-- Priority Move Up / Down Buttons (Pehle / Doosre Pe Set Karna) -->
+                <div class="flex items-center gap-1.5">
+                  <span class="text-[11px] text-gray-400 font-semibold mr-1">Priority:</span>
+                  <button
+                    type="button"
+                    (click)="moveBannerUp(idx)"
+                    [disabled]="idx === 0"
+                    title="Move to 1st/Higher Priority"
+                    class="w-7 h-7 rounded-lg bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 border border-gray-200 flex items-center justify-center font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs transition-colors">
+                    ↑
+                  </button>
+                  <button
+                    type="button"
+                    (click)="moveBannerDown(idx)"
+                    [disabled]="idx === banners().length - 1"
+                    title="Move to Lower Priority"
+                    class="w-7 h-7 rounded-lg bg-white hover:bg-orange-50 text-gray-700 hover:text-orange-600 border border-gray-200 flex items-center justify-center font-bold text-xs disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer shadow-2xs transition-colors">
+                    ↓
+                  </button>
+                </div>
+              </div>
+
+              <!-- Live Banner Mini-Preview Box (Matches Pinterest Style) -->
+              <div class="p-4">
+                <div [style.background]="getBackgroundStyle(b.backgroundColor)" class="relative h-44 rounded-xl p-4 overflow-hidden flex items-center justify-between shadow-inner">
+                  <!-- Background Glow Circle -->
+                  <div class="absolute -right-6 -bottom-6 w-48 h-48 rounded-full bg-white/10 blur-xl pointer-events-none"></div>
+
+                  <!-- Text info -->
+                  <div class="relative z-10 max-w-[60%] space-y-1.5">
+                    @if (b.subtitle) {
+                      <div [class]="'text-[10px] uppercase font-bold tracking-wider truncate ' + (isDarkText(b.textColor, b.backgroundColor) ? 'text-slate-700' : 'text-white/80')">
+                        {{ b.subtitle }}
+                      </div>
+                    }
+                    <h4 [class]="'text-base font-black leading-tight line-clamp-2 drop-shadow-xs ' + (isDarkText(b.textColor, b.backgroundColor) ? 'text-slate-950' : 'text-white')">
+                      {{ b.title }}
+                    </h4>
+                    @if (b.description) {
+                      <p [class]="'text-[11px] line-clamp-1 ' + (isDarkText(b.textColor, b.backgroundColor) ? 'text-slate-800' : 'text-white/85')">
+                        {{ b.description }}
+                      </p>
+                    }
+                    <div class="flex items-center gap-2 pt-1">
+                      @if (b.price) {
+                        <span [class]="'text-sm font-black ' + (isDarkText(b.textColor, b.backgroundColor) ? 'text-slate-950' : 'text-white')">
+                          $ {{ b.price | number:'1.0-0' }}
+                        </span>
+                      }
+                      @if (b.originalPrice) {
+                        <span [class]="'text-xs line-through ' + (isDarkText(b.textColor, b.backgroundColor) ? 'text-slate-600' : 'text-white/60')">
+                          $ {{ b.originalPrice | number:'1.0-0' }}
+                        </span>
+                      }
+                    </div>
+                    <div class="pt-1">
+                      <span [class]="'inline-block px-3 py-1 rounded-full text-[10px] font-bold shadow-xs ' + (isDarkText(b.textColor, b.backgroundColor) ? 'bg-slate-950 text-white' : 'bg-white text-slate-950')">
+                        {{ b.buttonText || 'Get the look >' }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <!-- Product Floating Image Preview -->
+                  <div class="relative z-10 w-28 h-28 sm:w-32 sm:h-32 shrink-0 flex items-center justify-center">
+                    @if (formatBannerImageUrl(b.imageUrl); as img) {
+                      <img 
+                        [src]="img" 
+                        [alt]="b.title" 
+                        class="max-w-full max-h-full object-contain drop-shadow-2xl">
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <!-- Banner Details & Management Footer -->
+              <div class="px-4 pb-3.5 pt-1 border-t border-gray-100 flex items-center justify-between text-xs text-gray-500">
+                <div class="flex items-center gap-2 truncate max-w-[65%]">
+                  <span class="font-semibold text-gray-700">Link:</span>
+                  <span class="truncate font-mono text-[11px] text-gray-500">{{ b.linkUrl || '/' }}</span>
+                  @if (b.availableSizes) {
+                    <span class="hidden sm:inline text-gray-300">•</span>
+                    <span class="hidden sm:inline text-[11px] text-gray-600">Sizes: {{ b.availableSizes }}</span>
+                  }
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <button
+                    type="button"
+                    (click)="toggleBannerVisibility(b)"
+                    [disabled]="busyBannerId() === b.id"
+                    [class]="b.isActive !== false
+                      ? 'px-2.5 py-1 rounded-lg font-bold text-xs border cursor-pointer transition-colors disabled:opacity-50 bg-slate-50 hover:bg-slate-100 text-slate-700 border-slate-200'
+                      : 'px-2.5 py-1 rounded-lg font-bold text-xs border cursor-pointer transition-colors disabled:opacity-50 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200'">
+                    {{ b.isActive !== false ? 'Set Hidden' : 'Set Live' }}
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="openBannerModal(b)"
+                    class="px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-xs border border-orange-200 cursor-pointer transition-colors">
+                    Edit
+                  </button>
+                  <button 
+                    type="button" 
+                    (click)="askDeleteBanner(b)"
+                    class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs border border-rose-200 cursor-pointer transition-colors">
+                    Delete
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          }
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- MODAL: COUPON -->
+@if (couponModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="couponModalOpen.set(false)"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+      <h3 class="text-base font-bold text-gray-900">Create Platform Coupon</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Coupon Code *</label>
+          <input 
+            type="text" 
+            [ngModel]="cCode()"
+            (ngModelChange)="cCode.set($event)"
+            placeholder="e.g. ESELLER20" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono uppercase focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Discount Type</label>
+            <select 
+              [ngModel]="cDiscountType()"
+              (ngModelChange)="cDiscountType.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 outline-hidden">
+              <option value="Percentage">Percentage (%)</option>
+              <option value="Fixed">Fixed Amount (Rs)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Value *</label>
+            <input 
+              type="number" 
+              [ngModel]="cValue()"
+              (ngModelChange)="cValue.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Min Order Amount ($)</label>
+          <input 
+            type="number" 
+            [ngModel]="cMinOrder()"
+            (ngModelChange)="cMinOrder.set(+$event)"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button (click)="couponModalOpen.set(false)" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100">Cancel</button>
+        <button (click)="saveCoupon()" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs">Create Coupon</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: FLASH SALE -->
+@if (flashModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="flashModalOpen.set(false)"></div>
+    <div class="relative bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl space-y-4 border border-gray-100 max-h-[90vh] overflow-y-auto">
+      <h3 class="text-base font-bold text-gray-900">Launch Flash Sale Campaign</h3>
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Campaign Title *</label>
+          <input 
+            type="text" 
+            [ngModel]="fTitle()"
+            (ngModelChange)="fTitle.set($event)"
+            placeholder="e.g. Midnight Mega Sale" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Discount Percentage (%) *</label>
+          <input 
+            type="number" 
+            [ngModel]="fDiscountPercentage()"
+            (ngModelChange)="fDiscountPercentage.set(+$event)"
+            min="1"
+            max="90"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+        </div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Start</label>
+            <input type="datetime-local" [ngModel]="fStartDate()" (ngModelChange)="fStartDate.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">End</label>
+            <input type="datetime-local" [ngModel]="fEndDate()" (ngModelChange)="fEndDate.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+          </div>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">
+            Catalog Products * <span class="font-medium text-gray-400">({{ selectedFlashProductIds().length }} selected)</span>
+          </label>
+          @if (flashCatalogLoading()) {
+            <p class="text-[11px] text-gray-400 font-medium py-3">Loading catalog…</p>
+          } @else if (flashCatalog().length === 0) {
+            <p class="text-[11px] text-amber-600 font-bold py-2">No catalog products. Create master products first.</p>
+          } @else {
+            <div class="max-h-44 overflow-y-auto border border-gray-200 rounded-xl divide-y divide-gray-50">
+              @for (p of flashCatalog(); track p.id) {
+                <label class="flex items-center gap-2 px-3 py-2 text-xs cursor-pointer hover:bg-orange-50/60">
+                  <input
+                    type="checkbox"
+                    [checked]="selectedFlashProductIds().includes(p.id)"
+                    (change)="toggleFlashProduct(p.id)"
+                    class="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+                  <span class="font-medium text-gray-800 truncate">{{ p.name }}</span>
+                </label>
+              }
+            </div>
+          }
+        </div>
+      </div>
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button type="button" (click)="flashModalOpen.set(false)" class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">Cancel</button>
+        <button type="button" (click)="saveFlashSale()" class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs cursor-pointer">Launch Sale</button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- MODAL: BANNER (SUPERADMIN FULL SHOWCASE CONTROL) -->
+@if (bannerModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeBannerModal(false)"></div>
+    <div class="relative bg-white rounded-2xl max-w-2xl w-full p-6 shadow-2xl space-y-4 border border-gray-100 max-h-[90vh] overflow-y-auto" (click)="$event.stopPropagation()">
+      
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div>
+          <h3 class="text-base font-black text-gray-900">
+            {{ editingBannerId() ? 'Edit Storefront Showcase Banner' : 'Create 3D Showcase Hero Banner' }}
+          </h3>
+          <p class="text-xs text-gray-500">
+            Customize 3D hero product showcase, typography, pricing, size selector & background. Draft is kept if you close and reopen.
+          </p>
+        </div>
+        <button 
+          type="button" 
+          (click)="closeBannerModal(false)" 
+          class="text-gray-400 hover:text-gray-600 font-bold text-lg leading-none cursor-pointer">
+          ✕
+        </button>
+      </div>
+
+      <div class="space-y-4">
+        <!-- Live Mini Preview inside Modal -->
+        <div class="space-y-1">
+          <div class="flex items-center justify-between">
+            <label class="block text-xs font-bold text-gray-700">Live Appearance Preview</label>
+            <span [class]="'text-[10px] font-bold px-2.5 py-0.5 rounded-full ' + (isModalDarkText() ? 'bg-slate-900 text-white' : 'bg-orange-100 text-orange-800')">
+              {{ isModalDarkText() ? '🌙 Black Text Mode (High Contrast)' : '☀️ White Text Mode' }}
+            </span>
+          </div>
+          <div [style.background]="getBackgroundStyle(bBackgroundColor())" class="relative h-44 rounded-2xl p-4 overflow-hidden flex items-center justify-between shadow-md transition-all">
+            <div class="relative z-10 max-w-[65%] space-y-1">
+              <span [class]="'text-[10px] uppercase font-bold tracking-wider ' + (isModalDarkText() ? 'text-slate-700' : 'text-white/80')">
+                {{ bSubtitle() || 'Showcase Tagline' }}
+              </span>
+              <h4 [class]="'text-base font-black leading-tight drop-shadow-xs truncate ' + (isModalDarkText() ? 'text-slate-950' : 'text-white')">
+                {{ bTitle() || 'Hero Banner Headline' }}
+              </h4>
+              <p [class]="'text-[11px] line-clamp-1 ' + (isModalDarkText() ? 'text-slate-800' : 'text-white/80')">
+                {{ bDescription() || 'Showcase description text will appear right here.' }}
+              </p>
+              <div class="flex items-center gap-2 pt-1">
+                @if (bPrice()) {
+                  <span [class]="'text-sm font-black ' + (isModalDarkText() ? 'text-slate-950' : 'text-white')">$ {{ bPrice() | number:'1.0-0' }}</span>
+                }
+                @if (bOriginalPrice()) {
+                  <span [class]="'text-xs line-through ' + (isModalDarkText() ? 'text-slate-600' : 'text-white/60')">$ {{ bOriginalPrice() | number:'1.0-0' }}</span>
+                }
+              </div>
+              <span [class]="'inline-block mt-1 px-3 py-1 rounded-full text-[10px] font-bold shadow-xs ' + (isModalDarkText() ? 'bg-slate-950 text-white' : 'bg-white text-slate-950')">
+                {{ bButtonText() || 'Get the look >' }}
+              </span>
+            </div>
+            <div class="relative z-10 w-28 h-28 shrink-0 flex items-center justify-center">
+              @if (formatBannerImageUrl(bImageUrl()); as img) {
+                <img [src]="img" alt="Preview" class="max-w-full max-h-full object-contain drop-shadow-2xl">
+              } @else {
+                <div [class]="'w-20 h-20 rounded-xl border flex items-center justify-center text-xs font-bold ' + (isModalDarkText() ? 'bg-slate-200 border-slate-300 text-slate-500' : 'bg-white/20 border-white/40 text-white')">
+                  No Image
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Image Upload or URL -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-2">
+          <label class="block text-xs font-bold text-gray-700">Product Image (Transparent PNG or High-Res JPG) *</label>
+          <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+            <label class="px-4 py-2 rounded-xl bg-white hover:bg-orange-50 text-orange-700 border border-orange-300 font-bold text-xs cursor-pointer flex items-center justify-center gap-2 shrink-0 shadow-2xs">
+              <span>📷</span>
+              <span>{{ isUploadingBanner() ? 'Uploading Image...' : 'Upload File from Device' }}</span>
+              <input 
+                type="file" 
+                accept="image/*" 
+                (change)="onBannerFileSelected($event)" 
+                class="hidden" 
+                [disabled]="isUploadingBanner()">
+            </label>
+            <div class="relative flex-1">
+              <input 
+                type="text" 
+                [ngModel]="bImageUrl()"
+                (ngModelChange)="bImageUrl.set($event); persistBannerDraft()"
+                placeholder="Or paste image URL (e.g. /uploads/banners/...)" 
+                class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+            </div>
+          </div>
+        </div>
+
+        <!-- Title & Subtitle -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Headline Title *</label>
+            <input 
+              type="text" 
+              [ngModel]="bTitle()"
+              (ngModelChange)="bTitle.set($event); persistBannerDraft()"
+              placeholder="e.g. Stand out Without trying" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Subtitle / Tagline</label>
+            <input 
+              type="text" 
+              [ngModel]="bSubtitle()"
+              (ngModelChange)="bSubtitle.set($event); persistBannerDraft()"
+              placeholder="e.g. Confidence, wrapped in warmth" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+        </div>
+
+        <!-- Description -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Showcase Description</label>
+          <textarea 
+            [ngModel]="bDescription()"
+            (ngModelChange)="bDescription.set($event); persistBannerDraft()"
+            rows="2"
+            placeholder="e.g. Embrace the cold with this bold, insulated puffer. Lightweight yet cozy, designed for all-season style." 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500"></textarea>
+        </div>
+
+        <!-- Pricing & Button -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Special Price (Rs / $)</label>
+            <input 
+              type="number" 
+              [ngModel]="bPrice()"
+              (ngModelChange)="bPrice.set(+$event)"
+              placeholder="e.g. 149" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Original Price (Strikethrough)</label>
+            <input 
+              type="number" 
+              [ngModel]="bOriginalPrice()"
+              (ngModelChange)="bOriginalPrice.set(+$event)"
+              placeholder="e.g. 199" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">CTA Button Text</label>
+            <input 
+              type="text" 
+              [ngModel]="bButtonText()"
+              (ngModelChange)="bButtonText.set($event)"
+              placeholder="e.g. Get the look >" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+        </div>
+
+        <!-- Link Target & Available Sizes -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Click Destination URL</label>
+            <input 
+              type="text" 
+              [ngModel]="bLinkUrl()"
+              (ngModelChange)="bLinkUrl.set($event)"
+              placeholder="e.g. /products or /products/puffer-jacket" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Available Sizes (Comma Separated)</label>
+            <input 
+              type="text" 
+              [ngModel]="bAvailableSizes()"
+              (ngModelChange)="bAvailableSizes.set($event)"
+              placeholder="e.g. 36, 38, 40, 42 or S, M, L, XL" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+        </div>
+
+        <!-- Background Gradient / Color Presets -->
+        <div class="space-y-2">
+          <label class="block text-xs font-bold text-gray-700">1-Click Theme & Atmosphere Presets</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mb-2">
+            @for (p of bgPresets; track p.value) {
+              <button 
+                type="button" 
+                (click)="selectBgPreset(p)"
+                [class]="'p-2 rounded-xl text-left text-xs font-bold cursor-pointer transition-all border flex flex-col gap-0.5 ' + (bBackgroundColor() === p.value ? 'ring-2 ring-orange-600 border-orange-600 bg-orange-50 text-orange-950 shadow-xs' : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50')">
+                <span class="truncate">{{ p.label }}</span>
+                <span class="text-[10px] font-medium text-gray-400">
+                  {{ p.text === 'dark' ? '🌙 Black Text' : '☀️ White Text' }}
+                </span>
+              </button>
+            }
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Custom Tailwind Gradient Classes</label>
+            <input 
+              type="text" 
+              [ngModel]="bBackgroundColor()"
+              (ngModelChange)="bBackgroundColor.set($event)"
+              placeholder="Tailwind gradient classes e.g. from-[#ea580c] via-[#c2410c] to-[#431407]" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono outline-hidden focus:border-orange-500">
+          </div>
+        </div>
+
+        <!-- Text & UI Contrast Controls (Dynamic Light/Dark Mode) -->
+        <div class="bg-gray-50 border border-gray-200 rounded-xl p-3.5 space-y-2">
+          <div class="flex items-center justify-between">
+            <div>
+              <label class="block text-xs font-bold text-gray-900">Text & Controls Contrast Mode</label>
+              <p class="text-[11px] text-gray-500">
+                Agar white/light product ya light background ho tu Black text select karein taake sab kuch clearly nazar aaye.
+              </p>
+            </div>
+          </div>
+          <div class="grid grid-cols-3 gap-2">
+            <button
+              type="button"
+              (click)="bTextColor.set('auto')"
+              [class]="'py-2 px-2.5 rounded-xl text-xs font-bold cursor-pointer border text-center transition-all ' + (bTextColor() === 'auto' ? 'bg-orange-600 text-white border-orange-600 shadow-xs' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100')">
+              ⚡ Auto Detect
+            </button>
+            <button
+              type="button"
+              (click)="bTextColor.set('dark')"
+              [class]="'py-2 px-2.5 rounded-xl text-xs font-bold cursor-pointer border text-center transition-all ' + (bTextColor() === 'dark' ? 'bg-slate-900 text-white border-slate-900 shadow-xs' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100')">
+              🌙 Black Text (For Light BGs)
+            </button>
+            <button
+              type="button"
+              (click)="bTextColor.set('light')"
+              [class]="'py-2 px-2.5 rounded-xl text-xs font-bold cursor-pointer border text-center transition-all ' + (bTextColor() === 'light' ? 'bg-orange-600 text-white border-orange-600 shadow-xs' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-100')">
+              ☀️ White Text (For Dark BGs)
+            </button>
+          </div>
+        </div>
+
+        <!-- Sort Order & Active Status (SuperAdmin Priority Decision) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100 items-center">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">
+              Display Sequence / Sort Order (1 = First Slide, 2 = Second...)
+            </label>
+            <input 
+              type="number" 
+              [ngModel]="bSortOrder()"
+              (ngModelChange)="bSortOrder.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden focus:border-orange-500">
+          </div>
+          <div class="flex items-center gap-2 pt-4">
+            <input 
+              type="checkbox" 
+              id="bannerActiveCheck"
+              [ngModel]="bIsActive()"
+              (ngModelChange)="bIsActive.set($event)"
+              class="w-4 h-4 rounded text-orange-600 focus:ring-orange-500 cursor-pointer">
+            <label for="bannerActiveCheck" class="text-xs font-bold text-gray-700 cursor-pointer">
+              Active / Visible on Storefront
+            </label>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button 
+          type="button"
+          (click)="closeBannerModal(true)" 
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
+          Discard
+        </button>
+        <button 
+          type="button"
+          (click)="closeBannerModal(false)" 
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
+          Close (keep draft)
+        </button>
+        <button 
+          type="button"
+          (click)="saveBanner()"
+          [disabled]="isSavingBanner() || isUploadingBanner()"
+          class="px-5 py-2.5 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs cursor-pointer disabled:opacity-50">
+          {{ isSavingBanner() ? 'Publishing…' : (editingBannerId() ? 'Save Changes' : 'Publish Banner') }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- DELETE BANNER CONFIRM MODAL -->
+@if (deleteModalOpen() && bannerToDelete(); as doomed) {
+  <div class="fixed inset-0 z-[60] flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeDeleteModal()"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-5 shadow-2xl border border-gray-100 space-y-4">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="w-8 h-8 rounded-xl bg-rose-100 text-rose-600 flex items-center justify-center font-bold text-sm">⌫</span>
+          <h3 class="font-extrabold text-slate-900 text-sm">Delete Homepage Banner</h3>
+        </div>
+        <button type="button" (click)="closeDeleteModal()" class="text-slate-400 hover:text-slate-600 cursor-pointer text-lg leading-none">✕</button>
+      </div>
+
+      <p class="text-xs text-slate-600 leading-relaxed">
+        Delete <strong class="text-slate-900">"{{ doomed.title || 'this banner' }}"</strong> permanently?
+        It will be removed from the admin list and the customer homepage. This cannot be undone.
+      </p>
+
+      <div class="rounded-xl border border-rose-100 bg-rose-50/70 px-3 py-2 text-[11px] text-rose-800 font-medium">
+        Tip: agar sirf hide karna hai to <span class="font-bold">Set Hidden</span> use karo — Delete se record permanently remove hota hai.
+      </div>
+
+      <div class="flex items-center justify-end gap-2 pt-1">
+        <button
+          type="button"
+          (click)="closeDeleteModal()"
+          [disabled]="isDeletingBanner()"
+          class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer disabled:opacity-50">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="confirmDeleteBanner()"
+          [disabled]="isDeletingBanner()"
+          class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50">
+          {{ isDeletingBanner() ? 'Deleting…' : 'Delete Permanently' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

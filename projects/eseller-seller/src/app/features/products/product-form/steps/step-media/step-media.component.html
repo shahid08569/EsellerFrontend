@@ -1,0 +1,224 @@
+<div class="space-y-6">
+  
+  <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-6">
+    
+    <!-- Header with Bulk Toggle -->
+    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-gray-100 pb-4">
+      <div>
+        <h2 class="text-base font-bold text-gray-900 flex items-center gap-2">
+          <span class="w-6 h-6 rounded-lg bg-indigo-50 text-primary flex items-center justify-center text-xs font-bold">2</span>
+          Product Media & Gallery
+        </h2>
+        <p class="text-xs text-gray-500 mt-0.5">High-quality photos increase buyer trust and conversion rates.</p>
+      </div>
+
+      <!-- Single vs Bulk Toggle -->
+      <div class="flex items-center gap-3 bg-gray-50 p-1.5 rounded-xl border border-gray-200 shrink-0">
+        <button 
+          type="button" 
+          (click)="isBulkMode.set(false)"
+          class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer"
+          [class.bg-white]="!isBulkMode()"
+          [class.text-primary]="!isBulkMode()"
+          [class.shadow-xs]="!isBulkMode()"
+          [class.text-gray-500]="isBulkMode()">
+          Single Cover
+        </button>
+        <button 
+          type="button" 
+          (click)="isBulkMode.set(true)"
+          class="px-3 py-1.5 text-xs font-bold rounded-lg transition-all cursor-pointer flex items-center gap-1.5"
+          [class.bg-white]="isBulkMode()"
+          [class.text-primary]="isBulkMode()"
+          [class.shadow-xs]="isBulkMode()"
+          [class.text-gray-500]="!isBulkMode()">
+          <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+          Bulk Upload
+        </button>
+      </div>
+    </div>
+
+    <!-- Existing Images List (Edit Mode - Shown at top) -->
+    @if (isEditMode()) {
+      <div class="space-y-3 pb-2">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+            Current Listing Images
+            <span class="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[11px] font-bold">
+              {{ existingImages().length }}
+            </span>
+          </h3>
+          <span class="text-[11px] text-gray-400">
+            Hover over any image to remove it
+          </span>
+        </div>
+
+        @if (isLoadingImages()) {
+          <div class="p-8 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+            <svg class="animate-spin w-4 h-4 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            Loading current photos...
+          </div>
+        } @else if (existingImages().length === 0) {
+          <div class="p-6 text-center text-xs text-gray-400 bg-gray-50 rounded-xl border border-gray-200">
+            No photos found on server yet. Upload photos below to add them to this listing.
+          </div>
+        } @else {
+          <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+            @for (img of existingImages(); track img.id; let idx = $index) {
+              <div class="group relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-square shadow-2xs hover:shadow-md transition-all">
+                <img [src]="img.imageUrl | imageUrl" [alt]="'Product photo'" class="w-full h-full object-cover" appFallback>
+                
+                @if (img.sortOrder === 0 || idx === 0) {
+                  <div class="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs">
+                    ★ Primary
+                  </div>
+                }
+
+                <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                  <button 
+                    type="button" 
+                    (click)="deleteExistingImage.emit(img)" 
+                    class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Delete
+                  </button>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Upload Zone Header in Edit Mode -->
+    @if (isEditMode()) {
+      <div class="pt-2 border-t border-gray-100">
+        <h4 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">
+          + Add More Photos to Listing
+        </h4>
+      </div>
+    }
+
+    <!-- Drag & Drop Upload Zone -->
+    <div 
+      (dragover)="onDragOver($event)"
+      (dragleave)="onDragLeave($event)"
+      (drop)="onDrop($event)"
+      class="border-2 border-dashed rounded-2xl p-8 text-center transition-all cursor-pointer relative"
+      [class.border-primary]="isDragging()"
+      [class.bg-indigo-50/40]="isDragging()"
+      [class.border-gray-200]="!isDragging()"
+      [class.hover:border-primary/50]="!isDragging()"
+      [class.hover:bg-gray-50]="!isDragging()">
+      
+      <input 
+        type="file" 
+        [multiple]="isBulkMode()" 
+        accept="image/png, image/jpeg, image/webp, image/gif"
+        (change)="onFileInputChange($event)"
+        class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+
+      <div class="space-y-3 pointer-events-none">
+        <div class="w-14 h-14 rounded-2xl bg-indigo-50 text-primary flex items-center justify-center mx-auto text-2xl shadow-2xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+          </svg>
+        </div>
+        <div>
+          <p class="text-sm font-bold text-gray-800">
+            {{ isEditMode() ? 'Click or drop files to upload more photos directly to this product' : 'Click to upload or drag & drop files here' }}
+          </p>
+          <p class="text-xs text-gray-400 mt-1">
+            {{ isBulkMode() ? 'Upload multiple product angles (JPG, PNG, WEBP, up to 5MB each)' : 'Upload main product cover photo (JPG, PNG, WEBP up to 5MB)' }}
+          </p>
+        </div>
+        <div class="inline-flex items-center gap-2 px-3 py-1 bg-white border border-gray-200 rounded-lg text-xs font-semibold text-gray-600 shadow-2xs">
+          <span>📁 Browse from computer</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Direct Upload Spinner (Edit Mode) -->
+    @if (isUploadingNewImage()) {
+      <div class="p-4 bg-indigo-50 border border-indigo-100 rounded-xl flex items-center gap-3">
+        <svg class="animate-spin w-5 h-5 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+        </svg>
+        <p class="text-xs font-bold text-primary">Uploading photo directly to product listing...</p>
+      </div>
+    }
+
+    <!-- Queued Images List (New Product Creation) -->
+    @if (!isEditMode() && queuedImages().length > 0) {
+      <div class="space-y-3">
+        <div class="flex items-center justify-between">
+          <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider flex items-center gap-1.5">
+            Photos to be Uploaded
+            <span class="px-2 py-0.5 rounded-full bg-indigo-50 text-primary text-[11px] font-bold">
+              {{ queuedImages().length }}
+            </span>
+          </h3>
+          <button 
+            type="button" 
+            (click)="clearAllQueued.emit()" 
+            class="text-xs font-bold text-rose-500 hover:text-rose-600 transition-colors">
+            Clear All Photos
+          </button>
+        </div>
+
+        <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
+          @for (item of queuedImages(); track $index; let idx = $index) {
+            <div class="group relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-square shadow-2xs hover:shadow-md transition-all">
+              <img [src]="item.previewUrl" [alt]="item.name" class="w-full h-full object-cover">
+              
+              <!-- First Image is the Cover -->
+              @if (idx === 0) {
+                <div class="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                  ★ Cover
+                </div>
+              }
+
+              <!-- Overlay Actions on Hover -->
+              <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
+                <div class="flex justify-end">
+                  <button 
+                    type="button" 
+                    (click)="removeQueued.emit(idx)" 
+                    class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center hover:bg-rose-700 transition-colors shadow-xs"
+                    title="Remove photo">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+
+                @if (idx > 0) {
+                  <button 
+                    type="button" 
+                    (click)="reorderCover.emit(idx)" 
+                    class="w-full py-1 bg-white/90 hover:bg-white text-gray-900 font-bold text-[10px] rounded-md transition-colors shadow-xs">
+                    Make Cover
+                  </button>
+                }
+              </div>
+
+              <!-- Footer with file size -->
+              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 text-center">
+                <p class="text-[10px] text-white/90 truncate px-1">{{ item.name }}</p>
+                <p class="text-[9px] text-white/60">{{ formatBytes(item.size) }}</p>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
+
+</div>

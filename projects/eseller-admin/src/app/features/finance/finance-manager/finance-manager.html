@@ -1,0 +1,263 @@
+<div class="space-y-6">
+  <!-- UNIFIED PAGE HEADER BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg shrink-0">
+        💳
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
+          Finance & Payout Operations
+        </h1>
+        <p class="text-orange-100 text-xs font-medium">
+          Audit merchant & affiliate commission balances, process settlements, and review payout withdrawals.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        (click)="loadData()" 
+        title="Refresh ledger"
+        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold text-white transition-colors cursor-pointer border border-white/20 shadow-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh
+      </button>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="bg-white border border-gray-100 rounded-2xl p-3 shadow-2xs flex items-center gap-2">
+    <button 
+      type="button" 
+      (click)="activeTab.set('withdrawals')"
+      [class]="activeTab() === 'withdrawals' 
+        ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200 shadow-2xs' 
+        : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+      Withdrawal Requests ({{ withdrawals().length }})
+      @if (pendingWithdrawals().length > 0) {
+        <span class="ml-1 px-1.5 py-0.5 rounded-full bg-amber-500 text-white text-[10px]">
+          {{ pendingWithdrawals().length }}
+        </span>
+      }
+    </button>
+    <button 
+      type="button" 
+      (click)="activeTab.set('commissions')"
+      [class]="activeTab() === 'commissions' 
+        ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200 shadow-2xs' 
+        : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+      Commission Ledger ({{ commissions().length }})
+    </button>
+  </div>
+
+  @if (activeTab() === 'withdrawals') {
+    <!-- WITHDRAWALS TABLE -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-xs text-gray-400">Loading payout records...</div>
+      } @else if (withdrawals().length === 0) {
+        <div class="p-12 text-center text-gray-400">
+          <p class="text-sm font-bold text-gray-600">No withdrawal requests found</p>
+          <p class="text-xs mt-1">Merchants will appear here when they request payouts from their balance.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+                <th class="py-3.5 px-4 font-extrabold">Recipient</th>
+                <th class="py-3.5 px-4 font-extrabold">Amount & Date</th>
+                <th class="py-3.5 px-4 font-extrabold">Payout Method / Bank</th>
+                <th class="py-3.5 px-4 font-extrabold text-center">Status</th>
+                <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (w of withdrawals(); track w.id) {
+                <tr class="hover:bg-orange-50/20 transition-colors">
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-gray-900">{{ w.userName || 'Account' }}</div>
+                    <span class="text-[10px] font-bold px-2 py-0.5 rounded-md bg-gray-100 text-gray-600 uppercase">
+                      {{ w.userType }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="font-black text-gray-900 text-sm">
+                      $ {{ w.amount | number:'1.2-2' }}
+                    </div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">
+                      {{ w.requestedAt | date:'mediumDate' }}
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4 text-xs text-gray-600">
+                    <div class="font-bold text-gray-800">{{ w.paymentMethod }}</div>
+                    <div class="font-mono text-gray-400">{{ w.accountDetails }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <span [class]="w.status === 'Approved' ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800' : w.status === 'Processed' ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800' : w.status === 'Rejected' ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800' : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800'">
+                      {{ w.status }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    @if (w.status === 'Pending') {
+                      <div class="flex items-center justify-end gap-2">
+                        <button 
+                          type="button" 
+                          (click)="approveWithdrawal(w)"
+                          [disabled]="actionInProgress() === w.id"
+                          class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
+                          Approve
+                        </button>
+                        <button 
+                          type="button" 
+                          (click)="openRejectModal(w)"
+                          [disabled]="actionInProgress() === w.id"
+                          class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer transition-colors border border-rose-200">
+                          Reject
+                        </button>
+                      </div>
+                    } @else if (w.status === 'Approved') {
+                      <button 
+                        type="button" 
+                        (click)="openProcessModal(w)"
+                        [disabled]="actionInProgress() === w.id"
+                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
+                        Mark Paid & Process →
+                      </button>
+                    } @else {
+                      <span class="text-xs text-gray-400 font-mono">
+                        {{ w.transactionReference || 'Completed' }}
+                      </span>
+                    }
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  } @else {
+    <!-- COMMISSIONS TABLE -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      @if (commissions().length === 0) {
+        <div class="p-12 text-center text-gray-400">
+          <p class="text-sm font-bold text-gray-600">No commissions recorded</p>
+          <p class="text-xs mt-1">Platform commissions from completed orders will appear in this ledger.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+                <th class="py-3.5 px-4 font-extrabold">Order / Source</th>
+                <th class="py-3.5 px-4 font-extrabold">Beneficiary</th>
+                <th class="py-3.5 px-4 font-extrabold">Order Amount</th>
+                <th class="py-3.5 px-4 font-extrabold text-center">Commission & Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (c of commissions(); track c.id) {
+                <tr class="hover:bg-orange-50/20 transition-colors">
+                  <td class="py-3.5 px-4">
+                    <div class="font-mono font-bold text-gray-900 text-xs">
+                      #{{ c.orderId ? c.orderId.slice(0, 8) : 'N/A' }}
+                    </div>
+                    <div class="text-[11px] text-gray-400 mt-0.5">
+                      {{ c.createdAt | date:'mediumDate' }}
+                    </div>
+                  </td>
+                  <td class="py-3.5 px-4 font-medium text-gray-800 text-xs">
+                    {{ c.recipientName || 'Marketplace Member' }}
+                  </td>
+                  <td class="py-3.5 px-4 font-bold text-gray-900">
+                    $ {{ c.orderAmount | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4 text-center">
+                    <div class="font-bold text-emerald-600 text-xs">
+                      $ {{ c.commissionAmount | number:'1.2-2' }} ({{ c.rate }}%)
+                    </div>
+                    <span [class]="c.status === 'Paid' ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 mt-1 inline-block' : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 mt-1 inline-block'">
+                      {{ c.status }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+<!-- PROCESS / REJECT MODAL -->
+@if (processModalOpen() && selectedWithdrawal()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeProcessModal()"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-base font-bold text-gray-900">
+          {{ isRejecting() ? 'Reject Withdrawal' : 'Confirm Payout Dispatch' }}
+        </h3>
+        <button (click)="closeProcessModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs space-y-1">
+          <div class="flex justify-between">
+            <span class="text-gray-500">Account:</span>
+            <span class="font-bold text-gray-900">{{ selectedWithdrawal()!.userName }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Amount:</span>
+            <span class="font-bold text-orange-600">$ {{ selectedWithdrawal()!.amount | number:'1.2-2' }}</span>
+          </div>
+          <div class="flex justify-between">
+            <span class="text-gray-500">Payment Channel:</span>
+            <span class="font-mono text-gray-800">{{ selectedWithdrawal()!.paymentMethod }} - {{ selectedWithdrawal()!.accountDetails }}</span>
+          </div>
+        </div>
+
+        @if (isRejecting()) {
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Reason for Rejection *</label>
+            <textarea 
+              [(ngModel)]="rejectionReason"
+              rows="3"
+              placeholder="e.g. Bank details invalid or insufficient verified balance..." 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"></textarea>
+          </div>
+        } @else {
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Transaction / Reference ID *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="transactionReference"
+              placeholder="e.g. IBFT-9847291039 or EasyPaisa-TRX-1029" 
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+          </div>
+        }
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeProcessModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmProcessOrReject()"
+          [class]="isRejecting() ? 'px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer' : 'px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer'">
+          {{ isRejecting() ? 'Confirm Rejection' : 'Mark as Dispatched' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

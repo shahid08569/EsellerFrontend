@@ -1,0 +1,176 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Promotional Discounts</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Create price slash campaigns across your store items to drive higher conversions.</p>
+    </div>
+    <button 
+      type="button" 
+      (click)="openCreateModal()"
+      class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer">
+      <span>+ Add New Discount</span>
+    </button>
+  </div>
+
+  <!-- Search & Stats Bar -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="relative w-full sm:w-80">
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event); onFilterChange()"
+        placeholder="Search active discounts..."
+        class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+      <span class="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
+    </div>
+    <span class="text-xs text-gray-500 font-semibold">
+      Active Promotions: <span class="text-gray-900 font-bold">{{ filteredDiscounts().length }}</span>
+    </span>
+  </div>
+
+  <!-- Discounts Table -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-xs text-gray-400">Loading store discounts...</div>
+    } @else if (filteredDiscounts().length === 0) {
+      <div class="p-12 text-center bg-gray-50/50">
+        <p class="text-sm font-bold text-gray-800">No Active Discounts</p>
+        <p class="text-xs text-gray-400 mt-1">Create your first percentage or flat discount offer above.</p>
+      </div>
+    } @else {
+      <div class="seller-table-wrap">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>Discount</th>
+              <th>Value</th>
+              <th>Duration</th>
+              <th class="text-center">Status</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (d of pagedDiscounts(); track d.id) {
+              <tr>
+                <td>
+                  <p class="cell-title">{{ d.productName || 'Store-Wide Promotion' }}</p>
+                  <p class="cell-sub">{{ d.type == 1 ? 'Percentage' : 'Fixed amount' }}</p>
+                </td>
+                <td>
+                  <p class="cell-mono">{{ d.type == 1 ? (d.value + '% OFF') : ('$ ' + d.value + ' OFF') }}</p>
+                </td>
+                <td>
+                  <p class="cell-title">{{ d.startDate | date:'mediumDate' }}</p>
+                  <p class="cell-sub">to {{ d.endDate | date:'mediumDate' }}</p>
+                </td>
+                <td class="text-center"><span class="badge badge-ok">Active</span></td>
+                <td class="text-right">
+                  <button type="button" (click)="deleteDiscount(d)" class="btn-quiet">Remove</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-table-pagination
+        [page]="currentPage()"
+        [pageSize]="pageSize()"
+        [total]="filteredDiscounts().length"
+        [pageSizeOptions]="pageSizeOptions"
+        label="discounts"
+        (pageChange)="setPage($event)"
+        (pageSizeChange)="setPageSize($event)">
+      </app-table-pagination>
+    }
+  </div>
+
+  <!-- Create Discount Modal -->
+  @if (createModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 class="text-base font-bold text-gray-900">Create Discount Promotion</h3>
+          <button (click)="closeCreateModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xs p-1">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Target Product (Optional)</label>
+            <select 
+              [ngModel]="selectedProductId()"
+              (ngModelChange)="selectedProductId.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+              <option value="">-- Apply Store-Wide --</option>
+              @for (p of products(); track p.id) {
+                <option [value]="p.id">{{ p.name }} ($ {{ p.basePrice }})</option>
+              }
+            </select>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Discount Type</label>
+              <select 
+                [ngModel]="discountType()"
+                (ngModelChange)="discountType.set(+$event)"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+                <option [ngValue]="1">Percentage (%)</option>
+                <option [ngValue]="2">Fixed Amount (USD)</option>
+              </select>
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Discount Value *</label>
+              <input 
+                type="number" 
+                [ngModel]="discountValue()"
+                (ngModelChange)="discountValue.set(+$event)"
+                min="1"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+            </div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">Start Date</label>
+              <input 
+                type="date" 
+                [ngModel]="startDate()"
+                (ngModelChange)="startDate.set($event)"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+            </div>
+
+            <div>
+              <label class="block text-xs font-bold text-gray-700 mb-1">End Date</label>
+              <input 
+                type="date" 
+                [ngModel]="endDate()"
+                (ngModelChange)="endDate.set($event)"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+            </div>
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+          <button 
+            type="button" 
+            (click)="closeCreateModal()" 
+            class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            (click)="createDiscount()" 
+            [disabled]="isSubmitting()"
+            class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50">
+            {{ isSubmitting() ? 'Creating...' : 'Create Discount' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

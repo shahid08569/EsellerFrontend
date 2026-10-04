@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { WishlistService, CartService, ProductListDto, ToastService } from 'eseller-shared';
+import { WishlistService, CartService, ProductListDto, ToastService, AuthActionService } from 'eseller-shared';
 
 @Component({
   selector: 'app-wishlist',
@@ -13,6 +13,7 @@ export class Wishlist implements OnInit {
   readonly wishlistService = inject(WishlistService);
   private readonly cartService = inject(CartService);
   private readonly toastService = inject(ToastService);
+  private readonly authAction = inject(AuthActionService);
 
   readonly feedbackMessage = signal<string | null>(null);
   readonly loading = signal<boolean>(true);
@@ -31,6 +32,7 @@ export class Wishlist implements OnInit {
   readonly showClearModal = signal<boolean>(false);
 
   moveToCart(product: ProductListDto): void {
+    if (!this.authAction.requireLogin('add items to your cart')) return;
     const img = this.getImageUrl(product.primaryImageUrl);
     if (!this.cartService.isInCart(product.id)) {
       this.cartService.addItem({

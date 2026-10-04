@@ -1,0 +1,124 @@
+<div class="space-y-6 max-w-4xl">
+  <!-- UNIFIED PAGE HEADER BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg shrink-0">
+        ⚙️
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
+          System & Platform Settings
+        </h1>
+        <p class="text-orange-100 text-xs font-medium">
+          Configure global marketplace commissions, affiliate tracking, and operational rules.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        (click)="saveAllSettings()"
+        [disabled]="isSaving()"
+        class="inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-white text-orange-700 hover:bg-orange-50 font-bold text-xs shadow-xs hover:shadow transition-all cursor-pointer disabled:opacity-50">
+        <span>{{ isSaving() ? 'Saving...' : '💾 Save Configurations' }}</span>
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="p-12 text-center text-xs text-gray-400 bg-white rounded-2xl border border-gray-100">
+      Loading platform settings...
+    </div>
+  } @else {
+    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-6">
+      <!-- 1. COMMISSION & FEES -->
+      <div class="space-y-4">
+        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
+          💰 Commission & Payout Policy
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Base Platform Commission (%)</label>
+            <input 
+              type="number" 
+              [ngModel]="commissionRate()"
+              (ngModelChange)="commissionRate.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+            <p class="text-[11px] text-gray-400 mt-1">Percentage deducted from seller completed orders.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Minimum Withdrawal Threshold ($)</label>
+            <input 
+              type="number" 
+              [ngModel]="minWithdrawalThreshold()"
+              (ngModelChange)="minWithdrawalThreshold.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+            <p class="text-[11px] text-gray-400 mt-1">Minimum account balance required to request a payout.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. AFFILIATE NETWORK -->
+      <div class="space-y-4">
+        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
+          🤝 Affiliate Program Setup
+        </h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Affiliate Cookie Attribution (Days)</label>
+            <input 
+              type="number" 
+              [ngModel]="affiliateCookieDays()"
+              (ngModelChange)="affiliateCookieDays.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+            <p class="text-[11px] text-gray-400 mt-1">Days an affiliate click retains credit for customer purchases.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Platform Support Email</label>
+            <input 
+              type="email" 
+              [ngModel]="supportEmail()"
+              (ngModelChange)="supportEmail.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+            <p class="text-[11px] text-gray-400 mt-1">Official support email displayed to merchants and customers.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. PLATFORM CONTROLS -->
+      <div class="space-y-4">
+        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
+          🛡️ Moderation & Availability Controls
+        </h3>
+        <div class="space-y-3">
+          <label class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+            <input 
+              type="checkbox" 
+              [ngModel]="autoApproveProducts()"
+              (ngModelChange)="autoApproveProducts.set($event)"
+              class="mt-0.5 rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+            <div>
+              <span class="block text-xs font-bold text-gray-900">Auto-Approve Products</span>
+              <span class="block text-[11px] text-gray-500">If enabled, shopkeeper submitted products bypass admin quality review and publish immediately.</span>
+            </div>
+          </label>
+
+          <label class="flex items-start gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer">
+            <input 
+              type="checkbox" 
+              [ngModel]="maintenanceMode()"
+              (ngModelChange)="maintenanceMode.set($event)"
+              class="mt-0.5 rounded border-gray-300 text-orange-600 focus:ring-orange-500">
+            <div>
+              <span class="block text-xs font-bold text-gray-900">Maintenance Mode</span>
+              <span class="block text-[11px] text-gray-500">Temporarily pauses new customer order placements while platform updates occur.</span>
+            </div>
+          </label>
+        </div>
+      </div>
+    </div>
+  }
+</div>

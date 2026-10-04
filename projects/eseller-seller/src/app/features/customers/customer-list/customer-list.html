@@ -1,0 +1,134 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Customer Directory</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Manage and view buyers who have purchased products from your store.</p>
+    </div>
+  </div>
+
+  <!-- Search & Stats Bar -->
+  <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+    <div class="relative w-full sm:w-80">
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event); onFilterChange()"
+        placeholder="Search by customer name, phone, city..."
+        class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+      <span class="absolute left-3 top-2.5 text-gray-400 text-xs">🔍</span>
+    </div>
+    <span class="text-xs text-gray-500 font-semibold">
+      Total Unique Buyers: <span class="text-gray-900 font-bold">{{ filteredCustomers().length }}</span>
+    </span>
+  </div>
+
+  <!-- Customers Table -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+    @if (isLoading()) {
+      <div class="p-12 text-center text-xs text-gray-400">Loading customer roster...</div>
+    } @else if (filteredCustomers().length === 0) {
+      <div class="p-12 text-center bg-gray-50/50">
+        <p class="text-sm font-bold text-gray-800">No Customers Found</p>
+        <p class="text-xs text-gray-400 mt-1">Customers who place orders on your shop will be automatically recorded here.</p>
+      </div>
+    } @else {
+      <div class="seller-table-wrap">
+        <table class="seller-table">
+          <thead>
+            <tr>
+              <th>Customer</th>
+              <th>Contact</th>
+              <th class="text-right">Orders / Spend</th>
+              <th>Last order</th>
+              <th class="text-right">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (c of pagedCustomers(); track c.id) {
+              <tr>
+                <td>
+                  <div class="flex items-center gap-3">
+                    <div class="w-8 h-8 rounded-lg bg-slate-100 text-slate-700 flex items-center justify-center font-bold text-xs shrink-0 border border-slate-200">
+                      {{ c.name.slice(0, 1).toUpperCase() }}
+                    </div>
+                    <div class="min-w-0">
+                      <p class="cell-title truncate">{{ c.name }}</p>
+                      <p class="cell-sub">{{ c.city || '—' }}</p>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <p class="cell-title truncate max-w-[180px]">{{ c.email }}</p>
+                  <p class="cell-sub">{{ c.phone || '—' }}</p>
+                </td>
+                <td class="text-right">
+                  <p class="cell-mono">{{ c.totalOrders }} orders</p>
+                  <p class="cell-sub">$ {{ c.totalSpent | number:'1.2-2' }}</p>
+                </td>
+                <td>
+                  <p class="cell-title">{{ c.lastOrderDate | date:'mediumDate' }}</p>
+                </td>
+                <td class="text-right">
+                  <button type="button" (click)="viewCustomer(c)" class="btn-quiet">View</button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <app-table-pagination
+        [page]="currentPage()"
+        [pageSize]="pageSize()"
+        [total]="filteredCustomers().length"
+        [pageSizeOptions]="pageSizeOptions"
+        label="customers"
+        (pageChange)="setPage($event)"
+        (pageSizeChange)="setPageSize($event)">
+      </app-table-pagination>
+    }
+  </div>
+
+  <!-- Customer Detail Modal -->
+  @if (selectedCustomer()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-4 max-h-[85vh] flex flex-col">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <div>
+            <h3 class="text-base font-bold text-gray-900">{{ selectedCustomer()?.name }}</h3>
+            <p class="text-xs text-gray-400">{{ selectedCustomer()?.city }} • {{ selectedCustomer()?.totalOrders }} lifetime orders</p>
+          </div>
+          <button (click)="closeModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xs p-1">✕</button>
+        </div>
+
+        <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+          <p class="text-xs font-bold text-gray-500 uppercase tracking-wider">Purchase History</p>
+          @for (o of selectedCustomer()?.orders; track o.id) {
+            <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 text-xs space-y-1">
+              <div class="flex items-center justify-between font-bold">
+                <span class="font-mono text-gray-900">Order #{{ o.id.slice(0, 8) }}</span>
+                <span class="text-primary font-black">$ {{ o.totalAmount | number:'1.2-2' }}</span>
+              </div>
+              <div class="flex items-center justify-between text-[11px] text-gray-500">
+                <span>Status: <b class="uppercase">{{ o.status }}</b></span>
+                <span>{{ o.createdAt | date:'short' }}</span>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="pt-2 border-t border-gray-100 flex justify-end">
+          <button 
+            type="button" 
+            (click)="closeModal()" 
+            class="px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs rounded-xl cursor-pointer">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

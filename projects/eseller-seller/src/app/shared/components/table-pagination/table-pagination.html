@@ -1,0 +1,37 @@
+<div class="p-4 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-gray-500">
+  <div class="flex items-center gap-3">
+    <span>
+      Showing <span class="font-bold text-gray-900">{{ startItem() }}</span> to <span class="font-bold text-gray-900">{{ endItem() }}</span>
+      of <span class="font-bold text-gray-900">{{ total() }}</span> {{ label() }}
+    </span>
+    <label class="flex items-center gap-1.5">
+      <span class="font-semibold text-gray-500">Rows:</span>
+      <select
+        [ngModel]="pageSize()"
+        (ngModelChange)="onPageSizeChange(+$event)"
+        class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-gray-700 cursor-pointer focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        @for (size of pageSizeOptions(); track size) {
+          <option [value]="size">{{ size }}</option>
+        }
+      </select>
+    </label>
+  </div>
+
+  <div class="flex items-center gap-1.5">
+    <button
+      type="button"
+      (click)="goToPage(page() - 1)"
+      [disabled]="page() <= 1"
+      class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 font-bold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all">
+      ← Previous
+    </button>
+    <span class="px-2 font-bold text-gray-700">{{ page() }} / {{ totalPages() }}</span>
+    <button
+      type="button"
+      (click)="goToPage(page() + 1)"
+      [disabled]="page() >= totalPages()"
+      class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 font-bold hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer transition-all">
+      Next →
+    </button>
+  </div>
+</div>

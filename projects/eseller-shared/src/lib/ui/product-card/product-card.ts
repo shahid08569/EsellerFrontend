@@ -15,6 +15,7 @@ import { CartService } from '../../services/cart.service';
 import { WishlistService } from '../../services/wishlist.service';
 import { CompareService } from '../../services/compare.service';
 import { ToastService } from '../../services/toast.service';
+import { AuthActionService } from '../../services/auth-action.service';
 
 export type PreferredBadge =
   | 'flash_sale'
@@ -38,6 +39,7 @@ export class ProductCard implements OnInit, OnDestroy {
   private readonly wishlistService = inject(WishlistService);
   private readonly compareService = inject(CompareService);
   private readonly toastService = inject(ToastService);
+  private readonly authAction = inject(AuthActionService);
 
   readonly isInWishlist = computed(() => this.wishlistService.isInWishlist(this.product().id));
   readonly isInCart = computed(() => this.cartService.isInCart(this.product().id));
@@ -73,8 +75,8 @@ export class ProductCard implements OnInit, OnDestroy {
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     })
   );
 
@@ -97,8 +99,8 @@ export class ProductCard implements OnInit, OnDestroy {
 
   readonly formattedOldPrice = computed(() =>
     this.oldPrice().toLocaleString('en-US', {
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
     })
   );
 
@@ -112,12 +114,9 @@ export class ProductCard implements OnInit, OnDestroy {
     type BadgeItem = { label: string; classes: string; key: string };
     const list: BadgeItem[] = [];
 
-    // Natural order (default)
+    // Priority: Flash Sale first, then Hot / New / Featured / Best Seller (max 2 later)
     if (b.isFlashSale) {
       list.push({ label: 'Flash Sale', classes: 'bg-red-500 text-white', key: 'flash_sale' });
-    }
-    if (b.isBestSelling) {
-      list.push({ label: 'Best Seller', classes: 'bg-[#8A9741] text-white', key: 'best_seller' });
     }
     if (b.isHotSelling) {
       list.push({ label: 'Hot', classes: 'bg-orange-500 text-white', key: 'hot' });
@@ -127,6 +126,9 @@ export class ProductCard implements OnInit, OnDestroy {
     }
     if (b.isFeatured) {
       list.push({ label: 'Featured', classes: 'bg-primary text-white', key: 'featured' });
+    }
+    if (b.isBestSelling) {
+      list.push({ label: 'Best Seller', classes: 'bg-[#8A9741] text-white', key: 'best_seller' });
     }
 
     // ✅ Move preferred badge to first position
@@ -199,10 +201,14 @@ export class ProductCard implements OnInit, OnDestroy {
 
   getImageUrl(imageUrl: string | null | undefined): string | null {
     if (!imageUrl) return null;
-    if (imageUrl.startsWith('http')) return imageUrl;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase.replace(/\/api\/v1\/?$/, '');
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
     const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
+    // DB already stores "/uploads/..." — do not prefix again
+    if (path.startsWith('/uploads')) return `${host}${path}`;
     return `${host}/uploads${path}`;
   }
 
@@ -216,6 +222,7 @@ export class ProductCard implements OnInit, OnDestroy {
   onAddToCart(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.authAction.requireLogin('add items to your cart')) return;
     const p = this.product();
     if (this.isInCart()) {
       this.cartService.removeByProductId(p.id);
@@ -227,7 +234,7 @@ export class ProductCard implements OnInit, OnDestroy {
       productSlug: p.slug,
       name: p.name,
       imageUrl: this.getImageUrl(p.primaryImageUrl),
-      shopId: '',
+      shopId: (p as any).shopId || '',
       shopName: p.shopName || '',
       price: p.basePrice,
       quantity: 1
@@ -239,6 +246,7 @@ export class ProductCard implements OnInit, OnDestroy {
   onAddToWishlist(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.authAction.requireLogin('save items to your wishlist')) return;
     const p = this.product();
     const added = this.wishlistService.toggleItem(p);
     this.toastService.show(
@@ -251,6 +259,7 @@ export class ProductCard implements OnInit, OnDestroy {
   onAddToCompare(event: Event): void {
     event.preventDefault();
     event.stopPropagation();
+    if (!this.authAction.requireLogin('compare products')) return;
     const p = this.product();
     const result = this.compareService.toggleItem(p);
     this.toastService.show(result.message, result.added ? 'success' : 'info');

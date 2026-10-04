@@ -53,7 +53,7 @@ export class CartService {
     this.items().reduce((acc, item) => acc + item.price * item.quantity, 0)
   );
 
-  // Free shipping threshold: Rs. 5,000, otherwise flat Rs. 200
+  // Free shipping threshold: $ 5,000, otherwise flat $ 200
   readonly shippingFee = computed(() => {
     const sub = this.subtotal();
     if (sub <= 0) return 0;
@@ -72,7 +72,7 @@ export class CartService {
   readonly formattedShipping = computed(() => {
     const fee = this.shippingFee();
     if (fee === 0) return 'Free';
-    return `Rs. ${fee.toLocaleString('en-US', {
+    return `$ ${fee.toLocaleString('en-US', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1
     })}`;

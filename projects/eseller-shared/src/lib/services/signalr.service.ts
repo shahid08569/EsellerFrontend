@@ -9,20 +9,17 @@ import {
 import { AuthStore } from '../state/auth.store';
 import { SignalRIncomingMessage } from '../models/chat/chat.models';
 
+export interface SignalRIncomingNotification {
+  notificationId: string;
+  type: number;
+  title: string;
+  message: string;
+  createdAt: string;
+}
+
 /**
- * ============================================================
- * SignalRService — Manages Chat + Notification hubs
- * ------------------------------------------------------------
- * - Creates and maintains hub connections.
- * - Auto-reconnect with backoff.
- * - Injects the access token via accessTokenFactory.
- * - Exposes connection state as signals.
- *
- * Hub URLs are configured at bootstrap via
- * `window.__ESELLER_CHAT_HUB_URL__` and
- * `window.__ESELLER_NOTIFICATION_HUB_URL__` so the shared
- * library doesn't need per-app environment imports.
- * ============================================================
+ * SignalRService — Chat + Notification hubs with a single ReceiveMessage dispatcher
+ * so multiple subscribers do not stack duplicate hub handlers.
  */
 @Injectable({ providedIn: 'root' })
 export class SignalRService {
@@ -31,44 +28,54 @@ export class SignalRService {
   private chatConnection: HubConnection | null = null;
   private notificationConnection: HubConnection | null = null;
 
-  // ============================================================
-  // STATE
-  // ============================================================
-  readonly chatState = signal<HubConnectionState>(
-    HubConnectionState.Disconnected
-  );
-  readonly notificationState = signal<HubConnectionState>(
-    HubConnectionState.Disconnected
-  );
+  private receiveMessageHandlers = new Set<(msg: SignalRIncomingMessage) => void>();
+  private receiveMessageHubBound = false;
 
-  // ============================================================
-  // CHAT HUB
-  // ============================================================
+  private receiveNotificationHandlers = new Set<(payload: SignalRIncomingNotification) => void>();
+  private receiveNotificationHubBound = false;
+
+  readonly chatState = signal<HubConnectionState>(HubConnectionState.Disconnected);
+  readonly notificationState = signal<HubConnectionState>(HubConnectionState.Disconnected);
+
   async startChatConnection(): Promise<void> {
     if (
       this.chatConnection &&
       this.chatConnection.state === HubConnectionState.Connected
     ) {
+      this.ensureReceiveMessageHubHandler();
       return;
+    }
+
+    // If a previous connection exists but is not Connected, rebuild cleanly
+    if (this.chatConnection) {
+      try { await this.chatConnection.stop(); } catch { /* ignore */ }
+      this.chatConnection = null;
+      this.receiveMessageHubBound = false;
     }
 
     this.chatConnection = this.buildConnection(
       this.getHubUrl('__ESELLER_CHAT_HUB_URL__')
     );
 
-    this.chatConnection.onclose(() =>
-      this.chatState.set(HubConnectionState.Disconnected)
-    );
+    this.chatConnection.onclose(() => {
+      this.chatState.set(HubConnectionState.Disconnected);
+      this.receiveMessageHubBound = false;
+    });
     this.chatConnection.onreconnecting(() =>
       this.chatState.set(HubConnectionState.Reconnecting)
     );
-    this.chatConnection.onreconnected(() =>
-      this.chatState.set(HubConnectionState.Connected)
-    );
+    this.chatConnection.onreconnected(() => {
+      this.chatState.set(HubConnectionState.Connected);
+      this.receiveMessageHubBound = false;
+      this.ensureReceiveMessageHubHandler();
+    });
+
+    this.ensureReceiveMessageHubHandler();
 
     try {
       await this.chatConnection.start();
       this.chatState.set(HubConnectionState.Connected);
+      this.ensureReceiveMessageHubHandler();
     } catch (err) {
       this.chatState.set(HubConnectionState.Disconnected);
       throw err;
@@ -79,6 +86,7 @@ export class SignalRService {
     if (this.chatConnection) {
       await this.chatConnection.stop();
       this.chatConnection = null;
+      this.receiveMessageHubBound = false;
       this.chatState.set(HubConnectionState.Disconnected);
     }
   }
@@ -100,28 +108,11 @@ export class SignalRService {
   }
 
   onReceiveMessage(callback: (msg: SignalRIncomingMessage) => void): () => void {
-    if (!this.chatConnection) return () => {};
-
-    const handler = (
-      messageId: string,
-      orderRequestId: string,
-      senderAccountId: string,
-      senderRole: string,
-      message: string,
-      sentAt: string
-    ) => {
-      callback({
-        messageId,
-        orderRequestId,
-        senderAccountId,
-        senderRole,
-        message,
-        sentAt
-      });
+    this.receiveMessageHandlers.add(callback);
+    this.ensureReceiveMessageHubHandler();
+    return () => {
+      this.receiveMessageHandlers.delete(callback);
     };
-
-    this.chatConnection.on('ReceiveMessage', handler);
-    return () => this.chatConnection?.off('ReceiveMessage', handler);
   }
 
   onMessageRead(callback: (messageId: string, readAt: string) => void): () => void {
@@ -135,15 +126,19 @@ export class SignalRService {
     return () => this.chatConnection?.off('MessageRead', handler);
   }
 
-  // ============================================================
-  // NOTIFICATION HUB
-  // ============================================================
   async startNotificationConnection(): Promise<void> {
     if (
       this.notificationConnection &&
       this.notificationConnection.state === HubConnectionState.Connected
     ) {
+      this.ensureReceiveNotificationHubHandler();
       return;
+    }
+
+    if (this.notificationConnection) {
+      try { await this.notificationConnection.stop(); } catch { /* ignore */ }
+      this.notificationConnection = null;
+      this.receiveNotificationHubBound = false;
     }
 
     this.notificationConnection = this.buildConnection(
@@ -156,17 +151,53 @@ export class SignalRService {
     this.notificationConnection.onreconnecting(() =>
       this.notificationState.set(HubConnectionState.Reconnecting)
     );
-    this.notificationConnection.onreconnected(() =>
-      this.notificationState.set(HubConnectionState.Connected)
-    );
+    this.notificationConnection.onreconnected(() => {
+      this.notificationState.set(HubConnectionState.Connected);
+      this.ensureReceiveNotificationHubHandler();
+    });
 
     try {
       await this.notificationConnection.start();
       this.notificationState.set(HubConnectionState.Connected);
+      this.ensureReceiveNotificationHubHandler();
     } catch (err) {
       this.notificationState.set(HubConnectionState.Disconnected);
       throw err;
     }
+  }
+
+  /** Subscribe to realtime notification hub events (DB + SignalR push). */
+  onReceiveNotification(callback: (payload: SignalRIncomingNotification) => void): () => void {
+    this.receiveNotificationHandlers.add(callback);
+    this.ensureReceiveNotificationHubHandler();
+    return () => {
+      this.receiveNotificationHandlers.delete(callback);
+    };
+  }
+
+  private ensureReceiveNotificationHubHandler(): void {
+    if (!this.notificationConnection || this.receiveNotificationHubBound) return;
+
+    this.notificationConnection.on(
+      'ReceiveNotification',
+      (notificationId: string, type: number, title: string, message: string, createdAt: string) => {
+        const payload: SignalRIncomingNotification = {
+          notificationId,
+          type,
+          title,
+          message,
+          createdAt
+        };
+        for (const handler of this.receiveNotificationHandlers) {
+          try {
+            handler(payload);
+          } catch {
+            /* isolate subscriber errors */
+          }
+        }
+      }
+    );
+    this.receiveNotificationHubBound = true;
   }
 
   async stopNotificationConnection(): Promise<void> {
@@ -181,9 +212,39 @@ export class SignalRService {
     return this.notificationConnection;
   }
 
-  // ============================================================
-  // HELPERS
-  // ============================================================
+  private ensureReceiveMessageHubHandler(): void {
+    if (!this.chatConnection || this.receiveMessageHubBound) return;
+
+    this.chatConnection.on(
+      'ReceiveMessage',
+      (
+        messageId: string,
+        orderRequestId: string,
+        senderAccountId: string,
+        senderRole: string,
+        message: string,
+        sentAt: string
+      ) => {
+        const payload: SignalRIncomingMessage = {
+          messageId,
+          orderRequestId,
+          senderAccountId,
+          senderRole,
+          message,
+          sentAt
+        };
+        for (const handler of this.receiveMessageHandlers) {
+          try {
+            handler(payload);
+          } catch {
+            /* isolate subscriber errors */
+          }
+        }
+      }
+    );
+    this.receiveMessageHubBound = true;
+  }
+
   private buildConnection(url: string): HubConnection {
     return new HubConnectionBuilder()
       .withUrl(url, {

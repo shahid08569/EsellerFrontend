@@ -1,80 +1,147 @@
 <div class="space-y-6">
-  
-  <div class="flex items-center justify-between">
+
+  <!-- Header Banner with Direct Action to Browse Master Catalog -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Product Catalog</h1>
-      <p class="text-sm text-gray-500 mt-1">Manage your inventory, pricing, and stock levels.</p>
+      <div class="flex items-center gap-2">
+        <h2 class="text-xl font-black text-slate-900 tracking-tight">
+          My Store Listed Products
+        </h2>
+        <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold">
+          20% Commission Active
+        </span>
+      </div>
+      <p class="text-xs text-slate-500 mt-1">
+        Master products selected from the warehouse catalog. You earn a flat 20% net commission on each sale.
+      </p>
     </div>
-    <a routerLink="new" class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-sm rounded-xl shadow-sm shadow-primary/20 transition-colors flex items-center gap-2">
-      <span>➕</span> Add New Product
+
+    <!-- Browse Master Catalog Button -->
+    <a routerLink="/products/catalog" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer border border-slate-800 shrink-0">
+      <span>Product Warehouse (Add Products)</span>
     </a>
   </div>
 
-  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm shadow-gray-200/50 overflow-hidden">
-    <div class="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
-      <div class="relative w-72">
-        <span class="absolute inset-y-0 left-0 flex items-center pl-3 text-gray-400">🔍</span>
-        <input type="text" placeholder="Search products..." class="w-full pl-9 pr-4 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary">
-      </div>
-      <div class="text-sm font-medium text-gray-500">
-        Showing <span class="text-gray-900 font-bold">{{ products().length }}</span> of {{ totalCount() }}
-      </div>
+  <!-- Search & Filter Controls -->
+  <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
+    <!-- Search Query -->
+    <div class="relative w-full sm:w-72">
+      <input 
+        type="text" 
+        [ngModel]="searchTerm()" 
+        (ngModelChange)="searchTerm.set($event); onFilterChange()"
+        placeholder="Filter your listed products..."
+        class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
+      />
+      <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+      </svg>
     </div>
 
+    <!-- Filters & Sort -->
+    <div class="flex items-center gap-2 w-full sm:w-auto">
+      <select 
+        [ngModel]="selectedCategory()" 
+        (ngModelChange)="selectedCategory.set($event); onFilterChange()"
+        class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
+        <option value="all">All Categories</option>
+        @for (c of categories(); track c.id) {
+          <option [value]="c.name">{{ c.name }}</option>
+        }
+      </select>
+
+      <select 
+        [ngModel]="selectedStatus()" 
+        (ngModelChange)="selectedStatus.set($event); onFilterChange()"
+        class="w-full sm:w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
+        <option value="all">All Status</option>
+        <option value="approved">Approved</option>
+        <option value="pending">Pending Approval</option>
+      </select>
+
+      @if (searchTerm() || selectedCategory() !== 'all' || selectedStatus() !== 'all') {
+        <button 
+          type="button" 
+          (click)="resetFilters()"
+          class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shrink-0">
+          Reset
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Products List Table -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
     @if (isLoading()) {
-      <div class="p-12 flex justify-center">
-        <svg class="animate-spin w-8 h-8 text-primary" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-        </svg>
+      <div class="p-8 text-center text-slate-400 space-y-2">
+        <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
+        <p class="text-xs font-medium">Loading store products...</p>
       </div>
-    } @else if (products().length === 0) {
-      <div class="p-12 text-center max-w-md mx-auto space-y-4">
-        <div class="w-16 h-16 bg-gray-50 rounded-full flex items-center justify-center mx-auto text-3xl">🛒</div>
-        <h3 class="text-lg font-bold text-gray-900">No products found</h3>
-        <p class="text-sm text-gray-500">You haven't listed any products yet. Get started by adding your first product to your shopfront.</p>
-        <a routerLink="new" class="inline-flex px-4 py-2 bg-primary text-white font-bold text-sm rounded-xl">Add Product</a>
+    } @else if (pagedProducts().length === 0) {
+      <div class="p-12 text-center space-y-3">
+        <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mx-auto">
+          📦
+        </div>
+        <h3 class="text-sm font-bold text-slate-900">No products in your store yet</h3>
+        <p class="text-xs text-slate-500 max-w-sm mx-auto">
+          Browse the Master Warehouse Catalog to select and list products in your store.
+        </p>
+        <div class="pt-2">
+          <a routerLink="/products/catalog" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer">
+            <span>+ Browse Master Catalog</span>
+          </a>
+        </div>
       </div>
     } @else {
-      <div class="overflow-x-auto">
-        <table class="w-full text-left text-sm">
-          <thead class="bg-gray-50 border-b border-gray-100 text-gray-500">
+      <div class="seller-table-wrap">
+        <table class="seller-table">
+          <thead>
             <tr>
-              <th class="px-4 py-3 font-semibold">Product</th>
-              <th class="px-4 py-3 font-semibold">Price</th>
-              <th class="px-4 py-3 font-semibold">Status</th>
-              <th class="px-4 py-3 font-semibold text-right">Actions</th>
+              <th>Product</th>
+              <th class="text-right">Price</th>
+              <th class="text-center">Status</th>
+              <th class="text-right">Action</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-100">
-            @for (p of products(); track p.id) {
-              <tr class="hover:bg-gray-50/50 transition-colors group">
-                <td class="px-4 py-3">
+          <tbody>
+            @for (p of pagedProducts(); track p.id) {
+              <tr>
+                <td>
                   <div class="flex items-center gap-3">
-                    <img [src]="p.primaryImageUrl || 'https://placehold.co/100x100?text=No+Image'" class="w-10 h-10 rounded-lg object-cover border border-gray-100" [alt]="p.name">
-                    <div>
-                      <p class="font-bold text-gray-900 line-clamp-1">{{ p.name }}</p>
-                      <p class="text-[11px] text-gray-400">{{ p.categoryName || 'Uncategorized' }}</p>
+                    <img 
+                      [src]="(p.primaryImageUrl | imageUrl) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect fill=%22%23e2e8f0%22 width=%2248%22 height=%2248%22/%3E%3C/svg%3E'" 
+                      [alt]="p.name" 
+                      class="w-11 h-11 object-cover rounded-xl border border-slate-200 shrink-0 bg-slate-100"
+                      (error)="$any($event.target).src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect fill=%22%23e2e8f0%22 width=%2248%22 height=%2248%22/%3E%3C/svg%3E'"
+                    />
+                    <div class="min-w-0">
+                      <p class="cell-title truncate max-w-[240px]">{{ p.name }}</p>
+                      <p class="cell-sub">{{ p.categoryName || 'Catalog' }} · {{ p.brandName || 'Brand' }}</p>
                     </div>
                   </div>
                 </td>
-                <td class="px-4 py-3">
-                  <div class="font-bold text-gray-900">Rs. {{ p.basePrice }}</div>
+                <td class="text-right">
+                  <p class="cell-mono">$ {{ p.basePrice | number }}</p>
+                  <p class="cell-sub">Net 20%: $ {{ getCommission(p.basePrice) | number }}</p>
                 </td>
-                <td class="px-4 py-3">
+                <td class="text-center">
                   @if (p.isApproved) {
-                    <span class="px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 text-[10px] font-bold uppercase tracking-wider">Approved</span>
+                    <span class="badge badge-ok">Approved</span>
                   } @else {
-                    <span class="px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-bold uppercase tracking-wider">Pending</span>
+                    <span class="badge badge-warn">Pending</span>
                   }
                 </td>
-                <td class="px-4 py-3 text-right">
-                  <div class="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                    <button class="p-1.5 text-gray-400 hover:text-primary hover:bg-primary/10 rounded-lg transition-colors" title="Edit">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" /></svg>
+                <td class="text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      (click)="chatWithAdmin(p)"
+                      class="px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200 text-[11px] font-bold text-violet-700 cursor-pointer"
+                      title="Chat with Super Admin about this product">
+                      Ask Admin
                     </button>
-                    <button (click)="deleteProduct(p.id)" class="p-1.5 text-gray-400 hover:text-rose-500 hover:bg-rose-500/10 rounded-lg transition-colors" title="Delete">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>
+                    <button type="button" (click)="promptDelete(p.id, p.name)" class="btn-quiet" title="Remove from Store">
+                      Remove
                     </button>
                   </div>
                 </td>
@@ -83,7 +150,30 @@
           </tbody>
         </table>
       </div>
+
+      <app-table-pagination
+        [page]="currentPage()"
+        [pageSize]="pageSize()"
+        [total]="filteredProducts().length"
+        [pageSizeOptions]="pageSizeOptions"
+        label="products"
+        (pageChange)="setPage($event)"
+        (pageSizeChange)="setPageSize($event)">
+      </app-table-pagination>
     }
   </div>
+
+  <!-- Remove Confirm Modal -->
+  <app-confirm-modal
+    [isOpen]="!!productToDelete()"
+    title="Remove Product from Store?"
+    message="Are you sure you want to remove this product from your shop? You can add it back anytime from the Marketplace Catalog."
+    [itemHighlight]="productToDelete()?.name || ''"
+    confirmText="Yes, Remove from Store"
+    cancelText="Cancel"
+    type="danger"
+    (confirmed)="confirmDelete()"
+    (cancelled)="cancelDelete()">
+  </app-confirm-modal>
 
 </div>

@@ -17,6 +17,7 @@ import {
   CartService,
   WishlistService,
   CompareService,
+  AuthActionService,
   ProductDto,
   ProductListDto,
   ProductImageDto,
@@ -63,6 +64,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   private readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
   readonly compareService = inject(CompareService);
+  private readonly authAction = inject(AuthActionService);
   readonly authStore = inject(AuthStore);
   private readonly toastService = inject(ToastService);
   private readonly orderService = inject(OrderService);
@@ -75,6 +77,8 @@ export class ProductDetail implements OnInit, OnDestroy {
   readonly images = signal<ProductImageDto[]>([]);
   readonly variants = signal<ProductVariantDto[]>([]);
   readonly reviews = signal<ReviewDto[]>([]);
+  readonly reviewsTotal = signal<number>(0);
+  readonly reviewSubmitting = signal<boolean>(false);
   readonly questions = signal<ProductQuestionDto[]>([]);
   readonly relatedProducts = signal<ProductListDto[]>([]);
 
@@ -90,10 +94,10 @@ export class ProductDetail implements OnInit, OnDestroy {
   readonly customerName = signal<string>('');
   readonly customerPhone = signal<string>('');
   readonly deliveryAddress = signal<string>('');
-  readonly selectedCountry = signal<string>('Pakistan');
-  readonly selectedState = signal<string>('Punjab');
-  readonly deliveryCity = signal<string>('Lahore');
-  readonly deliveryProvince = signal<string>('Punjab');
+  readonly selectedCountry = signal<string>('');
+  readonly selectedState = signal<string>('');
+  readonly deliveryCity = signal<string>('');
+  readonly deliveryProvince = signal<string>('');
   readonly orderNotes = signal<string>('');
   readonly orderError = signal<string | null>(null);
   readonly isSubmittingOrder = signal<boolean>(false);
@@ -116,15 +120,17 @@ export class ProductDetail implements OnInit, OnDestroy {
   );
 
   readonly selectedCountryData = computed(() => {
-    return COUNTRIES_DATA.find((x) => x.name === this.selectedCountry()) || COUNTRIES_DATA[0];
+    const name = this.selectedCountry();
+    if (!name) return null;
+    return COUNTRIES_DATA.find((x) => x.name === name) || null;
   });
 
   readonly selectedDialCode = computed(() => {
-    return this.selectedCountryData()?.phoneCode || '+92';
+    return this.selectedCountryData()?.phoneCode || '';
   });
 
   readonly selectedFlag = computed(() => {
-    return this.selectedCountryData()?.flag || '🇵🇰';
+    return this.selectedCountryData()?.flag || '🌍';
   });
 
   readonly phonePlaceholder = computed(() => {
@@ -149,20 +155,9 @@ export class ProductDetail implements OnInit, OnDestroy {
   onCountryChange(countryName: string): void {
     this.selectedCountry.set(countryName);
     this.countryError.set(null);
-    const found = COUNTRIES_DATA.find((c) => c.name === countryName);
-    if (found && found.states && found.states.length > 0) {
-      this.selectedState.set(found.states[0]);
-    } else {
-      this.selectedState.set('');
-    }
+    this.selectedState.set('');
     this.stateError.set(null);
-    if (countryName === 'Pakistan' && (!this.deliveryCity() || this.deliveryCity() === 'Dubai' || this.deliveryCity() === 'Riyadh')) {
-      this.deliveryCity.set('Lahore');
-    } else if (countryName === 'United Arab Emirates') {
-      this.deliveryCity.set('Dubai');
-    } else if (countryName === 'Saudi Arabia') {
-      this.deliveryCity.set('Riyadh');
-    }
+    this.deliveryCity.set('');
   }
 
   onStateChange(stateName: string): void {
@@ -336,7 +331,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   readonly formattedOrderShipping = computed(() => {
     const fee = this.orderShipping();
     if (fee === 0) return 'Free';
-    return `Rs. ${fee.toLocaleString('en-US', {
+    return `$ ${fee.toLocaleString('en-US', {
       minimumFractionDigits: 1,
       maximumFractionDigits: 1
     })}`;
@@ -417,10 +412,7 @@ export class ProductDetail implements OnInit, OnDestroy {
     });
 
     // 3. Reviews
-    this.homeService.getProductReviews(prod.id).subscribe({
-      next: (res) => this.reviews.set(res.items),
-      error: () => this.reviews.set([])
-    });
+    this.reloadReviews(prod.id);
 
     // 4. Q&A
     this.homeService.getProductQuestions(prod.id).subscribe({
@@ -510,6 +502,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   openOrderModal(): void {
     const prod = this.product();
     if (!prod || this.isOutOfStock()) return;
+    if (!this.authAction.requireLogin('buy this product')) return;
 
     // Load real profile name & phone from API (not username which is email)
     if (this.authStore.isAuthenticated() && !this.customerName()) {
@@ -549,6 +542,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   confirmOrderViaChat(): void {
     const prod = this.product();
     if (!prod) return;
+    if (!this.authAction.requireLogin('place an order')) return;
 
     this.nameError.set(null);
     this.phoneError.set(null);
@@ -592,6 +586,10 @@ export class ProductDetail implements OnInit, OnDestroy {
 
     if (hasErrors) {
       this.orderError.set('Please fill in all required delivery details.');
+      if (typeof window !== 'undefined') {
+        const el = document.getElementById('order-modal-error');
+        el?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -628,7 +626,7 @@ export class ProductDetail implements OnInit, OnDestroy {
           address: this.deliveryAddress().trim(),
           city: this.deliveryCity().trim(),
           state: this.selectedState()?.trim() || '',
-          country: this.selectedCountry()?.trim() || 'Pakistan',
+          country: this.selectedCountry()?.trim() || '',
           province: this.selectedState()?.trim() || '',
           notes: this.orderNotes().trim()
         },
@@ -669,16 +667,21 @@ export class ProductDetail implements OnInit, OnDestroy {
       this.isOrderModalOpen.set(false);
       this.isSubmittingOrder.set(false);
 
+      const displayRef = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalOrderRef)
+        ? `ORD-${finalOrderRef.substring(0, 8).toUpperCase()}`
+        : finalOrderRef;
+
       if (isApiCreated) {
-        this.toastService.show(`Order placed successfully! Reference: ${finalOrderRef}`, 'success');
+        this.toastService.show(`Order placed! Reference: ${displayRef}. Opening Super Admin chat...`, 'success');
       } else {
-        this.toastService.show(`Order request prepared! Connecting with seller...`, 'success');
+        this.toastService.show(`Order ready. Opening Super Admin chat with your order template...`, 'success');
       }
 
       this.router.navigate(['/chat'], {
         queryParams: {
-          shopId: prod.shopId,
-          orderRef: finalOrderRef
+          support: '1',
+          orderRef: finalOrderRef,
+          autosend: '1'
         }
       });
     };
@@ -690,10 +693,9 @@ export class ProductDetail implements OnInit, OnDestroy {
         quantity: this.quantity()
       }).subscribe({
         next: (res) => {
-          const confirmedRef = res.orderId
-            ? `ORD-${res.orderId.substring(0, 8).toUpperCase()}`
-            : generatedRef;
-          saveAndRedirect(confirmedRef, true);
+          // Pass the real OrderRequest GUID so chat joins the seller order room
+          const confirmedRef = res.orderId || generatedRef;
+          saveAndRedirect(confirmedRef, !!res.orderId);
         },
         error: (err) => {
           console.warn('Backend buyNow order placement error, using local fallback:', err);
@@ -706,26 +708,19 @@ export class ProductDetail implements OnInit, OnDestroy {
   }
 
   /**
-   * Optional direct chat inquiry with seller
+   * Customers chat with Super Admin only (not the merchant).
    */
   chatWithSeller(): void {
-    const prod = this.product();
-    if (!prod) return;
-
-    // Navigate to Chat feature passing shop and product context
+    if (!this.authAction.requireLogin('chat with Super Admin')) return;
     this.router.navigate(['/chat'], {
-      queryParams: {
-        shopId: prod.shopId,
-        productId: prod.id,
-        variantId: this.selectedVariant()?.id || null,
-        qty: this.quantity()
-      }
+      queryParams: { support: '1' }
     });
   }
 
   addToCart(): void {
     const prod = this.product();
     if (!prod || this.isOutOfStock()) return;
+    if (!this.authAction.requireLogin('add items to your cart')) return;
 
     if (this.isInCart()) {
       this.cartService.removeByProductId(prod.id);
@@ -781,6 +776,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   addToWishlist(): void {
     const prod = this.product();
     if (!prod) return;
+    if (!this.authAction.requireLogin('save items to your wishlist')) return;
     const added = this.wishlistService.toggleItem({
       id: prod.id,
       slug: prod.slug,
@@ -801,6 +797,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   addToCompare(): void {
     const prod = this.product();
     if (!prod) return;
+    if (!this.authAction.requireLogin('compare products')) return;
     const item: ProductListDto = {
       id: prod.id,
       slug: prod.slug,
@@ -906,10 +903,53 @@ export class ProductDetail implements OnInit, OnDestroy {
   onFilterReviews(rating: number | null): void {
     const prod = this.product();
     if (!prod) return;
+    this.reloadReviews(prod.id, rating);
+  }
 
-    this.homeService.getProductReviews(prod.id, rating).subscribe({
-      next: (res) => this.reviews.set(res.items),
-      error: () => {}
+  onSubmitReview(payload: { rating: number; title: string; comment: string }): void {
+    const prod = this.product();
+    if (!prod) return;
+
+    if (!this.authStore.isAuthenticated()) {
+      this.toastService.show('Please sign in to write a review.', 'warning');
+      return;
+    }
+
+    this.reviewSubmitting.set(true);
+    this.homeService.createProductReview(prod.id, {
+      rating: payload.rating,
+      title: payload.title || null,
+      comment: payload.comment || null
+    }).subscribe({
+      next: () => {
+        this.reviewSubmitting.set(false);
+        this.toastService.show('Review published. Rating updated.', 'success');
+        this.reloadReviews(prod.id);
+        // Refresh product avg rating from server
+        this.homeService.getProductById(prod.id).subscribe({
+          next: (fresh) => {
+            if (fresh) this.product.set(fresh);
+          },
+          error: () => {}
+        });
+      },
+      error: (err) => {
+        this.reviewSubmitting.set(false);
+        this.toastService.show(err?.error?.error || 'Failed to submit review.', 'error');
+      }
+    });
+  }
+
+  private reloadReviews(productId: string, rating?: number | null): void {
+    this.homeService.getProductReviews(productId, rating).subscribe({
+      next: (res) => {
+        this.reviews.set(res.items || []);
+        this.reviewsTotal.set(res.totalCount ?? (res.items || []).length);
+      },
+      error: () => {
+        this.reviews.set([]);
+        this.reviewsTotal.set(0);
+      }
     });
   }
 

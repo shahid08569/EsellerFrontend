@@ -1,3 +1,11 @@
+<div class="relative min-h-[70vh]">
+  <!-- Soft marketplace atmosphere -->
+  <div class="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+    <div class="absolute -top-24 -right-16 w-[28rem] h-[28rem] rounded-full bg-[#8A9741]/10 blur-3xl"></div>
+    <div class="absolute top-40 -left-20 w-[22rem] h-[22rem] rounded-full bg-amber-200/30 blur-3xl"></div>
+    <div class="absolute inset-0 opacity-[0.035]" style="background-image: radial-gradient(#1f2937 0.8px, transparent 0.8px); background-size: 18px 18px;"></div>
+  </div>
+
 <div class="max-w-7xl mx-auto px-3 md:px-4 py-4 md:py-8 space-y-6">
 
   <!-- ============================================================ -->
@@ -13,30 +21,55 @@
   <!-- EMPTY CART STATE -->
   <!-- ============================================================ -->
   @if (cartService.items().length === 0) {
-    <div class="bg-white rounded-3xl border border-gray-200 p-8 sm:p-14 text-center shadow-xs">
-      <div class="max-w-md mx-auto space-y-4">
-        <div class="w-20 h-20 mx-auto rounded-full bg-primary-tint flex items-center justify-center text-primary">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
-          </svg>
+    <section class="relative overflow-hidden rounded-[2rem] border border-[#d9e0c8] bg-gradient-to-br from-[#f7f8f2] via-white to-[#eef3e0] shadow-[0_20px_50px_-28px_rgba(74,88,32,0.45)]">
+      <div class="absolute inset-y-0 right-0 w-1/2 hidden md:block opacity-40"
+           style="background: radial-gradient(circle at 70% 40%, rgba(138,151,65,0.35), transparent 60%);"></div>
+      <div class="relative grid md:grid-cols-[1.1fr_0.9fr] gap-8 p-8 sm:p-12 items-center">
+        <div class="space-y-5 max-w-lg">
+          <p class="text-[11px] font-black uppercase tracking-[0.2em] text-[#6f7c34]">Your basket</p>
+          <h2 class="text-3xl sm:text-4xl font-black text-slate-900 tracking-tight leading-[1.1]">
+            Cart’s waiting for<br class="hidden sm:block" /> something great.
+          </h2>
+          <p class="text-sm text-slate-600 leading-relaxed">
+            Browse the marketplace, then sign in to add products, save wishlists, and checkout with sellers.
+          </p>
+          <div class="flex flex-wrap gap-3 pt-1">
+            <a routerLink="/products"
+               class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl bg-[#8A9741] hover:bg-[#758235] text-white text-sm font-bold shadow-lg shadow-[#8A9741]/25 transition-all cursor-pointer">
+              Explore products
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
+              </svg>
+            </a>
+            @if (!authStore.isAuthenticated()) {
+              <a routerLink="/auth/login" [queryParams]="{ returnUrl: '/cart' }"
+                 class="inline-flex items-center gap-2 px-6 py-3 rounded-2xl border border-slate-300 bg-white/80 text-slate-800 text-sm font-bold hover:border-[#8A9741] hover:text-[#6f7c34] transition-all cursor-pointer">
+                Sign in to shop
+              </a>
+            }
+          </div>
+          <div class="flex flex-wrap gap-4 pt-2 text-[11px] font-semibold text-slate-500">
+            <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Free delivery over $ 5,000</span>
+            <span class="inline-flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-amber-500"></span> Chat checkout with sellers</span>
+          </div>
         </div>
-        <h2 class="text-xl sm:text-2xl font-black text-text-primary tracking-tight">Your Cart is Empty</h2>
-        <p class="text-xs sm:text-sm text-text-secondary leading-relaxed">
-          Looks like you haven't added anything to your cart yet. Explore thousands of verified products from top sellers across Pakistan!
-        </p>
-        <div class="pt-2">
-          <a
-            routerLink="/products"
-            class="inline-flex items-center gap-2 px-6 py-3 bg-primary hover:bg-primary-hover text-white text-xs sm:text-sm font-bold rounded-xl shadow-xs transition-colors cursor-pointer"
-          >
-            <span>Start Shopping</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
-            </svg>
-          </a>
+
+        <div class="relative mx-auto w-full max-w-sm">
+          <div class="aspect-square rounded-[2rem] bg-white/70 border border-white shadow-inner flex items-center justify-center overflow-hidden">
+            <div class="absolute inset-6 rounded-[1.5rem] border border-dashed border-[#8A9741]/35"></div>
+            <div class="relative text-center space-y-3 px-6">
+              <div class="mx-auto w-20 h-20 rounded-3xl bg-[#8A9741] text-white flex items-center justify-center shadow-xl shadow-[#8A9741]/30 rotate-[-6deg]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 3h1.386c.51 0 .955.343 1.087.835l.383 1.437M7.5 14.25a3 3 0 00-3 3h15.75m-12.75-3h11.218c1.121-2.3 2.1-4.684 2.924-7.138a60.114 60.114 0 00-16.536-1.84M7.5 14.25L5.106 5.272M6 20.25a.75.75 0 11-1.5 0 .75.75 0 011.5 0zm12.75 0a.75.75 0 11-1.5 0 .75.75 0 011.5 0z" />
+                </svg>
+              </div>
+              <p class="text-sm font-black text-slate-800">0 items in basket</p>
+              <p class="text-xs text-slate-500">Add a product after signing in — your cart lives with your account session.</p>
+            </div>
+          </div>
         </div>
       </div>
-    </div>
+    </section>
   }
 
   <!-- ============================================================ -->
@@ -51,13 +84,14 @@
       <div class="lg:col-span-8 space-y-4">
 
         <!-- Header Bar -->
-        <div class="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 flex items-center justify-between shadow-card">
+        <div class="bg-gradient-to-r from-[#f4f6ec] to-white rounded-2xl border border-[#d9e0c8] p-4 sm:p-5 flex items-center justify-between shadow-[0_12px_30px_-20px_rgba(74,88,32,0.35)]">
           <div>
-            <h1 class="text-lg sm:text-xl font-black text-text-primary tracking-tight">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f7c34] mb-1">Basket</p>
+            <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Shopping Cart
             </h1>
-            <p class="text-xs text-text-secondary mt-0.5">
-              {{ cartService.totalItemsCount() }} item(s) in your basket
+            <p class="text-xs text-slate-500 mt-0.5">
+              {{ cartService.totalItemsCount() }} item(s) ready for checkout
             </p>
           </div>
           <button
@@ -84,7 +118,7 @@
           } @else {
             <div class="space-y-2">
               <div class="flex justify-between text-xs text-text-secondary">
-                <span>Add <strong class="text-text-primary">Rs. {{ (5000 - cartService.subtotal()) | number:'1.1-1' }}</strong> more for FREE delivery</span>
+                <span>Add <strong class="text-text-primary">$ {{ (5000 - cartService.subtotal()) | number:'1.1-1' }}</strong> more for FREE delivery</span>
                 <span class="font-bold text-primary">{{ ((cartService.subtotal() / 5000) * 100) | number:'1.0-0' }}%</span>
               </div>
               <div class="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
@@ -100,12 +134,12 @@
         <!-- Items Card List -->
         <div class="space-y-3">
           @for (item of cartService.items(); track item.id) {
-            <div class="bg-white rounded-2xl border border-gray-200/90 p-4 sm:p-5 shadow-card hover:shadow-card-hover flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-gray-300">
+            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.35)] hover:shadow-[0_16px_36px_-16px_rgba(74,88,32,0.35)] flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-[#8A9741]/40 ring-1 ring-black/[0.02]">
 
               <!-- Item Thumbnail -->
-              <a [routerLink]="['/products', item.productSlug]" class="w-20 h-20 rounded-xl bg-gray-50 border border-gray-100 p-1 flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer group">
+              <a [routerLink]="['/products', item.productSlug]" class="w-24 h-24 rounded-2xl bg-gradient-to-br from-slate-50 to-[#f4f6ec] border border-slate-100 p-2 flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer group shadow-inner">
                 @if (getImageUrl(item.imageUrl); as img) {
-                  <img [src]="img" [alt]="item.name" class="w-full h-full object-contain group-hover:scale-105 transition-transform" loading="lazy" />
+                  <img [src]="img" [alt]="item.name" class="w-full h-full object-contain group-hover:scale-110 transition-transform duration-300" loading="lazy" />
                 } @else {
                   <span class="text-[10px] text-gray-400">No Image</span>
                 }
@@ -113,7 +147,7 @@
 
               <!-- Item Details -->
               <div class="flex-1 min-w-0 space-y-1.5">
-                <a [routerLink]="['/products', item.productSlug]" class="text-xs sm:text-sm font-bold text-text-primary hover:text-primary transition-colors line-clamp-2">
+                <a [routerLink]="['/products', item.productSlug]" class="text-sm font-black text-slate-900 hover:text-[#6f7c34] transition-colors line-clamp-2">
                   {{ item.name }}
                 </a>
                 <div class="flex items-center gap-2 flex-wrap text-xs text-text-secondary">
@@ -153,7 +187,7 @@
                 </div>
 
                 <div class="text-xs font-bold text-primary tabular-nums">
-                  Rs. {{ item.price | number:'1.1-1' }}
+                  $ {{ item.price | number:'1.1-1' }}
                 </div>
               </div>
 
@@ -184,7 +218,7 @@
                 <!-- Item Total -->
                 <div class="text-right min-w-[90px]">
                   <div class="text-xs sm:text-sm font-black text-text-primary tabular-nums">
-                    Rs. {{ (item.price * item.quantity) | number:'1.1-1' }}
+                    $ {{ (item.price * item.quantity) | number:'1.1-1' }}
                   </div>
                   <button
                     type="button"
@@ -218,14 +252,15 @@
       <!-- ======================================================== -->
       <div class="lg:col-span-4 w-full sticky top-24 space-y-4">
 
-        <div id="delivery-form-container" class="bg-white rounded-3xl border border-gray-200/90 shadow-card p-5 sm:p-6 space-y-5">
+        <div id="delivery-form-container" class="bg-white rounded-3xl border border-[#d9e0c8] shadow-[0_18px_40px_-24px_rgba(74,88,32,0.45)] p-5 sm:p-6 space-y-5 ring-1 ring-[#8A9741]/10">
 
           <div>
-            <h2 class="text-base sm:text-lg font-black text-text-primary tracking-tight">
-              Delivery &amp; Checkout
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f7c34] mb-1">Checkout</p>
+            <h2 class="text-base sm:text-lg font-black text-slate-900 tracking-tight">
+              Delivery &amp; Chat confirm
             </h2>
-            <p class="text-xs text-text-secondary mt-0.5">
-              Fill your shipping address to finalize via Chat
+            <p class="text-xs text-slate-500 mt-0.5">
+              Add your address — then confirm the order with the seller in chat.
             </p>
           </div>
 
@@ -412,7 +447,7 @@
           <div class="border-t border-gray-200 pt-4 space-y-2 text-xs">
             <div class="flex justify-between text-text-secondary">
               <span>Subtotal ({{ cartService.totalItemsCount() }} items):</span>
-              <span class="font-semibold text-text-primary tabular-nums">Rs. {{ cartService.formattedSubtotal() }}</span>
+              <span class="font-semibold text-text-primary tabular-nums">$ {{ cartService.formattedSubtotal() }}</span>
             </div>
             <div class="flex justify-between text-text-secondary">
               <span>Estimated Shipping:</span>
@@ -423,7 +458,7 @@
             <div class="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold">
               <span class="text-sm text-text-primary">Order Total:</span>
               <span class="text-xl font-black text-primary tabular-nums">
-                Rs. {{ cartService.formattedTotal() }}
+                $ {{ cartService.formattedTotal() }}
               </span>
             </div>
           </div>
@@ -434,7 +469,7 @@
               <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
             </svg>
             <div class="text-[11px] leading-relaxed">
-              <span class="font-bold">Chat Confirmation:</span> You will connect with the verified seller on Chat with this order pre-filled. You can confirm dispatch schedule and parcel verification before sending.
+              <span class="font-bold">Order template:</span> Products, qty, total amount &amp; delivery details are packed into a Super Admin chat message — sent in one click after you finalize.
             </div>
           </div>
 
@@ -458,7 +493,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
               <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a5.969 5.969 0 01-.474-.065 4.48 4.48 0 00.978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
             </svg>
-            <span>Finalize Order via Chat with Seller</span>
+            <span>Finalize Order via Chat with Super Admin</span>
           </button>
 
           <!-- Security Badges -->
@@ -531,4 +566,5 @@
     </div>
   }
 
+</div>
 </div>

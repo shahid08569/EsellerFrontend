@@ -6,7 +6,7 @@ export interface CountryStateData {
   states: string[];
 }
 
-export const COUNTRIES_DATA: CountryStateData[] = [
+const RAW_COUNTRIES_DATA: CountryStateData[] = [
   {
     "code": "PK",
     "name": "Pakistan",
@@ -2850,3 +2850,13 @@ export const COUNTRIES_DATA: CountryStateData[] = [
     ]
   }
 ];
+
+/** Alphabetical countries; states A→Z. UI should start with empty "Select Country". */
+export const COUNTRIES_DATA: CountryStateData[] = RAW_COUNTRIES_DATA
+  .map((c) => ({
+    ...c,
+    states: [...c.states].sort((a, b) =>
+      a.localeCompare(b, undefined, { sensitivity: 'base' })
+    )
+  }))
+  .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));

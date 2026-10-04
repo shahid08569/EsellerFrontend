@@ -59,6 +59,25 @@ export class ProductGallery {
     return list[idx] || list[0];
   });
 
+  /** Max 2 badges; Flash Sale first, then Hot / New / Featured / Best Seller. Out of Stock always wins. */
+  readonly displayBadges = computed(() => {
+    const b = this.badges();
+    if (!b) return [] as { label: string; classes: string }[];
+
+    const list: { label: string; classes: string }[] = [];
+    if (b.isFlashSale) list.push({ label: 'Flash Sale', classes: 'bg-red-600 text-white' });
+    if (b.isHotSelling) list.push({ label: 'Hot', classes: 'bg-orange-500 text-white' });
+    if (b.isNew) list.push({ label: 'New', classes: 'bg-blue-500 text-white' });
+    if (b.isFeatured) list.push({ label: 'Featured', classes: 'bg-primary text-white' });
+    if (b.isBestSelling) list.push({ label: 'Best Seller', classes: 'bg-[#8A9741] text-white' });
+
+    if (b.isOutOfStock) {
+      list.unshift({ label: 'Out of Stock', classes: 'bg-gray-600 text-white' });
+    }
+
+    return list.slice(0, 2);
+  });
+
   constructor() {
     effect(() => {
       const v = this.variantImageUrl();
@@ -127,10 +146,13 @@ export class ProductGallery {
 
   getImageUrl(url: string | null | undefined): string | null {
     if (!url) return null;
-    if (url.startsWith('http')) return url;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : '';
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
     const path = url.startsWith('/') ? url : `/${url}`;
+    if (path.startsWith('/uploads')) return `${host}${path}`;
     return `${host}/uploads${path}`;
   }
 }

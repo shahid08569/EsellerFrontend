@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { customerShopGuard } from 'eseller-shared';
 
 export const routes: Routes = [
   {
@@ -57,6 +58,27 @@ export const routes: Routes = [
         title: 'Eseller — Brand'
       },
       {
+        path: 'blogs',
+        loadComponent: () =>
+          import('./features/blog/blog-list/blog-list').then(m => m.BlogList),
+        title: 'Eseller — Blogs & Stories'
+      },
+      {
+        path: 'blogs/:slug',
+        loadComponent: () =>
+          import('./features/blog/blog-detail/blog-detail').then(m => m.BlogDetail),
+        title: 'Eseller — Story'
+      },
+      {
+        path: 'blog',
+        redirectTo: 'blogs',
+        pathMatch: 'full'
+      },
+      {
+        path: 'blog/:slug',
+        redirectTo: 'blogs/:slug'
+      },
+      {
         path: 'flash-sales',
         loadComponent: () =>
           import('./features/flash-sales/flash-sales').then(m => m.FlashSales),
@@ -108,30 +130,39 @@ export const routes: Routes = [
       },
       {
         path: 'cart',
+        canActivate: [customerShopGuard],
         loadComponent: () =>
           import('./features/cart/cart').then(m => m.Cart),
         title: 'Eseller — Cart'
       },
       {
         path: 'orders',
+        canActivate: [customerShopGuard],
         loadComponent: () =>
           import('./features/orders/orders').then(m => m.Orders),
         title: 'Eseller — Orders'
       },
       {
+        path: 'track-order',
+        redirectTo: 'orders'
+      },
+      {
         path: 'wishlist',
+        canActivate: [customerShopGuard],
         loadComponent: () =>
           import('./features/wishlist/wishlist').then(m => m.Wishlist),
         title: 'Eseller — Wishlist'
       },
       {
         path: 'compare',
+        canActivate: [customerShopGuard],
         loadComponent: () =>
           import('./features/compare/compare').then(m => m.Compare),
         title: 'Eseller — Compare'
       },
       {
         path: 'chat',
+        canActivate: [customerShopGuard],
         loadComponent: () =>
           import('./features/chat/chat').then(m => m.Chat),
         title: 'Eseller — Chat'
@@ -184,19 +215,8 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auth/seller-register/seller-register').then(m => m.SellerRegister),
         title: 'Eseller — Merchant Registration'
-      },
-      {
-        path: 'verify-email',
-        loadComponent: () =>
-          import('./features/auth/verify-email/verify-email').then(m => m.VerifyEmail),
-        title: 'Eseller — Verify Email'
       }
     ]
-  },
-  {
-    path: 'verify-email',
-    redirectTo: 'auth/verify-email',
-    pathMatch: 'full'
   },
   {
     path: 'login',

@@ -1,0 +1,171 @@
+<div class="space-y-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Withdrawals & Payouts</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Transfer your settled store profits to your local bank account, Easypaisa, or JazzCash.</p>
+    </div>
+    <button 
+      type="button" 
+      (click)="openRequestModal()"
+      [disabled]="availableBalance() < MIN_WITHDRAWAL"
+      class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
+      <span>💸 Request Payout (Min. $ 1,000)</span>
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="p-12 text-center text-xs text-gray-400">Loading payout accounts...</div>
+  } @else {
+
+    <!-- Balance Banner -->
+    <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <p class="text-xs font-bold text-indigo-300 uppercase tracking-widest">Available Balance For Payout</p>
+        <p class="text-3xl font-black mt-2">$ {{ availableBalance() | number:'1.2-2' }}</p>
+        <p class="text-xs text-slate-400 mt-1">Available after Super Admin marks orders Delivered and credits your wallet.</p>
+      </div>
+
+      <div class="text-right">
+        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+          ● Payout Gateway Active
+        </span>
+      </div>
+    </div>
+
+    <!-- Payout History Table -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-4">
+      <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
+        <h3 class="text-base font-bold text-gray-900">Withdrawal Request History</h3>
+        <span class="text-xs text-gray-400">Past Transfers</span>
+      </div>
+
+      @if (withdrawalHistory().length === 0) {
+        <p class="text-xs text-gray-400 py-8 text-center">No withdrawal requests filed yet.</p>
+      } @else {
+        <div class="seller-table-wrap">
+          <table class="seller-table">
+            <thead>
+              <tr>
+                <th>Request</th>
+                <th class="text-right">Amount</th>
+                <th>Payout</th>
+                <th class="text-center">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (w of withdrawalHistory(); track w.id) {
+                <tr>
+                  <td>
+                    <p class="cell-mono">{{ w.id }}</p>
+                    <p class="cell-sub">{{ w.requestedAt | date:'mediumDate' }}</p>
+                  </td>
+                  <td class="text-right cell-mono">$ {{ w.amount | number:'1.2-2' }}</td>
+                  <td>
+                    <p class="cell-title">{{ w.paymentMethod }}</p>
+                    <p class="cell-sub truncate max-w-[180px]">{{ w.accountDetails }}</p>
+                  </td>
+                  <td class="text-center">
+                    <span class="badge"
+                      [class.badge-warn]="w.status === 'Pending'"
+                      [class.badge-ok]="w.status === 'Paid' || w.status === 'Approved'">
+                      {{ w.status }}
+                    </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+
+  }
+
+  <!-- Request Modal -->
+  @if (requestModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
+      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
+        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
+          <h3 class="text-base font-bold text-gray-900">Request Fund Withdrawal</h3>
+          <button (click)="closeRequestModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xs p-1">✕</button>
+        </div>
+
+        <div class="space-y-3">
+          <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs flex justify-between">
+            <span class="text-indigo-800 font-medium">Available Balance:</span>
+            <span class="text-indigo-950 font-black">$ {{ availableBalance() | number:'1.2-2' }}</span>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Withdrawal Amount (USD) *</label>
+            <input 
+              type="number" 
+              [(ngModel)]="withdrawAmount"
+              [min]="MIN_WITHDRAWAL"
+              [max]="availableBalance()"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+            <p class="text-[10px] text-gray-400 mt-1">Minimum withdrawal is $ 1,000.</p>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Payout Channel</label>
+            <select 
+              [(ngModel)]="paymentMethod"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+              <option value="Bank Transfer">Bank Account (1LINK / IBAN)</option>
+              <option value="Easypaisa">Easypaisa Mobile Wallet</option>
+              <option value="JazzCash">JazzCash Mobile Wallet</option>
+              <option value="Nayapay">NayaPay / SadaPay</option>
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Bank / Channel Name</label>
+            <input 
+              type="text" 
+              [(ngModel)]="bankName"
+              placeholder="e.g. Meezan Bank, HBL, Alfalah, Telenor Bank..."
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Account Title</label>
+            <input 
+              type="text" 
+              [(ngModel)]="accountTitle"
+              placeholder="Name on bank / wallet account"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Account Number / IBAN *</label>
+            <input 
+              type="text" 
+              [(ngModel)]="accountNumber"
+              placeholder="e.g. 03001234567 or PK76MEZN..."
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+          </div>
+        </div>
+
+        <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
+          <button 
+            type="button" 
+            (click)="closeRequestModal()" 
+            class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
+            Cancel
+          </button>
+          <button 
+            type="button" 
+            (click)="submitWithdrawal()" 
+            [disabled]="isSubmitting() || withdrawAmount() < MIN_WITHDRAWAL || withdrawAmount() > availableBalance()"
+            class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50">
+            {{ isSubmitting() ? 'Submitting...' : 'Submit Request' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+</div>

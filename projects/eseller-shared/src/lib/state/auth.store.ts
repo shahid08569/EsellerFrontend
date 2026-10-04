@@ -44,6 +44,33 @@ export class AuthStore {
   );
 
   // ============================================================
+  // CONSTRUCTOR
+  // ============================================================
+  constructor() {
+    this.restoreFromStorage();
+  }
+
+  private restoreFromStorage(): void {
+    if (typeof window !== 'undefined' && window.localStorage) {
+      try {
+        const saved = window.localStorage.getItem('eseller_auth_session');
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data && data.accessToken && data.account) {
+            this._accessToken.set(data.accessToken);
+            this._currentAccount.set(data.account);
+            this._accessTokenExpiresAt.set(
+              data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null
+            );
+          }
+        }
+      } catch (e) {
+        console.error('Failed to restore auth session from storage', e);
+      }
+    }
+  }
+
+  // ============================================================
   // MUTATIONS
   // ============================================================
   /**
@@ -57,11 +84,22 @@ export class AuthStore {
   }): void {
     this._accessToken.set(payload.accessToken);
     this._currentAccount.set(payload.account);
-    this._accessTokenExpiresAt.set(
+    const expiresAt =
       payload.accessTokenExpiresAt instanceof Date
         ? payload.accessTokenExpiresAt
-        : new Date(payload.accessTokenExpiresAt)
-    );
+        : new Date(payload.accessTokenExpiresAt);
+    this._accessTokenExpiresAt.set(expiresAt);
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.setItem(
+        'eseller_auth_session',
+        JSON.stringify({
+          accessToken: payload.accessToken,
+          accessTokenExpiresAt: expiresAt.toISOString(),
+          account: payload.account
+        })
+      );
+    }
   }
 
   /**
@@ -70,11 +108,23 @@ export class AuthStore {
    */
   updateAccessToken(accessToken: string, accessTokenExpiresAt: string | Date): void {
     this._accessToken.set(accessToken);
-    this._accessTokenExpiresAt.set(
+    const expiresAt =
       accessTokenExpiresAt instanceof Date
         ? accessTokenExpiresAt
-        : new Date(accessTokenExpiresAt)
-    );
+        : new Date(accessTokenExpiresAt);
+    this._accessTokenExpiresAt.set(expiresAt);
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const saved = window.localStorage.getItem('eseller_auth_session');
+      if (saved) {
+        try {
+          const data = JSON.parse(saved);
+          data.accessToken = accessToken;
+          data.accessTokenExpiresAt = expiresAt.toISOString();
+          window.localStorage.setItem('eseller_auth_session', JSON.stringify(data));
+        } catch {}
+      }
+    }
   }
 
   /**
@@ -85,6 +135,10 @@ export class AuthStore {
     this._accessToken.set(null);
     this._currentAccount.set(null);
     this._accessTokenExpiresAt.set(null);
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      window.localStorage.removeItem('eseller_auth_session');
+    }
   }
 
   // ============================================================

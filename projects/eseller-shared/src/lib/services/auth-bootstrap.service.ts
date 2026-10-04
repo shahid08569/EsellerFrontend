@@ -5,6 +5,40 @@ import { AuthService } from './auth.service';
 import { AuthStore } from '../state/auth.store';
 import { RoleType } from '../models/auth/auth.models';
 
+export function safeEncodeHandoff(data: any): string {
+  try {
+    const jsonStr = JSON.stringify(data);
+    const bytes = new TextEncoder().encode(jsonStr);
+    let binString = '';
+    for (let i = 0; i < bytes.length; i++) {
+      binString += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binString);
+  } catch {
+    return btoa(unescape(encodeURIComponent(JSON.stringify(data))));
+  }
+}
+
+export function safeDecodeHandoff<T = any>(str: string): T | null {
+  if (!str) return null;
+  try {
+    const binString = atob(str);
+    const bytes = Uint8Array.from(binString, (m) => m.charCodeAt(0));
+    const decoded = new TextDecoder().decode(bytes);
+    return JSON.parse(decoded) as T;
+  } catch {
+    try {
+      return JSON.parse(decodeURIComponent(escape(atob(str)))) as T;
+    } catch {
+      try {
+        return JSON.parse(atob(str)) as T;
+      } catch {
+        return null;
+      }
+    }
+  }
+}
+
 /**
  * ============================================================
  * AuthBootstrapService — Silent refresh on app start
@@ -23,35 +57,58 @@ export class AuthBootstrapService {
   private readonly authStore = inject(AuthStore);
 
   async bootstrap(): Promise<void> {
+    // ── Strategy 0: Explicit Cross-App Logout Signal ──
+    if (typeof window !== 'undefined') {
+      const search = window.location.search;
+      const hash = window.location.hash;
+      if (search.includes('logout=true') || hash.includes('logout=true')) {
+        this.authStore.clearAuth();
+        try {
+          // Clean logout param from URL without reloading
+          const cleanUrl = window.location.pathname;
+          window.history.replaceState(null, '', cleanUrl);
+        } catch {}
+        return; // User explicitly logged out from another portal
+      }
+    }
+
     // ── Strategy 1: URL hash handoff from customer app ──
     if (typeof window !== 'undefined') {
       const hash = window.location.hash; // e.g. "#auth=eyJ..."
       if (hash.startsWith('#auth=')) {
         try {
-          const encoded = hash.slice(6); // remove "#auth="
-          const handoff = JSON.parse(atob(encoded)) as {
+          // Support both raw and URI-encoded base64 handoffs
+          let encoded = hash.slice(6); // remove "#auth="
+          try {
+            encoded = decodeURIComponent(encoded);
+          } catch {
+            // keep raw slice
+          }
+          const handoff = safeDecodeHandoff<{
             accessToken: string;
             accessTokenExpiresAt: string;
             accountId: string;
             username: string;
             email: string;
             roleType: RoleType;
-          };
+          }>(encoded);
 
           // Clean hash from URL so it doesn't stay visible
-          window.history.replaceState(null, '', window.location.pathname);
+          window.history.replaceState(null, '', window.location.pathname + window.location.search);
 
-          this.authStore.setAuth({
-            accessToken: handoff.accessToken,
-            accessTokenExpiresAt: handoff.accessTokenExpiresAt,
-            account: {
-              accountId: handoff.accountId,
-              username: handoff.username,
-              email: handoff.email,
-              roleType: handoff.roleType
-            }
-          });
-          return; // success — skip cookie refresh
+          if (handoff && handoff.accessToken && handoff.accountId) {
+            this.authStore.setAuth({
+              accessToken: handoff.accessToken,
+              accessTokenExpiresAt: handoff.accessTokenExpiresAt,
+              account: {
+                accountId: handoff.accountId,
+                username: handoff.username,
+                email: handoff.email,
+                roleType: handoff.roleType
+              }
+            });
+            return; // success — skip cookie refresh
+          }
         } catch {
           // Malformed handoff — clean up and fall through
           window.history.replaceState(null, '', window.location.pathname);
@@ -59,9 +116,14 @@ export class AuthBootstrapService {
       }
     }
 
-    // ── Strategy 2: cookie-based silent refresh ──
+    // ── Strategy 2: cookie-based silent refresh (hard timeout so app never stays blank) ──
     try {
-      const response = await firstValueFrom(this.authService.refreshToken());
+      const response = await Promise.race([
+        firstValueFrom(this.authService.refreshToken()),
+        new Promise<never>((_, reject) =>
+          setTimeout(() => reject(new Error('AUTH_REFRESH_TIMEOUT')), 8000)
+        )
+      ]);
 
       this.authStore.setAuth({
         accessToken: response.accessToken,
@@ -74,8 +136,11 @@ export class AuthBootstrapService {
         }
       });
     } catch {
-      // No cookie / expired / invalid — user is a guest.
-      this.authStore.clearAuth();
+      // If cookie refresh fails (e.g. cross-port dev server where browser blocks Lax cookies),
+      // keep current localStorage session active so refresh doesn't log the user out.
+      if (!this.authStore.currentAccount()) {
+        this.authStore.clearAuth();
+      }
     }
   }
 }

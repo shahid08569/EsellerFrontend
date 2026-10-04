@@ -50,9 +50,13 @@ export class Brands implements OnInit {
 
   getLogoUrl(logoUrl: string | null | undefined): string | null {
     if (!logoUrl) return null;
-    if (logoUrl.startsWith('http')) return logoUrl;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string;
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : '';
+    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://') || logoUrl.startsWith('data:') || logoUrl.startsWith('blob:')) {
+      return logoUrl;
+    }
+    const apiBase =
+      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
+      'https://localhost:7127/api/v1';
+    const host = apiBase.replace(/\/api\/v1\/?$/, '');
     const path = logoUrl.startsWith('/') ? logoUrl : `/${logoUrl}`;
     if (path.startsWith('/uploads/')) return `${host}${path}`;
     return `${host}/uploads${path}`;

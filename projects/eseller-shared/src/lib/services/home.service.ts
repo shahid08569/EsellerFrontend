@@ -1,5 +1,6 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, shareReplay } from 'rxjs';
+import { Observable, of, shareReplay } from 'rxjs';
+import { catchError, map } from 'rxjs/operators';
 import { HttpParams } from '@angular/common/http';
 
 import { ApiService } from './api.service';
@@ -33,9 +34,17 @@ export class HomeService {
   // ============================================================
   getHomepageBanners(forceRefresh = false): Observable<HomepageBannerDto[]> {
     if (!this.banners$ || forceRefresh) {
-      this.banners$ = this.api.get<HomepageBannerDto[]>('/banners/active').pipe(shareReplay(1));
+      this.banners$ = this.api.get<HomepageBannerDto[]>('/banners/active').pipe(
+        catchError(() => of([])),
+        shareReplay(1)
+      );
     }
     return this.banners$;
+  }
+
+  /** Clear cached banners so the next homepage load picks up admin publishes. */
+  invalidateBannersCache(): void {
+    this.banners$ = undefined;
   }
 
   // ============================================================
@@ -43,9 +52,36 @@ export class HomeService {
   // ============================================================
   getCategories(forceRefresh = false): Observable<CategoryTreeDto[]> {
     if (!this.categories$ || forceRefresh) {
-      this.categories$ = this.api.get<CategoryTreeDto[]>('/Categories').pipe(shareReplay(1));
+      this.categories$ = this.api.get<any>('/Categories').pipe(
+        map((res) => this.normalizeCategoryTree(res)),
+        shareReplay(1)
+      );
     }
     return this.categories$;
+  }
+
+  private normalizeCategoryTree(res: any): CategoryTreeDto[] {
+    const list = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.value)
+        ? res.value
+        : Array.isArray(res?.data)
+          ? res.data
+          : [];
+
+    const mapNode = (n: any): CategoryTreeDto => ({
+      id: String(n.id ?? n.Id ?? ''),
+      name: n.name ?? n.Name ?? 'Category',
+      slug: n.slug ?? n.Slug ?? '',
+      imageUrl: n.imageUrl ?? n.ImageUrl ?? null,
+      children: Array.isArray(n.children ?? n.Children)
+        ? (n.children ?? n.Children).map((c: any) => mapNode(c))
+        : [],
+      isFeaturedOnHomepage: n.isFeaturedOnHomepage ?? n.IsFeaturedOnHomepage ?? undefined,
+      homepageDisplayOrder: n.homepageDisplayOrder ?? n.HomepageDisplayOrder ?? undefined
+    });
+
+    return list.map(mapNode);
   }
 
   // ============================================================
@@ -53,7 +89,26 @@ export class HomeService {
   // ============================================================
   getBrands(forceRefresh = false): Observable<BrandDto[]> {
     if (!this.brands$ || forceRefresh) {
-      this.brands$ = this.api.get<BrandDto[]>('/Brands').pipe(shareReplay(1));
+      this.brands$ = this.api.get<any>('/Brands').pipe(
+        map((res) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.value)
+              ? res.value
+              : Array.isArray(res?.data)
+                ? res.data
+                : [];
+          return list.map((b: any) => ({
+            id: String(b.id ?? b.Id ?? ''),
+            name: b.name ?? b.Name ?? 'Brand',
+            slug: b.slug ?? b.Slug ?? '',
+            logoUrl: b.logoUrl ?? b.LogoUrl ?? null,
+            isActive: (b.isActive ?? b.IsActive) !== false,
+            createdAt: b.createdAt ?? b.CreatedAt ?? ''
+          })) as BrandDto[];
+        }),
+        shareReplay(1)
+      );
     }
     return this.brands$;
   }
@@ -186,6 +241,21 @@ export class HomeService {
     if (rating != null) params = params.set('rating', rating);
 
     return this.api.get<PagedList<ReviewDto>>(`/products/${productId}/reviews`, { params });
+  }
+
+  createProductReview(
+    productId: string,
+    payload: { rating: number; title?: string | null; comment?: string | null; orderRequestItemId?: string | null }
+  ): Observable<{ reviewId: string; message: string }> {
+    return this.api.post<{ reviewId: string; message: string }>(
+      `/products/${productId}/reviews`,
+      {
+        orderRequestItemId: payload.orderRequestItemId ?? null,
+        rating: payload.rating,
+        title: payload.title ?? null,
+        comment: payload.comment ?? null
+      }
+    );
   }
 
   getProductQuestions(

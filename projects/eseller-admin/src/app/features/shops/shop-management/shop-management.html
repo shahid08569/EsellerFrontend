@@ -1,0 +1,1762 @@
+<div class="space-y-6">
+  
+  <!-- UNIFIED PAGE HEADER BANNER -->
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-4 sm:p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="flex items-center gap-3.5">
+      <div class="w-10 h-10 rounded-xl bg-white/20 backdrop-blur-xs flex items-center justify-center font-black text-lg shrink-0">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+        </svg>
+      </div>
+      <div>
+        <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
+          Shops & Storefronts Management
+        </h1>
+        <p class="text-orange-100 text-xs font-medium">
+          Oversee all live merchant storefronts, inspect store profiles, and process merchant verification applications.
+        </p>
+      </div>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button 
+        type="button" 
+        (click)="openManageTiersModal()" 
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-xs font-bold text-white transition-colors cursor-pointer border border-amber-400 shadow-xs">
+        Manage Tiers & Badges
+      </button>
+
+      <button 
+        type="button" 
+        (click)="loadData()" 
+        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white/15 hover:bg-white/25 text-xs font-bold text-white transition-colors cursor-pointer border border-white/20 shadow-xs">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        Refresh Data
+      </button>
+    </div>
+  </div>
+
+  <!-- MAIN VIEW SWITCHER TABS -->
+  <div class="bg-white border border-gray-100 rounded-2xl p-2 shadow-2xs flex flex-wrap items-center justify-between gap-3">
+    <div class="flex items-center gap-2">
+      <!-- Active Stores Button -->
+      <button 
+        type="button" 
+        (click)="switchViewMode('stores')"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+        [class.bg-orange-600]="viewMode() === 'stores'"
+        [class.text-white]="viewMode() === 'stores'"
+        [class.shadow-xs]="viewMode() === 'stores'"
+        [class.bg-gray-100]="viewMode() !== 'stores'"
+        [class.text-gray-700]="viewMode() !== 'stores'"
+        [class.hover:bg-gray-200]="viewMode() !== 'stores'">
+        <span>Live Stores Directory</span>
+        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
+              [class.bg-white/25]="viewMode() === 'stores'"
+              [class.bg-gray-200]="viewMode() !== 'stores'"
+              [class.text-white]="viewMode() === 'stores'"
+              [class.text-gray-700]="viewMode() !== 'stores'">
+          {{ activeShops().length }}
+        </span>
+      </button>
+
+      <!-- Shopkeeper Requests Button -->
+      <button 
+        type="button" 
+        (click)="switchViewMode('applications')"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+        [class.bg-orange-600]="viewMode() === 'applications'"
+        [class.text-white]="viewMode() === 'applications'"
+        [class.shadow-xs]="viewMode() === 'applications'"
+        [class.bg-gray-100]="viewMode() !== 'applications'"
+        [class.text-gray-700]="viewMode() !== 'applications'"
+        [class.hover:bg-gray-200]="viewMode() !== 'applications'">
+        <span>Merchant Requests</span>
+        @if (countPending() > 0) {
+          <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
+            {{ countPending() }} pending
+          </span>
+        } @else {
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
+                [class.bg-white/25]="viewMode() === 'applications'"
+                [class.bg-gray-200]="viewMode() !== 'applications'"
+                [class.text-white]="viewMode() === 'applications'"
+                [class.text-gray-700]="viewMode() !== 'applications'">
+            {{ allShopkeepers().length }}
+          </span>
+        }
+      </button>
+
+      <!-- Tier Upgrade & Package Requests Button -->
+      <button 
+        type="button" 
+        (click)="switchViewMode('tiers')"
+        class="px-4 py-2 rounded-xl text-xs font-bold transition-all cursor-pointer flex items-center gap-2"
+        [class.bg-orange-600]="viewMode() === 'tiers'"
+        [class.text-white]="viewMode() === 'tiers'"
+        [class.shadow-xs]="viewMode() === 'tiers'"
+        [class.bg-gray-100]="viewMode() !== 'tiers'"
+        [class.text-gray-700]="viewMode() !== 'tiers'"
+        [class.hover:bg-gray-200]="viewMode() !== 'tiers'">
+        <span>Tier Upgrade Requests</span>
+        @if (countPendingTiers() > 0) {
+          <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
+            {{ countPendingTiers() }} pending
+          </span>
+        } @else {
+          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
+                [class.bg-white/25]="viewMode() === 'tiers'"
+                [class.bg-gray-200]="viewMode() !== 'tiers'"
+                [class.text-white]="viewMode() === 'tiers'"
+                [class.text-gray-700]="viewMode() !== 'tiers'">
+            {{ tierRequests().length }}
+          </span>
+        }
+      </button>
+    </div>
+
+    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+      <!-- Tier Filter Dropdown -->
+      @if (viewMode() === 'stores') {
+        <div class="flex items-center gap-1.5">
+          <span class="text-xs font-bold text-gray-500 whitespace-nowrap">Tier:</span>
+          <select 
+            [ngModel]="selectedCategoryFilter()" 
+            (ngModelChange)="onCategoryFilterChange($event)"
+            class="bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-2 text-xs font-bold text-gray-700 outline-hidden cursor-pointer focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500">
+            <option value="all">All Tiers & Badges</option>
+            @for (cat of shopCategories(); track cat.id) {
+              <option [value]="cat.id">
+                {{ cat.name }}
+              </option>
+            }
+          </select>
+        </div>
+      }
+
+      <!-- Search Input -->
+      <div class="relative w-full sm:w-72">
+        <input 
+          type="text" 
+          [ngModel]="searchTerm()"
+          (ngModelChange)="onSearch($event)"
+          [placeholder]="viewMode() === 'stores' ? 'Search live stores by name, city, badge...' : 'Search applicant name, store, city...'"
+          class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- VIEW 1: LIVE STORES DIRECTORY -->
+  @if (viewMode() === 'stores') {
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      @if (isLoading()) {
+        <div class="p-12 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+          <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Loading active storefronts...
+        </div>
+      } @else if (filteredActiveStores().length === 0) {
+        <div class="p-12 text-center bg-gray-50/50">
+          <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto text-xl mb-3">
+            🏪
+          </div>
+          <p class="text-sm font-bold text-gray-800">No Live Stores Found</p>
+          <p class="text-xs text-gray-400 mt-1">No active stores match your search keyword, or no merchant has created a storefront yet.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+                <th class="py-3.5 px-4 font-extrabold">Store Profile</th>
+                <th class="py-3.5 px-4 font-extrabold">Tier</th>
+                <th class="py-3.5 px-4 font-extrabold">Catalog</th>
+                <th class="py-3.5 px-4 font-extrabold">Created Date</th>
+                <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (store of pagedActiveStores(); track store.id) {
+                <tr class="hover:bg-amber-50/30 transition-all duration-150">
+                  
+                  <!-- Store Profile -->
+                  <td class="py-4 px-4">
+                    <div class="flex items-center gap-3">
+                      @if (store.logoUrl) {
+                        <img [src]="formatImageUrl(store.logoUrl)" (error)="onImgError($event, store.name)" [alt]="store.name" class="w-11 h-11 rounded-xl object-cover border border-slate-200 shadow-2xs shrink-0">
+                      } @else {
+                        <div class="w-11 h-11 rounded-xl bg-gradient-to-br from-orange-400 to-amber-500 text-white flex items-center justify-center font-black text-sm shadow-2xs shrink-0">
+                          {{ (store.name || 'S')[0].toUpperCase() }}
+                        </div>
+                      }
+                      <div>
+                        <div class="font-extrabold text-gray-900 flex items-center gap-1.5">
+                          <span>{{ store.name }}</span>
+                          <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            Active
+                          </span>
+                        </div>
+                        <div class="text-[11px] font-mono text-gray-400 mt-0.5">
+                          /shops/{{ store.slug }}
+                        </div>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- Tier (read-only — seller must apply; admin only approves requests) -->
+                  <td class="py-4 px-4">
+                    <div class="space-y-1">
+                      <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[11px] font-extrabold border"
+                            [style.background-color]="(store.badgeColor || '#94A3B8') + '1A'"
+                            [style.color]="store.badgeColor || '#475569'"
+                            [style.border-color]="(store.badgeColor || '#94A3B8') + '55'">
+                        <span>{{ store.iconUrl || '🏷️' }}</span>
+                        <span>{{ store.badgeText || store.shopCategoryName || 'Bronze (Free)' }}</span>
+                      </span>
+                      <p class="text-[10px] text-slate-400">Seller apply → Approve/Reject</p>
+                    </div>
+                  </td>
+
+                  <!-- Products Count -->
+                  <td class="py-4 px-4">
+                    <button 
+                      type="button" 
+                      (click)="viewShopProducts(store.name, store.id)"
+                      class="inline-flex items-center px-3 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-800 font-extrabold text-xs transition-colors border border-orange-200/60 cursor-pointer shadow-2xs">
+                      {{ store.totalProducts }} Products
+                    </button>
+                  </td>
+
+                  <!-- Date -->
+                  <td class="py-4 px-4 text-xs text-gray-500 font-medium">
+                    {{ store.createdAt | date:'mediumDate' }}
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-4 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <!-- Details Modal -->
+                      <button 
+                        type="button" 
+                        (click)="openStoreDetails(store)"
+                        title="View Full Store Profile & Owner Details"
+                        class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer transition-colors border border-slate-200">
+                        Details
+                      </button>
+
+                      <!-- SuperAdmin Delete Shop -->
+                      <button 
+                        type="button" 
+                        (click)="openDeleteShopModal(store)"
+                        title="Delete Shop"
+                        class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs cursor-pointer transition-colors border border-rose-200">
+                        Delete
+                      </button>
+                    </div>
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Stores Pagination Bar -->
+        @if (filteredActiveStores().length > 0) {
+          <div class="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="text-gray-500 font-medium">
+              Showing <span class="font-bold text-gray-900">{{ startItemIndex() }}</span> to 
+              <span class="font-bold text-gray-900">{{ endItemIndex() }}</span> of 
+              <span class="font-bold text-gray-900">{{ currentTotalItems() }}</span> storefronts
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-gray-500 font-medium">Per page:</span>
+                <select 
+                  [ngModel]="pageSize()" 
+                  (ngModelChange)="setPageSize(+$event)"
+                  class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 outline-hidden cursor-pointer">
+                  @for (opt of pageSizeOptions; track opt) {
+                    <option [value]="opt">{{ opt }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button 
+                  type="button"
+                  [disabled]="currentPage() <= 1"
+                  (click)="goToPage(currentPage() - 1)"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-white font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                  ‹ Prev
+                </button>
+                @for (p of pageNumbers(); track p) {
+                  <button 
+                    type="button"
+                    (click)="goToPage(p)"
+                    [class]="p === currentPage() 
+                      ? 'px-2.5 py-1 rounded-lg bg-orange-600 text-white font-extrabold shadow-2xs' 
+                      : 'px-2.5 py-1 rounded-lg border border-gray-200 bg-white font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors'">
+                    {{ p }}
+                  </button>
+                }
+                <button 
+                  type="button"
+                  [disabled]="currentPage() >= currentTotalPages()"
+                  (click)="goToPage(currentPage() + 1)"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-white font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                  Next ›
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+    </div>
+  }
+
+  <!-- VIEW 2: SHOPKEEPER APPLICATIONS & VERIFICATION -->
+  @if (viewMode() === 'applications') {
+    
+    <!-- Sub-tabs for Applications -->
+    <div class="flex items-center gap-1.5 p-1 bg-white border border-gray-100 rounded-xl w-full sm:w-auto overflow-x-auto shadow-2xs">
+      <button 
+        type="button" 
+        (click)="switchTab('all')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+        [class.bg-orange-600]="activeTab() === 'all'"
+        [class.text-white]="activeTab() === 'all'"
+        [class.shadow-xs]="activeTab() === 'all'"
+        [class.bg-gray-100]="activeTab() !== 'all'"
+        [class.text-gray-700]="activeTab() !== 'all'"
+        [class.hover:bg-gray-200]="activeTab() !== 'all'">
+        All Applications ({{ allShopkeepers().length }})
+      </button>
+
+      <button 
+        type="button" 
+        (click)="switchTab('pending')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+        [class.bg-orange-600]="activeTab() === 'pending'"
+        [class.text-white]="activeTab() === 'pending'"
+        [class.shadow-xs]="activeTab() === 'pending'"
+        [class.bg-gray-100]="activeTab() !== 'pending'"
+        [class.text-gray-700]="activeTab() !== 'pending'"
+        [class.hover:bg-gray-200]="activeTab() !== 'pending'">
+        Pending
+        @if (countPending() > 0) {
+          <span class="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold"
+                [class.bg-white]="activeTab() === 'pending'"
+                [class.text-orange-700]="activeTab() === 'pending'"
+                [class.bg-amber-500]="activeTab() !== 'pending'"
+                [class.text-white]="activeTab() !== 'pending'">
+            {{ countPending() }}
+          </span>
+        }
+      </button>
+
+      <button 
+        type="button" 
+        (click)="switchTab('approved')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+        [class.bg-orange-600]="activeTab() === 'approved'"
+        [class.text-white]="activeTab() === 'approved'"
+        [class.shadow-xs]="activeTab() === 'approved'"
+        [class.bg-gray-100]="activeTab() !== 'approved'"
+        [class.text-gray-700]="activeTab() !== 'approved'"
+        [class.hover:bg-gray-200]="activeTab() !== 'approved'">
+        Approved ({{ countApproved() }})
+      </button>
+
+      <button 
+        type="button" 
+        (click)="switchTab('rejected')"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5"
+        [class.bg-orange-600]="activeTab() === 'rejected'"
+        [class.text-white]="activeTab() === 'rejected'"
+        [class.shadow-xs]="activeTab() === 'rejected'"
+        [class.bg-gray-100]="activeTab() !== 'rejected'"
+        [class.text-gray-700]="activeTab() !== 'rejected'"
+        [class.hover:bg-gray-200]="activeTab() !== 'rejected'">
+        Rejected ({{ countRejected() }})
+      </button>
+    </div>
+
+    <!-- APPLICATIONS TABLE -->
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      
+      @if (isLoading()) {
+        <div class="p-12 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+          <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Loading merchant requests...
+        </div>
+      } @else if (filteredShopkeepers().length === 0) {
+        <div class="p-12 text-center bg-gray-50/50">
+          <div class="w-12 h-12 rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center mx-auto text-xl mb-3">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+          </div>
+          <p class="text-sm font-bold text-gray-800">No Merchant Requests Found</p>
+          <p class="text-xs text-gray-400 mt-1">Try switching tabs or adjusting search query.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+                <th class="py-3.5 px-4 font-extrabold">Store Application</th>
+                <th class="py-3.5 px-4 font-extrabold">Merchant Name</th>
+                <th class="py-3.5 px-4 font-extrabold">Status</th>
+                <th class="py-3.5 px-4 font-extrabold">Applied Date</th>
+                <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (shop of pagedShopkeepers(); track shop.id) {
+                <tr class="hover:bg-amber-50/30 transition-all duration-150">
+                  
+                  <!-- Store Profile -->
+                  <td class="py-4 px-4">
+                    <div class="font-extrabold text-gray-900">{{ shop.storeName || (shop.name + "'s Store") }}</div>
+                    @if (shop.storeUrl) {
+                      <span class="text-[11px] font-mono text-gray-400 mt-0.5 block">
+                        /shops/{{ shop.storeUrl }}
+                      </span>
+                    }
+                  </td>
+
+                  <!-- Merchant Name (Direct Plain Text Only) -->
+                  <td class="py-4 px-4 text-xs font-bold text-gray-900">
+                    {{ shop.name }}
+                  </td>
+
+                  <!-- Status Badge -->
+                  <td class="py-4 px-4">
+                    @if (shop.status === 'Approved') {
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-emerald-50 text-emerald-800 border border-emerald-200">
+                        Approved
+                      </span>
+                    } @else if (shop.status === 'Pending') {
+                      <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-amber-50 text-amber-800 border border-amber-200">
+                        Pending Review
+                      </span>
+                    } @else {
+                      <div>
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-[11px] font-extrabold bg-rose-50 text-rose-800 border border-rose-200">
+                          Rejected
+                        </span>
+                        @if (shop.rejectionReason) {
+                          <p class="text-[10px] text-rose-600 mt-1 max-w-xs truncate" [title]="shop.rejectionReason">
+                            Reason: {{ shop.rejectionReason }}
+                          </p>
+                        }
+                      </div>
+                    }
+                  </td>
+
+                  <!-- Date -->
+                  <td class="py-4 px-4 text-xs text-gray-500 font-medium">
+                    {{ shop.createdAt | date:'mediumDate' }}
+                  </td>
+
+                  <!-- Actions -->
+                  <td class="py-4 px-4 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      
+                      <!-- View Details -->
+                      <button 
+                        type="button" 
+                        (click)="openApplicantDetails(shop)"
+                        title="View Applicant Profile & Store Details"
+                        class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs cursor-pointer transition-colors border border-slate-200">
+                        Details
+                      </button>
+
+                      <!-- View Products Link -->
+                      @if (shop.status === 'Approved') {
+                        <button 
+                          type="button" 
+                          (click)="viewShopProducts(shop.storeName, shop.shopId)"
+                          title="View products of this shop"
+                          class="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-800 font-bold text-xs cursor-pointer transition-colors border border-orange-200">
+                          Products
+                        </button>
+                      }
+
+                      <!-- Approve Action -->
+                      @if (shop.status !== 'Approved') {
+                        <button 
+                          type="button" 
+                          (click)="openApproveModal(shop)" 
+                          [disabled]="actionInProgress() === shop.id"
+                          class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs cursor-pointer transition-colors shadow-2xs disabled:opacity-50">
+                          {{ actionInProgress() === shop.id ? '...' : 'Approve' }}
+                        </button>
+                      }
+
+                      <!-- Reject Action -->
+                      @if (shop.status.toLowerCase() !== 'rejected') {
+                        <button 
+                          type="button" 
+                          (click)="openRejectModal(shop)" 
+                          [disabled]="actionInProgress() === shop.id"
+                          class="px-3 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs cursor-pointer transition-colors border border-rose-200 disabled:opacity-50">
+                          Reject
+                        </button>
+                      }
+
+                      <!-- Delete Action -->
+                      <button 
+                        type="button" 
+                        (click)="openDeleteShopkeeperModal(shop)" 
+                        title="Delete Store & Applicant"
+                        class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-xs cursor-pointer transition-colors border border-rose-200">
+                        Delete
+                      </button>
+
+                    </div>
+                  </td>
+
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Applications Pagination Bar -->
+        @if (filteredShopkeepers().length > 0) {
+          <div class="p-4 border-t border-gray-100 bg-gray-50/50 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <div class="text-gray-500 font-medium">
+              Showing <span class="font-bold text-gray-900">{{ startItemIndex() }}</span> to 
+              <span class="font-bold text-gray-900">{{ endItemIndex() }}</span> of 
+              <span class="font-bold text-gray-900">{{ currentTotalItems() }}</span> applications
+            </div>
+
+            <div class="flex items-center gap-3">
+              <div class="flex items-center gap-1.5">
+                <span class="text-gray-500 font-medium">Per page:</span>
+                <select 
+                  [ngModel]="pageSize()" 
+                  (ngModelChange)="setPageSize(+$event)"
+                  class="bg-white border border-gray-200 rounded-lg px-2 py-1 text-xs font-semibold text-gray-700 outline-hidden cursor-pointer">
+                  @for (opt of pageSizeOptions; track opt) {
+                    <option [value]="opt">{{ opt }}</option>
+                  }
+                </select>
+              </div>
+
+              <div class="flex items-center gap-1">
+                <button 
+                  type="button"
+                  [disabled]="currentPage() <= 1"
+                  (click)="goToPage(currentPage() - 1)"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-white font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                  ‹ Prev
+                </button>
+                @for (p of pageNumbers(); track p) {
+                  <button 
+                    type="button"
+                    (click)="goToPage(p)"
+                    [class]="p === currentPage() 
+                      ? 'px-2.5 py-1 rounded-lg bg-orange-600 text-white font-extrabold shadow-2xs' 
+                      : 'px-2.5 py-1 rounded-lg border border-gray-200 bg-white font-semibold text-gray-700 hover:bg-gray-50 cursor-pointer transition-colors'">
+                    {{ p }}
+                  </button>
+                }
+                <button 
+                  type="button"
+                  [disabled]="currentPage() >= currentTotalPages()"
+                  (click)="goToPage(currentPage() + 1)"
+                  class="px-2.5 py-1 rounded-lg border border-gray-200 bg-white font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors cursor-pointer">
+                  Next ›
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      }
+
+    </div>
+  }
+
+  <!-- VIEW 3: TIER UPGRADE & PACKAGE REQUESTS -->
+  @if (viewMode() === 'tiers') {
+    <div class="space-y-4">
+      <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2 shadow-sm">
+        <div>
+          <h3 class="text-sm font-black text-slate-900">Tier Upgrade Requests</h3>
+          <p class="text-xs text-slate-500 mt-0.5">
+            Sellers apply with payment proof — you only Approve or Reject. Direct assign is disabled.
+          </p>
+        </div>
+        <div class="flex items-center gap-2 text-[11px] font-bold">
+          <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">{{ countPendingTiers() }} pending</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200">{{ tierRequests().length }} total</span>
+        </div>
+      </div>
+
+      @if (tierRequests().length === 0) {
+        <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-14 text-center">
+          <p class="text-sm font-black text-slate-800">No upgrade requests yet</p>
+          <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">When a merchant submits Gold or Diamond with a receipt, it will show up here for review.</p>
+        </div>
+      } @else {
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
+          <div class="overflow-x-auto">
+            <table class="w-full min-w-[920px] text-left">
+              <thead>
+                <tr class="bg-slate-50 border-b border-slate-200 text-[10px] font-extrabold uppercase tracking-wider text-slate-500">
+                  <th class="py-3 px-4">Store / Merchant</th>
+                  <th class="py-3 px-4">Requested plan</th>
+                  <th class="py-3 px-4">Capacity</th>
+                  <th class="py-3 px-4">Payment</th>
+                  <th class="py-3 px-4">Status</th>
+                  <th class="py-3 px-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                @for (req of tierRequests(); track req.id) {
+                  <tr class="hover:bg-slate-50/80 transition-colors">
+                    <td class="py-4 px-4 align-top">
+                      <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-xl bg-slate-900 text-white text-xs font-black flex items-center justify-center shrink-0">
+                          {{ req.shopName.charAt(0).toUpperCase() }}
+                        </div>
+                        <div class="min-w-0">
+                          <p class="text-sm font-bold text-slate-900 truncate">{{ req.shopName }}</p>
+                          <p class="text-xs text-slate-500 mt-0.5 truncate">{{ req.merchantName }}</p>
+                          <p class="text-[11px] text-slate-400 mt-0.5">Current: <span class="font-semibold text-slate-600">{{ req.currentTier }}</span></p>
+                        </div>
+                      </div>
+                    </td>
+
+                    <td class="py-4 px-4 align-top">
+                      <div class="inline-flex flex-col gap-1">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border w-fit"
+                          [class.bg-amber-50]="req.requestedTier.toLowerCase().includes('gold')"
+                          [class.text-amber-900]="req.requestedTier.toLowerCase().includes('gold')"
+                          [class.border-amber-200]="req.requestedTier.toLowerCase().includes('gold')"
+                          [class.bg-cyan-50]="req.requestedTier.toLowerCase().includes('diamond')"
+                          [class.text-cyan-900]="req.requestedTier.toLowerCase().includes('diamond')"
+                          [class.border-cyan-200]="req.requestedTier.toLowerCase().includes('diamond')"
+                          [class.bg-slate-50]="!req.requestedTier.toLowerCase().includes('gold') && !req.requestedTier.toLowerCase().includes('diamond')"
+                          [class.text-slate-800]="!req.requestedTier.toLowerCase().includes('gold') && !req.requestedTier.toLowerCase().includes('diamond')"
+                          [class.border-slate-200]="!req.requestedTier.toLowerCase().includes('gold') && !req.requestedTier.toLowerCase().includes('diamond')">
+                          {{ req.requestedTier }}
+                        </span>
+                        <span class="text-sm font-black text-slate-900 font-mono">${{ req.price | number }}</span>
+                      </div>
+                    </td>
+
+                    <td class="py-4 px-4 align-top">
+                      <p class="text-sm font-bold text-slate-900">
+                        {{ req.requestedTier.toLowerCase().includes('diamond') ? '5,000' : (req.requestedTier.toLowerCase().includes('gold') ? '1,000' : '200') }}
+                        <span class="text-xs font-semibold text-slate-500">products</span>
+                      </p>
+                      <p class="text-[11px] text-slate-400 mt-0.5">Warehouse listing limit</p>
+                    </td>
+
+                    <td class="py-4 px-4 align-top max-w-[220px]">
+                      <p class="text-xs font-semibold text-slate-800 truncate" [title]="req.paymentMethod">{{ req.paymentMethod || '—' }}</p>
+                      <p class="text-[11px] text-slate-500 line-clamp-2 mt-1" [title]="req.referenceNote">{{ req.referenceNote || 'No reference note' }}</p>
+                      <div class="flex items-center gap-2 mt-2 flex-wrap">
+                        <span class="text-[10px] text-slate-400 font-medium">{{ req.requestedAt | date:'mediumDate' }}</span>
+                        @if (req.receiptUrl) {
+                          <button type="button" (click)="openReceiptPreview(req.receiptUrl, req.shopName)"
+                            class="px-2 py-0.5 rounded-md bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-[10px] font-bold cursor-pointer transition-colors">
+                            View receipt
+                          </button>
+                        }
+                      </div>
+                    </td>
+
+                    <td class="py-4 px-4 align-top">
+                      @if (req.status === 'Approved') {
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">Approved</span>
+                      } @else if (req.status === 'Pending') {
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Pending</span>
+                      } @else {
+                        <span class="inline-flex items-center px-2.5 py-1 rounded-lg text-[11px] font-bold bg-rose-50 text-rose-800 border border-rose-200">Rejected</span>
+                      }
+                    </td>
+
+                    <td class="py-4 px-4 align-top text-right">
+                      <div class="inline-flex items-center justify-end gap-1.5">
+                        @if (req.status === 'Pending') {
+                          <button type="button" (click)="approveTierUpgrade(req)" [disabled]="actionInProgress() === req.id"
+                            class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50">
+                            {{ actionInProgress() === req.id ? '…' : 'Approve' }}
+                          </button>
+                          <button type="button" (click)="rejectTierUpgrade(req)" [disabled]="actionInProgress() === req.id"
+                            class="px-3 py-1.5 rounded-lg bg-white hover:bg-rose-50 text-rose-700 font-bold text-xs cursor-pointer transition-colors border border-rose-200 disabled:opacity-50">
+                            Reject
+                          </button>
+                        } @else {
+                          <button type="button" (click)="deleteTierUpgrade(req)"
+                            class="px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs cursor-pointer transition-colors border border-slate-200">
+                            Remove
+                          </button>
+                        }
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+  }
+
+</div>
+
+<!-- REJECTION MODAL -->
+@if (rejectModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeRejectModal()"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-base font-bold text-gray-900">
+          Reject Store: {{ selectedShop()?.storeName }}
+        </h3>
+        <button (click)="closeRejectModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-2">
+        <p class="text-xs text-gray-600">
+          Specify why <span class="font-bold text-gray-900">"{{ selectedShop()?.storeName }}"</span> is being rejected. The applicant will be notified with this feedback.
+        </p>
+
+        <textarea 
+          [(ngModel)]="rejectionReason"
+          rows="4" 
+          placeholder="e.g. Incomplete registration credentials, duplicate account, or invalid storefront details..."
+          class="w-full bg-gray-50 border border-gray-200 rounded-xl p-3 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"></textarea>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-2">
+        <button 
+          type="button" 
+          (click)="closeRejectModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmReject()"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shadow-xs">
+          Confirm Rejection
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- STORE DETAILS MODAL -->
+@if (detailsModalOpen() && selectedStoreDetails(); as store) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeDetailsModal()"></div>
+    <div class="relative bg-white rounded-3xl max-w-xl w-full p-6 shadow-2xl space-y-5 border border-gray-100 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div class="flex items-center gap-3">
+          <div class="w-12 h-12 rounded-2xl bg-orange-100 border border-orange-200 text-orange-700 flex items-center justify-center font-black text-lg shrink-0">
+            {{ (store.name || 'S')[0].toUpperCase() }}
+          </div>
+          <div>
+            <h3 class="text-base font-black text-gray-900">{{ store.name }}</h3>
+            <p class="text-xs font-mono text-gray-400">/shops/{{ store.slug }}</p>
+          </div>
+        </div>
+        <button (click)="closeDetailsModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Banner if available -->
+      @if (store.bannerUrl) {
+        <div class="h-32 rounded-2xl overflow-hidden border border-gray-100">
+          <img [src]="store.bannerUrl" alt="Store banner" class="w-full h-full object-cover">
+        </div>
+      }
+
+      <!-- Grid of Information -->
+      <div class="grid grid-cols-2 gap-3 text-xs">
+        
+        @if (selectedApplicant(); as applicant) {
+          <div class="col-span-2 p-4 bg-slate-900 text-white rounded-2xl shadow-md space-y-3">
+            <div class="flex items-center justify-between">
+              <span class="text-orange-400 font-extrabold text-xs uppercase tracking-wider">
+                Merchant Identity & Verification Details
+              </span>
+              <span class="px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider"
+                    [class.bg-emerald-500]="applicant.status === 'Approved'"
+                    [class.bg-amber-500]="applicant.status === 'Pending'"
+                    [class.bg-rose-500]="applicant.status === 'Rejected'"
+                    class="text-white">
+                {{ applicant.status }}
+              </span>
+            </div>
+
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 text-xs">
+              <div>
+                <span class="text-slate-400 block text-[11px]">Merchant Name</span>
+                <span class="font-extrabold text-white">{{ applicant.name }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Email Address</span>
+                <span class="font-bold text-white">{{ applicant.email }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Phone</span>
+                <span class="font-bold text-white font-mono">{{ applicant.phone || 'N/A' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">City / Country</span>
+                <span class="font-bold text-white">{{ applicant.city || 'N/A' }}, {{ applicant.country || 'Pakistan' }}</span>
+              </div>
+              <div>
+                <span class="text-slate-400 block text-[11px]">Registration Date</span>
+                <span class="font-bold text-white">{{ applicant.createdAt | date:'mediumDate' }}</span>
+              </div>
+            </div>
+
+            <!-- Identity Document Verification -->
+            <div class="p-3.5 bg-slate-800/90 rounded-2xl border border-slate-700/80 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-[11px] font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
+                  <span>🪪</span>
+                  <span>Government Identity Proof ({{ applicant.documentType || 'CNIC / National ID' }})</span>
+                </span>
+                <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-slate-700 text-slate-200 font-mono font-bold">
+                  Doc #: {{ applicant.documentNumber || 'Verified Official Record' }}
+                </span>
+              </div>
+
+              <!-- Side-by-Side Proof Cards -->
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <!-- Front Side Preview -->
+                <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-700/60 space-y-2">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-300 font-bold">Front Side Proof</span>
+                    @if (applicant.cnicFrontUrl || applicant.documentUrl) {
+                      <button
+                        type="button"
+                        (click)="openDocumentLightbox(applicant.cnicFrontUrl || applicant.documentUrl, applicant.storeName || applicant.name, 'CNIC / ID — Front Side')"
+                        class="text-[10px] text-amber-400 hover:text-amber-300 font-bold cursor-pointer bg-transparent border-0 p-0">
+                        Open Full ↗
+                      </button>
+                    }
+                  </div>
+                  @if (applicant.cnicFrontUrl || applicant.documentUrl) {
+                    <button
+                      type="button"
+                      (click)="openDocumentLightbox(applicant.cnicFrontUrl || applicant.documentUrl, applicant.storeName || applicant.name, 'CNIC / ID — Front Side')"
+                      class="h-28 w-full rounded-lg overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-700 cursor-zoom-in p-0">
+                      <img 
+                        [src]="formatImageUrl(applicant.cnicFrontUrl || applicant.documentUrl)" 
+                        (error)="onImgError($event, 'ID-Front')"
+                        alt="Front Side ID" 
+                        class="w-full h-full object-cover pointer-events-none">
+                    </button>
+                  } @else {
+                    <div class="h-28 rounded-lg bg-slate-950 flex flex-col items-center justify-center text-slate-500 text-xs border border-dashed border-slate-700">
+                      <span class="text-xl mb-1">📄</span>
+                      <span>Digital Onboarding Record</span>
+                    </div>
+                  }
+                </div>
+
+                <!-- Back Side Preview -->
+                <div class="bg-slate-900/90 rounded-xl p-2.5 border border-slate-700/60 space-y-2">
+                  <div class="flex items-center justify-between text-[11px]">
+                    <span class="text-slate-300 font-bold">Back Side Proof</span>
+                    @if (applicant.cnicBackUrl || applicant.documentUrl) {
+                      <button
+                        type="button"
+                        (click)="openDocumentLightbox(applicant.cnicBackUrl || applicant.documentUrl, applicant.storeName || applicant.name, 'CNIC / ID — Back Side')"
+                        class="text-[10px] text-amber-400 hover:text-amber-300 font-bold cursor-pointer bg-transparent border-0 p-0">
+                        Open Full ↗
+                      </button>
+                    }
+                  </div>
+                  @if (applicant.cnicBackUrl) {
+                    <button
+                      type="button"
+                      (click)="openDocumentLightbox(applicant.cnicBackUrl, applicant.storeName || applicant.name, 'CNIC / ID — Back Side')"
+                      class="h-28 w-full rounded-lg overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-700 cursor-zoom-in p-0">
+                      <img 
+                        [src]="formatImageUrl(applicant.cnicBackUrl)" 
+                        (error)="onImgError($event, 'ID-Back')"
+                        alt="Back Side ID" 
+                        class="w-full h-full object-cover pointer-events-none">
+                    </button>
+                  } @else if (applicant.documentUrl) {
+                    <button
+                      type="button"
+                      (click)="openDocumentLightbox(applicant.documentUrl, applicant.storeName || applicant.name, 'Submitted Document')"
+                      class="h-28 w-full rounded-lg overflow-hidden bg-slate-950 flex items-center justify-center border border-slate-700 cursor-zoom-in p-0">
+                      <img 
+                        [src]="formatImageUrl(applicant.documentUrl)" 
+                        (error)="onImgError($event, 'ID-Doc')"
+                        alt="Submitted Document" 
+                        class="w-full h-full object-cover pointer-events-none">
+                    </button>
+                  } @else {
+                    <div class="h-28 rounded-lg bg-slate-950 flex flex-col items-center justify-center text-slate-500 text-xs border border-dashed border-slate-700">
+                      <span class="text-xl mb-1">📄</span>
+                      <span>Single Page / Verified Record</span>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Action Buttons for Applicant -->
+            <div class="pt-2 flex items-center justify-end gap-2 border-t border-slate-800">
+              <button 
+                type="button" 
+                (click)="openDeleteShopkeeperModal(applicant)"
+                class="px-3.5 py-1.5 rounded-xl border border-rose-500/40 bg-rose-500/10 hover:bg-rose-500/20 text-rose-300 font-bold text-xs transition-colors cursor-pointer flex items-center gap-1.5">
+                <span>🗑️</span>
+                <span>Delete Store</span>
+              </button>
+              @if (applicant.status === 'Pending') {
+                <button 
+                  type="button" 
+                  (click)="closeDetailsModal(); openRejectModal(applicant)"
+                  class="px-3.5 py-1.5 rounded-xl border border-rose-400/40 bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 font-bold text-xs transition-colors cursor-pointer">
+                  Reject Application
+                </button>
+                <button 
+                  type="button" 
+                  (click)="closeDetailsModal(); approveShop(applicant)"
+                  class="px-4 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-md shadow-emerald-600/30 transition-all cursor-pointer">
+                  Approve Storefront
+                </button>
+              }
+            </div>
+          </div>
+        }
+
+        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+          <span class="text-gray-400 block font-medium">City / Location</span>
+          <span class="font-bold text-gray-900">{{ store.city || 'N/A' }}, {{ store.country || 'Pakistan' }}</span>
+        </div>
+
+        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
+          <div class="flex items-center justify-between gap-2">
+            <span class="text-gray-400 block font-medium">Platform Shop Rating</span>
+            <span class="font-extrabold text-amber-600">{{ store.rating ? (store.rating | number:'1.1-1') : '0.0' }} / 5.0</span>
+          </div>
+          <div class="flex items-center gap-1">
+            @for (star of [1,2,3,4,5]; track star) {
+              <button
+                type="button"
+                (click)="rateShop(store, star)"
+                class="w-8 h-8 rounded-lg border text-sm font-black transition-colors cursor-pointer"
+                [class.bg-amber-500]="(store.rating || 0) >= star"
+                [class.text-white]="(store.rating || 0) >= star"
+                [class.border-amber-500]="(store.rating || 0) >= star"
+                [class.bg-white]="(store.rating || 0) < star"
+                [class.text-amber-500]="(store.rating || 0) < star"
+                [class.border-amber-200]="(store.rating || 0) < star"
+                [disabled]="actionInProgress() === ('rate-' + store.id)"
+                [title]="'Rate ' + star + ' stars'">
+                {{ star }}
+              </button>
+            }
+          </div>
+          <p class="text-[10px] text-gray-400">Super Admin can rate any shop (1–5).</p>
+        </div>
+
+        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+          <span class="text-gray-400 block font-medium">Total Products</span>
+          <span class="font-extrabold text-gray-900">📦 {{ store.totalProducts }} items</span>
+        </div>
+
+        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+          <span class="text-gray-400 block font-medium">Store Established Date</span>
+          <span class="font-bold text-gray-900">{{ store.createdAt | date:'mediumDate' }}</span>
+        </div>
+
+        @if (store.phone) {
+          <div class="col-span-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <span class="text-gray-400 block font-medium">Store Hotline / Support</span>
+            <span class="font-bold text-gray-900 font-mono">{{ store.phone }}</span>
+          </div>
+        }
+
+        @if (store.description) {
+          <div class="col-span-2 p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <span class="text-gray-400 block font-medium">Store Description & Bio</span>
+            <p class="text-gray-700 mt-1 leading-relaxed">{{ store.description }}</p>
+          </div>
+        }
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeDetailsModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer border border-gray-200">
+          Close Window
+        </button>
+
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            (click)="openDeleteShopModal(store)"
+            class="px-4 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs cursor-pointer transition-colors flex items-center gap-1.5">
+            <span>🗑️</span>
+            <span>Delete Store</span>
+          </button>
+          <button 
+            type="button" 
+            (click)="viewShopProducts(store.name, store.id)"
+            class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs cursor-pointer shadow-xs transition-colors flex items-center gap-1.5">
+            <span>📦</span>
+            <span>View Shop Products</span>
+          </button>
+        </div>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- DELETE SHOP CONFIRMATION MODAL -->
+@if (deleteShopModalOpen() && shopToDelete()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 text-left space-y-4">
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shadow-inner shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-base font-black text-slate-900 tracking-tight">Delete Store</h3>
+          <p class="text-xs text-slate-500">Shop: <strong class="text-slate-800">{{ shopToDelete()!.name }}</strong></p>
+        </div>
+      </div>
+
+      <div class="space-y-2 text-xs">
+        <label class="block font-bold text-slate-700">
+          Reason for Deletion *
+        </label>
+        <textarea 
+          [ngModel]="deleteShopReason()" 
+          (ngModelChange)="deleteShopReason.set($event)"
+          rows="3"
+          placeholder="Specify reason for store removal (e.g. Terms violation, fraudulent store, merchant requested shutdown)..."
+          class="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-rose-500"></textarea>
+      </div>
+
+      <p class="text-[11px] text-rose-600 font-medium bg-rose-50 p-2.5 rounded-xl border border-rose-100">
+        ⚠️ This will deactivate the shop and remove its catalog listings from the customer marketplace.
+      </p>
+
+      <div class="flex items-center justify-end gap-2 pt-2">
+        <button 
+          type="button"
+          (click)="closeDeleteShopModal()"
+          class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button"
+          (click)="confirmDeleteShop()"
+          [disabled]="actionInProgress() === shopToDelete()!.id || !deleteShopReason().trim()"
+          class="px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition-all cursor-pointer disabled:opacity-50">
+          {{ actionInProgress() === shopToDelete()!.id ? 'Deleting...' : 'Confirm Delete Shop' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- DELETE TIER CONFIRMATION MODAL -->
+@if (deleteTierModalOpen() && tierToDelete()) {
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 text-center">
+      <div class="w-14 h-14 mx-auto mb-4 rounded-2xl bg-rose-50 text-rose-600 flex items-center justify-center border border-rose-100 shadow-inner text-2xl">
+        🗑️
+      </div>
+
+      <h3 class="text-lg font-black text-slate-900 tracking-tight mb-2">Delete Tier / Badge</h3>
+      <p class="text-xs text-slate-500 mb-2">
+        Are you sure you want to delete tier <strong class="text-slate-800">"{{ tierToDelete()!.name }}"</strong>?
+      </p>
+      <p class="text-[11px] text-rose-600 font-medium mb-6 bg-rose-50 p-2.5 rounded-xl border border-rose-100">
+        ⚠️ Shops currently assigned to this tier will have their tier reset to unassigned.
+      </p>
+
+      <div class="flex items-center justify-center gap-3">
+        <button 
+          type="button"
+          (click)="closeDeleteTierModal()"
+          class="flex-1 px-4 py-2.5 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button"
+          (click)="confirmDeleteTier()"
+          class="flex-1 px-4 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-600/30 transition-all cursor-pointer">
+          Yes, Delete Tier
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ASSIGN SHOP TIER & BADGE MODAL -->
+@if (assignTierModalOpen() && shopToAssign()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-5">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center text-lg font-black border border-amber-200 shadow-xs">
+            💎
+          </div>
+          <div>
+            <h3 class="text-base font-black text-gray-900 tracking-tight">Assign Store Tier & Badge</h3>
+            <p class="text-[11px] text-gray-400 font-medium">Configure store prestige level for "{{ shopToAssign()!.name }}"</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          (click)="closeAssignTierModal()" 
+          class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Form Content -->
+      <div class="space-y-4">
+        
+        <!-- Clickable Tier Cards -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-2">Select Marketplace Tier (Click to Select)</label>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+            <!-- Standard / None option -->
+            <button 
+              type="button" 
+              (click)="assignSelectedTierId.set(null); assignCustomBadge.set('')"
+              class="p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between"
+              [class.border-orange-500]="assignSelectedTierId() === null"
+              [class.bg-orange-50/60]="assignSelectedTierId() === null"
+              [class.ring-2]="assignSelectedTierId() === null"
+              [class.ring-orange-500/20]="assignSelectedTierId() === null"
+              [class.border-gray-200]="assignSelectedTierId() !== null"
+              [class.hover:border-gray-300]="assignSelectedTierId() !== null">
+              <div class="text-xl mb-1">🏪</div>
+              <div class="font-bold text-xs text-gray-900">Standard</div>
+              <div class="text-[10px] text-gray-400">Regular Store</div>
+            </button>
+
+            <!-- Dynamic Category Tiers -->
+            @for (tier of shopCategories(); track tier.id) {
+              <button 
+                type="button" 
+                (click)="assignSelectedTierId.set(tier.id); assignCustomBadge.set(tier.badgeText || tier.name)"
+                class="p-3 rounded-xl border text-left cursor-pointer transition-all flex flex-col justify-between"
+                [class.border-orange-500]="assignSelectedTierId() === tier.id"
+                [class.bg-orange-50/60]="assignSelectedTierId() === tier.id"
+                [class.ring-2]="assignSelectedTierId() === tier.id"
+                [class.ring-orange-500/20]="assignSelectedTierId() === tier.id"
+                [class.border-gray-200]="assignSelectedTierId() !== tier.id"
+                [class.hover:border-gray-300]="assignSelectedTierId() !== tier.id">
+                <div class="text-xl mb-1">{{ tier.iconUrl || '💎' }}</div>
+                <div class="font-bold text-xs text-gray-900">{{ tier.name }}</div>
+                <div class="text-[10px] font-bold" [style.color]="tier.badgeColor || '#D97706'">
+                  {{ tier.badgeText || tier.name }}
+                </div>
+              </button>
+            }
+          </div>
+        </div>
+
+        <!-- Tier Dropdown Fallback -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1.5">Or Choose from Dropdown</label>
+          <select 
+            [ngModel]="assignSelectedTierId()" 
+            (ngModelChange)="assignSelectedTierId.set($event)"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-semibold text-gray-800 outline-hidden focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 cursor-pointer">
+            <option [ngValue]="null">-- None (Standard Store / Unassigned) --</option>
+            @for (tier of shopCategories(); track tier.id) {
+              <option [value]="tier.id">
+                {{ tier.iconUrl || '💎' }} {{ tier.name }} (Badge: {{ tier.badgeText || tier.name }})
+              </option>
+            }
+          </select>
+        </div>
+
+        <!-- Custom Badge Text Override -->
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1.5">Custom Badge Text (Optional Override)</label>
+          <input 
+            type="text" 
+            [ngModel]="assignCustomBadge()" 
+            (ngModelChange)="assignCustomBadge.set($event)"
+            placeholder="e.g. Official Diamond Partner, Top Rated" 
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+          <p class="text-[11px] text-gray-400 mt-1">Leave empty to use the standard tier name and badge text.</p>
+        </div>
+
+        <!-- Live Preview -->
+        <div class="p-3.5 bg-gray-50 rounded-xl border border-gray-200 space-y-1.5">
+          <span class="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">Live Store Badge Preview</span>
+          <div class="flex items-center gap-2">
+            @if (assignSelectedTierId()) {
+              <div class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-xs bg-amber-50 text-amber-700 border border-amber-300">
+                <span>💎</span>
+                <span>{{ assignCustomBadge().trim() || 'Tier Badge' }}</span>
+              </div>
+            } @else {
+              <span class="text-xs text-gray-400 italic">No badge assigned (Standard Store)</span>
+            }
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeAssignTierModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmAssignTier()"
+          [disabled]="actionInProgress() === shopToAssign()!.id"
+          class="px-4 py-2.5 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50 flex items-center gap-1.5">
+          <span>💾</span>
+          <span>{{ actionInProgress() === shopToAssign()!.id ? 'Saving...' : 'Save Tier Assignment' }}</span>
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- MANAGE SHOP TIERS / CATEGORIES MODAL -->
+@if (manageTiersModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-5">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-black border border-orange-200 shadow-xs">
+            👑
+          </div>
+          <div>
+            <h3 class="text-base font-black text-gray-900 tracking-tight">Shop Tiers & Category Badges</h3>
+            <p class="text-[11px] text-gray-400 font-medium">Create and customize tiers like Diamond, Gold, Silver, and Premium badges.</p>
+          </div>
+        </div>
+        
+        <div class="flex items-center gap-2">
+          <button 
+            type="button" 
+            (click)="openCreateTierModal()"
+            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs cursor-pointer transition-colors">
+            <span>+ Add Tier</span>
+          </button>
+          <button 
+            type="button" 
+            (click)="closeManageTiersModal()" 
+            class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
+            ✕
+          </button>
+        </div>
+      </div>
+
+      <!-- Tiers Table -->
+      <div class="border border-gray-100 rounded-xl overflow-hidden shadow-2xs">
+        @if (shopCategories().length === 0) {
+          <div class="p-8 text-center text-gray-400 text-xs">
+            No tiers found. Click "+ Add Tier" to define one.
+          </div>
+        } @else {
+          <table class="w-full text-left text-xs">
+            <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
+              <tr>
+                <th class="py-2.5 px-3">Icon & Name</th>
+                <th class="py-2.5 px-3">Badge Preview</th>
+                <th class="py-2.5 px-3 text-center">Order</th>
+                <th class="py-2.5 px-3 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              @for (tier of shopCategories(); track tier.id) {
+                <tr class="hover:bg-orange-50/20 transition-colors">
+                  <td class="py-3 px-3">
+                    <div class="flex items-center gap-2">
+                      <span class="text-base">{{ tier.iconUrl || '💎' }}</span>
+                      <div>
+                        <div class="font-bold text-gray-900">{{ tier.name }}</div>
+                        <div class="text-[10px] text-gray-400 font-mono">{{ tier.slug }}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td class="py-3 px-3">
+                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-2xs"
+                          [style.background-color]="(tier.badgeColor || '#F59E0B') + '1A'"
+                          [style.color]="tier.badgeColor || '#D97706'"
+                          [style.border]="'1px solid ' + (tier.badgeColor || '#F59E0B') + '55'">
+                      <span>{{ tier.iconUrl || '💎' }}</span>
+                      <span>{{ tier.badgeText || tier.name }}</span>
+                    </span>
+                  </td>
+                  <td class="py-3 px-3 text-center font-mono font-bold text-gray-600">
+                    {{ tier.displayOrder }}
+                  </td>
+                  <td class="py-3 px-3 text-right">
+                    <div class="flex items-center justify-end gap-1.5">
+                      <button 
+                        type="button" 
+                        (click)="openEditTierModal(tier)"
+                        class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] cursor-pointer transition-colors">
+                        ✏️ Edit
+                      </button>
+                      <button 
+                        type="button" 
+                        (click)="deleteTier(tier)"
+                        class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] cursor-pointer transition-colors border border-rose-200">
+                        🗑️ Delete
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        }
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="flex items-center justify-end pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeManageTiersModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Close
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- CREATE / EDIT TIER SUB-MODAL -->
+@if (editingTierModalOpen()) {
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-4">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-sm font-black text-gray-900 tracking-tight">
+          {{ editingTier() ? 'Edit Tier: ' + editingTier()!.name : 'Create New Shop Tier' }}
+        </h3>
+        <button 
+          type="button" 
+          (click)="closeEditingTierModal()" 
+          class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Form -->
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Tier Name *</label>
+          <input 
+            type="text" 
+            [ngModel]="tierFormName()" 
+            (ngModelChange)="tierFormName.set($event)"
+            placeholder="e.g. Diamond, Gold, Silver, Platinum"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Badge Text</label>
+          <input 
+            type="text" 
+            [ngModel]="tierFormBadgeText()" 
+            (ngModelChange)="tierFormBadgeText.set($event)"
+            placeholder="e.g. Diamond Partner"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Badge Color Hex</label>
+            <div class="flex items-center gap-2">
+              <input 
+                type="color" 
+                [ngModel]="tierFormBadgeColor()" 
+                (ngModelChange)="tierFormBadgeColor.set($event)"
+                class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer p-0.5">
+              <input 
+                type="text" 
+                [ngModel]="tierFormBadgeColor()" 
+                (ngModelChange)="tierFormBadgeColor.set($event)"
+                placeholder="#06B6D4"
+                class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-mono outline-hidden">
+            </div>
+          </div>
+
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Badge Icon / Emoji</label>
+            <input 
+              type="text" 
+              [ngModel]="tierFormIcon()" 
+              (ngModelChange)="tierFormIcon.set($event)"
+              placeholder="💎"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-center text-base outline-hidden">
+          </div>
+        </div>
+
+        <!-- Quick emoji selectors -->
+        <div>
+          <span class="text-[10px] text-gray-400 block font-bold uppercase mb-1">Quick Select Icon:</span>
+          <div class="flex items-center gap-1.5 flex-wrap">
+            @for (em of ['💎', '🥇', '🥈', '🥉', '⭐', '👑', '🔥', '🏆', '✨']; track em) {
+              <button 
+                type="button" 
+                (click)="tierFormIcon.set(em)"
+                class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-orange-100 text-sm flex items-center justify-center cursor-pointer transition-colors"
+                [class.bg-orange-200]="tierFormIcon() === em">
+                {{ em }}
+              </button>
+            }
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Display Order</label>
+            <input 
+              type="number" 
+              [ngModel]="tierFormOrder()" 
+              (ngModelChange)="tierFormOrder.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Price (USD)</label>
+            <input 
+              type="number" 
+              [ngModel]="tierFormPriceUsd()" 
+              (ngModelChange)="tierFormPriceUsd.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Max Products</label>
+            <input 
+              type="number" 
+              [ngModel]="tierFormMaxProducts()" 
+              (ngModelChange)="tierFormMaxProducts.set(+$event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
+          </div>
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Description (Optional)</label>
+          <textarea 
+            rows="2"
+            [ngModel]="tierFormDesc()" 
+            (ngModelChange)="tierFormDesc.set($event)"
+            placeholder="Brief tier benefits or prestige description"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden resize-none"></textarea>
+        </div>
+
+        <!-- Preview -->
+        <div class="p-2.5 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
+          <span class="text-[11px] font-bold text-gray-500">Preview:</span>
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black shadow-2xs"
+                [style.background-color]="(tierFormBadgeColor() || '#F59E0B') + '1A'"
+                [style.color]="tierFormBadgeColor() || '#D97706'"
+                [style.border]="'1px solid ' + (tierFormBadgeColor() || '#F59E0B') + '55'">
+            <span>{{ tierFormIcon() || '💎' }}</span>
+            <span>{{ tierFormBadgeText().trim() || tierFormName().trim() || 'Tier Badge' }}</span>
+          </span>
+        </div>
+
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeEditingTierModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="saveTier()"
+          [disabled]="isSavingTier()"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50">
+          {{ isSavingTier() ? 'Saving...' : 'Save Tier' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- CONFIRM STORE APPROVAL MODAL -->
+@if (approveModalOpen() && shopToApprove()) {
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-150">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-gray-100 p-6 space-y-4 text-center">
+      <div class="w-14 h-14 rounded-2xl bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto text-2xl shadow-sm border border-emerald-100">
+        🏪
+      </div>
+      <div>
+        <h3 class="text-base font-black text-gray-900">Approve Store Application?</h3>
+        <p class="text-xs text-gray-500 mt-1">
+          Are you sure you want to approve <strong class="text-gray-900">{{ shopToApprove()!.storeName || shopToApprove()!.name }}</strong>?
+        </p>
+        <p class="text-[11px] text-gray-400 mt-1">
+          The merchant application will be marked as approved, their storefront will become active, and they can publish products to the marketplace.
+        </p>
+      </div>
+
+      <div class="flex items-center justify-center gap-3 pt-2">
+        <button 
+          type="button" 
+          (click)="closeApproveModal()" 
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="confirmApproveShop()" 
+          class="px-5 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition-colors cursor-pointer flex items-center gap-1.5">
+          <span>✓</span>
+          <span>Yes, Approve Store</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- EDIT STORE PROFILE & MEDIA MODAL (SUPER ADMIN) -->
+@if (editStoreModalOpen() && editingShop()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-5 max-h-[90vh] overflow-y-auto">
+      
+      <!-- Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <div class="flex items-center gap-2.5">
+          <div class="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center text-lg font-black border border-blue-200 shadow-xs">
+            🏪
+          </div>
+          <div>
+            <h3 class="text-base font-black text-gray-900 tracking-tight">Edit Store Profile & Media</h3>
+            <p class="text-[11px] text-gray-400 font-medium">Update store brand media, name, contact and address info as Super Admin.</p>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          (click)="closeEditStoreModal()" 
+          class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Media Section: Logo & Banner -->
+      <div class="space-y-3 p-4 bg-gray-50/70 rounded-2xl border border-gray-200">
+        <span class="text-xs font-black text-gray-800 uppercase tracking-wider block">Store Media Assets</span>
+
+        <!-- Logo Upload -->
+        <div class="flex items-center gap-4">
+          <div class="w-16 h-16 rounded-2xl bg-white border border-gray-200 overflow-hidden flex items-center justify-center shrink-0 shadow-2xs">
+            @if (editLogoUrl()) {
+              <img [src]="formatImageUrl(editLogoUrl())" alt="Store Logo" class="w-full h-full object-cover">
+            } @else {
+              <span class="text-2xl text-gray-300">🏪</span>
+            }
+          </div>
+          <div class="space-y-1">
+            <span class="text-xs font-bold text-gray-700 block">Store Brand Logo</span>
+            <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-100 text-xs font-bold text-gray-700 cursor-pointer shadow-2xs transition-colors">
+              <span>{{ isUploadingLogo() ? '⏳' : '📁' }}</span>
+              <span>{{ isUploadingLogo() ? 'Uploading Logo...' : 'Upload New Logo' }}</span>
+              <input type="file" accept="image/*" (change)="onShopLogoSelected($event)" class="hidden" [disabled]="isUploadingLogo()">
+            </label>
+            <span class="text-[10px] text-gray-400 block">Square image recommended (JPG, PNG, WebP)</span>
+          </div>
+        </div>
+
+        <!-- Banner Upload -->
+        <div class="space-y-1.5 pt-2 border-t border-gray-200">
+          <span class="text-xs font-bold text-gray-700 block">Storefront Banner</span>
+          <div class="relative w-full h-24 rounded-xl bg-white border border-gray-200 overflow-hidden flex items-center justify-center shadow-2xs">
+            @if (editBannerUrl()) {
+              <img [src]="formatImageUrl(editBannerUrl())" alt="Store Banner" class="w-full h-full object-cover">
+            } @else {
+              <span class="text-xs text-gray-400">No banner uploaded yet</span>
+            }
+          </div>
+          <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-gray-300 hover:bg-gray-100 text-xs font-bold text-gray-700 cursor-pointer shadow-2xs transition-colors">
+            <span>{{ isUploadingBanner() ? '⏳' : '📁' }}</span>
+            <span>{{ isUploadingBanner() ? 'Uploading Banner...' : 'Upload New Banner' }}</span>
+            <input type="file" accept="image/*" (change)="onShopBannerSelected($event)" class="hidden" [disabled]="isUploadingBanner()">
+          </label>
+        </div>
+      </div>
+
+      <!-- Store Details Form -->
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Store Name *</label>
+          <input 
+            type="text" 
+            [ngModel]="editName()" 
+            (ngModelChange)="editName.set($event)"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
+        </div>
+
+        <div>
+          <label class="block font-bold text-gray-700 mb-1">Description</label>
+          <textarea 
+            rows="2"
+            [ngModel]="editDescription()" 
+            (ngModelChange)="editDescription.set($event)"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden resize-none"></textarea>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Phone</label>
+            <input 
+              type="text" 
+              [ngModel]="editPhone()" 
+              (ngModelChange)="editPhone.set($event)"
+              placeholder="+92 300 1234567"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">City</label>
+            <input 
+              type="text" 
+              [ngModel]="editCity()" 
+              (ngModelChange)="editCity.set($event)"
+              placeholder="e.g. Lahore, Karachi, Islamabad"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
+          </div>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Street Address</label>
+            <input 
+              type="text" 
+              [ngModel]="editAddress()" 
+              (ngModelChange)="editAddress.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
+          </div>
+          <div>
+            <label class="block font-bold text-gray-700 mb-1">Country</label>
+            <input 
+              type="text" 
+              [ngModel]="editCountry()" 
+              (ngModelChange)="editCountry.set($event)"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button 
+          type="button" 
+          (click)="closeEditStoreModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          (click)="saveShopProfile()"
+          [disabled]="isSavingShopDetails() || isUploadingLogo() || isUploadingBanner()"
+          class="px-5 py-2.5 rounded-xl text-xs font-bold bg-blue-600 hover:bg-blue-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50">
+          {{ isSavingShopDetails() ? 'Saving...' : 'Save Store Changes' }}
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- DOCUMENT / RECEIPT LIGHTBOX -->
+@if (previewReceiptModalOpen() && previewReceiptUrl()) {
+  <div
+    class="fixed inset-0 z-70 flex items-center justify-center p-4 bg-slate-950/90 backdrop-blur-sm animate-in fade-in duration-200"
+    (click)="closeReceiptPreview()">
+    <div
+      class="bg-white rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl border border-slate-100 overflow-hidden relative animate-in zoom-in-95 duration-200 space-y-4"
+      (click)="$event.stopPropagation()">
+      
+      <!-- Modal Header -->
+      <div class="flex items-center justify-between pb-3 border-b border-slate-100">
+        <div>
+          <h3 class="text-base font-black text-slate-900 tracking-tight">{{ previewDocTitle() }}</h3>
+          <p class="text-xs text-slate-500">Store: <strong class="text-slate-800">{{ previewReceiptStore() }}</strong></p>
+        </div>
+        <button 
+          type="button" 
+          (click)="closeReceiptPreview()"
+          class="w-7 h-7 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center font-bold text-xs cursor-pointer transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <!-- Full Image Container -->
+      <div class="w-full max-h-[75vh] bg-slate-950 rounded-2xl overflow-auto flex items-center justify-center p-2 border border-slate-200">
+        <img [src]="previewReceiptUrl()!" alt="Document Preview" class="max-w-full max-h-[70vh] object-contain rounded-xl shadow-md" />
+      </div>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-between pt-2">
+        <a 
+          [href]="previewReceiptUrl()!" 
+          target="_blank" 
+          class="text-xs font-bold text-slate-700 hover:text-slate-900 underline flex items-center gap-1">
+          <span>Open Full Size in New Tab ↗</span>
+        </a>
+        <button 
+          type="button" 
+          (click)="closeReceiptPreview()"
+          class="px-4 py-2 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl transition-colors cursor-pointer">
+          Close Preview
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+

@@ -46,16 +46,19 @@
 
     <div>
       <!-- Category & Brand -->
-      <div class="flex items-center gap-2 text-xs text-text-muted mb-1.5 flex-wrap">
-        <span class="font-medium text-primary hover:underline">{{ product().categoryName }}</span>
+      <div class="flex items-center gap-2 mb-2 flex-wrap">
+        @if (product().categoryName) {
+          <span class="inline-flex px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+            {{ product().categoryName }}
+          </span>
+        }
         @if (product().brandName) {
-          <span>&bull;</span>
-          <span class="font-medium text-text-secondary">{{ product().brandName }}</span>
+          <span class="text-[11px] font-medium text-slate-400">{{ product().brandName }}</span>
         }
       </div>
 
       <!-- Title -->
-      <h3 class="text-base md:text-lg font-bold text-text-primary group-hover:text-primary transition-colors line-clamp-2 mb-2">
+      <h3 class="text-base md:text-lg font-bold text-slate-900 tracking-tight group-hover:text-primary transition-colors line-clamp-2 mb-2">
         {{ fullName() }}
       </h3>
 
@@ -112,12 +115,18 @@
 
     <!-- Price block -->
     <div class="text-left sm:text-right">
-      <div class="text-xl md:text-2xl font-extrabold text-primary tabular-nums">
-        Rs. {{ formattedPrice() }}
+      <div class="flex items-baseline gap-1.5 sm:justify-end">
+        <span class="text-xs font-semibold text-slate-400 tracking-wide">$</span>
+        <span class="text-xl md:text-2xl font-black text-slate-900 tabular-nums tracking-tight">
+          {{ formattedPrice() }}
+        </span>
       </div>
       @if (hasDiscount()) {
-        <div class="text-xs text-text-muted line-through tabular-nums">
-          Rs. {{ formattedOldPrice() }}
+        <div class="flex items-center gap-2 sm:justify-end mt-0.5">
+          <span class="text-xs text-slate-400 line-through tabular-nums">{{ formattedOldPrice() }}</span>
+          <span class="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full">
+            −{{ effectiveDiscount() }}%
+          </span>
         </div>
       }
     </div>
