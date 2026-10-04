@@ -41,3 +41,4 @@ export * from './lib/guards/customer-shop.guard';
 // UI COMPONENTS
 export * from './lib/ui/empty-state/empty-state';
 export * from './lib/ui/product-card/product-card';
+export * from './lib/ui/shop-rating-badge/shop-rating-badge';

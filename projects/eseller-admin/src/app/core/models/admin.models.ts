@@ -125,6 +125,7 @@ export interface PlatformDashboardDto {
   pendingProducts: number;
   rejectedProducts: number;
   totalOrders: number;
+  newOrders: number;
   pendingOrders: number;
   deliveredOrders: number;
   cancelledOrders: number;
@@ -346,4 +347,20 @@ export interface AdminAuditLogDto {
   ipAddress?: string;
   timestamp?: string;
   createdAt: string;
+}
+
+export interface AdminReviewDto {
+  id: string;
+  productId: string;
+  userId: string;
+  userName: string;
+  orderRequestItemId?: string | null;
+  isVerifiedPurchase: boolean;
+  rating: number;
+  title?: string | null;
+  comment?: string | null;
+  isApproved: boolean;
+  createdAt: string;
+  productName?: string | null;
+  shopName?: string | null;
 }

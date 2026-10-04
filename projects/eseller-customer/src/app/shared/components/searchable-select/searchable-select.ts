@@ -32,7 +32,6 @@ export interface SelectOption {
         </label>
       }
 
-      <!-- Trigger Button -->
       <button
         type="button"
         (click)="toggleDropdown()"
@@ -43,12 +42,19 @@ export interface SelectOption {
         [class.ring-2]="isOpen()"
         [class.ring-primary/20]="isOpen()"
       >
-        <span class="truncate flex items-center gap-2">
+        <span class="truncate flex items-center gap-2 min-w-0">
           @if (selectedOption()?.flag) {
-            <span class="text-sm leading-none">{{ selectedOption()!.flag }}</span>
+            <span class="text-sm leading-none shrink-0">{{ selectedOption()!.flag }}</span>
           }
-          <span [class.text-text-muted]="!selectedOption()" [class.text-text-primary]="selectedOption()" [class.font-medium]="selectedOption()">
-            {{ selectedOption() ? selectedOption()!.label : placeholder() }}
+          <span class="truncate" [class.text-text-muted]="!selectedOption()" [class.text-text-primary]="selectedOption()" [class.font-medium]="selectedOption()">
+            @if (selectedOption()) {
+              {{ selectedOption()!.label }}
+              @if (selectedOption()!.subLabel) {
+                <span class="text-text-muted font-semibold">{{ selectedOption()!.subLabel }}</span>
+              }
+            } @else {
+              {{ placeholder() }}
+            }
           </span>
         </span>
 
@@ -65,13 +71,11 @@ export interface SelectOption {
         </svg>
       </button>
 
-      <!-- Dropdown Menu -->
       @if (isOpen()) {
         <div
           class="absolute z-50 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-2xl shadow-xl overflow-hidden animate-in fade-in zoom-in-95 duration-150"
           style="max-height: 280px;"
         >
-          <!-- Search input box -->
           <div class="p-2 border-b border-gray-100 bg-gray-50/70 sticky top-0 z-10">
             <div class="relative">
               <svg
@@ -97,7 +101,6 @@ export interface SelectOption {
             </div>
           </div>
 
-          <!-- Options List -->
           <div class="max-h-[220px] overflow-y-auto divide-y divide-gray-50 p-1">
             @if (filteredOptions().length === 0) {
               <div class="px-3 py-4 text-center text-xs text-text-muted">
