@@ -24,6 +24,7 @@ import {
   AdminCmsDto,
   AdminSettingDto,
   AdminAuditLogDto,
+  AdminReviewDto,
   UserLocationLogDto
 } from '../models/admin.models';
 
@@ -54,6 +55,7 @@ export class AdminService {
         pendingProducts: 0,
         rejectedProducts: 0,
         totalOrders: 0,
+        newOrders: 0,
         pendingOrders: 0,
         deliveredOrders: 0,
         cancelledOrders: 0,
@@ -613,6 +615,48 @@ export class AdminService {
 
   deleteOrder(id: string): Observable<any> {
     return this.api.delete<any>(`/admin/orders/${id}`);
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 6b. PRODUCT REVIEWS (moderation)
+  // ═══════════════════════════════════════════════════════════
+  getReviews(
+    status: 'pending' | 'approved' | 'all' = 'pending',
+    pageNumber: number = 1,
+    pageSize: number = 20
+  ): Observable<PagedResult<AdminReviewDto>> {
+    return this.api.get<PagedResult<AdminReviewDto>>(
+      `/admin/reviews?status=${status}&pageNumber=${pageNumber}&pageSize=${pageSize}`
+    ).pipe(
+      map(res => ({
+        items: res?.items ?? [],
+        totalCount: res?.totalCount ?? 0,
+        pageNumber: res?.pageNumber ?? pageNumber,
+        pageSize: res?.pageSize ?? pageSize,
+        totalPages: res?.totalPages ?? 0,
+        hasPreviousPage: !!res?.hasPreviousPage,
+        hasNextPage: !!res?.hasNextPage
+      })),
+      catchError(() => of({
+        items: [],
+        totalCount: 0,
+        pageNumber,
+        pageSize,
+        totalPages: 0,
+        hasPreviousPage: false,
+        hasNextPage: false
+      }))
+    );
+  }
+
+  /** Keep / publish a customer review */
+  keepReview(id: string): Observable<{ message: string }> {
+    return this.api.put<{ message: string }>(`/admin/reviews/${id}/approve`, {});
+  }
+
+  /** Permanently delete a customer review */
+  deleteReview(id: string): Observable<{ message: string }> {
+    return this.api.delete<{ message: string }>(`/admin/reviews/${id}`);
   }
 
   // ═══════════════════════════════════════════════════════════

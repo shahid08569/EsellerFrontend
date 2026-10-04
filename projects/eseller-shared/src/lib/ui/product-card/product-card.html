@@ -144,9 +144,14 @@
       </h3>
 
       @if (product().shopName) {
-        <p class="text-[10px] sm:text-[11px] text-slate-400 truncate leading-none">
-          Sold by <span class="font-medium text-slate-500">{{ product().shopName }}</span>
-        </p>
+        <div class="flex items-center gap-1.5 min-w-0">
+          <span class="text-[10px] text-slate-400 shrink-0">Sold by</span>
+          <es-shop-rating-badge
+            [shopName]="product().shopName"
+            [rating]="product().shopRating"
+            [showVerified]="true"
+            size="sm" />
+        </div>
       }
     </div>
 

@@ -9,6 +9,7 @@ import {
   OnDestroy
 } from '@angular/core';
 import { Router } from '@angular/router';
+import { CommonModule } from '@angular/common';
 
 import { ProductListDto } from '../../models/catalog/catalog.models';
 import { CartService } from '../../services/cart.service';
@@ -16,6 +17,7 @@ import { WishlistService } from '../../services/wishlist.service';
 import { CompareService } from '../../services/compare.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthActionService } from '../../services/auth-action.service';
+import { ShopRatingBadge } from '../shop-rating-badge/shop-rating-badge';
 
 export type PreferredBadge =
   | 'flash_sale'
@@ -27,7 +29,7 @@ export type PreferredBadge =
 
 @Component({
   selector: 'es-product-card',
-  imports: [],
+  imports: [CommonModule, ShopRatingBadge],
   templateUrl: './product-card.html',
   host: {
     class: 'block h-full'

@@ -39,6 +39,8 @@ export interface ProductDto {
   seoDescription: string | null;
   isActive: boolean;
   createdAt: string; // ISO 8601
+  /** SuperAdmin platform store rating (0–5) */
+  shopRating?: number | null;
 }
 // PRODUCT — LIST 
 export interface ProductListDto {
@@ -65,6 +67,8 @@ export interface ProductListDto {
   viewCount?: number | null;
   sourceProductId?: string | null;
   shopId?: string | null;
+  /** SuperAdmin platform store rating (0–5) */
+  shopRating?: number | null;
 }
 //PRODUCT BADGE DTO
 export interface ProductBadgeDto {

@@ -26,6 +26,7 @@ import {
   ProductQuestionDto,
   ProductCard,
   EmptyState,
+  ShopRatingBadge,
   ToastService,
   OrderService,
   BuyNowRequest,
@@ -39,7 +40,9 @@ import {
   SearchableSelect,
   SelectOption
 } from '../../../shared/components/searchable-select/searchable-select';
+import { DialCodeSelect, DialCodeOption } from '../../../shared/components/dial-code-select/dial-code-select';
 import { COUNTRIES_DATA } from '../../../shared/data/countries-states.data';
+import { toLocalPhoneNumber } from '../../../shared/utils/phone.util';
 
 @Component({
   selector: 'app-product-detail',
@@ -49,10 +52,12 @@ import { COUNTRIES_DATA } from '../../../shared/data/countries-states.data';
     RouterLink,
     ProductCard,
     EmptyState,
+    ShopRatingBadge,
     ProductGallery,
     ProductReviews,
     ProductQa,
-    SearchableSelect
+    SearchableSelect,
+    DialCodeSelect
   ],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css'
@@ -94,7 +99,10 @@ export class ProductDetail implements OnInit, OnDestroy {
   readonly customerName = signal<string>('');
   readonly customerPhone = signal<string>('');
   readonly deliveryAddress = signal<string>('');
+  /** Empty until user picks — no default Pakistan. */
   readonly selectedCountry = signal<string>('');
+  /** Dial code auto-fills from country, but user can change it anytime. */
+  readonly selectedDialCode = signal<string>('');
   readonly selectedState = signal<string>('');
   readonly deliveryCity = signal<string>('');
   readonly deliveryProvince = signal<string>('');
@@ -119,17 +127,31 @@ export class ProductDetail implements OnInit, OnDestroy {
     }))
   );
 
+  /** Dial codes (+flag) only — no country names in this dropdown. */
+  readonly dialCodeOptions = computed<DialCodeOption[]>(() => {
+    const seen = new Set<string>();
+    return COUNTRIES_DATA.filter((c) => {
+      if (!c.phoneCode || seen.has(c.phoneCode)) return false;
+      seen.add(c.phoneCode);
+      return true;
+    }).map((c) => ({
+      code: c.phoneCode,
+      flag: c.flag
+    }));
+  });
+
   readonly selectedCountryData = computed(() => {
     const name = this.selectedCountry();
     if (!name) return null;
     return COUNTRIES_DATA.find((x) => x.name === name) || null;
   });
 
-  readonly selectedDialCode = computed(() => {
-    return this.selectedCountryData()?.phoneCode || '';
-  });
-
   readonly selectedFlag = computed(() => {
+    const code = this.selectedDialCode();
+    if (code) {
+      const byCode = COUNTRIES_DATA.find((c) => c.phoneCode === code);
+      if (byCode) return byCode.flag;
+    }
     return this.selectedCountryData()?.flag || '🌍';
   });
 
@@ -158,11 +180,24 @@ export class ProductDetail implements OnInit, OnDestroy {
     this.selectedState.set('');
     this.stateError.set(null);
     this.deliveryCity.set('');
+    const matched = COUNTRIES_DATA.find((c) => c.name === countryName);
+    this.selectedDialCode.set(matched?.phoneCode || '');
+  }
+
+  onDialCodeChange(phoneCode: string): void {
+    this.selectedDialCode.set(phoneCode);
+    this.phoneError.set(null);
   }
 
   onStateChange(stateName: string): void {
     this.selectedState.set(stateName);
     this.stateError.set(null);
+  }
+
+  /** Autofill / paste may include +92 — keep only the local number in the input. */
+  onPhoneInput(value: string): void {
+    this.customerPhone.set(toLocalPhoneNumber(value));
+    this.phoneError.set(null);
   }
 
   // Variant display toggle
@@ -512,7 +547,7 @@ export class ProductDetail implements OnInit, OnDestroy {
             this.customerName.set(profile.name);
           }
           if (profile.phone && !this.customerPhone()) {
-            this.customerPhone.set(profile.phone);
+            this.customerPhone.set(toLocalPhoneNumber(profile.phone));
           }
         },
         error: () => {}
@@ -574,6 +609,11 @@ export class ProductDetail implements OnInit, OnDestroy {
       hasErrors = true;
     }
 
+    if (!this.selectedDialCode().trim()) {
+      this.phoneError.set('Please select a country dial code.');
+      hasErrors = true;
+    }
+
     if (this.stateOptions().length > 0 && !this.selectedState().trim()) {
       this.stateError.set('Please select your state / province.');
       hasErrors = true;
@@ -610,9 +650,10 @@ export class ProductDetail implements OnInit, OnDestroy {
     const rawImg = this.variantImageUrl() || (this.images().length > 0 ? this.images()[0].imageUrl : null);
     const resolvedImg = this.getImageUrl(rawImg);
 
-    const rawPhone = this.customerPhone().trim();
+    // Dial code is locked to selected country (e.g. Pakistan → +92 only) — not user-editable
+    const rawPhone = toLocalPhoneNumber(this.customerPhone());
     const dialCode = this.selectedDialCode();
-    const fullPhone = rawPhone.startsWith('+') ? rawPhone : `${dialCode} ${rawPhone}`;
+    const fullPhone = `${dialCode} ${rawPhone}`.trim();
 
     const saveAndRedirect = (finalOrderRef: string, isApiCreated: boolean = false) => {
       const orderData = {
@@ -906,7 +947,10 @@ export class ProductDetail implements OnInit, OnDestroy {
     this.reloadReviews(prod.id, rating);
   }
 
-  onSubmitReview(payload: { rating: number; title: string; comment: string }): void {
+  onSubmitReview(
+    payload: { rating: number; title: string; comment: string },
+    reviewsPanel?: ProductReviews
+  ): void {
     const prod = this.product();
     if (!prod) return;
 
@@ -923,9 +967,9 @@ export class ProductDetail implements OnInit, OnDestroy {
     }).subscribe({
       next: () => {
         this.reviewSubmitting.set(false);
+        reviewsPanel?.resetForm();
         this.toastService.show('Review published. Rating updated.', 'success');
         this.reloadReviews(prod.id);
-        // Refresh product avg rating from server
         this.homeService.getProductById(prod.id).subscribe({
           next: (fresh) => {
             if (fresh) this.product.set(fresh);
@@ -935,7 +979,8 @@ export class ProductDetail implements OnInit, OnDestroy {
       },
       error: (err) => {
         this.reviewSubmitting.set(false);
-        this.toastService.show(err?.error?.error || 'Failed to submit review.', 'error');
+        const msg = err?.error?.error || err?.error?.title || 'Failed to submit review.';
+        this.toastService.show(msg, 'error');
       }
     });
   }

@@ -38,6 +38,10 @@ export const routes: Routes = [
         loadComponent: () => import('./features/orders/order-management/order-management').then(m => m.OrderManagement)
       },
       {
+        path: 'reviews',
+        loadComponent: () => import('./features/reviews/review-management/review-management').then(m => m.ReviewManagement)
+      },
+      {
         path: 'chat',
         loadComponent: () => import('./features/chat-inbox/admin-chat/admin-chat').then(m => m.AdminChat)
       },

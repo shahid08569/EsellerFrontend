@@ -714,8 +714,15 @@ export class ShopManagement implements OnInit {
         this.activeShops.update((list) =>
           list.map((s) => (s.id === store.id ? { ...s, rating: next } : s))
         );
+        this.allShopkeepers.update((list) =>
+          list.map((sk) =>
+            sk.shopId === store.id || sk.storeName === store.name
+              ? { ...sk, rating: next }
+              : sk
+          )
+        );
         this.actionInProgress.set(null);
-        this.toast.show(`Shop rated ${next.toFixed(1)} / 5.0`, 'success');
+        this.toast.show(`Shop rated ${next.toFixed(1)} / 5.0 — visible to all visitors`, 'success');
       },
       error: (err) => {
         this.actionInProgress.set(null);

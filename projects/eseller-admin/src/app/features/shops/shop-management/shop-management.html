@@ -13,7 +13,7 @@
           Shops & Storefronts Management
         </h1>
         <p class="text-orange-100 text-xs font-medium">
-          Oversee all live merchant storefronts, inspect store profiles, and process merchant verification applications.
+          Oversee stores, set platform shop ratings (★), and process merchant verification applications.
         </p>
       </div>
     </div>
@@ -176,6 +176,7 @@
             <thead>
               <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
                 <th class="py-3.5 px-4 font-extrabold">Store Profile</th>
+                <th class="py-3.5 px-4 font-extrabold">Shop Rating</th>
                 <th class="py-3.5 px-4 font-extrabold">Tier</th>
                 <th class="py-3.5 px-4 font-extrabold">Catalog</th>
                 <th class="py-3.5 px-4 font-extrabold">Created Date</th>
@@ -197,16 +198,52 @@
                         </div>
                       }
                       <div>
-                        <div class="font-extrabold text-gray-900 flex items-center gap-1.5">
+                        <div class="font-extrabold text-gray-900 flex items-center gap-1.5 flex-wrap">
                           <span>{{ store.name }}</span>
                           <span class="inline-flex items-center px-1.5 py-0.5 rounded-full text-[10px] font-extrabold bg-emerald-50 text-emerald-700 border border-emerald-200">
-                            Active
+                            Verified
                           </span>
+                          @if ((store.rating || 0) > 0) {
+                            <span class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-black bg-amber-50 text-amber-700 border border-amber-200">
+                              ★ {{ store.rating | number:'1.1-1' }}
+                            </span>
+                          }
                         </div>
                         <div class="text-[11px] font-mono text-gray-400 mt-0.5">
                           /shops/{{ store.slug }}
                         </div>
                       </div>
+                    </div>
+                  </td>
+
+                  <!-- Super Admin shop rating (1–5) — set directly from list -->
+                  <td class="py-4 px-4">
+                    <div class="space-y-1.5 min-w-[140px]">
+                      <div class="flex items-center gap-0.5">
+                        @for (star of [1,2,3,4,5]; track star) {
+                          <button
+                            type="button"
+                            (click)="rateShop(store, star); $event.stopPropagation()"
+                            class="w-7 h-7 rounded-md text-sm leading-none transition-transform hover:scale-110 cursor-pointer disabled:opacity-50"
+                            [class.text-amber-400]="(store.rating || 0) >= star"
+                            [class.text-gray-300]="(store.rating || 0) < star"
+                            [disabled]="actionInProgress() === ('rate-' + store.id)"
+                            [title]="'Set shop rating to ' + star + ' stars'">
+                            ★
+                          </button>
+                        }
+                      </div>
+                      <p class="text-[10px] font-bold"
+                         [class.text-amber-700]="(store.rating || 0) > 0"
+                         [class.text-gray-400]="!(store.rating || 0)">
+                        @if (actionInProgress() === ('rate-' + store.id)) {
+                          Saving…
+                        } @else if ((store.rating || 0) > 0) {
+                          {{ store.rating | number:'1.1-1' }} / 5.0
+                        } @else {
+                          Click stars to rate
+                        }
+                      </p>
                     </div>
                   </td>
 
@@ -787,6 +824,41 @@
         </button>
       </div>
 
+      <!-- Super Admin: rate this shop (always visible at top) -->
+      <div class="p-4 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 space-y-3 shadow-xs">
+        <div class="flex items-center justify-between gap-2">
+          <div>
+            <p class="text-xs font-black text-amber-900 uppercase tracking-wide">Platform Shop Rating</p>
+            <p class="text-[11px] text-amber-800/80 font-medium mt-0.5">Super Admin sets this — shown next to the shop name for all visitors.</p>
+          </div>
+          <span class="text-lg font-black text-amber-700 shrink-0">
+            {{ store.rating ? (store.rating | number:'1.1-1') : '0.0' }}
+            <span class="text-xs font-bold text-amber-600">/ 5</span>
+          </span>
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap">
+          @for (star of [1,2,3,4,5]; track star) {
+            <button
+              type="button"
+              (click)="rateShop(store, star)"
+              class="w-10 h-10 rounded-xl border-2 text-base font-black transition-all cursor-pointer shadow-xs"
+              [class.bg-amber-500]="(store.rating || 0) >= star"
+              [class.text-white]="(store.rating || 0) >= star"
+              [class.border-amber-500]="(store.rating || 0) >= star"
+              [class.bg-white]="(store.rating || 0) < star"
+              [class.text-amber-500]="(store.rating || 0) < star"
+              [class.border-amber-200]="(store.rating || 0) < star"
+              [disabled]="actionInProgress() === ('rate-' + store.id)"
+              [title]="'Rate ' + star + ' stars'">
+              ★
+            </button>
+          }
+          @if (actionInProgress() === ('rate-' + store.id)) {
+            <span class="text-[11px] font-bold text-amber-700 ml-1">Saving…</span>
+          }
+        </div>
+      </div>
+
       <!-- Banner if available -->
       @if (store.bannerUrl) {
         <div class="h-32 rounded-2xl overflow-hidden border border-gray-100">
@@ -956,32 +1028,6 @@
         <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
           <span class="text-gray-400 block font-medium">City / Location</span>
           <span class="font-bold text-gray-900">{{ store.city || 'N/A' }}, {{ store.country || 'Pakistan' }}</span>
-        </div>
-
-        <div class="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2">
-          <div class="flex items-center justify-between gap-2">
-            <span class="text-gray-400 block font-medium">Platform Shop Rating</span>
-            <span class="font-extrabold text-amber-600">{{ store.rating ? (store.rating | number:'1.1-1') : '0.0' }} / 5.0</span>
-          </div>
-          <div class="flex items-center gap-1">
-            @for (star of [1,2,3,4,5]; track star) {
-              <button
-                type="button"
-                (click)="rateShop(store, star)"
-                class="w-8 h-8 rounded-lg border text-sm font-black transition-colors cursor-pointer"
-                [class.bg-amber-500]="(store.rating || 0) >= star"
-                [class.text-white]="(store.rating || 0) >= star"
-                [class.border-amber-500]="(store.rating || 0) >= star"
-                [class.bg-white]="(store.rating || 0) < star"
-                [class.text-amber-500]="(store.rating || 0) < star"
-                [class.border-amber-200]="(store.rating || 0) < star"
-                [disabled]="actionInProgress() === ('rate-' + store.id)"
-                [title]="'Rate ' + star + ' stars'">
-                {{ star }}
-              </button>
-            }
-          </div>
-          <p class="text-[10px] text-gray-400">Super Admin can rate any shop (1–5).</p>
         </div>
 
         <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">

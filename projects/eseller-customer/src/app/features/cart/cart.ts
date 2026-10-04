@@ -17,13 +17,15 @@ import {
   SearchableSelect,
   SelectOption
 } from '../../shared/components/searchable-select/searchable-select';
+import { DialCodeSelect, DialCodeOption } from '../../shared/components/dial-code-select/dial-code-select';
 import {
   COUNTRIES_DATA
 } from '../../shared/data/countries-states.data';
+import { toLocalPhoneNumber } from '../../shared/utils/phone.util';
 
 @Component({
   selector: 'app-cart',
-  imports: [CommonModule, FormsModule, RouterLink, SearchableSelect],
+  imports: [CommonModule, FormsModule, RouterLink, SearchableSelect, DialCodeSelect],
   templateUrl: './cart.html',
   styleUrl: './cart.css'
 })
@@ -41,7 +43,10 @@ export class Cart implements OnInit {
   readonly customerName = signal<string>('');
   readonly customerPhone = signal<string>('');
   readonly deliveryAddress = signal<string>('');
+  /** Empty until user picks — no default Pakistan. */
   readonly selectedCountry = signal<string>('');
+  /** Dial code auto-fills from country, but user can change it anytime. */
+  readonly selectedDialCode = signal<string>('');
   readonly selectedState = signal<string>('');
   readonly deliveryCity = signal<string>('');
   readonly orderNotes = signal<string>('');
@@ -58,7 +63,7 @@ export class Cart implements OnInit {
   readonly isSubmitting = signal<boolean>(false);
   readonly feedbackMessage = signal<string | null>(null);
 
-  // Searchable Country options
+  // Searchable Country options (dial code shown after selection)
   readonly countryOptions = computed<SelectOption[]>(() =>
     COUNTRIES_DATA.map((c) => ({
       value: c.name,
@@ -68,17 +73,31 @@ export class Cart implements OnInit {
     }))
   );
 
+  /** Changeable dial-code list — codes (+flag) only, no country names. */
+  readonly dialCodeOptions = computed<DialCodeOption[]>(() => {
+    const seen = new Set<string>();
+    return COUNTRIES_DATA.filter((c) => {
+      if (!c.phoneCode || seen.has(c.phoneCode)) return false;
+      seen.add(c.phoneCode);
+      return true;
+    }).map((c) => ({
+      code: c.phoneCode,
+      flag: c.flag
+    }));
+  });
+
   readonly selectedCountryData = computed(() => {
     const name = this.selectedCountry();
     if (!name) return null;
     return COUNTRIES_DATA.find((x) => x.name === name) || null;
   });
 
-  readonly selectedDialCode = computed(() => {
-    return this.selectedCountryData()?.phoneCode || '';
-  });
-
   readonly selectedFlag = computed(() => {
+    const code = this.selectedDialCode();
+    if (code) {
+      const byCode = COUNTRIES_DATA.find((c) => c.phoneCode === code);
+      if (byCode) return byCode.flag;
+    }
     return this.selectedCountryData()?.flag || '🌍';
   });
 
@@ -119,7 +138,7 @@ export class Cart implements OnInit {
             this.customerName.set(profile.name);
           }
           if (profile.phone && !this.customerPhone()) {
-            this.customerPhone.set(profile.phone);
+            this.customerPhone.set(toLocalPhoneNumber(profile.phone));
           }
         },
         error: () => {}
@@ -142,16 +161,23 @@ export class Cart implements OnInit {
   selectSavedAddress(addr: AddressDto): void {
     this.selectedSavedAddressId.set(addr.id);
     this.customerName.set(addr.fullName);
-    this.customerPhone.set(addr.phone);
+    this.customerPhone.set(toLocalPhoneNumber(addr.phone));
     const fullStreet = addr.addressLine1 + (addr.addressLine2 ? ', ' + addr.addressLine2 : '');
     this.deliveryAddress.set(fullStreet);
-    this.selectedCountry.set(addr.country);
+    // Resolve to a known country name so dial code matches (Pakistan → +92, etc.)
+    const matched = COUNTRIES_DATA.find(
+      (c) => c.name.toLowerCase() === (addr.country || '').trim().toLowerCase()
+        || c.code.toLowerCase() === (addr.country || '').trim().toLowerCase()
+    );
+    this.selectedCountry.set(matched?.name || '');
+    this.selectedDialCode.set(matched?.phoneCode || '');
     this.selectedState.set(addr.state || '');
     this.deliveryCity.set(addr.city);
     this.nameError.set(null);
     this.phoneError.set(null);
     this.addressError.set(null);
     this.cityError.set(null);
+    this.countryError.set(null);
   }
 
   onCountryChange(countryName: string): void {
@@ -160,11 +186,26 @@ export class Cart implements OnInit {
     this.selectedState.set('');
     this.stateError.set(null);
     this.deliveryCity.set('');
+    // Auto-fill dial code from country (user can still change it afterwards)
+    const matched = COUNTRIES_DATA.find((c) => c.name === countryName);
+    this.selectedDialCode.set(matched?.phoneCode || '');
+  }
+
+  /** User can freely change dial code (not locked to country). */
+  onDialCodeChange(phoneCode: string): void {
+    this.selectedDialCode.set(phoneCode);
+    this.phoneError.set(null);
   }
 
   onStateChange(stateName: string): void {
     this.selectedState.set(stateName);
     this.stateError.set(null);
+  }
+
+  /** Autofill / paste may include +92 — keep only the local number in the input. */
+  onPhoneInput(value: string): void {
+    this.customerPhone.set(toLocalPhoneNumber(value));
+    this.phoneError.set(null);
   }
 
   readonly availableSizes: string[] = ['Free Size', 'S', 'M', 'L', 'XL', 'XXL'];
@@ -262,6 +303,11 @@ export class Cart implements OnInit {
       hasErrors = true;
     }
 
+    if (!this.selectedDialCode().trim()) {
+      this.phoneError.set('Please select a country dial code.');
+      hasErrors = true;
+    }
+
     if (this.stateOptions().length > 0 && !this.selectedState().trim()) {
       this.stateError.set('Please select your state / province.');
       hasErrors = true;
@@ -288,9 +334,10 @@ export class Cart implements OnInit {
     const primaryShopId = items[0].shopId || '';
     const primaryShopName = items[0].shopName || 'Eseller Store';
 
-    const rawPhone = this.customerPhone().trim();
+    // Dial code is locked to selected country (e.g. Pakistan → +92 only) — not user-editable
+    const rawPhone = toLocalPhoneNumber(this.customerPhone());
     const dialCode = this.selectedDialCode();
-    const fullPhone = rawPhone.startsWith('+') ? rawPhone : `${dialCode} ${rawPhone}`;
+    const fullPhone = `${dialCode} ${rawPhone}`.trim();
 
     const orderPayload: CreateOrderRequest = {
       customerName: this.customerName().trim(),

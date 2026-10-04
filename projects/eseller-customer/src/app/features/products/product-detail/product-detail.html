@@ -198,7 +198,7 @@
       <!-- ======================================================== -->
       <div class="lg:col-span-4 space-y-4">
 
-        <!-- Brand / Store Link -->
+        <!-- Brand / Store + Verified + SuperAdmin store rating -->
         <div class="flex items-center gap-2 flex-wrap">
           <a
             [routerLink]="['/products']"
@@ -206,13 +206,13 @@
             class="inline-flex items-center gap-1.5 text-xs font-bold text-primary hover:underline uppercase tracking-wider bg-primary/5 px-2.5 py-1 rounded-lg border border-primary/15"
           >
             <span>VISIT {{ (prod.brandName || prod.shopName) | uppercase }}</span>
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-emerald-500" viewBox="0 0 20 20" fill="currentColor">
-              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.857-9.809a.75.75 0 00-1.214-.882l-3.483 4.79-1.88-1.88a.75.75 0 10-1.06 1.061l2.5 2.5a.75.75 0 001.137-.089l4-5.5z" clip-rule="evenodd" />
-            </svg>
           </a>
-          <span class="text-[11px] font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-md">
-            Verified Seller
-          </span>
+          <es-shop-rating-badge
+            [shopName]="prod.shopName"
+            [rating]="prod.shopRating"
+            [showName]="false"
+            [showVerified]="true"
+            size="md" />
         </div>
 
         <!-- Title -->
@@ -478,9 +478,13 @@
               <span class="text-text-muted">Ships from:</span>
               <span class="font-medium text-text-primary">Eseller Platform</span>
             </div>
-            <div class="flex justify-between">
-              <span class="text-text-muted">Sold by:</span>
-              <span class="font-bold text-text-primary truncate max-w-[120px]">{{ prod.shopName }}</span>
+            <div class="flex justify-between items-center gap-2">
+              <span class="text-text-muted shrink-0">Sold by:</span>
+              <es-shop-rating-badge
+                [shopName]="prod.shopName"
+                [rating]="prod.shopRating"
+                [showVerified]="true"
+                size="sm" />
             </div>
             <div class="flex justify-between">
               <span class="text-text-muted">Payment:</span>
@@ -617,9 +621,13 @@
                   <span class="font-semibold text-text-primary">{{ prod.brandName }}</span>
                 </div>
               }
-              <div class="p-3 bg-gray-50 rounded-xl flex justify-between">
-                <span class="text-text-muted">Seller</span>
-                <span class="font-semibold text-text-primary">{{ prod.shopName }}</span>
+              <div class="p-3 bg-gray-50 rounded-xl flex justify-between items-center gap-2">
+                <span class="text-text-muted shrink-0">Seller</span>
+                <es-shop-rating-badge
+                  [shopName]="prod.shopName"
+                  [rating]="prod.shopRating"
+                  [showVerified]="true"
+                  size="sm" />
               </div>
               <div class="p-3 bg-gray-50 rounded-xl flex justify-between">
                 <span class="text-text-muted">Views</span>
@@ -634,13 +642,14 @@
       @if (activeTab() === 'reviews') {
         <div class="animate-in fade-in duration-200">
           <app-product-reviews
+            #reviewsPanel
             [reviews]="reviews()"
             [avgRating]="prod.avgRating"
             [totalCount]="reviewsTotal()"
             [canReview]="authStore.isAuthenticated() && authStore.currentAccount()?.roleType === 'User'"
             [submitting]="reviewSubmitting()"
             (ratingFilterChange)="onFilterReviews($event)"
-            (submitReview)="onSubmitReview($event)"
+            (submitReview)="onSubmitReview($event, reviewsPanel)"
           />
         </div>
       }
@@ -947,20 +956,20 @@
                     Phone Number <span class="text-red-500">*</span>
                   </label>
                   <div
-                    class="flex items-center rounded-xl border bg-white overflow-hidden transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/20"
+                    class="flex items-stretch rounded-xl border bg-white overflow-visible transition-all focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15"
                     [class.border-red-400]="phoneError()"
-                    [class.border-gray-300]="!phoneError()"
-                  >
-                    <div class="flex items-center gap-1.5 px-3 py-2.5 bg-gray-50 border-r border-gray-200 text-xs font-bold text-text-primary select-none flex-shrink-0">
-                      <span class="text-base leading-none">{{ selectedFlag() }}</span>
-                      <span class="text-xs font-bold text-gray-700 tracking-tight">{{ selectedDialCode() }}</span>
-                    </div>
+                    [class.border-gray-300]="!phoneError()">
+                    <app-dial-code-select
+                      [options]="dialCodeOptions()"
+                      [value]="selectedDialCode()"
+                      (valueChange)="onDialCodeChange($event)"
+                    />
                     <input
                       type="tel"
                       [ngModel]="customerPhone()"
-                      (ngModelChange)="customerPhone.set($event); phoneError.set(null)"
-                      [placeholder]="phonePlaceholder()"
-                      class="w-full text-xs px-3 py-2.5 bg-transparent border-0 focus:outline-none text-text-primary"
+                      (ngModelChange)="onPhoneInput($event)"
+                      [placeholder]="selectedDialCode() ? phonePlaceholder() : 'Phone number'"
+                      class="flex-1 min-w-0 text-xs px-3 py-2.5 bg-transparent border-0 outline-none text-text-primary"
                     />
                   </div>
                   @if (phoneError(); as err) {
