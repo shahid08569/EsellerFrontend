@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SellerService } from '../../core/services/seller.service';
-import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage } from 'eseller-shared';
+import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, ChatMessageDto } from 'eseller-shared';
 
 interface ChatMessage {
   id?: string;
@@ -11,6 +11,7 @@ interface ChatMessage {
   message: string;
   createdAt: string;
   isMe?: boolean;
+  isRead?: boolean;
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
@@ -30,6 +31,8 @@ interface PendingAttachment {
   sizeBytes: number;
 }
 
+const SELLER_SUPPORT_ROOM_KEY = 'eseller_seller_support_room';
+
 @Component({
   selector: 'app-seller-chat',
   standalone: true,
@@ -47,6 +50,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
   private shouldScrollToBottom = false;
   private receiveMessageUnsubscribe: (() => void) | null = null;
+  private messageReadUnsubscribe: (() => void) | null = null;
 
   readonly isLoading = signal<boolean>(true);
   readonly conversations = signal<ChatConversation[]>([]);
@@ -93,7 +97,9 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       this.signalR.leaveOrderRoom(id).catch(() => {});
     }
     this.receiveMessageUnsubscribe?.();
+    this.messageReadUnsubscribe?.();
     this.receiveMessageUnsubscribe = null;
+    this.messageReadUnsubscribe = null;
   }
 
   ngAfterViewChecked(): void {
@@ -101,6 +107,14 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       this.shouldScrollToBottom = false;
       this.scrollToBottom();
     }
+  }
+
+  /** WhatsApp-style: pending (no id) → single ✓ → double ✓ when read */
+  tickState(msg: ChatMessage): 'pending' | 'sent' | 'read' {
+    if (!msg.isMe) return 'sent';
+    const id = String(msg.id || '');
+    if (!id || id.startsWith('tmp-')) return 'pending';
+    return msg.isRead ? 'read' : 'sent';
   }
 
   private scrollToBottom(): void {
@@ -113,6 +127,38 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   private isMyRole(role: string | undefined): boolean {
     const roleLower = String(role || '').toLowerCase();
     return roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
+  }
+
+  private mapApiMessage(m: ChatMessageDto | any): ChatMessage {
+    const role = m.senderRole ?? m.SenderRole;
+    return {
+      id: m.id,
+      senderRole: role,
+      message: m.message || m.content || m.Message || '',
+      createdAt: m.sentAt || m.createdAt || new Date().toISOString(),
+      isMe: this.isMyRole(String(role)) || role === 2,
+      isRead: !!m.isRead,
+      attachmentUrl: m.attachmentUrl || null,
+      attachmentFileName: m.attachmentFileName || null,
+      attachmentContentType: m.attachmentContentType || null
+    };
+  }
+
+  private applyMessageRead(messageId: string, readAt: string): void {
+    const id = messageId.toLowerCase();
+    this.messages.update(list =>
+      list.map(m =>
+        m.id && m.id.toLowerCase() === id ? { ...m, isRead: true, createdAt: m.createdAt || readAt } : m
+      )
+    );
+  }
+
+  private persistRoomId(roomId: string): void {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        window.sessionStorage.setItem(SELLER_SUPPORT_ROOM_KEY, roomId);
+      } catch { /* ignore */ }
+    }
   }
 
   private initSignalR(): void {
@@ -144,6 +190,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
               message: incoming.message,
               createdAt: incoming.sentAt || new Date().toISOString(),
               isMe,
+              isRead: false,
               attachmentUrl: incoming.attachmentUrl || null,
               attachmentFileName: incoming.attachmentFileName || null,
               attachmentContentType: incoming.attachmentContentType || null
@@ -152,22 +199,21 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         });
         this.shouldScrollToBottom = true;
 
-        // Open thread — clear unread chat notifications for this conversation
         if (!isMe) {
           this.chatService.markConversationAsRead(roomId).subscribe({ error: () => {} });
         }
 
-        this.conversations.update(list => list.map(c => {
-          if (c.roomId === roomId) {
-            return {
-              ...c,
-              lastMessage: incoming.message,
-              lastMessageTime: incoming.sentAt || new Date().toISOString()
-            };
-          }
-          return c;
-        }));
+        this.updateConversationPreview(roomId, incoming.message, incoming.sentAt);
       });
+
+      this.messageReadUnsubscribe = this.signalR.onMessageRead((messageId, readAt) => {
+        this.applyMessageRead(messageId, readAt);
+      });
+
+      const roomId = this.selectedRoomId();
+      if (roomId) {
+        this.signalR.joinOrderRoom(roomId).catch(() => {});
+      }
     }).catch(() => {});
   }
 
@@ -176,46 +222,49 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
     this.chatService.getShopSupportSession(productId).subscribe({
       next: (session) => {
-        const roomId = session.orderRequestId || session.shopId;
+        const roomId = session.orderRequestId || session.conversationId;
+        if (!roomId) {
+          this.isLoading.set(false);
+          this.toast.show('Could not open support chat.', 'error');
+          return;
+        }
+
+        this.persistRoomId(roomId);
+
         const supportConvo: ChatConversation = {
           roomId,
-          title: 'Super Admin Support',
-          lastMessage: productId
-            ? 'Product inquiry attached for Super Admin'
-            : 'Direct chat with Platform Super Admin',
-          lastMessageTime: new Date().toISOString()
+          title: session.shopName ? `${session.shopName} · Super Admin` : 'Super Admin Support',
+          lastMessage: 'Loading…',
+          lastMessageTime: undefined
         };
 
         this.conversations.set([supportConvo]);
         this.isLoading.set(false);
-        this.selectConversation(this.selectedRoomId() || roomId);
+
+        const preferred =
+          this.selectedRoomId() ||
+          (typeof window !== 'undefined' ? window.sessionStorage.getItem(SELLER_SUPPORT_ROOM_KEY) : null) ||
+          roomId;
+        this.selectConversation(preferred);
       },
       error: () => {
-        this.sellerSvc.getMyShop().subscribe({
-          next: (shop) => {
-            const roomId = shop?.id;
-            if (!roomId) {
-              this.isLoading.set(false);
-              this.toast.show('Failed to open Super Admin support chat', 'error');
-              return;
-            }
-            const supportConvo: ChatConversation = {
-              roomId,
-              title: 'Super Admin Support',
-              lastMessage: 'Direct chat with Platform Super Admin',
-              lastMessageTime: new Date().toISOString()
-            };
-            this.conversations.set([supportConvo]);
-            this.isLoading.set(false);
-            this.selectConversation(this.selectedRoomId() || roomId);
-          },
-          error: () => {
-            this.isLoading.set(false);
-            this.toast.show('Failed to open Super Admin support chat', 'error');
-          }
-        });
+        this.isLoading.set(false);
+        this.toast.show('Failed to open Super Admin support chat', 'error');
       }
     });
+  }
+
+  private updateConversationPreview(roomId: string, preview: string, time?: string): void {
+    this.conversations.update(list => list.map(c => {
+      if (c.roomId === roomId) {
+        return {
+          ...c,
+          lastMessage: preview,
+          lastMessageTime: time || new Date().toISOString()
+        };
+      }
+      return c;
+    }));
   }
 
   selectConversation(roomId: string): void {
@@ -225,29 +274,31 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     this.selectedRoomId.set(roomId);
+    this.persistRoomId(roomId);
     this.messages.set([]);
     this.pendingAttachment.set(null);
 
     this.signalR.joinOrderRoom(roomId).catch(() => {});
     this.chatService.markConversationAsRead(roomId).subscribe({ error: () => {} });
 
-    this.sellerSvc.getOrderMessages(roomId).subscribe({
-      next: (res: any) => {
-        const list: any[] = Array.isArray(res) ? res : (res?.items ?? []);
-        const mapped = list.map(m => ({
-          id: m.id,
-          senderRole: m.senderRole,
-          message: m.message || m.content || '',
-          createdAt: m.createdAt || m.sentAt || new Date().toISOString(),
-          isMe: this.isMyRole(m.senderRole) || m.senderRole === 2,
-          attachmentUrl: m.attachmentUrl || null,
-          attachmentFileName: m.attachmentFileName || null,
-          attachmentContentType: m.attachmentContentType || null
-        }));
+    this.chatService.getMessages(roomId, 1, 100).subscribe({
+      next: (page) => {
+        const list = page?.items ?? [];
+        const mapped = list.map(m => this.mapApiMessage(m));
         this.messages.set(mapped);
         this.shouldScrollToBottom = true;
+
+        const last = mapped[mapped.length - 1];
+        if (last) {
+          const preview = last.message || (last.attachmentFileName ? `📎 ${last.attachmentFileName}` : '');
+          this.updateConversationPreview(roomId, preview, last.createdAt);
+        } else {
+          this.updateConversationPreview(roomId, 'Chat with Super Admin', undefined);
+        }
       },
-      error: () => {}
+      error: () => {
+        this.toast.show('Could not load chat history.', 'error');
+      }
     });
   }
 
@@ -298,6 +349,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       message: text,
       createdAt: new Date().toISOString(),
       isMe: true,
+      isRead: false,
       senderRole: 'Shopkeeper',
       attachmentUrl: attachment?.url || null,
       attachmentFileName: attachment?.fileName || null,
@@ -322,13 +374,9 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
           const without = list.filter(m =>
             m.id !== tempId && String(m.id || '').toLowerCase() !== realId.toLowerCase()
           );
-          return [...without, { ...optimisticMsg, id: realId }];
+          return [...without, { ...optimisticMsg, id: realId, isRead: false }];
         });
-        this.conversations.update(list => list.map(c =>
-          c.roomId === roomId
-            ? { ...c, lastMessage: preview, lastMessageTime: new Date().toISOString() }
-            : c
-        ));
+        this.updateConversationPreview(roomId, preview, new Date().toISOString());
       },
       error: (err) => {
         this.isSending.set(false);

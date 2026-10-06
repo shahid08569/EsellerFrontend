@@ -33,6 +33,9 @@ export class SignalRService {
   private receiveMessageHandlers = new Set<(msg: SignalRIncomingMessage) => void>();
   private receiveMessageHubBound = false;
 
+  private messageReadHandlers = new Set<(messageId: string, readAt: string) => void>();
+  private messageReadHubBound = false;
+
   private receiveNotificationHandlers = new Set<(payload: SignalRIncomingNotification) => void>();
   private receiveNotificationHubBound = false;
   private unreadCountHandlers = new Set<(count: number) => void>();
@@ -47,6 +50,7 @@ export class SignalRService {
       this.chatConnection.state === HubConnectionState.Connected
     ) {
       this.ensureReceiveMessageHubHandler();
+      this.ensureMessageReadHubHandler();
       return;
     }
 
@@ -83,6 +87,7 @@ export class SignalRService {
     this.chatConnection.onclose(() => {
       this.chatState.set(HubConnectionState.Disconnected);
       this.receiveMessageHubBound = false;
+      this.messageReadHubBound = false;
     });
     this.chatConnection.onreconnecting(() =>
       this.chatState.set(HubConnectionState.Reconnecting)
@@ -90,15 +95,19 @@ export class SignalRService {
     this.chatConnection.onreconnected(() => {
       this.chatState.set(HubConnectionState.Connected);
       this.receiveMessageHubBound = false;
+      this.messageReadHubBound = false;
       this.ensureReceiveMessageHubHandler();
+      this.ensureMessageReadHubHandler();
     });
 
     this.ensureReceiveMessageHubHandler();
+    this.ensureMessageReadHubHandler();
 
     try {
       await this.chatConnection.start();
       this.chatState.set(HubConnectionState.Connected);
       this.ensureReceiveMessageHubHandler();
+      this.ensureMessageReadHubHandler();
     } catch (err) {
       this.chatState.set(HubConnectionState.Disconnected);
       try { await this.chatConnection?.stop(); } catch { /* ignore */ }
@@ -158,14 +167,28 @@ export class SignalRService {
   }
 
   onMessageRead(callback: (messageId: string, readAt: string) => void): () => void {
-    if (!this.chatConnection) return () => {};
-
-    const handler = (messageId: string, readAt: string) => {
-      callback(messageId, readAt);
+    this.messageReadHandlers.add(callback);
+    this.ensureMessageReadHubHandler();
+    return () => {
+      this.messageReadHandlers.delete(callback);
     };
+  }
 
-    this.chatConnection.on('MessageRead', handler);
-    return () => this.chatConnection?.off('MessageRead', handler);
+  private ensureMessageReadHubHandler(): void {
+    if (!this.chatConnection || this.messageReadHubBound) return;
+
+    this.chatConnection.on('MessageRead', (messageId: string, readAt: string) => {
+      const id = String(messageId || '').toLowerCase();
+      const at = typeof readAt === 'string' ? readAt : new Date(readAt as any).toISOString();
+      for (const handler of this.messageReadHandlers) {
+        try {
+          handler(id, at);
+        } catch {
+          /* isolate subscriber errors */
+        }
+      }
+    });
+    this.messageReadHubBound = true;
   }
 
   async startNotificationConnection(): Promise<void> {

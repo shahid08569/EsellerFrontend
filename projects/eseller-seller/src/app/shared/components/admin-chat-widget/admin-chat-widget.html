@@ -143,7 +143,11 @@
               <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-slate-400">
                 <span>{{ msg.timestamp }}</span>
                 @if (msg.sender === 'seller') {
-                  <span class="text-[#34B7F1] font-bold">✓✓</span>
+                  @if (tickState(msg) === 'read') {
+                    <span class="text-[#34B7F1] font-bold tracking-tighter">✓✓</span>
+                  } @else if (tickState(msg) === 'sent') {
+                    <span class="text-slate-500 font-bold">✓</span>
+                  }
                 }
               </div>
             </div>

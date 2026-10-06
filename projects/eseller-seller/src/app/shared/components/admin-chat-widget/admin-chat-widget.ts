@@ -11,6 +11,7 @@ export interface AdminChatMessage {
   message: string;
   timestamp: string;
   isQuickAction?: boolean;
+  isRead?: boolean;
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
@@ -22,6 +23,8 @@ interface PendingAttachment {
   contentType: string;
   sizeBytes: number;
 }
+
+const WIDGET_SUPPORT_ROOM_KEY = 'eseller_seller_support_room';
 
 @Component({
   selector: 'app-admin-chat-widget',
@@ -50,33 +53,71 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly messages = signal<AdminChatMessage[]>([]);
   readonly isLoading = signal<boolean>(false);
 
+  private supportRoomId: string | null = null;
   private shouldScrollToBottom = false;
   private joinedRoomId: string | null = null;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private unsubscribeSignalR?: () => void;
+  private unsubscribeMessageRead?: () => void;
+  private realtimeHooksAttached = false;
+
+  tickState(msg: AdminChatMessage): 'pending' | 'sent' | 'read' {
+    if (msg.sender !== 'seller') return 'sent';
+    const id = String(msg.id || '');
+    if (!id || id.startsWith('tmp-')) return 'pending';
+    return msg.isRead ? 'read' : 'sent';
+  }
 
   ngOnInit(): void {
     this.refreshUnreadBadge();
 
     this.sellerSvc.getMyShop().subscribe({
-      next: (shop) => {
-        this.shop.set(shop);
-        if (shop?.id) {
-          this.joinAndLoad(shop.id);
-        }
-      },
+      next: (shop) => this.shop.set(shop),
       error: () => {}
     });
 
-    this.signalR.startChatConnection().then(() => {
-      const shopId = this.shop()?.id;
-      if (shopId) {
-        this.signalR.joinOrderRoom(shopId).catch(() => {});
-        this.joinedRoomId = shopId;
-      }
+    this.attachRealtimeHooks();
 
+    this.chatService.getShopSupportSession().subscribe({
+      next: (session) => {
+        const roomId = session.orderRequestId || session.conversationId;
+        if (!roomId) return;
+        this.supportRoomId = roomId;
+        this.persistRoomId(roomId);
+        this.signalR.joinOrderRoom(roomId).catch(() => {});
+        this.joinedRoomId = roomId;
+        if (this.isOpen()) {
+          this.joinAndLoad(roomId);
+        }
+      },
+      error: () => {
+        this.toast.show('Could not connect to Super Admin chat.', 'error');
+      }
+    });
+
+    this.pollTimer = setInterval(() => {
+      this.refreshUnreadBadge();
+      if (this.isOpen() && this.supportRoomId) {
+        this.fetchMessages(this.supportRoomId, false);
+      }
+    }, 8000);
+  }
+
+  private persistRoomId(roomId: string): void {
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        window.sessionStorage.setItem(WIDGET_SUPPORT_ROOM_KEY, roomId);
+      } catch { /* ignore */ }
+    }
+  }
+
+  private attachRealtimeHooks(): void {
+    if (this.realtimeHooksAttached) return;
+    this.realtimeHooksAttached = true;
+
+    this.signalR.startChatConnection().then(() => {
       this.unsubscribeSignalR = this.signalR.onReceiveMessage((incoming: SignalRIncomingMessage) => {
-        const roomId = this.shop()?.id;
+        const roomId = this.supportRoomId;
         if (!roomId || incoming.orderRequestId?.toLowerCase() !== roomId.toLowerCase()) {
           return;
         }
@@ -108,6 +149,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
                 hour: '2-digit',
                 minute: '2-digit'
               }),
+              isRead: true,
               attachmentUrl: incoming.attachmentUrl || null,
               attachmentFileName: incoming.attachmentFileName || null,
               attachmentContentType: incoming.attachmentContentType || null
@@ -126,14 +168,35 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
         this.shouldScrollToBottom = true;
       });
-    }).catch(() => {});
 
-    this.pollTimer = setInterval(() => {
-      this.refreshUnreadBadge();
-      if (this.isOpen() && this.shop()?.id) {
-        this.fetchMessages(this.shop()!.id);
-      }
-    }, 8000);
+      this.unsubscribeMessageRead = this.signalR.onMessageRead((messageId) => {
+        const id = messageId.toLowerCase();
+        this.messages.update(list =>
+          list.map(m =>
+            m.sender === 'seller' && m.id && m.id.toLowerCase() === id ? { ...m, isRead: true } : m
+          )
+        );
+      });
+    }).catch(() => {});
+  }
+
+  private ensureSupportRoom(onReady: (roomId: string) => void): void {
+    if (this.supportRoomId) {
+      onReady(this.supportRoomId);
+      return;
+    }
+    this.chatService.getShopSupportSession().subscribe({
+      next: (session) => {
+        const id = session.orderRequestId || session.conversationId;
+        if (!id) return;
+        this.supportRoomId = id;
+        this.persistRoomId(id);
+        this.signalR.joinOrderRoom(id).catch(() => {});
+        this.joinedRoomId = id;
+        onReady(id);
+      },
+      error: () => this.toast.show('Could not open support chat.', 'error')
+    });
   }
 
   private refreshUnreadBadge(): void {
@@ -150,6 +213,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   ngOnDestroy(): void {
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.unsubscribeSignalR?.();
+    this.unsubscribeMessageRead?.();
     if (this.joinedRoomId) {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
     }
@@ -167,10 +231,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen.set(nextState);
     if (nextState) {
       this.unreadCount.set(0);
-      const shopId = this.shop()?.id;
-      if (shopId) {
-        this.joinAndLoad(shopId);
-      }
+      this.ensureSupportRoom((roomId) => this.joinAndLoad(roomId));
       this.shouldScrollToBottom = true;
     }
   }
@@ -236,37 +297,23 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
-  private joinAndLoad(shopId: string): void {
-    this.chatService.markConversationAsRead(shopId).subscribe({
+  private joinAndLoad(roomId: string): void {
+    this.chatService.markConversationAsRead(roomId).subscribe({
       next: () => this.refreshUnreadBadge(),
       error: () => {}
     });
-    this.signalR.joinOrderRoom(shopId).then(() => {
-      this.joinedRoomId = shopId;
+    this.signalR.joinOrderRoom(roomId).then(() => {
+      this.joinedRoomId = roomId;
     }).catch(() => {});
-    this.fetchMessages(shopId);
+    this.fetchMessages(roomId, true);
   }
 
-  private fetchMessages(shopId: string): void {
-    this.isLoading.set(true);
-    this.sellerSvc.getOrderMessages(shopId, 1, 50).subscribe({
-      next: (res: any) => {
+  private fetchMessages(roomId: string, showLoading: boolean): void {
+    if (showLoading) this.isLoading.set(true);
+    this.chatService.getMessages(roomId, 1, 100).subscribe({
+      next: (page) => {
         this.isLoading.set(false);
-        const list: any[] = Array.isArray(res) ? res : (res?.items ?? []);
-        if (!list.length) {
-          if (this.messages().length === 0) {
-            this.messages.set([{
-              id: 'm-welcome',
-              sender: 'admin',
-              senderName: 'System',
-              message: 'Support chat is ready. Send a message to Super Admin about verification, tier upgrades, or store questions.',
-              timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-              isQuickAction: true
-            }]);
-          }
-          return;
-        }
-
+        const list: any[] = page?.items ?? [];
         const formatted: AdminChatMessage[] = list.map((m: any) => {
           const role = String(m.senderRole || '');
           const isSeller = this.isShopkeeperRole(role);
@@ -281,6 +328,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               hour: '2-digit',
               minute: '2-digit'
             }),
+            isRead: !!m.isRead,
             attachmentUrl: m.attachmentUrl || null,
             attachmentFileName: m.attachmentFileName || null,
             attachmentContentType: m.attachmentContentType || null
@@ -297,9 +345,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private sendMessageDirect(text: string, attachment?: PendingAttachment | null): void {
-    const shopId = this.shop()?.id;
-    if (!shopId) {
-      this.toast.show('Shop profile not loaded yet. Please try again.', 'error');
+    const roomId = this.supportRoomId;
+    if (!roomId) {
+      this.toast.show('Support chat is still loading. Please try again.', 'error');
       return;
     }
 
@@ -316,6 +364,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         senderName: myName,
         message: preview,
         timestamp: nowTime,
+        isRead: false,
         attachmentUrl: attachment?.url || null,
         attachmentFileName: attachment?.fileName || null,
         attachmentContentType: attachment?.contentType || null
@@ -324,7 +373,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.shouldScrollToBottom = true;
     this.isSending.set(true);
 
-    this.chatService.sendMessage(shopId, text, attachment ? {
+    this.chatService.sendMessage(roomId, text, attachment ? {
       attachmentUrl: attachment.url,
       attachmentFileName: attachment.fileName,
       attachmentContentType: attachment.contentType,
@@ -345,6 +394,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               senderName: myName,
               message: preview,
               timestamp: nowTime,
+              isRead: false,
               attachmentUrl: attachment?.url || null,
               attachmentFileName: attachment?.fileName || null,
               attachmentContentType: attachment?.contentType || null
