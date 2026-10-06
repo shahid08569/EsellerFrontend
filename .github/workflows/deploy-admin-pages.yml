@@ -1,0 +1,47 @@
+# Build admin app with a Node version Angular accepts, deploy to Cloudflare Pages.
+# Secrets (repo Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN   = Cloudflare API token (Pages:Edit)
+#   CLOUDFLARE_ACCOUNT_ID  = Cloudflare Account ID
+
+name: Deploy Admin → Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/eseller-admin/**"
+      - "projects/eseller-shared/**"
+      - "package.json"
+      - "package-lock.json"
+      - "angular.json"
+      - ".github/workflows/deploy-admin-pages.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.15.0"
+          cache: npm
+
+      - name: Install & build
+        run: |
+          npm ci --ignore-engines
+          npx ng build eseller-admin --configuration=production
+          printf '/*    /index.html   200\n' > dist/eseller-admin/browser/_redirects
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: eseller-admin
+          directory: dist/eseller-admin/browser
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,47 @@
+# Build seller app with a Node version Angular accepts, deploy to Cloudflare Pages.
+# Secrets (repo Settings → Secrets → Actions):
+#   CLOUDFLARE_API_TOKEN   = Cloudflare API token (Pages:Edit)
+#   CLOUDFLARE_ACCOUNT_ID  = Cloudflare Account ID
+
+name: Deploy Seller → Cloudflare Pages
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "projects/eseller-seller/**"
+      - "projects/eseller-shared/**"
+      - "package.json"
+      - "package-lock.json"
+      - "angular.json"
+      - ".github/workflows/deploy-seller-pages.yml"
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      deployments: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24.15.0"
+          cache: npm
+
+      - name: Install & build
+        run: |
+          npm ci --ignore-engines
+          npx ng build eseller-seller --configuration=production
+          printf '/*    /index.html   200\n' > dist/eseller-seller/browser/_redirects
+
+      - name: Publish to Cloudflare Pages
+        uses: cloudflare/pages-action@v1
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          projectName: eseller-seller
+          directory: dist/eseller-seller/browser
+          gitHubToken: ${{ secrets.GITHUB_TOKEN }}
