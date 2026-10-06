@@ -228,7 +228,9 @@ export class Login implements OnInit {
           String(errMsg).toLowerCase().includes('failed to fetch') ||
           String(errMsg).toLowerCase().includes('unknown error')
         ) {
-          message = 'Cannot reach API. Start the backend (https://localhost:7127) then try again.';
+          message = environment.production
+            ? 'Cannot reach API right now. Please wait a moment and try again.'
+            : 'Cannot reach API. Start the backend (https://localhost:7127) then try again.';
         } else if (code === 'INVALID_CREDENTIALS' || errMsg.toLowerCase().includes('invalid credentials')) {
           message = 'Invalid email/username or password. Please try again.';
         } else if (code === 'ACCOUNT_INACTIVE' || errMsg.toLowerCase().includes('inactive')) {
