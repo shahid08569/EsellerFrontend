@@ -77,10 +77,7 @@ export class Home implements OnInit {
     // Banners (force refresh so admin publishes appear after cache)
     this.homeService.getHomepageBanners(true).subscribe({
       next: (b) => this.banners.set(Array.isArray(b) ? b : []),
-      error: (e) => {
-        console.error('Banners failed', e);
-        this.banners.set([]);
-      }
+      error: () => this.banners.set([])
     });
 
     // Categories (for grid at top - filtered by SuperAdmin homepage selection)
@@ -89,13 +86,13 @@ export class Home implements OnInit {
         const featured = (c || []).filter(cat => cat.isFeaturedOnHomepage);
         this.categories.set(featured.length > 0 ? featured : (c || []));
       },
-      error: (e) => console.error('Categories failed', e)
+      error: () => this.categories.set([])
     });
 
     // Brands
     this.homeService.getBrands().subscribe({
       next: (b) => this.brands.set(b),
-      error: (e) => console.error('Brands failed', e)
+      error: () => this.brands.set([])
     });
 
     // Flash Sale
@@ -104,10 +101,7 @@ export class Home implements OnInit {
         this.flashSaleProducts.set(p);
         this.loadingFlashSale.set(false);
       },
-      error: (e) => {
-        console.error('Flash sale failed', e);
-        this.loadingFlashSale.set(false);
-      }
+      error: () => this.loadingFlashSale.set(false)
     });
 
     // New Arrivals
@@ -116,10 +110,7 @@ export class Home implements OnInit {
         this.newArrivals.set(p);
         this.loadingNewArrivals.set(false);
       },
-      error: (e) => {
-        console.error('New arrivals failed', e);
-        this.loadingNewArrivals.set(false);
-      }
+      error: () => this.loadingNewArrivals.set(false)
     });
 
     // Featured — prefer the dedicated /Products?isFeatured=true endpoint. If the admin
@@ -135,10 +126,7 @@ export class Home implements OnInit {
           this.loadFeaturedFallback();
         }
       },
-      error: (e) => {
-        console.error('Featured failed', e);
-        this.loadFeaturedFallback();
-      }
+      error: () => this.loadFeaturedFallback()
     });
 
     // Best Selling
@@ -147,10 +135,7 @@ export class Home implements OnInit {
         this.bestSellingProducts.set(p);
         this.loadingBestSelling.set(false);
       },
-      error: (e) => {
-        console.error('Best selling failed', e);
-        this.loadingBestSelling.set(false);
-      }
+      error: () => this.loadingBestSelling.set(false)
     });
 
     // Hot Selling
@@ -159,10 +144,7 @@ export class Home implements OnInit {
         this.hotSellingProducts.set(p);
         this.loadingHotSelling.set(false);
       },
-      error: (e) => {
-        console.error('Hot selling failed', e);
-        this.loadingHotSelling.set(false);
-      }
+      error: () => this.loadingHotSelling.set(false)
     });
 
     // ✅ Homepage Categories (admin-controlled sections)
@@ -171,10 +153,7 @@ export class Home implements OnInit {
         this.categorySections.set(sections);
         this.loadingCategorySections.set(false);
       },
-      error: (e) => {
-        console.error('Homepage categories failed', e);
-        this.loadingCategorySections.set(false);
-      }
+      error: () => this.loadingCategorySections.set(false)
     });
   }
 

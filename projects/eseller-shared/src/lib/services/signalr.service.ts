@@ -354,17 +354,24 @@ export class SignalRService {
         withCredentials: true
       })
       .withAutomaticReconnect([0, 2_000, 5_000, 10_000, 30_000])
-      .configureLogging(LogLevel.Warning)
+      .configureLogging(LogLevel.Error)
       .build();
   }
 
   private getHubUrl(key: '__ESELLER_CHAT_HUB_URL__' | '__ESELLER_NOTIFICATION_HUB_URL__'): string {
-    const url = (window as any)[key] as string | undefined;
-    if (!url) {
-      throw new Error(
-        `Eseller hub URL not configured. Ensure app bootstrap sets window.${key}.`
-      );
+    const configured = (window as any)[key] as string | undefined;
+    if (configured) return configured;
+
+    // Derive from API URL so missing bootstrap never crashes the whole admin page
+    const api = ((window as any).__ESELLER_API_URL__ as string | undefined) || '';
+    const host = api.replace(/\/api\/v1\/?$/i, '').replace(/\/+$/, '');
+    if (host) {
+      return key === '__ESELLER_CHAT_HUB_URL__'
+        ? `${host}/hubs/chat`
+        : `${host}/hubs/notifications`;
     }
-    return url;
+    return key === '__ESELLER_CHAT_HUB_URL__'
+      ? 'https://api.esellerglobal.com/hubs/chat'
+      : 'https://api.esellerglobal.com/hubs/notifications';
   }
 }
