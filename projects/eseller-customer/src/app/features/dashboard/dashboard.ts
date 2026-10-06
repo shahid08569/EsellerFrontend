@@ -30,6 +30,7 @@ import {
   SelectOption
 } from '../../shared/components/searchable-select/searchable-select';
 import { COUNTRIES_DATA } from '../../shared/data/countries-states.data';
+import { environment } from '../../../environments/environment';
 
 export type DashboardTab = 'overview' | 'orders' | 'addresses' | 'profile' | 'notifications';
 
@@ -220,13 +221,13 @@ export class Dashboard implements OnInit {
     const role = this.authStore.currentAccount()?.roleType;
     if (role === 'Shopkeeper') {
       if (typeof window !== 'undefined') {
-        window.location.href = 'http://localhost:54007/dashboard';
+        window.location.href = `${environment.sellerUrl}/dashboard`;
         return;
       }
     }
     if (role === 'SuperAdmin' || role === 'Partner') {
       if (typeof window !== 'undefined') {
-        window.location.href = 'http://localhost:4201/dashboard';
+        window.location.href = `${environment.adminUrl}/dashboard`;
         return;
       }
     }

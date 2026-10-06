@@ -6,6 +6,7 @@ import { AdminService } from '../../core/services/admin.service';
 import { filter } from 'rxjs/operators';
 import { AdminChatWidget } from '../../shared/components/admin-chat-widget/admin-chat-widget';
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-layout',
@@ -19,6 +20,8 @@ export class AdminLayout implements OnInit {
   private readonly adminService = inject(AdminService);
   readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  readonly customerUrl = environment.customerUrl;
+  readonly sellerUrl = environment.sellerUrl;
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
@@ -135,15 +138,16 @@ export class AdminLayout implements OnInit {
 
   confirmLogout(): void {
     this.logoutModalOpen.set(false);
+    const loginUrl = `${environment.customerUrl}/auth/login?logout=true`;
     this.authService.logout().subscribe({
       next: () => {
         this.authStore.clearAuth();
         this.toast.show('Signed out successfully.', 'info');
-        window.location.href = 'http://localhost:4200/auth/login?logout=true';
+        window.location.href = loginUrl;
       },
       error: () => {
         this.authStore.clearAuth();
-        window.location.href = 'http://localhost:4200/auth/login?logout=true';
+        window.location.href = loginUrl;
       }
     });
   }

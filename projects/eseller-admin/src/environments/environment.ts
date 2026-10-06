@@ -6,6 +6,10 @@ export const environment = {
   apiUrl: 'https://localhost:7127/api/v1',
   chatHubUrl: 'https://localhost:7127/hubs/chat',
   notificationHubUrl: 'https://localhost:7127/hubs/notifications',
+  customerUrl: 'http://localhost:4200',
+  adminUrl: 'http://localhost:4201',
+  sellerUrl: 'http://localhost:54007',
+  affiliateUrl: 'http://localhost:4203',
   appName: 'Eseller Admin',
   appRole: 'SuperAdmin' as const
 };

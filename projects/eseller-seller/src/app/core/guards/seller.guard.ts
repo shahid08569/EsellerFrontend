@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { AuthStore } from 'eseller-shared';
+import { environment } from '../../../environments/environment';
 
 export const sellerGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
-  const router = inject(Router);
 
   if (authStore.isAuthenticated() && authStore.currentAccount()?.roleType === 'Shopkeeper') {
     return true;
@@ -34,7 +34,8 @@ export const sellerGuard: CanActivateFn = () => {
   // Never return a hanging Promise — that freezes the seller app on a blank screen.
   if (typeof window !== 'undefined') {
     window.location.replace(
-      'http://localhost:4200/auth/login?returnUrl=' + encodeURIComponent(window.location.href)
+      `${environment.customerUrl}/auth/login?returnUrl=` +
+        encodeURIComponent(window.location.href)
     );
   }
   return false;

@@ -6,6 +6,10 @@ export const environment = {
   apiUrl: 'https://api.esellerglobal.com/api/v1',
   chatHubUrl: 'https://api.esellerglobal.com/hubs/chat',
   notificationHubUrl: 'https://api.esellerglobal.com/hubs/notifications',
+  customerUrl: 'https://www.esellerglobal.com',
+  adminUrl: 'https://admin.esellerglobal.com',
+  sellerUrl: 'https://seller.esellerglobal.com',
+  affiliateUrl: 'https://affiliate.esellerglobal.com',
   appName: 'Eseller Affiliate',
   appRole: 'Affiliate' as const
 };

@@ -5,6 +5,7 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { ToastService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto } from '../../../core/models/admin.models';
+import { environment } from '../../../../environments/environment';
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
 type ViewMode = 'stores' | 'applications' | 'tiers';
@@ -743,7 +744,7 @@ export class ShopManagement implements OnInit {
   openCustomerStorefront(slug: string): void {
     if (!slug) return;
     const cleanSlug = slug.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/shops\//, '').replace(/^\//, '');
-    window.open(`http://localhost:4200/shops/${cleanSlug}`, '_blank');
+    window.open(`${environment.customerUrl}/shops/${cleanSlug}`, '_blank');
   }
 
   onCategoryFilterChange(val: string): void {

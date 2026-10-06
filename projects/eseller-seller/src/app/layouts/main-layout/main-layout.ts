@@ -8,6 +8,7 @@ import { AdminChatWidget } from '../../shared/components/admin-chat-widget/admin
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { filter } from 'rxjs/operators';
 import { SellerService, ShopDto } from '../../core/services/seller.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-main-layout',
@@ -190,17 +191,18 @@ export class MainLayout implements OnInit, OnDestroy {
 
   confirmLogout() {
     this.showLogoutModal.set(false);
+    const loginUrl = `${environment.customerUrl}/auth/login?logout=true`;
     this.authService.logout().subscribe({
       next: () => {
         this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = 'http://localhost:4200/auth/login?logout=true';
+          window.location.href = loginUrl;
         }
       },
       error: () => {
         this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = 'http://localhost:4200/auth/login?logout=true';
+          window.location.href = loginUrl;
         }
       }
     });

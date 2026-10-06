@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
 import { AuthService, AuthStore, ToastService, safeEncodeHandoff } from 'eseller-shared';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -84,13 +85,13 @@ export class Login implements OnInit {
 
         if (role === 'Shopkeeper') {
           if (typeof window !== 'undefined') {
-            window.location.href = `http://localhost:54007/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = this.portalHandoffUrl(environment.sellerUrl, handoff);
             return;
           }
         }
         if (role === 'SuperAdmin' || role === 'Partner') {
           if (typeof window !== 'undefined') {
-            window.location.href = `http://localhost:4201/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = this.portalHandoffUrl(environment.adminUrl, handoff);
             return;
           }
         }
@@ -194,7 +195,7 @@ export class Login implements OnInit {
               email: res.email,
               roleType: res.roleType
             });
-            window.location.href = `http://localhost:54007/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = this.portalHandoffUrl(environment.sellerUrl, handoff);
           }
         } else if (res.roleType === 'SuperAdmin' || res.roleType === 'Partner') {
           if (typeof window !== 'undefined') {
@@ -206,7 +207,7 @@ export class Login implements OnInit {
               email: res.email,
               roleType: res.roleType
             });
-            window.location.href = `http://localhost:4201/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = this.portalHandoffUrl(environment.adminUrl, handoff);
           }
         } else {
           this.router.navigateByUrl(this.returnUrl);
@@ -232,6 +233,22 @@ export class Login implements OnInit {
         this.toastService.show(message, 'error');
       }
     });
+  }
+
+  /** Admin/seller handoff URL; prefers returnUrl when it already targets that portal. */
+  private portalHandoffUrl(portalBase: string, handoff: string): string {
+    const base = portalBase.replace(/\/$/, '');
+    let dest = `${base}/dashboard`;
+    const ret = this.returnUrl?.trim();
+    if (ret?.startsWith(base)) {
+      try {
+        const u = new URL(ret);
+        dest = u.pathname && u.pathname !== '/' ? `${u.origin}${u.pathname}${u.search}` : dest;
+      } catch {
+        /* keep dashboard */
+      }
+    }
+    return `${dest}#auth=${encodeURIComponent(handoff)}`;
   }
 
   // ─────────────────────────────────────────────────────────────

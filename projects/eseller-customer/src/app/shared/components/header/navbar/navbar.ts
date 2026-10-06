@@ -14,6 +14,7 @@ import {
   ToastService,
   AuthActionService
 } from 'eseller-shared';
+import { environment } from '../../../../../environments/environment';
 
 @Component({
   imports: [RouterLink],
@@ -31,6 +32,8 @@ export class Navbar implements OnInit, OnDestroy {
   readonly authStore = inject(AuthStore);
   private readonly toastService = inject(ToastService);
   private readonly authAction = inject(AuthActionService);
+  readonly sellerUrl = environment.sellerUrl;
+  readonly adminUrl = environment.adminUrl;
 
   /** Signed-in customer — used to show Orders and allow commerce pages. */
   readonly canShop = () => this.authAction.canShop();

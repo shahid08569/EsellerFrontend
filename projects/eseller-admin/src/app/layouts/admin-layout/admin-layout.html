@@ -431,10 +431,10 @@
 
         <!-- Quick External Links -->
         <div class="pt-3 border-t border-slate-800/80 flex items-center justify-between px-2 text-xs">
-          <a href="http://localhost:54007/dashboard" target="_blank" class="hover:text-emerald-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
+          <a [href]="sellerUrl + '/dashboard'" target="_blank" class="hover:text-emerald-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
             <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400/50"></span> Seller Hub ↗
           </a>
-          <a href="http://localhost:4200" target="_blank" class="hover:text-blue-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
+          <a [href]="customerUrl" target="_blank" class="hover:text-blue-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
             <span class="w-2 h-2 rounded-full bg-blue-400 shadow-xs shadow-blue-400/50"></span> Storefront ↗
           </a>
         </div>

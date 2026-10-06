@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { AuthStore } from 'eseller-shared';
+import { environment } from '../../../environments/environment';
 
 export const adminGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
-  const router = inject(Router);
 
   // 1. Check in-memory store
   const role = authStore.currentAccount()?.roleType;
@@ -42,9 +42,11 @@ export const adminGuard: CanActivateFn = () => {
     }
   }
 
-  // 3. Redirect to main login page if not logged in as Admin
+  // 3. Redirect to customer-portal login if not logged in as Admin
   if (typeof window !== 'undefined') {
-    window.location.href = 'http://localhost:4200/auth/login?returnUrl=' + encodeURIComponent(window.location.href);
+    window.location.href =
+      `${environment.customerUrl}/auth/login?returnUrl=` +
+      encodeURIComponent(window.location.href);
     return new Promise(() => {});
   }
   return false;
