@@ -421,8 +421,12 @@ export class Cart implements OnInit {
             saveAndRedirect(confirmedRef, !!res.orderId);
           },
           error: (err) => {
-            console.warn('Backend order placement error, proceeding with local fallback:', err);
-            saveAndRedirect(generatedRef, false);
+            this.isSubmitting.set(false);
+            const msg =
+              (typeof err?.error === 'string' ? err.error : null) ||
+              err?.error?.error ||
+              'Could not place your order. Please try again.';
+            this.toastService.show(msg, 'error');
           }
         });
       };
@@ -449,7 +453,8 @@ export class Cart implements OnInit {
         executeCreateOrder();
       }
     } else {
-      saveAndRedirect(generatedRef, false);
+      this.isSubmitting.set(false);
+      this.toastService.show('Please sign in to place an order.', 'error');
     }
   }
 

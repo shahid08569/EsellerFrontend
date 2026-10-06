@@ -210,8 +210,10 @@
           <es-shop-rating-badge
             [shopName]="prod.shopName"
             [rating]="prod.shopRating"
+            [shopBadgeText]="prod.shopBadgeText"
+            [shopBadgeColor]="prod.shopBadgeColor"
             [showName]="false"
-            [showVerified]="true"
+            [showVerified]="false"
             size="md" />
         </div>
 
@@ -483,7 +485,9 @@
               <es-shop-rating-badge
                 [shopName]="prod.shopName"
                 [rating]="prod.shopRating"
-                [showVerified]="true"
+                [shopBadgeText]="prod.shopBadgeText"
+                [shopBadgeColor]="prod.shopBadgeColor"
+                [showVerified]="false"
                 size="sm" />
             </div>
             <div class="flex justify-between">
@@ -626,7 +630,9 @@
                 <es-shop-rating-badge
                   [shopName]="prod.shopName"
                   [rating]="prod.shopRating"
-                  [showVerified]="true"
+                  [shopBadgeText]="prod.shopBadgeText"
+                  [shopBadgeColor]="prod.shopBadgeColor"
+                  [showVerified]="false"
                   size="sm" />
               </div>
               <div class="p-3 bg-gray-50 rounded-xl flex justify-between">

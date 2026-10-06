@@ -6,6 +6,8 @@ import { AdminService } from '../../core/services/admin.service';
 import { filter } from 'rxjs/operators';
 import { AdminChatWidget } from '../../shared/components/admin-chat-widget/admin-chat-widget';
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
+import { AdminChatUnreadService } from '../../core/services/admin-chat-unread.service';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-admin-layout',
@@ -17,14 +19,18 @@ export class AdminLayout implements OnInit {
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
   private readonly adminService = inject(AdminService);
+  readonly chatUnread = inject(AdminChatUnreadService);
   readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  readonly customerPortalUrl = environment.customerPortalUrl;
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
   readonly pendingShopsCount = signal<number>(0);
   readonly totalShopsCount = signal<number>(0);
   readonly pendingProductsCount = signal<number>(0);
+  /** Tracks full URL (incl. query) so sidebar active styles update on tab/view changes */
+  readonly currentUrl = signal<string>('');
 
   // Active accordion dropdowns: multi-open supported so opening one doesn't auto-close another
   readonly openDropdowns = signal<Record<string, boolean>>({
@@ -39,12 +45,16 @@ export class AdminLayout implements OnInit {
 
   ngOnInit(): void {
     this.refreshBadges();
+    this.chatUnread.start();
+    this.currentUrl.set(this.router.url || '');
     this.autoExpandActiveDropdown(this.router.url);
 
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)
     ).subscribe((e: any) => {
-      this.autoExpandActiveDropdown(e.urlAfterRedirects || e.url);
+      const url = e.urlAfterRedirects || e.url || '';
+      this.currentUrl.set(url);
+      this.autoExpandActiveDropdown(url);
       this.mobileMenuOpen.set(false);
     });
   }
@@ -69,12 +79,33 @@ export class AdminLayout implements OnInit {
   }
 
   isProductNav(status: 'all' | 'pending' | 'approved' | 'rejected'): boolean {
-    const url = this.router.url || '';
+    const url = this.currentUrl() || this.router.url || '';
     if (!url.startsWith('/products')) return false;
     if (status === 'all') {
       return !url.includes('status=') || url.includes('status=all');
     }
     return url.includes(`status=${status}`);
+  }
+
+  /** Shop Management submenu — match by view (+ tab for applications). */
+  isShopNav(item: 'pending' | 'stores' | 'tiers' | 'all'): boolean {
+    const url = this.currentUrl() || this.router.url || '';
+    if (!url.startsWith('/shops')) return false;
+
+    const q = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(q);
+    const view = (params.get('view') || '').toLowerCase();
+    const tab = (params.get('tab') || '').toLowerCase();
+
+    if (item === 'tiers') return view === 'tiers';
+    if (item === 'stores') return view === 'stores' || (!view && !tab);
+    if (item === 'pending') {
+      return view === 'applications' && (tab === 'pending' || tab === '');
+    }
+    if (item === 'all') {
+      return view === 'applications' && (tab === 'all' || tab === 'approved' || tab === 'rejected');
+    }
+    return false;
   }
 
   private autoExpandActiveDropdown(url: string): void {
@@ -139,11 +170,11 @@ export class AdminLayout implements OnInit {
       next: () => {
         this.authStore.clearAuth();
         this.toast.show('Signed out successfully.', 'info');
-        window.location.href = 'http://localhost:4200/auth/login?logout=true';
+        window.location.href = `${environment.customerPortalUrl}/auth/login?logout=true`;
       },
       error: () => {
         this.authStore.clearAuth();
-        window.location.href = 'http://localhost:4200/auth/login?logout=true';
+        window.location.href = `${environment.customerPortalUrl}/auth/login?logout=true`;
       }
     });
   }

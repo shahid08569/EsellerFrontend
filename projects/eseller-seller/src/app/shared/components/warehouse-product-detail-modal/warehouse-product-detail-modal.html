@@ -1,0 +1,170 @@
+@if (productId()) {
+  <div
+    class="fixed inset-0 z-[80] flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs"
+    (click)="onBackdrop($event)">
+    <div
+      class="bg-white rounded-2xl w-full max-w-3xl max-h-[92vh] shadow-2xl border border-slate-100 flex flex-col overflow-hidden"
+      role="dialog"
+      aria-modal="true"
+      [attr.aria-label]="displayName()"
+      (click)="$event.stopPropagation()">
+
+      <div class="shrink-0 flex items-start justify-between gap-3 px-5 py-3.5 border-b border-slate-100">
+        <div class="min-w-0">
+          <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400">Warehouse Product</p>
+          <h3 class="text-sm sm:text-base font-black text-slate-900 tracking-tight truncate" [title]="displayName()">
+            {{ displayName() }}
+          </h3>
+          <div class="flex items-center gap-2 flex-wrap mt-1">
+            @if (detail()?.categoryName || preview()?.categoryName) {
+              <span class="px-2 py-0.5 rounded-md bg-slate-100 text-[10px] font-bold text-slate-600 uppercase">
+                {{ detail()?.categoryName || preview()?.categoryName }}
+              </span>
+            }
+            @if (detail()?.brandName || preview()?.brandName) {
+              <span class="text-[11px] font-medium text-slate-400">
+                {{ detail()?.brandName || preview()?.brandName }}
+              </span>
+            }
+          </div>
+        </div>
+        <button
+          type="button"
+          (click)="close.emit()"
+          class="w-8 h-8 shrink-0 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
+          ✕
+        </button>
+      </div>
+
+      <div class="flex-1 min-h-0 overflow-y-auto px-5 py-4">
+        @if (loading()) {
+          <div class="py-16 text-center">
+            <div class="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
+            <p class="text-xs font-bold text-slate-500">Loading product details…</p>
+          </div>
+        } @else if (error()) {
+          <div class="py-12 text-center text-xs font-bold text-rose-600">{{ error() }}</div>
+        } @else {
+          <div class="grid sm:grid-cols-2 gap-5">
+            <div class="space-y-2.5">
+              <div class="aspect-square rounded-2xl bg-slate-100 border border-slate-200 overflow-hidden flex items-center justify-center">
+                @if (activeImageUrl() | imageUrl; as img) {
+                  <img [src]="img" [alt]="displayName()" class="w-full h-full object-contain" />
+                } @else {
+                  <span class="text-xs text-slate-400 font-bold">No photo</span>
+                }
+              </div>
+              @if (galleryUrls().length > 1) {
+                <div class="flex gap-2 overflow-x-auto pb-1" style="scrollbar-width: thin;">
+                  @for (url of galleryUrls(); track url) {
+                    <button
+                      type="button"
+                      (click)="selectImage(url)"
+                      class="w-14 h-14 shrink-0 rounded-xl border-2 overflow-hidden bg-slate-50 cursor-pointer transition-colors"
+                      [class.border-slate-900]="activeImageUrl() === url"
+                      [class.border-slate-200]="activeImageUrl() !== url">
+                      <img [src]="url | imageUrl" alt="" class="w-full h-full object-cover" />
+                    </button>
+                  }
+                </div>
+              }
+            </div>
+
+            <div class="space-y-4">
+              <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 space-y-2">
+                <div class="flex items-center justify-between text-xs">
+                  <span class="text-slate-500 font-medium">Retail Price</span>
+                  <span class="font-black text-slate-900 font-mono text-sm">$ {{ displayPrice() | number:'1.2-2' }}</span>
+                </div>
+                <div class="flex items-center justify-between text-xs bg-white px-2.5 py-1.5 rounded-xl border border-slate-200">
+                  <span class="text-slate-700 font-bold">Your 20% Cut</span>
+                  <span class="font-black text-emerald-700 font-mono">+$ {{ commission() | number:'1.2-2' }}</span>
+                </div>
+              </div>
+
+              <div>
+                <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500 mb-1.5">Description</h4>
+                <p class="text-xs text-slate-700 leading-relaxed whitespace-pre-wrap">
+                  {{ detail()?.description?.trim() || 'No description provided for this warehouse product.' }}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-5">
+            <div class="flex items-center justify-between mb-2">
+              <h4 class="text-[11px] font-extrabold uppercase tracking-wider text-slate-500">
+                Variants &amp; Stock
+              </h4>
+              <span class="text-[10px] font-bold text-slate-400">{{ variants().length }} variant(s)</span>
+            </div>
+
+            @if (variants().length === 0) {
+              <div class="p-3 rounded-xl border border-dashed border-slate-200 text-center text-[11px] text-slate-400 font-medium">
+                No variants configured — sold as a single SKU at base price.
+              </div>
+            } @else {
+              <div class="border border-slate-200 rounded-xl overflow-hidden overflow-x-auto">
+                <table class="w-full text-left text-[11px] min-w-[480px]">
+                  <thead class="bg-slate-50 border-b border-slate-200 text-slate-500 font-bold uppercase tracking-wider text-[9px]">
+                    <tr>
+                      <th class="py-2 px-3">Variant</th>
+                      <th class="py-2 px-3">SKU</th>
+                      <th class="py-2 px-3 text-right">Price</th>
+                      <th class="py-2 px-3 text-right">Stock</th>
+                      <th class="py-2 px-3 text-center">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-slate-100">
+                    @for (v of variants(); track v.id) {
+                      <tr class="hover:bg-slate-50/80">
+                        <td class="py-2 px-3">
+                          <div class="flex items-center gap-2 min-w-0">
+                            @if (v.imageUrl | imageUrl; as vImg) {
+                              <img [src]="vImg" alt="" class="w-8 h-8 rounded-lg object-cover border border-slate-100 shrink-0" />
+                            }
+                            <span class="font-bold text-slate-800 truncate">{{ attributeLabel(v) }}</span>
+                          </div>
+                        </td>
+                        <td class="py-2 px-3 font-mono text-slate-500">{{ v.sku || '—' }}</td>
+                        <td class="py-2 px-3 text-right font-mono font-bold text-slate-900">$ {{ v.price | number:'1.2-2' }}</td>
+                        <td class="py-2 px-3 text-right font-mono font-bold" [class.text-amber-700]="v.stockQty <= v.lowStockThreshold" [class.text-slate-700]="v.stockQty > v.lowStockThreshold">
+                          {{ v.stockQty }}
+                        </td>
+                        <td class="py-2 px-3 text-center">
+                          @if (v.isActive) {
+                            <span class="inline-flex px-1.5 py-0.5 rounded-md bg-emerald-50 text-emerald-700 border border-emerald-200 text-[9px] font-extrabold uppercase">Active</span>
+                          } @else {
+                            <span class="inline-flex px-1.5 py-0.5 rounded-md bg-slate-100 text-slate-500 border border-slate-200 text-[9px] font-extrabold uppercase">Off</span>
+                          }
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="shrink-0 flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100 bg-slate-50/80">
+        <button
+          type="button"
+          (click)="close.emit()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-slate-600 hover:bg-white border border-transparent hover:border-slate-200 transition-colors cursor-pointer">
+          Close
+        </button>
+        @if (showRequestAction() && canRequest()) {
+          <button
+            type="button"
+            (click)="onRequest()"
+            [disabled]="requestBusy()"
+            class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-black text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50">
+            {{ requestBusy() ? 'Submitting…' : requestLabel() }}
+          </button>
+        }
+      </div>
+    </div>
+  </div>
+}

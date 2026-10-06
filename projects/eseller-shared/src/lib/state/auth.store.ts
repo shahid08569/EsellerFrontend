@@ -7,16 +7,12 @@ import { CurrentAccount, RoleType } from '../models/auth/auth.models';
  * AuthStore — In-memory authentication state
  * ------------------------------------------------------------
  * Holds:
- *   - accessToken       (JWT — memory only, never persisted)
+ *   - accessToken       (JWT — in memory; mirrored to localStorage for
+ *                        reload/cross-port bootstrap, cleared when expired)
  *   - currentAccount    (id, username, email, roleType)
  *
  * The refreshToken is NEVER stored here — it lives in the
  * backend's HttpOnly cookie and is managed by the browser.
- *
- * State is intentionally NOT persisted to localStorage or
- * sessionStorage. On a full page reload the access token is
- * gone; the app must perform a silent refresh (via the
- * refresh-token endpoint) to restore the session.
  * ============================================================
  */
 @Injectable({ providedIn: 'root' })
@@ -51,22 +47,26 @@ export class AuthStore {
   }
 
   private restoreFromStorage(): void {
-    if (typeof window !== 'undefined' && window.localStorage) {
-      try {
-        const saved = window.localStorage.getItem('eseller_auth_session');
-        if (saved) {
-          const data = JSON.parse(saved);
-          if (data && data.accessToken && data.account) {
-            this._accessToken.set(data.accessToken);
-            this._currentAccount.set(data.account);
-            this._accessTokenExpiresAt.set(
-              data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null
-            );
-          }
-        }
-      } catch (e) {
-        console.error('Failed to restore auth session from storage', e);
+    if (typeof window === 'undefined' || !window.localStorage) return;
+    try {
+      const saved = window.localStorage.getItem('eseller_auth_session');
+      if (!saved) return;
+      const data = JSON.parse(saved);
+      if (!data?.accessToken || !data?.account) {
+        window.localStorage.removeItem('eseller_auth_session');
+        return;
       }
+      const expiresAt = data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null;
+      // Never restore an expired JWT from storage (XSS surface + stale auth)
+      if (expiresAt && expiresAt.getTime() <= Date.now()) {
+        window.localStorage.removeItem('eseller_auth_session');
+        return;
+      }
+      this._accessToken.set(data.accessToken);
+      this._currentAccount.set(data.account);
+      this._accessTokenExpiresAt.set(expiresAt);
+    } catch {
+      window.localStorage.removeItem('eseller_auth_session');
     }
   }
 

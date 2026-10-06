@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ToastService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminBlogPostDto, AdminCmsDto } from '../../../core/models/admin.models';
+import { environment } from '../../../../environments/environment';
 
 type ContentTab = 'blog' | 'cms';
 
@@ -246,6 +247,6 @@ export class ContentManager implements OnInit {
 
   openPreview(type: 'blog' | 'cms', slug: string): void {
     const path = type === 'blog' ? `/blog/${slug}` : `/page/${slug}`;
-    window.open(`http://localhost:4200${path}`, '_blank');
+    window.open(`${environment.customerPortalUrl}${path}`, '_blank', 'noopener,noreferrer');
   }
 }

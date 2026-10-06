@@ -22,8 +22,8 @@ export const appConfig: ApplicationConfig = {
     provideHttpClient(
       withInterceptors([
         authInterceptor,
-        refreshInterceptor,
-        errorInterceptor
+        errorInterceptor,
+        refreshInterceptor
       ])
     ),
     provideAppInitializer(authBootstrapFactory())

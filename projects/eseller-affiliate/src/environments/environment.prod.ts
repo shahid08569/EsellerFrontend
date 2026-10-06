@@ -1,11 +1,12 @@
 /**
  * Eseller — Affiliate App Environment (Production)
+ * API + hubs always on api.eseller.com (single backend).
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://affiliate.eseller.com/api/v1',
-  chatHubUrl: 'https://affiliate.eseller.com/hubs/chat',
-  notificationHubUrl: 'https://affiliate.eseller.com/hubs/notifications',
+  apiUrl: 'https://api.eseller.com/api/v1',
+  chatHubUrl: 'https://api.eseller.com/hubs/chat',
+  notificationHubUrl: 'https://api.eseller.com/hubs/notifications',
   appName: 'Eseller Affiliate',
   appRole: 'Affiliate' as const
 };

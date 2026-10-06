@@ -2,7 +2,8 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { AuthService, AuthStore, ToastService, safeEncodeHandoff } from 'eseller-shared';
+import { AuthService, AuthStore, ToastService, safeEncodeHandoff, sanitizeAppPath } from 'eseller-shared';
+import { environment } from '../../../../environments/environment';
 
 @Component({
   selector: 'app-login',
@@ -84,13 +85,13 @@ export class Login implements OnInit {
 
         if (role === 'Shopkeeper') {
           if (typeof window !== 'undefined') {
-            window.location.href = `http://localhost:54007/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = `${environment.sellerPortalUrl}/dashboard#auth=${encodeURIComponent(handoff)}`;
             return;
           }
         }
         if (role === 'SuperAdmin' || role === 'Partner') {
           if (typeof window !== 'undefined') {
-            window.location.href = `http://localhost:4201/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = `${environment.adminPortalUrl}/dashboard#auth=${encodeURIComponent(handoff)}`;
             return;
           }
         }
@@ -99,10 +100,11 @@ export class Login implements OnInit {
       }
     }
 
-    // Capture returnUrl
+    // Capture returnUrl (same-origin relative paths only)
     const rUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    if (rUrl && rUrl !== '/auth/login') {
-      this.returnUrl = rUrl;
+    const safeReturn = sanitizeAppPath(rUrl);
+    if (safeReturn && safeReturn !== '/auth/login') {
+      this.returnUrl = safeReturn;
     }
 
     // Check if redirected after successful registration
@@ -131,7 +133,8 @@ export class Login implements OnInit {
     this.passwordError.set(null);
 
     const valEmail = this.usernameOrEmail().trim();
-    const valPassword = this.password().trim();
+    // Do not trim password — must match exactly what was registered
+    const valPassword = this.password();
 
     let hasErrors = false;
     if (!valEmail) {
@@ -194,7 +197,7 @@ export class Login implements OnInit {
               email: res.email,
               roleType: res.roleType
             });
-            window.location.href = `http://localhost:54007/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = `${environment.sellerPortalUrl}/dashboard#auth=${encodeURIComponent(handoff)}`;
           }
         } else if (res.roleType === 'SuperAdmin' || res.roleType === 'Partner') {
           if (typeof window !== 'undefined') {
@@ -206,7 +209,7 @@ export class Login implements OnInit {
               email: res.email,
               roleType: res.roleType
             });
-            window.location.href = `http://localhost:4201/dashboard#auth=${encodeURIComponent(handoff)}`;
+            window.location.href = `${environment.adminPortalUrl}/dashboard#auth=${encodeURIComponent(handoff)}`;
           }
         } else {
           this.router.navigateByUrl(this.returnUrl);
@@ -216,9 +219,17 @@ export class Login implements OnInit {
         this.isSubmitting.set(false);
         const code = err?.errorCode || err?.error?.errorCode || (typeof err?.error === 'string' ? err.error : '') || '';
         const errMsg = (typeof err?.error === 'string' ? err.error : '') || err?.error?.error || err?.message || '';
-        let message = 'Unable to sign in. Please verify your credentials and try again.';
+        let message = 'Unable to sign in. Please try again.';
 
-        if (code === 'INVALID_CREDENTIALS' || errMsg.toLowerCase().includes('invalid credentials')) {
+        if (
+          code === 'HTTP_0' ||
+          code === 'HTTP_undefined' ||
+          String(errMsg).toLowerCase().includes('http failure') ||
+          String(errMsg).toLowerCase().includes('failed to fetch') ||
+          String(errMsg).toLowerCase().includes('unknown error')
+        ) {
+          message = 'Cannot reach API. Start the backend (https://localhost:7127) then try again.';
+        } else if (code === 'INVALID_CREDENTIALS' || errMsg.toLowerCase().includes('invalid credentials')) {
           message = 'Invalid email/username or password. Please try again.';
         } else if (code === 'ACCOUNT_INACTIVE' || errMsg.toLowerCase().includes('inactive')) {
           message = 'Your account has been deactivated. Please contact platform support.';

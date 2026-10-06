@@ -522,12 +522,11 @@
 
         </div>
 
-        <!-- 5. PASSWORD CREDENTIALS (IF NOT LOGGED IN) -->
-        @if (!authStore.isAuthenticated()) {
-          <div class="space-y-3 pt-3 border-t border-slate-100">
+        <!-- 5. SELLER ACCOUNT PASSWORD -->
+        <div class="space-y-3 pt-3 border-t border-slate-100">
             <div class="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
               <span class="w-5 h-5 rounded-full bg-slate-900 text-white flex items-center justify-center text-[10px]">5</span>
-              <span>Account Password</span>
+              <span>Seller Account Password</span>
             </div>
 
             <div class="grid sm:grid-cols-2 gap-3">
@@ -538,7 +537,8 @@
                   [ngModel]="password()"
                   (ngModelChange)="password.set($event); passwordError.set(null)"
                   name="password"
-                  placeholder="Min. 6 characters"
+                  placeholder="Min. 8 characters, mixed case + number + symbol"
+                  autocomplete="new-password"
                   class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
                   [class.border-rose-300]="passwordError()"
                   [class.border-slate-200]="!passwordError()"
@@ -556,6 +556,7 @@
                   (ngModelChange)="confirmPassword.set($event); confirmPasswordError.set(null)"
                   name="confirmPassword"
                   placeholder="Re-enter password"
+                  autocomplete="new-password"
                   class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
                   [class.border-rose-300]="confirmPasswordError()"
                   [class.border-slate-200]="!confirmPasswordError()"
@@ -566,7 +567,6 @@
               </div>
             </div>
           </div>
-        }
 
         <!-- Terms agreement -->
         <div class="pt-2">

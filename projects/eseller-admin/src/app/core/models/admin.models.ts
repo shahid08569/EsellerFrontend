@@ -58,6 +58,7 @@ export interface ShopCategoryDto {
   createdAt: string;
   priceUsd?: number;
   maxProductListings?: number;
+  isRecommended?: boolean;
 }
 
 export interface AdminShopDto {
@@ -99,6 +100,8 @@ export interface AdminProductDto {
   avgRating: number;
   isFeatured: boolean;
   isApproved: boolean;
+  /** Master Warehouse: true = also on customer website */
+  isStorefrontLive?: boolean;
   status?: string;
   rejectionReason: string | null;
   createdAt: string;

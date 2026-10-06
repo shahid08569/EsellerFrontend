@@ -1,11 +1,13 @@
 /**
  * Eseller — Admin App Environment (Production)
+ * API + hubs always on api.eseller.com (single backend).
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://admin.eseller.com/api/v1',
-  chatHubUrl: 'https://admin.eseller.com/hubs/chat',
-  notificationHubUrl: 'https://admin.eseller.com/hubs/notifications',
+  apiUrl: 'https://api.eseller.com/api/v1',
+  chatHubUrl: 'https://api.eseller.com/hubs/chat',
+  notificationHubUrl: 'https://api.eseller.com/hubs/notifications',
+  customerPortalUrl: 'https://eseller.com',
   appName: 'Eseller Admin',
   appRole: 'SuperAdmin' as const
 };

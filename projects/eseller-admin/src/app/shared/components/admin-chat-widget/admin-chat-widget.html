@@ -113,11 +113,19 @@
                     </div>
                   </div>
 
-                  <div class="flex items-center gap-1 text-emerald-600 font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                    <span>Chat</span>
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                    </svg>
+                  <div class="flex items-center gap-2 shrink-0">
+                    @if (shopUnread(s.id) > 0) {
+                      <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black shadow-xs">
+                        {{ shopUnread(s.id) > 99 ? '99+' : shopUnread(s.id) }}
+                      </span>
+                    } @else {
+                      <div class="flex items-center gap-1 text-emerald-600 font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">
+                        <span>Chat</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    }
                   </div>
                 </div>
               }
@@ -191,7 +199,25 @@
                   {{ msg.senderName }}
                 </p>
 
-                <p class="text-[12px] leading-relaxed whitespace-pre-wrap font-normal">{{ msg.message }}</p>
+                @if (msg.message) {
+                  <p class="text-[12px] leading-relaxed whitespace-pre-wrap font-normal">{{ msg.message }}</p>
+                }
+
+                @if (msg.attachmentUrl) {
+                  <div class="mt-1.5">
+                    @if (isImageAttachment(msg)) {
+                      <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener" class="block">
+                        <img [src]="attachmentHref(msg.attachmentUrl)" [alt]="msg.attachmentFileName || 'file'"
+                             class="max-w-[180px] max-h-32 rounded-lg object-cover border border-black/10" />
+                      </a>
+                    } @else {
+                      <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener"
+                         class="inline-flex items-center gap-1 font-bold text-[#075E54] underline underline-offset-2">
+                        📎 {{ msg.attachmentFileName || 'Download file' }}
+                      </a>
+                    }
+                  </div>
+                }
 
                 <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-gray-400">
                   <span>{{ msg.timestamp }}</span>
@@ -206,24 +232,42 @@
         </div>
 
         <!-- WHATSAPP MESSAGE INPUT BAR -->
-        <div class="bg-[#F0F2F5] px-3 py-2 border-t border-gray-200 flex items-center gap-2 shrink-0">
-          <input 
-            type="text" 
-            [ngModel]="messageText()"
-            (ngModelChange)="messageText.set($event)"
-            (keyup.enter)="sendMessage()"
-            placeholder="Type a message to seller..." 
-            class="flex-1 bg-white border border-gray-300 rounded-full px-4 py-2 text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#075E54] focus:border-[#075E54] shadow-inner">
-          
-          <button 
-            type="button" 
-            (click)="sendMessage()" 
-            [disabled]="!messageText().trim() || isSending()"
-            class="w-9 h-9 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white flex items-center justify-center shadow-md transition-all cursor-pointer disabled:opacity-40 shrink-0">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-            </svg>
-          </button>
+        <div class="bg-[#F0F2F5] px-3 py-2 border-t border-gray-200 shrink-0 space-y-1.5">
+          @if (pendingAttachment(); as att) {
+            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-[11px]">
+              <span class="truncate font-semibold text-slate-800">📎 {{ att.fileName }}</span>
+              <button type="button" (click)="clearPendingAttachment()" class="text-emerald-700 font-bold cursor-pointer shrink-0">Remove</button>
+            </div>
+          }
+          <div class="flex items-center gap-2">
+            <label class="w-9 h-9 rounded-full bg-white border border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 shrink-0"
+                   [class.opacity-50]="uploadingFile()" title="Attach file">
+              <input type="file" class="hidden" (change)="onFileSelected($event)"
+                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
+                     [disabled]="uploadingFile() || isSending()" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </label>
+
+            <input 
+              type="text" 
+              [ngModel]="messageText()"
+              (ngModelChange)="messageText.set($event)"
+              (keyup.enter)="sendMessage()"
+              placeholder="Type a message to seller..." 
+              class="flex-1 bg-white border border-gray-300 rounded-full px-4 py-2 text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#075E54] focus:border-[#075E54] shadow-inner">
+            
+            <button 
+              type="button" 
+              (click)="sendMessage()" 
+              [disabled]="(!messageText().trim() && !pendingAttachment()) || isSending() || uploadingFile()"
+              class="w-9 h-9 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white flex items-center justify-center shadow-md transition-all cursor-pointer disabled:opacity-40 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              </svg>
+            </button>
+          </div>
         </div>
       }
 
@@ -242,10 +286,10 @@
       <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.898-.992l.966-2.22A8.17 8.17 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
     </svg>
 
-    <!-- UNREAD BADGE -->
-    @if (unreadCount() > 0) {
-      <span class="absolute -top-1 -right-1 bg-red-600 text-white font-extrabold text-[10px] w-5 h-5 rounded-full flex items-center justify-center shadow-md animate-bounce border-2 border-white">
-        {{ unreadCount() }}
+    <!-- UNREAD BADGE (shared with sidebar Live Chat) -->
+    @if (chatUnread.totalUnread() > 0) {
+      <span class="absolute -top-1 -right-1 bg-red-600 text-white font-extrabold text-[10px] min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-md animate-bounce border-2 border-white">
+        {{ chatUnread.totalUnread() > 99 ? '99+' : chatUnread.totalUnread() }}
       </span>
     }
   </button>

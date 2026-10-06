@@ -1,18 +1,20 @@
 import { Component, inject, signal, computed, HostListener, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
-import { AuthStore, AuthService, ToastService, SignalRService } from 'eseller-shared';
+import { AuthStore, AuthService, ToastService } from 'eseller-shared';
 import { ConfirmModal } from '../../shared/components/confirm-modal/confirm-modal';
 import { TierModal } from '../../shared/components/tier-modal/tier-modal';
 import { AdminChatWidget } from '../../shared/components/admin-chat-widget/admin-chat-widget';
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { filter } from 'rxjs/operators';
 import { SellerService, ShopDto } from '../../core/services/seller.service';
+import { ImageUrlPipe } from '../../shared/pipes/image-url.pipe';
+import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-main-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ConfirmModal, TierModal, AdminChatWidget, NotificationBell],
+  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, ConfirmModal, TierModal, AdminChatWidget, NotificationBell, ImageUrlPipe],
   templateUrl: './main-layout.html'
 })
 export class MainLayout implements OnInit, OnDestroy {
@@ -21,7 +23,6 @@ export class MainLayout implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly sellerService = inject(SellerService);
   private readonly toast = inject(ToastService);
-  private readonly signalR = inject(SignalRService);
 
   readonly shop = signal<ShopDto | null>(null);
   readonly isSidebarOpen = signal<boolean>(true);
@@ -30,11 +31,36 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly dismissWarning = signal<boolean>(false);
   readonly isTierModalOpen = signal<boolean>(false);
 
-  private unsubNotification: (() => void) | null = null;
-
   readonly showPendingBanner = computed(
     () => !!this.shop() && !this.shop()!.isApproved && !this.dismissWarning()
   );
+
+  readonly headerTierLabel = computed(() => {
+    const raw = String(this.shop()?.tierName || this.shop()?.badgeText || 'Bronze').trim();
+    const lower = raw.toLowerCase();
+    if (lower.includes('diamond')) return 'Diamond';
+    if (lower.includes('gold')) return 'Gold';
+    if (lower.includes('bronze')) return 'Bronze';
+    if (lower.includes('silver')) return 'Silver';
+    if (lower.includes('platinum') || lower.includes('platnium')) return 'Platinum';
+    const first = raw.split(/[\s($/]/).find((w) => w.length > 0);
+    return first || 'Bronze';
+  });
+
+  readonly headerTierStyles = computed(() => {
+    const label = this.headerTierLabel().toLowerCase();
+    if (label.includes('diamond')) return { bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' };
+    if (label.includes('gold')) return { bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' };
+    if (label.includes('platinum')) return { bg: '#F5F3FF', color: '#6D28D9', border: '#DDD6FE' };
+    if (label.includes('silver')) return { bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' };
+    return { bg: '#F8FAFC', color: '#475569', border: '#E2E8F0' };
+  });
+
+  readonly headerRating = computed(() => {
+    const r = Number(this.shop()?.rating ?? 0);
+    if (!Number.isFinite(r) || r < 0) return 0;
+    return Math.min(5, Math.round(r * 10) / 10);
+  });
 
   // Dark Mode Toggle
   readonly isDarkMode = signal<boolean>(false);
@@ -56,7 +82,6 @@ export class MainLayout implements OnInit, OnDestroy {
   ngOnInit() {
     this.checkScreenSize();
     this.loadShopInfo();
-    this.connectNotifications();
 
     // Check saved theme preference
     if (typeof localStorage !== 'undefined') {
@@ -77,29 +102,7 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.unsubNotification?.();
-    this.unsubNotification = null;
-    void this.signalR.stopNotificationConnection();
-  }
-
-  private connectNotifications(): void {
-    void this.signalR.startNotificationConnection().catch(() => {
-      // Polling bell still works if hub URL is unavailable
-    });
-
-    this.unsubNotification = this.signalR.onReceiveNotification((payload) => {
-      // 6 = ShopApproved, 7 = ShopRejected
-      if (payload.type === 6) {
-        this.toast.show(payload.message || 'Your store has been verified!', 'success');
-        this.dismissWarning.set(false);
-        this.loadShopInfo();
-      } else if (payload.type === 7) {
-        this.toast.show(payload.message || 'Your store verification was rejected.', 'error');
-        this.loadShopInfo();
-      } else {
-        this.toast.show(payload.title || 'New notification', 'info');
-      }
-    });
+    // Notification hub lifecycle is owned by NotificationBell
   }
 
   dismissPendingBanner(): void {
@@ -160,13 +163,14 @@ export class MainLayout implements OnInit, OnDestroy {
     this.isTierModalOpen.set(false);
   }
 
-  onTierRequested(data: { tier: string; price: number; note: string; receiptUrl?: string }) {
+  onTierRequested(data: { tier: string; price: number; note: string; receiptUrl?: string; categoryId?: string }) {
     this.sellerService.requestTierUpgrade({
       requestedTier: data.tier,
       price: data.price,
       referenceNote: data.note,
       paymentMethod: data.price === 0 ? 'Free Default' : 'Online Merchant Transfer',
-      receiptUrl: data.receiptUrl || null
+      receiptUrl: data.receiptUrl || null,
+      requestedCategoryId: data.categoryId || null
     }).subscribe({
       next: (res) => {
         this.toast.show(
@@ -194,13 +198,13 @@ export class MainLayout implements OnInit, OnDestroy {
       next: () => {
         this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = 'http://localhost:4200/auth/login?logout=true';
+          window.location.href = `${environment.customerPortalUrl}/auth/login?logout=true`;
         }
       },
       error: () => {
         this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = 'http://localhost:4200/auth/login?logout=true';
+          window.location.href = `${environment.customerPortalUrl}/auth/login?logout=true`;
         }
       }
     });

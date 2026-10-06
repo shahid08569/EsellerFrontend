@@ -19,7 +19,7 @@
       </h1>
       <p class="text-orange-100 text-xs font-medium">
         @if (statusFilter() === 'all') {
-          Super Admin master catalog only — create and manage warehouse products.
+          Super Admin master catalog — create &amp; edit warehouse products. Use <strong>Live on Website</strong> only for products you want on the customer site; others stay warehouse-only for sellers.
         } @else if (statusFilter() === 'pending') {
           Seller listing requests waiting for Super Admin review. Approve to activate on their shop.
         } @else if (statusFilter() === 'approved') {
@@ -40,12 +40,14 @@
             Approve Selected ({{ selectedCount() }})
           </button>
         }
-        <button
-          type="button"
-          (click)="openBatchDeleteModal()"
-          class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-rose-600/30 flex items-center gap-1.5 animate-pulse">
-          Delete Selected ({{ selectedCount() }})
-        </button>
+        @if (statusFilter() !== 'all') {
+          <button
+            type="button"
+            (click)="openBatchDeleteModal()"
+            class="px-3.5 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-rose-600/30 flex items-center gap-1.5 animate-pulse">
+            Delete Selected ({{ selectedCount() }})
+          </button>
+        }
       }
 
       <button
@@ -80,6 +82,18 @@
       } @else if (statusFilter() === 'approved') {
         <div class="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700 whitespace-nowrap">
           Live on Seller Shops
+        </div>
+      }
+
+      @if (statusFilter() === 'pending' || statusFilter() === 'approved' || statusFilter() === 'rejected') {
+        <div class="relative min-w-[200px] flex-1 sm:flex-initial">
+          <app-searchable-select
+            placeholder="All shops"
+            searchPlaceholder="Search shops…"
+            [options]="filterShopOptions()"
+            [selectedValue]="selectedShopId() || selectedShopName()"
+            (valueChange)="onShopFilterChange($event)"
+          />
         </div>
       }
 
@@ -205,26 +219,33 @@
 
                 @if (statusFilter() === 'all') {
                   <td class="py-3 px-4">
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
-                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                      Warehouse Live
-                    </span>
+                    <p class="font-bold text-slate-800">Warehouse</p>
+                    @if (p.isStorefrontLive) {
+                      <span class="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                        Live on Website
+                      </span>
+                    } @else {
+                      <span class="inline-flex items-center gap-1.5 mt-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-slate-100 text-slate-600 border border-slate-200">
+                        Warehouse only
+                      </span>
+                    }
                   </td>
                 } @else {
                   <td class="py-3 px-4">
-                    <p class="font-bold text-slate-800 truncate max-w-[160px]">{{ p.shopName || 'Merchant Shop' }}</p>
+                    <p class="font-bold text-slate-800 truncate max-w-[160px]" [title]="p.shopName">{{ p.shopName || 'Merchant Shop' }}</p>
                     <p class="text-[10px] text-gray-400 font-medium truncate">{{ p.shopSlug || 'seller listing' }}</p>
                   </td>
                   <td class="py-3 px-4">
                     @if (statusFilter() === 'pending') {
                       <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-50 text-amber-800 border border-amber-200">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                        Approval In Progress
+                        {{ p.shopName || 'Pending' }}
                       </span>
                     } @else if (statusFilter() === 'approved') {
                       <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
-                        Live on Shop
+                        {{ p.status || p.shopName || 'Live' }}
                       </span>
                     } @else {
                       <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-rose-50 text-rose-700 border border-rose-200">
@@ -245,14 +266,23 @@
                     </button>
 
                     @if (statusFilter() === 'all') {
+                      <button type="button" (click)="toggleStorefrontLive(p)" [disabled]="actionInProgress() === p.id"
+                        class="px-2.5 py-1.5 rounded-lg text-xs font-extrabold transition-colors cursor-pointer disabled:opacity-50"
+                        [class.bg-emerald-600]="!p.isStorefrontLive"
+                        [class.hover:bg-emerald-700]="!p.isStorefrontLive"
+                        [class.text-white]="!p.isStorefrontLive"
+                        [class.border]="p.isStorefrontLive"
+                        [class.border-slate-300]="p.isStorefrontLive"
+                        [class.bg-white]="p.isStorefrontLive"
+                        [class.text-slate-700]="p.isStorefrontLive"
+                        [class.hover:bg-slate-50]="p.isStorefrontLive">
+                        {{ p.isStorefrontLive ? 'Take Offline' : 'Live on Website' }}
+                      </button>
                       <button type="button" (click)="openEditModal(p)"
                         class="px-2.5 py-1.5 rounded-lg border border-orange-200 bg-orange-50/50 hover:bg-orange-100/70 text-orange-700 text-xs font-bold transition-colors cursor-pointer">
                         Edit
                       </button>
-                      <button type="button" (click)="openDeleteModal(p)"
-                        class="px-2.5 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer">
-                        Delete
-                      </button>
+                      <!-- Master Warehouse products cannot be deleted -->
                     }
 
                     @if (statusFilter() === 'pending') {
@@ -305,7 +335,7 @@
               {{ createdProductId() ? 'Choose Cover Image' : 'Create Master Warehouse Product' }}
             </h3>
             <p class="text-xs text-orange-100">
-              {{ createdProductId() ? 'Pick the main image shown on the storefront and catalog cards.' : 'Auto-publishes to Platform Master Warehouse · categories & brands from backend' }}
+              {{ createdProductId() ? 'Pick the main image shown on the storefront and catalog cards.' : 'Saves to Platform Master Warehouse (not live on website until you turn Live on)' }}
             </p>
           </div>
           <button type="button" (click)="createdProductId() ? finishCreateWithCover() : closeCreateModal()" class="text-white/80 hover:text-white font-black text-sm p-1 cursor-pointer">✕</button>
@@ -701,7 +731,7 @@
               id="btn-create-product-submit"
               [disabled]="isCreatingProduct() || lookupsLoading() || categoriesList().length === 0"
               class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-extrabold shadow-md shadow-orange-600/30 cursor-pointer disabled:opacity-50">
-              {{ isCreatingProduct() ? 'Publishing…' : 'Create & Publish to Warehouse' }}
+              {{ isCreatingProduct() ? 'Publishing…' : 'Create Warehouse Product' }}
             </button>
           </div>
 

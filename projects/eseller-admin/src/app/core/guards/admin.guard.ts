@@ -1,12 +1,11 @@
 import { inject } from '@angular/core';
-import { Router, CanActivateFn } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { AuthStore } from 'eseller-shared';
+import { environment } from '../../../environments/environment';
 
 export const adminGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
-  const router = inject(Router);
 
-  // 1. Check in-memory store
   const role = authStore.currentAccount()?.roleType;
   const expiresAt = authStore.accessTokenExpiresAt();
   const isExpired = expiresAt ? expiresAt.getTime() <= Date.now() : false;
@@ -15,7 +14,7 @@ export const adminGuard: CanActivateFn = () => {
     return true;
   }
 
-  // 2. Fallback: check localStorage in case authStore is restoring
+  // Fallback: restore from storage if AuthStore constructor race occurs
   if (typeof window !== 'undefined' && window.localStorage) {
     try {
       const saved = window.localStorage.getItem('eseller_auth_session');
@@ -25,27 +24,28 @@ export const adminGuard: CanActivateFn = () => {
         const savedExpires = data?.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null;
         const savedExpired = savedExpires ? savedExpires.getTime() <= Date.now() : false;
 
-        if (data && data.accessToken && !savedExpired && (r === 'SuperAdmin' || r === 'Partner')) {
+        if (data?.accessToken && !savedExpired && (r === 'SuperAdmin' || r === 'Partner')) {
           authStore.setAuth({
             accessToken: data.accessToken,
-            accessTokenExpiresAt: savedExpires || new Date(Date.now() + 86400000),
+            accessTokenExpiresAt: savedExpires || new Date(Date.now() + 15 * 60 * 1000),
             account: data.account
           });
           return true;
-        } else if (savedExpired) {
+        }
+        if (savedExpired) {
           window.localStorage.removeItem('eseller_auth_session');
           authStore.clearAuth();
         }
       }
-    } catch (e) {
-      console.error('Error restoring admin auth session in guard', e);
+    } catch {
+      /* ignore corrupt storage */
     }
   }
 
-  // 3. Redirect to main login page if not logged in as Admin
   if (typeof window !== 'undefined') {
-    window.location.href = 'http://localhost:4200/auth/login?returnUrl=' + encodeURIComponent(window.location.href);
-    return new Promise(() => {});
+    window.location.replace(
+      `${environment.customerPortalUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}`
+    );
   }
   return false;
 };

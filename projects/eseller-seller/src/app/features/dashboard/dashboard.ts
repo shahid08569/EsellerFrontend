@@ -1,11 +1,12 @@
-import { Component, inject, signal, OnInit, computed, ElementRef, ViewChild } from '@angular/core';
+import { Component, inject, signal, OnInit, OnDestroy, computed, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
 import { SellerService, ShopDto, LowStockVariantDto, OrderDto } from '../../core/services/seller.service';
 import { SellerProductService } from '../../core/services/product.service';
 import { TierModal } from '../../shared/components/tier-modal/tier-modal';
+import { WarehouseProductDetailModal } from '../../shared/components/warehouse-product-detail-modal/warehouse-product-detail-modal';
 import { ImageUrlPipe } from '../../shared/pipes/image-url.pipe';
-import { ApiService, ToastService, ProductListDto, PagedList, HomeService, CategoryTreeDto } from 'eseller-shared';
+import { ApiService, ToastService, ProductListDto, PagedList, HomeService, CategoryTreeDto, SignalRService } from 'eseller-shared';
 
 export interface CategoryStat {
   name: string;
@@ -17,16 +18,18 @@ export interface CategoryStat {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TierModal, ImageUrlPipe],
+  imports: [CommonModule, RouterLink, TierModal, WarehouseProductDetailModal, ImageUrlPipe],
   templateUrl: './dashboard.html'
 })
-export class Dashboard implements OnInit {
+export class Dashboard implements OnInit, OnDestroy {
   private readonly sellerSvc = inject(SellerService);
   private readonly productService = inject(SellerProductService);
   private readonly homeService = inject(HomeService);
   private readonly api = inject(ApiService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
+  private readonly signalR = inject(SignalRService);
+  private unsubNotif: (() => void) | null = null;
 
   @ViewChild('warehouseSlider') warehouseSliderRef?: ElementRef<HTMLDivElement>;
 
@@ -98,6 +101,21 @@ export class Dashboard implements OnInit {
 
   ngOnInit(): void {
     this.loadDashboardData();
+    void this.signalR.startNotificationConnection().catch(() => {});
+    this.unsubNotif = this.signalR.onReceiveNotification((payload) => {
+      const title = String(payload?.title || '').toLowerCase();
+      const msg = String(payload?.message || '').toLowerCase();
+      if (title.includes('tier') || msg.includes('tier') || msg.includes('plan')) {
+        this.pendingTierUpgrade.set(null);
+        this.loadDashboardData();
+        this.toast.show(payload.title || 'Your package was updated.', 'success');
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.unsubNotif?.();
+    this.unsubNotif = null;
   }
 
   loadDashboardData(): void {
@@ -242,6 +260,32 @@ export class Dashboard implements OnInit {
   }
 
   readonly requestSuccessProduct = signal<ProductListDto | null>(null);
+  readonly detailProduct = signal<ProductListDto | null>(null);
+
+  openProductDetail(product: ProductListDto): void {
+    this.detailProduct.set(product);
+  }
+
+  closeProductDetail(): void {
+    this.detailProduct.set(null);
+  }
+
+  canRequestFromDetail(product: ProductListDto | null): boolean {
+    if (!product) return false;
+    return !this.isAddedToStore(product.id) && !this.isPendingApproval(product.id);
+  }
+
+  requestLabelFor(product: ProductListDto | null): string {
+    if (!product) return 'Add to List';
+    if (this.isAddedToStore(product.id)) return 'Live in Your Store';
+    if (this.isPendingApproval(product.id)) return 'Approval In Progress';
+    return 'Add to List';
+  }
+
+  onDetailRequestList(product: ProductListDto): void {
+    this.closeProductDetail();
+    this.addToStoreFromWarehouse(product);
+  }
 
   /** Seller requests Super Admin approval to list a warehouse product on their shop. */
   addToStoreFromWarehouse(product: ProductListDto): void {
@@ -347,7 +391,7 @@ export class Dashboard implements OnInit {
     this.isTierModalOpen.set(false);
   }
 
-  onTierRequested(data: { tier: string; price: number; note: string; receiptUrl?: string }): void {
+  onTierRequested(data: { tier: string; price: number; note: string; receiptUrl?: string; categoryId?: string }): void {
     this.pendingTierUpgrade.set({ tier: data.tier, price: data.price });
     
     this.sellerSvc.requestTierUpgrade({
@@ -355,7 +399,8 @@ export class Dashboard implements OnInit {
       price: data.price,
       referenceNote: data.note,
       paymentMethod: data.price === 0 ? 'Free Default' : 'Online Merchant Transfer',
-      receiptUrl: data.receiptUrl || null
+      receiptUrl: data.receiptUrl || null,
+      requestedCategoryId: data.categoryId || null
     }).subscribe({
       next: (res) => {
         this.toast.show(
@@ -364,6 +409,7 @@ export class Dashboard implements OnInit {
         );
       },
       error: (err) => {
+        this.pendingTierUpgrade.set(null);
         this.toast.show(err?.error?.error || 'Failed to submit tier upgrade request.', 'error');
       }
     });

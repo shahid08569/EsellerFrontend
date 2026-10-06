@@ -7,11 +7,12 @@ import { SellerService, ShopDto } from '../../../core/services/seller.service';
 import { SellerProductService } from '../../../core/services/product.service';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
+import { WarehouseProductDetailModal } from '../../../shared/components/warehouse-product-detail-modal/warehouse-product-detail-modal';
 
 @Component({
   selector: 'app-marketplace-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal],
   templateUrl: './marketplace-catalog.html'
 })
 export class MarketplaceCatalog implements OnInit {
@@ -43,6 +44,7 @@ export class MarketplaceCatalog implements OnInit {
   readonly requestingProductId = signal<string | null>(null);
   readonly showPendingVerificationModal = signal<boolean>(false);
   readonly requestSuccessProduct = signal<ProductListDto | null>(null);
+  readonly detailProduct = signal<ProductListDto | null>(null);
 
   readonly productLimit = computed(() => this.shop()?.maxProductLimit || 200);
   readonly usedSlots = computed(() => this.myStoreProductIds().size + this.pendingProductIds().size);
@@ -243,6 +245,31 @@ export class MarketplaceCatalog implements OnInit {
 
   closeRequestSuccessModal(): void {
     this.requestSuccessProduct.set(null);
+  }
+
+  openProductDetail(product: ProductListDto): void {
+    this.detailProduct.set(product);
+  }
+
+  closeProductDetail(): void {
+    this.detailProduct.set(null);
+  }
+
+  canRequestFromDetail(product: ProductListDto | null): boolean {
+    if (!product) return false;
+    return !this.isAddedToStore(product.id) && !this.isPendingApproval(product.id);
+  }
+
+  requestLabelFor(product: ProductListDto | null): string {
+    if (!product) return 'Add to List';
+    if (this.isAddedToStore(product.id)) return 'Live in Your Store';
+    if (this.isPendingApproval(product.id)) return 'Approval In Progress';
+    return 'Add to List';
+  }
+
+  onDetailRequestList(product: ProductListDto): void {
+    this.closeProductDetail();
+    this.requestToSell(product);
   }
 
   isAddedToStore(id: string): boolean {

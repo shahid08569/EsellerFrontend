@@ -17,7 +17,6 @@ import { WishlistService } from '../../services/wishlist.service';
 import { CompareService } from '../../services/compare.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthActionService } from '../../services/auth-action.service';
-import { ShopRatingBadge } from '../shop-rating-badge/shop-rating-badge';
 
 export type PreferredBadge =
   | 'flash_sale'
@@ -27,9 +26,20 @@ export type PreferredBadge =
   | 'featured'
   | null;
 
+const SECTION_BADGE_META: Record<
+  Exclude<PreferredBadge, null>,
+  { label: string; classes: string; key: string }
+> = {
+  flash_sale: { label: 'Flash Sale', classes: 'bg-red-500 text-white', key: 'flash_sale' },
+  hot: { label: 'Hot Selling', classes: 'bg-orange-500 text-white', key: 'hot' },
+  new: { label: 'New Arrival', classes: 'bg-blue-500 text-white', key: 'new' },
+  featured: { label: 'Featured', classes: 'bg-violet-600 text-white', key: 'featured' },
+  best_seller: { label: 'Best Seller', classes: 'bg-slate-700 text-white', key: 'best_seller' }
+};
+
 @Component({
   selector: 'es-product-card',
-  imports: [CommonModule, ShopRatingBadge],
+  imports: [CommonModule],
   templateUrl: './product-card.html',
   host: {
     class: 'block h-full'
@@ -77,8 +87,8 @@ export class ProductCard implements OnInit, OnDestroy {
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     })
   );
 
@@ -101,50 +111,49 @@ export class ProductCard implements OnInit, OnDestroy {
 
   readonly formattedOldPrice = computed(() =>
     this.oldPrice().toLocaleString('en-US', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2
     })
   );
 
   // ============================================================
-  // BADGES
+  // BADGES — 1st = section tag (always), 2nd = next priority
   // ============================================================
   readonly badges = computed(() => {
-    const b = this.product().badges;
-    if (!b) return [];
-
     type BadgeItem = { label: string; classes: string; key: string };
+    const b = this.product().badges;
+    const preferred = this.preferredBadge();
     const list: BadgeItem[] = [];
 
-    // Priority: Flash Sale first, then Hot / New / Featured / Best Seller (max 2 later)
-    if (b.isFlashSale) {
-      list.push({ label: 'Flash Sale', classes: 'bg-red-500 text-white', key: 'flash_sale' });
-    }
-    if (b.isHotSelling) {
-      list.push({ label: 'Hot', classes: 'bg-orange-500 text-white', key: 'hot' });
-    }
-    if (b.isNew) {
-      list.push({ label: 'New', classes: 'bg-blue-500 text-white', key: 'new' });
-    }
-    if (b.isFeatured) {
-      list.push({ label: 'Featured', classes: 'bg-primary text-white', key: 'featured' });
-    }
-    if (b.isBestSelling) {
-      list.push({ label: 'Best Seller', classes: 'bg-[#8A9741] text-white', key: 'best_seller' });
+    // Always show section tag first when on a curated homepage section
+    if (preferred && SECTION_BADGE_META[preferred]) {
+      list.push({ ...SECTION_BADGE_META[preferred] });
     }
 
-    // ✅ Move preferred badge to first position
-    const preferred = this.preferredBadge();
-    if (preferred) {
-      const idx = list.findIndex((x) => x.key === preferred);
-      if (idx > 0) {
-        const [item] = list.splice(idx, 1);
-        list.unshift(item);
-      }
+    const candidates: BadgeItem[] = [];
+    if (b?.isFlashSale) {
+      candidates.push({ label: 'Flash Sale', classes: 'bg-red-500 text-white', key: 'flash_sale' });
+    }
+    if (b?.isHotSelling) {
+      candidates.push({ label: 'Hot Selling', classes: 'bg-orange-500 text-white', key: 'hot' });
+    }
+    if (b?.isNew) {
+      candidates.push({ label: 'New Arrival', classes: 'bg-blue-500 text-white', key: 'new' });
+    }
+    if (b?.isFeatured) {
+      candidates.push({ label: 'Featured', classes: 'bg-violet-600 text-white', key: 'featured' });
+    }
+    if (b?.isBestSelling) {
+      candidates.push({ label: 'Best Seller', classes: 'bg-slate-700 text-white', key: 'best_seller' });
     }
 
-    // ✅ Out of Stock ALWAYS first (highest priority)
-    if (b.isOutOfStock) {
+    for (const c of candidates) {
+      if (list.some((x) => x.key === c.key)) continue;
+      list.push(c);
+      if (list.length >= 2) break;
+    }
+
+    if (b?.isOutOfStock) {
       list.unshift({
         label: 'Out of Stock',
         classes: 'bg-gray-500 text-white',
@@ -153,6 +162,32 @@ export class ProductCard implements OnInit, OnDestroy {
     }
 
     return list.slice(0, 2);
+  });
+
+  readonly tierLabel = computed(() => {
+    const raw = String(this.product().shopBadgeText || '').trim();
+    if (!raw) return 'Bronze';
+    const lower = raw.toLowerCase();
+    if (lower.includes('diamond')) return 'Diamond';
+    if (lower.includes('gold')) return 'Gold';
+    if (lower.includes('bronze')) return 'Bronze';
+    if (lower.includes('silver')) return 'Silver';
+    if (lower.includes('platinum') || lower.includes('platnium')) return 'Platinum';
+    const first = raw.split(/[\s($/]/).find((w) => w.length > 0);
+    return first || 'Bronze';
+  });
+
+  readonly tierStyles = computed(() => {
+    const label = this.tierLabel().toLowerCase();
+    if (label.includes('diamond')) return { bg: '#ECFEFF', color: '#0E7490', border: '#A5F3FC' };
+    if (label.includes('gold')) return { bg: '#FFFBEB', color: '#B45309', border: '#FDE68A' };
+    if (label.includes('platinum')) return { bg: '#F5F3FF', color: '#6D28D9', border: '#DDD6FE' };
+    if (label.includes('silver')) return { bg: '#F1F5F9', color: '#334155', border: '#CBD5E1' };
+    const custom = String(this.product().shopBadgeColor || '').trim();
+    if (/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(custom)) {
+      return { bg: `${custom}1A`, color: custom, border: `${custom}55` };
+    }
+    return { bg: '#F8FAFC', color: '#475569', border: '#E2E8F0' };
   });
 
   // ============================================================

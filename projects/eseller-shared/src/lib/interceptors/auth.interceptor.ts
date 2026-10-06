@@ -18,6 +18,9 @@ import { AuthStore } from '../state/auth.store';
 const PUBLIC_AUTH_PATHS = [
   '/Auth/login',
   '/Auth/register',
+  '/Auth/register/customer',
+  '/Auth/register/seller',
+  '/Auth/upload-document',
   '/Affiliate/register',
   '/Auth/refresh-token',
   '/Auth/logout',

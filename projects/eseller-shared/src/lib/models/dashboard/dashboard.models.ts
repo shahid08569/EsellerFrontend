@@ -78,4 +78,9 @@ export interface DashboardNotificationDto {
   isRead: boolean;
   type?: string;
   createdAt: string;
+  navigationUrl?: string | null;
+  entityId?: string | null;
+  entityType?: string | null;
+  linkPath?: string | null;
+  relatedEntityId?: string | null;
 }

@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { SellerService } from '../../../core/services/seller.service';
 import { ToastService } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
+import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 
 interface OrderItem {
   productName: string;
@@ -35,7 +36,7 @@ const MERCHANT_COMMISSION_RATE = 0.20;
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [CommonModule, TablePagination],
+  imports: [CommonModule, TablePagination, ImageUrlPipe],
   templateUrl: './order-list.html'
 })
 export class OrderList implements OnInit {

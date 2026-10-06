@@ -2,8 +2,10 @@ import { Injectable, inject } from '@angular/core';
 import { Observable, catchError, of } from 'rxjs';
 import { ApiService } from './api.service';
 import {
+  ChatAttachmentUploadResult,
   ChatMessageDto,
   PagedChatMessages,
+  SendChatMessageRequest,
   SendChatMessageResponse
 } from '../models/chat/chat.models';
 
@@ -11,13 +13,10 @@ import {
 export class ChatService {
   private readonly api = inject(ApiService);
 
-  /**
-   * Get chat messages for an order.
-   */
   getMessages(
     orderId: string,
     pageNumber: number = 1,
-    pageSize: number = 50
+    pageSize: number = 30
   ): Observable<PagedChatMessages | null> {
     return this.api
       .get<PagedChatMessages>(`/Chat/${orderId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`)
@@ -29,21 +28,27 @@ export class ChatService {
       );
   }
 
-  /**
-   * Send a message to an order chat room.
-   */
   sendMessage(
     orderId: string,
-    message: string
+    message: string,
+    attachment?: Partial<SendChatMessageRequest> | null
   ): Observable<SendChatMessageResponse> {
-    return this.api.post<SendChatMessageResponse>(`/Chat/${orderId}/messages`, {
-      message
-    });
+    const body: SendChatMessageRequest = {
+      message: message || undefined,
+      attachmentUrl: attachment?.attachmentUrl,
+      attachmentFileName: attachment?.attachmentFileName,
+      attachmentContentType: attachment?.attachmentContentType,
+      attachmentSizeBytes: attachment?.attachmentSizeBytes
+    };
+    return this.api.post<SendChatMessageResponse>(`/Chat/${orderId}/messages`, body);
   }
 
-  /**
-   * Mark a specific message as read.
-   */
+  uploadAttachment(file: File): Observable<ChatAttachmentUploadResult> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.api.postForm<ChatAttachmentUploadResult>('/Chat/attachments', form);
+  }
+
   markAsRead(messageId: string): Observable<{ message: string }> {
     return this.api.put<{ message: string }>(`/Chat/messages/${messageId}/read`, {});
   }
@@ -52,25 +57,17 @@ export class ChatService {
     return this.api.put<{ message: string; markedCount?: number }>(`/Chat/${orderRequestId}/read`, {});
   }
 
-  /**
-   * Get total unread messages count for the logged in user.
-   */
   getUnreadCount(): Observable<{ unreadCount: number }> {
     return this.api.get<{ unreadCount: number }>('/Chat/unread-count');
   }
 
-  /**
-   * Get or create a support chat session.
-   */
-  getSupportSession(): Observable<{ orderRequestId: string; orderRef: string }> {
-    return this.api.get<{ orderRequestId: string; orderRef: string }>('/Chat/support-session');
+  getSupportSession(): Observable<{ orderRequestId: string; conversationId?: string; orderRef: string }> {
+    return this.api.get('/Chat/support-session');
   }
 
-  /**
-   * Seller: open Super Admin support chat, optionally for a specific product.
-   */
   getShopSupportSession(productId?: string | null): Observable<{
     orderRequestId: string;
+    conversationId?: string;
     orderRef: string;
     shopId: string;
     shopName: string;
@@ -81,9 +78,6 @@ export class ChatService {
     return this.api.get(url);
   }
 
-  /**
-   * Admin: list seller-support + customer-support conversations.
-   */
   getAdminConversations(): Observable<any[]> {
     return this.api.get<any[]>('/Chat/conversations').pipe(
       catchError(() => of([]))

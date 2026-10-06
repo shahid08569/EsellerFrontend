@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService, SignalRService, SignalRIncomingMessage, ChatService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
 export interface AdminDisplayMessage {
   id: string;
@@ -11,6 +12,9 @@ export interface AdminDisplayMessage {
   content: string;
   createdAt: string | Date;
   isFromAdmin: boolean;
+  attachmentUrl?: string | null;
+  attachmentFileName?: string | null;
+  attachmentContentType?: string | null;
 }
 
 @Component({
@@ -24,6 +28,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   private readonly adminService = inject(AdminService);
   private readonly signalRService = inject(SignalRService);
   private readonly chatService = inject(ChatService);
+  private readonly chatUnread = inject(AdminChatUnreadService);
   private readonly toast = inject(ToastService);
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
@@ -35,11 +40,31 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly messages = signal<AdminDisplayMessage[]>([]);
   readonly newMessage = signal<string>('');
   readonly sendingMessage = signal<boolean>(false);
+  readonly uploadingFile = signal<boolean>(false);
   readonly searchTerm = signal<string>('');
+  readonly pendingAttachment = signal<{
+    url: string;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+  } | null>(null);
 
   readonly filteredConversations = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    let list = this.conversations();
+    // Depend on shared map so Live Chat list badges update when FAB/sidebar poll bumps
+    void this.chatUnread.byConversationId();
+    const activeId = String(
+      this.activeConversation()?.orderRequestId || this.activeConversation()?.id || ''
+    ).toLowerCase();
+    let list = this.conversations().map(c => {
+      const id = String(c.orderRequestId || c.id || '');
+      if (activeId && id.toLowerCase() === activeId) {
+        return { ...c, unreadCount: 0 };
+      }
+      const shared = id ? this.chatUnread.unreadFor(id) : 0;
+      const unreadCount = Math.max(Number(c.unreadCount || 0), shared);
+      return { ...c, unreadCount };
+    });
     if (term) {
       list = list.filter(c => {
         const name = (c.customerName || c.participantName || c.shopName || '').toLowerCase();
@@ -122,14 +147,12 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         if (incomingId && list.some(m => String(m.id).toLowerCase() === incomingId)) {
           return list;
         }
-        // Replace optimistic temp bubble with the real message
+        // Drop matching optimistic temp bubble
         const withoutTemp = list.filter(m =>
-          !(m.isFromAdmin === isFromAdmin && m.content === incoming.message && String(m.id).startsWith('tmp-'))
+          !(String(m.id).startsWith('tmp-') && m.isFromAdmin === isFromAdmin
+            && (m.content === incoming.message
+              || (!!incoming.attachmentUrl && m.attachmentUrl === incoming.attachmentUrl)))
         );
-        if (withoutTemp.some(m => m.content === incoming.message && m.isFromAdmin === isFromAdmin
-          && Math.abs(new Date(m.createdAt).getTime() - new Date(incoming.sentAt || Date.now()).getTime()) < 8000)) {
-          return withoutTemp;
-        }
         return [
           ...withoutTemp,
           {
@@ -137,11 +160,18 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             senderName: senderDisplayName,
             content: incoming.message,
             createdAt: incoming.sentAt || new Date().toISOString(),
-            isFromAdmin: isFromAdmin
+            isFromAdmin: isFromAdmin,
+            attachmentUrl: incoming.attachmentUrl || null,
+            attachmentFileName: incoming.attachmentFileName || null,
+            attachmentContentType: incoming.attachmentContentType || null
           }
         ];
       });
       this.shouldScrollToBottom = true;
+      // Thread is open — mark read so badges don't stick on already-seen messages
+      if (!isFromAdmin && activeOrderId) {
+        this.chatUnread.markConversationRead(activeOrderId);
+      }
     }
 
     // Update conversation sidebar preview — bump unreadCount (WhatsApp-style) unless the thread is open & it's our own message.
@@ -159,6 +189,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         }
         return c;
       }));
+      if (!isFromAdmin && !isActiveThread && incoming.orderRequestId) {
+        this.chatUnread.bump(incoming.orderRequestId, 1);
+      }
     } else {
       // New conversation from new customer — reload list immediately
       this.loadConversations(false);
@@ -174,7 +207,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
 
   loadConversations(selectFirst = true): void {
     this.isLoading.set(true);
-    const targetId = this.route.snapshot.queryParamMap.get('targetId');
+    const targetId =
+      this.route.snapshot.queryParamMap.get('targetId') ||
+      this.route.snapshot.queryParamMap.get('c');
     const targetName = this.route.snapshot.queryParamMap.get('name');
 
     this.adminService.getConversations().subscribe({
@@ -185,6 +220,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
           const found = convos.find((c: any) => (c.orderRequestId || c.id)?.toLowerCase() === targetId.toLowerCase());
           if (found) {
             this.conversations.set(convos);
+            this.chatUnread.applyFromConversations(convos);
             this.isLoading.set(false);
             this.selectConversation(found);
             return;
@@ -199,6 +235,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             };
             convos = [virtualConvo, ...convos];
             this.conversations.set(convos);
+            this.chatUnread.applyFromConversations(convos);
             this.isLoading.set(false);
             this.selectConversation(virtualConvo);
             return;
@@ -206,10 +243,15 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         }
 
         this.conversations.set(convos);
+        this.chatUnread.applyFromConversations(convos);
         this.isLoading.set(false);
 
-        if (selectFirst && convos.length > 0 && !this.activeConversation()) {
-          this.selectConversation(convos[0]);
+        // Do NOT auto-open first thread — that clears unread before admin chooses who messaged.
+        // Only open a thread when deep-linked (?targetId=) or when selectFirst is used after targetId path above.
+        if (selectFirst && targetId && convos.length > 0 && !this.activeConversation()) {
+          const match = convos.find((c: any) =>
+            (c.orderRequestId || c.id)?.toLowerCase() === targetId.toLowerCase());
+          if (match) this.selectConversation(match);
         }
       },
       error: () => {
@@ -247,14 +289,19 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
 
     // Mark as read immediately in the sidebar (WhatsApp-style — opening a thread clears its unread badge).
     const convoId = convo.orderRequestId || convo.id;
-    this.conversations.update(list => list.map(c =>
-      (c.orderRequestId || c.id) === convoId ? { ...c, unreadCount: 0 } : c
-    ));
+    this.conversations.update(list => list.map(c => {
+      const id = c.orderRequestId || c.id;
+      return id && convoId && String(id).toLowerCase() === String(convoId).toLowerCase()
+        ? { ...c, unreadCount: 0 }
+        : c;
+    }));
+    if (convoId) {
+      this.chatUnread.markConversationRead(convoId);
+    }
 
     const targetId = convo.orderRequestId || convo.id;
     if (targetId) {
       this.signalRService.joinOrderRoom(targetId).catch(() => {});
-      this.chatService.markConversationAsRead(targetId).subscribe({ error: () => {} });
       this.adminService.getConversationMessages(targetId).subscribe({
         next: (msgs: any) => {
           const list = Array.isArray(msgs) ? msgs : (msgs?.items || msgs?.messages || []);
@@ -268,7 +315,10 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               senderName: senderDisplayName,
               content: m.message || m.content || '',
               createdAt: m.sentAt || m.createdAt || new Date().toISOString(),
-              isFromAdmin: isFromAdmin
+              isFromAdmin: isFromAdmin,
+              attachmentUrl: m.attachmentUrl || null,
+              attachmentFileName: m.attachmentFileName || null,
+              attachmentContentType: m.attachmentContentType || null
             };
           }));
           this.shouldScrollToBottom = true;
@@ -280,27 +330,65 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+    this.uploadingFile.set(true);
+    this.adminService.uploadChatAttachment(file).subscribe({
+      next: (res) => {
+        this.uploadingFile.set(false);
+        this.pendingAttachment.set({
+          url: res.url,
+          fileName: res.fileName,
+          contentType: res.contentType,
+          sizeBytes: res.sizeBytes
+        });
+      },
+      error: (err) => {
+        this.uploadingFile.set(false);
+        this.toast.show(err?.error?.error || 'File upload failed', 'error');
+      }
+    });
+  }
+
+  clearPendingAttachment(): void {
+    this.pendingAttachment.set(null);
+  }
+
   sendMessage(): void {
     const text = this.newMessage().trim();
+    const attachment = this.pendingAttachment();
     const convo = this.activeConversation();
-    if (!text || !convo) return;
+    if ((!text && !attachment) || !convo) return;
 
     const targetId = convo.orderRequestId || convo.id;
     if (!targetId) return;
 
     this.sendingMessage.set(true);
     const tempId = `tmp-${Date.now()}`;
+    const preview = text || (attachment ? `📎 ${attachment.fileName}` : '');
     this.messages.update(prev => [...prev, {
       id: tempId,
       senderName: 'Super Admin',
       content: text,
       createdAt: new Date().toISOString(),
-      isFromAdmin: true
+      isFromAdmin: true,
+      attachmentUrl: attachment?.url || null,
+      attachmentFileName: attachment?.fileName || null,
+      attachmentContentType: attachment?.contentType || null
     }]);
     this.newMessage.set('');
+    this.pendingAttachment.set(null);
     this.shouldScrollToBottom = true;
 
-    this.adminService.sendMessage(targetId, text).subscribe({
+    this.adminService.sendMessage(targetId, text, attachment ? {
+      attachmentUrl: attachment.url,
+      attachmentFileName: attachment.fileName,
+      attachmentContentType: attachment.contentType,
+      attachmentSizeBytes: attachment.sizeBytes
+    } : null).subscribe({
       next: (msg) => {
         this.sendingMessage.set(false);
         const realId = msg?.messageId ? String(msg.messageId) : tempId;
@@ -313,15 +401,19 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             senderName: 'Super Admin',
             content: text,
             createdAt: new Date().toISOString(),
-            isFromAdmin: true
+            isFromAdmin: true,
+            attachmentUrl: attachment?.url || null,
+            attachmentFileName: attachment?.fileName || null,
+            attachmentContentType: attachment?.contentType || null
           }];
         });
 
         this.conversations.update(list => list.map(c => {
-          if ((c.orderRequestId || c.id) === targetId) {
+          const id = c.orderRequestId || c.id;
+          if (id && String(id).toLowerCase() === String(targetId).toLowerCase()) {
             return {
               ...c,
-              lastMessage: text,
+              lastMessage: preview,
               lastMessageAt: new Date().toISOString()
             };
           }
@@ -334,6 +426,17 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         this.toast.show(err?.error?.error || 'Failed to send message', 'error');
       }
     });
+  }
+
+  attachmentHref(url: string | null | undefined): string {
+    if (!url) return '#';
+    if (url.startsWith('http')) return url;
+    return this.adminService.formatImageUrl(url) || url;
+  }
+
+  isImageAttachment(msg: AdminDisplayMessage): boolean {
+    const ct = (msg.attachmentContentType || '').toLowerCase();
+    return ct.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/i.test(msg.attachmentFileName || '');
   }
 
   statusBadgeClass(status: string | null | undefined): string {

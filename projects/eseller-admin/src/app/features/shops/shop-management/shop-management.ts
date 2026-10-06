@@ -1,10 +1,11 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ToastService } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto } from '../../../core/models/admin.models';
+import { environment } from '../../../../environments/environment';
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
 type ViewMode = 'stores' | 'applications' | 'tiers';
@@ -24,6 +25,7 @@ export interface TierUpgradeRequest {
   receiptUrl?: string | null;
   status: 'Pending' | 'Approved' | 'Rejected';
   requestedAt: string;
+  maxProductListings?: number;
 }
 
 @Component({
@@ -32,26 +34,101 @@ export interface TierUpgradeRequest {
   imports: [CommonModule, FormsModule],
   templateUrl: './shop-management.html'
 })
-export class ShopManagement implements OnInit {
+export class ShopManagement implements OnInit, OnDestroy {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
+  readonly authStore = inject(AuthStore);
+  private readonly signalR = inject(SignalRService);
+  private unsubNotif: (() => void) | null = null;
+
+  /** Only SuperAdmin can create / edit / delete tier packages. */
+  readonly canManageTiers = computed(() => this.authStore.hasRole('SuperAdmin'));
 
   readonly isLoading = signal<boolean>(true);
+  readonly tiersLoading = signal<boolean>(true);
   readonly viewMode = signal<ViewMode>('stores');
   readonly allShopkeepers = signal<AdminShopkeeperDto[]>([]);
   readonly activeShops = signal<AdminShopDto[]>([]);
   readonly shopCategories = signal<ShopCategoryDto[]>([]);
   readonly tierRequests = signal<TierUpgradeRequest[]>([]);
+  /** Status filter for tier upgrade table */
+  readonly tierStatusFilter = signal<'ALL' | 'Pending' | 'Approved' | 'Rejected'>('ALL');
+  /** Plan/category filter (Gold, Diamond, …) */
+  readonly tierPlanFilter = signal<string>('ALL');
   readonly selectedCategoryFilter = signal<string>('all');
   readonly activeTab = signal<FilterTab>('all');
   readonly searchTerm = signal<string>('');
   readonly actionInProgress = signal<string | null>(null);
 
-  readonly countPendingTiers = computed(() => 
+  /** One row per shop — newest request only */
+  readonly latestTierRequests = computed(() => {
+    const byShop = new Map<string, TierUpgradeRequest>();
+    const sorted = [...this.tierRequests()].sort(
+      (a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
+    );
+    for (const r of sorted) {
+      const key = this.tierShopKey(r);
+      if (!byShop.has(key)) byShop.set(key, r);
+    }
+    return Array.from(byShop.values()).sort(
+      (a, b) => new Date(b.requestedAt).getTime() - new Date(a.requestedAt).getTime()
+    );
+  });
+
+  readonly countPendingTiers = computed(() =>
     this.tierRequests().filter(r => r.status === 'Pending').length
   );
+
+  readonly countLatestTiers = computed(() => this.latestTierRequests().length);
+
+  readonly filteredTierRequests = computed(() => {
+    let list = this.latestTierRequests();
+    const status = this.tierStatusFilter();
+    const plan = this.tierPlanFilter().toLowerCase();
+    const term = this.searchTerm().trim().toLowerCase();
+
+    if (status !== 'ALL') {
+      list = list.filter(r => String(r.status || '').toLowerCase() === status.toLowerCase());
+    }
+    if (plan !== 'all') {
+      list = list.filter(r => {
+        const requested = (r.requestedTier || '').toLowerCase();
+        const badge = (r.badgeText || '').toLowerCase();
+        return requested === plan || badge === plan ||
+          requested.includes(plan) || badge.includes(plan) ||
+          plan.includes(requested) || plan.includes(badge);
+      });
+    }
+    if (term) {
+      list = list.filter(r =>
+        (r.shopName || '').toLowerCase().includes(term) ||
+        (r.merchantName || '').toLowerCase().includes(term) ||
+        (r.requestedTier || '').toLowerCase().includes(term) ||
+        (r.currentTier || '').toLowerCase().includes(term)
+      );
+    }
+    return list;
+  });
+
+  readonly tierPlanOptions = computed(() => {
+    const fromCats = this.shopCategories().map(c => c.name).filter(Boolean);
+    const fromReqs = this.tierRequests().map(r => r.requestedTier).filter(Boolean);
+    return Array.from(new Set([...fromCats, ...fromReqs])).sort((a, b) => a.localeCompare(b));
+  });
+
+  // Tier history detail modal
+  readonly tierHistoryModalOpen = signal<boolean>(false);
+  readonly tierHistoryShop = signal<TierUpgradeRequest | null>(null);
+  readonly tierHistoryRows = computed(() => {
+    const shop = this.tierHistoryShop();
+    if (!shop) return [] as TierUpgradeRequest[];
+    const key = this.tierShopKey(shop);
+    return this.tierRequests()
+      .filter(r => this.tierShopKey(r) === key)
+      .sort((a, b) => new Date(a.requestedAt).getTime() - new Date(b.requestedAt).getTime());
+  });
 
   // Pagination
   readonly currentPage = signal<number>(1);
@@ -135,11 +212,12 @@ export class ShopManagement implements OnInit {
   readonly tierFormName = signal<string>('');
   readonly tierFormBadgeText = signal<string>('');
   readonly tierFormBadgeColor = signal<string>('#F59E0B');
-  readonly tierFormIcon = signal<string>('💎');
+  readonly tierFormIcon = signal<string>('👑');
   readonly tierFormDesc = signal<string>('');
   readonly tierFormOrder = signal<number>(1);
   readonly tierFormPriceUsd = signal<number>(0);
   readonly tierFormMaxProducts = signal<number>(200);
+  readonly tierFormIsRecommended = signal<boolean>(false);
   readonly isSavingTier = signal<boolean>(false);
   readonly deleteTierModalOpen = signal<boolean>(false);
   readonly tierToDelete = signal<ShopCategoryDto | null>(null);
@@ -249,10 +327,83 @@ export class ShopManagement implements OnInit {
     });
 
     this.loadData();
+
+    void this.signalR.startNotificationConnection().catch(() => {});
+    this.unsubNotif = this.signalR.onReceiveNotification((payload) => {
+      const t = String(payload?.title || '').toLowerCase();
+      const m = String(payload?.message || '').toLowerCase();
+      // Only tier-request notifications — do NOT force navigate (that caused stuck blank pages)
+      const isTierReq =
+        t.includes('tier') ||
+        t.includes('badge request') ||
+        m.includes('tier upgrade') ||
+        m.includes('package upgrade') ||
+        m.includes('badge request');
+      if (isTierReq) {
+        this.reloadTierRequests();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.unsubNotif?.();
+    this.unsubNotif = null;
+  }
+
+  private normalizeTierRequests(reqs: any[]): TierUpgradeRequest[] {
+    return (reqs || [])
+      .map((r: any) => {
+        const statusRaw = String(r?.status || r?.Status || 'Pending');
+        const statusNorm =
+          statusRaw.toLowerCase() === 'approved' ? 'Approved'
+          : statusRaw.toLowerCase() === 'rejected' ? 'Rejected'
+          : 'Pending';
+        return {
+          id: String(r?.id || r?.Id || '').trim(),
+          shopId: String(r?.shopId || r?.ShopId || ''),
+          shopName: String(r?.shopName || r?.ShopName || 'Unknown store'),
+          merchantName: String(r?.merchantName || r?.MerchantName || ''),
+          currentTier: String(r?.currentTier || r?.CurrentTier || 'Bronze (Free)'),
+          requestedTier: String(r?.requestedTier || r?.RequestedTier || ''),
+          requestedCategoryId: r?.requestedCategoryId || r?.RequestedCategoryId,
+          badgeText: String(r?.badgeText || r?.BadgeText || r?.requestedTier || r?.RequestedTier || ''),
+          price: Number(r?.price ?? r?.Price ?? 0) || 0,
+          paymentMethod: String(r?.paymentMethod || r?.PaymentMethod || ''),
+          referenceNote: String(r?.referenceNote || r?.ReferenceNote || ''),
+          receiptUrl: r?.receiptUrl || r?.ReceiptUrl || null,
+          status: statusNorm as TierUpgradeRequest['status'],
+          requestedAt: r?.requestedAt || r?.RequestedAt || new Date().toISOString(),
+          maxProductListings: Number(r?.maxProductListings ?? r?.MaxProductListings ?? 0) || undefined
+        };
+      })
+      .filter(r => !!r.id && r.id !== 'undefined' && r.id !== 'null');
+  }
+
+  private reloadTierRequests(): void {
+    this.tiersLoading.set(true);
+    this.adminService.getTierUpgradeRequests().subscribe({
+      next: (reqs) => {
+        this.tiersLoading.set(false);
+        // null = aborted / 204 / network swallow — keep current rows
+        if (reqs === null || reqs === undefined) return;
+        if (!Array.isArray(reqs)) {
+          console.warn('tier-requests unexpected payload', reqs);
+          return;
+        }
+        const normalized = this.normalizeTierRequests(reqs);
+        this.tierRequests.set(normalized);
+      },
+      error: (err) => {
+        this.tiersLoading.set(false);
+        console.error('tier-requests failed', err);
+        this.toast.show(err?.error || err?.message || 'Could not load tier upgrade requests.', 'error');
+      }
+    });
   }
 
   loadData(): void {
     this.isLoading.set(true);
+    this.tiersLoading.set(true);
 
     // Fetch all shopkeepers from admin API
     this.adminService.getShopkeepers().subscribe({
@@ -274,45 +425,25 @@ export class ShopManagement implements OnInit {
       error: () => {}
     });
 
-    // Ensure standard tiers exist, then load shop categories / tiers
-    this.adminService.seedStandardTiers().subscribe({
-      next: () => {
-        this.adminService.getShopCategories().subscribe({
-          next: (cats) => this.shopCategories.set(cats || []),
-          error: () => {}
-        });
-      },
-      error: () => {
-        this.adminService.getShopCategories().subscribe({
-          next: (cats) => this.shopCategories.set(cats || []),
-          error: () => {}
-        });
-      }
-    });
-
-    // Fetch tier upgrade requests
-    this.adminService.getTierUpgradeRequests().subscribe({
-      next: (reqs) => {
-        const normalized = (reqs || []).map((r: any) => ({
-          id: r.id,
-          shopId: r.shopId || r.ShopId || '',
-          shopName: r.shopName || r.ShopName || '',
-          merchantName: r.merchantName || r.MerchantName || '',
-          currentTier: r.currentTier || r.CurrentTier || 'Bronze (Free)',
-          requestedTier: r.requestedTier || r.RequestedTier || '',
-          requestedCategoryId: r.requestedCategoryId || r.RequestedCategoryId,
-          badgeText: r.badgeText || r.BadgeText || r.requestedTier || r.RequestedTier || '',
-          price: r.price ?? r.Price ?? 0,
-          paymentMethod: r.paymentMethod || r.PaymentMethod || '',
-          referenceNote: r.referenceNote || r.ReferenceNote || '',
-          receiptUrl: r.receiptUrl || r.ReceiptUrl || null,
-          status: (r.status || r.Status || 'Pending') as TierUpgradeRequest['status'],
-          requestedAt: r.requestedAt || r.RequestedAt || new Date().toISOString()
-        }));
-        this.tierRequests.set(normalized);
-      },
+    // Load shop categories; seed is best-effort (SuperAdmin only — ignore 401 for Partner)
+    this.adminService.getShopCategories().subscribe({
+      next: (cats) => this.shopCategories.set(cats || []),
       error: () => {}
     });
+    if (this.canManageTiers()) {
+      this.adminService.seedStandardTiers().subscribe({
+        next: () => {
+          this.adminService.getShopCategories().subscribe({
+            next: (cats) => this.shopCategories.set(cats || []),
+            error: () => {}
+          });
+        },
+        error: () => {}
+      });
+    }
+
+    // Fetch tier upgrade requests (Pending + Approved + Rejected)
+    this.reloadTierRequests();
   }
 
   // Filtered Applications List
@@ -454,7 +585,16 @@ export class ShopManagement implements OnInit {
   switchViewMode(mode: ViewMode): void {
     this.viewMode.set(mode);
     this.currentPage.set(1);
-    this.router.navigate([], { queryParams: { view: mode }, queryParamsHandling: 'merge' });
+    // Replace query so leftover tab=pending doesn't stick on stores/tiers
+    this.router.navigate([], {
+      queryParams: mode === 'applications'
+        ? { view: mode, tab: this.activeTab() }
+        : { view: mode, tab: null },
+      queryParamsHandling: ''
+    });
+    if (mode === 'tiers') {
+      this.reloadTierRequests();
+    }
   }
 
   switchTab(tab: FilterTab): void {
@@ -743,7 +883,7 @@ export class ShopManagement implements OnInit {
   openCustomerStorefront(slug: string): void {
     if (!slug) return;
     const cleanSlug = slug.replace(/^https?:\/\/[^/]+\//, '').replace(/^\/shops\//, '').replace(/^\//, '');
-    window.open(`http://localhost:4200/shops/${cleanSlug}`, '_blank');
+    window.open(`${environment.customerPortalUrl}/shops/${cleanSlug}`, '_blank', 'noopener,noreferrer');
   }
 
   onCategoryFilterChange(val: string): void {
@@ -774,6 +914,10 @@ export class ShopManagement implements OnInit {
 
   // --- Manage Tiers CRUD Modal ---
   openManageTiersModal(): void {
+    if (!this.canManageTiers()) {
+      this.toast.show('Only Super Admin can manage tier packages.', 'error');
+      return;
+    }
     this.manageTiersModalOpen.set(true);
   }
 
@@ -782,28 +926,38 @@ export class ShopManagement implements OnInit {
   }
 
   openCreateTierModal(): void {
+    if (!this.canManageTiers()) {
+      this.toast.show('Only Super Admin can add tiers.', 'error');
+      return;
+    }
     this.editingTier.set(null);
     this.tierFormName.set('');
     this.tierFormBadgeText.set('');
     this.tierFormBadgeColor.set('#F59E0B');
-    this.tierFormIcon.set('💎');
+    this.tierFormIcon.set('👑');
     this.tierFormDesc.set('');
     this.tierFormOrder.set((this.shopCategories().length + 1) * 10);
     this.tierFormPriceUsd.set(0);
     this.tierFormMaxProducts.set(200);
+    this.tierFormIsRecommended.set(false);
     this.editingTierModalOpen.set(true);
   }
 
   openEditTierModal(tier: ShopCategoryDto): void {
+    if (!this.canManageTiers()) {
+      this.toast.show('Only Super Admin can edit tiers.', 'error');
+      return;
+    }
     this.editingTier.set(tier);
     this.tierFormName.set(tier.name);
     this.tierFormBadgeText.set(tier.badgeText || '');
     this.tierFormBadgeColor.set(tier.badgeColor || '#F59E0B');
-    this.tierFormIcon.set(tier.iconUrl || '💎');
+    this.tierFormIcon.set(tier.iconUrl || '👑');
     this.tierFormDesc.set(tier.description || '');
     this.tierFormOrder.set(tier.displayOrder || 1);
     this.tierFormPriceUsd.set(tier.priceUsd ?? 0);
     this.tierFormMaxProducts.set(tier.maxProductListings ?? 200);
+    this.tierFormIsRecommended.set(!!tier.isRecommended);
     this.editingTierModalOpen.set(true);
   }
 
@@ -813,6 +967,10 @@ export class ShopManagement implements OnInit {
   }
 
   saveTier(): void {
+    if (!this.canManageTiers()) {
+      this.toast.show('Only Super Admin can save tiers.', 'error');
+      return;
+    }
     const name = this.tierFormName().trim();
     if (!name) {
       this.toast.show('Tier name is required.', 'error');
@@ -823,11 +981,12 @@ export class ShopManagement implements OnInit {
       name,
       badgeText: this.tierFormBadgeText().trim() || name,
       badgeColor: this.tierFormBadgeColor().trim() || '#F59E0B',
-      iconUrl: this.tierFormIcon().trim() || '💎',
+      iconUrl: this.tierFormIcon().trim() || '👑',
       description: this.tierFormDesc().trim() || undefined,
       displayOrder: this.tierFormOrder() || 1,
       priceUsd: Number(this.tierFormPriceUsd()) || 0,
-      maxProductListings: Number(this.tierFormMaxProducts()) || 200
+      maxProductListings: Number(this.tierFormMaxProducts()) || 200,
+      isRecommended: this.tierFormIsRecommended()
     };
 
     this.isSavingTier.set(true);
@@ -863,6 +1022,10 @@ export class ShopManagement implements OnInit {
   }
 
   openDeleteTierModal(tier: ShopCategoryDto): void {
+    if (!this.canManageTiers()) {
+      this.toast.show('Only Super Admin can delete tiers.', 'error');
+      return;
+    }
     this.tierToDelete.set(tier);
     this.deleteTierModalOpen.set(true);
   }
@@ -895,15 +1058,27 @@ export class ShopManagement implements OnInit {
   // --- Tier Upgrade Request Approval / Rejection ---
   approveTierUpgrade(req: TierUpgradeRequest): void {
     this.actionInProgress.set(req.id);
-    
+
     this.adminService.approveTierUpgradeRequest(req.id).subscribe({
-      next: (res) => {
+      next: (res: any) => {
         this.actionInProgress.set(null);
-        this.tierRequests.update(list => 
-          list.map(r => r.id === req.id ? { ...r, status: 'Approved' as const } : r)
+        const newTier = res?.currentTier || req.requestedTier || req.badgeText;
+        // Optimistic local update — never wait on full loadData (that was wiping the table)
+        this.tierRequests.update(list =>
+          list.map(r =>
+            r.id === req.id
+              ? {
+                  ...r,
+                  status: 'Approved' as const,
+                  currentTier: newTier || r.currentTier,
+                  maxProductListings: res?.maxProductListings ?? r.maxProductListings
+                }
+              : r
+          )
         );
         this.toast.show(res?.message || `Tier upgrade to ${req.requestedTier} approved for "${req.shopName}"!`, 'success');
-        this.loadData();
+        // Soft refresh tiers only (keep UI if refresh glitches)
+        this.reloadTierRequests();
       },
       error: (err) => {
         this.actionInProgress.set(null);
@@ -917,17 +1092,61 @@ export class ShopManagement implements OnInit {
     this.adminService.rejectTierUpgradeRequest(req.id, 'Upgrade request rejected by admin.').subscribe({
       next: (res) => {
         this.actionInProgress.set(null);
-        this.tierRequests.update(list => 
-          list.map(r => r.id === req.id ? { ...r, status: 'Rejected' as const } : r)
+        this.tierRequests.update(list =>
+          list.map(r => (r.id === req.id ? { ...r, status: 'Rejected' as const } : r))
         );
         this.toast.show(res?.message || `Tier upgrade request for "${req.shopName}" has been rejected.`, 'info');
-        this.loadData();
+        this.reloadTierRequests();
       },
       error: (err) => {
         this.actionInProgress.set(null);
         this.toast.show(err?.error?.error || 'Failed to reject tier upgrade request.', 'error');
       }
     });
+  }
+
+  setTierStatusFilter(status: 'ALL' | 'Pending' | 'Approved' | 'Rejected'): void {
+    this.tierStatusFilter.set(status);
+  }
+
+  setTierPlanFilter(plan: string): void {
+    this.tierPlanFilter.set(plan || 'ALL');
+  }
+
+  tierCapacityLabel(req: TierUpgradeRequest): string {
+    if (req.maxProductListings && req.maxProductListings > 0) {
+      return req.maxProductListings.toLocaleString();
+    }
+    const t = (req.requestedTier || '').toLowerCase();
+    if (t.includes('diamond') || t.includes('plat')) return '5,000';
+    if (t.includes('gold')) return '1,000';
+    return '200';
+  }
+
+  private tierShopKey(r: TierUpgradeRequest): string {
+    const id = String(r.shopId || '').trim();
+    if (id && id !== '00000000-0000-0000-0000-000000000000') return `id:${id}`;
+    return `name:${(r.shopName || '').trim().toLowerCase()}`;
+  }
+
+  tierHistoryCount(req: TierUpgradeRequest): number {
+    const key = this.tierShopKey(req);
+    return this.tierRequests().filter(r => this.tierShopKey(r) === key).length;
+  }
+
+  openTierHistory(req: TierUpgradeRequest): void {
+    this.tierHistoryShop.set(req);
+    this.tierHistoryModalOpen.set(true);
+  }
+
+  closeTierHistory(): void {
+    this.tierHistoryModalOpen.set(false);
+    this.tierHistoryShop.set(null);
+  }
+
+  /** Every shop starts on Bronze (Free) before any upgrade. */
+  tierHistoryStartLabel(): string {
+    return 'Bronze (Free)';
   }
 
   deleteTierUpgrade(req: TierUpgradeRequest): void {
@@ -937,7 +1156,6 @@ export class ShopManagement implements OnInit {
         this.actionInProgress.set(null);
         this.tierRequests.update(list => list.filter(r => r.id !== req.id));
         this.toast.show(res?.message || `Tier upgrade request for "${req.shopName}" removed.`, 'info');
-        this.loadData();
       },
       error: (err) => {
         this.actionInProgress.set(null);

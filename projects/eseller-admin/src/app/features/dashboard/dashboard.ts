@@ -155,6 +155,8 @@ export class Dashboard implements OnInit {
     this.adminService.getPlatformDashboard().subscribe({
       next: (stats) => {
         this.platformStats.set(stats);
+        this.totalShops.set(stats?.activeShops ?? stats?.totalShops ?? 0);
+        this.totalProducts.set(stats?.totalProducts ?? 0);
       },
       error: () => {}
     });
@@ -168,14 +170,6 @@ export class Dashboard implements OnInit {
       error: () => {}
     });
 
-    // Fetch total active shops count
-    this.adminService.getShops(1, 1).subscribe({
-      next: (res) => {
-        this.totalShops.set(res?.totalCount || 0);
-      },
-      error: () => {}
-    });
-
     // Fetch pending products
     this.adminService.getPendingProducts(1, 10).subscribe({
       next: (res) => {
@@ -185,14 +179,6 @@ export class Dashboard implements OnInit {
       error: () => {
         this.isLoading.set(false);
       }
-    });
-
-    // Fetch total products count
-    this.adminService.getProducts(undefined, undefined, 1, 1).subscribe({
-      next: (res) => {
-        this.totalProducts.set(res?.totalCount || 0);
-      },
-      error: () => {}
     });
   }
 

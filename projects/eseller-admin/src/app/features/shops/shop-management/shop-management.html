@@ -19,12 +19,14 @@
     </div>
 
     <div class="flex items-center gap-2">
-      <button 
-        type="button" 
-        (click)="openManageTiersModal()" 
-        class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-xs font-bold text-white transition-colors cursor-pointer border border-amber-400 shadow-xs">
-        Manage Tiers & Badges
-      </button>
+      @if (canManageTiers()) {
+        <button 
+          type="button" 
+          (click)="openManageTiersModal()" 
+          class="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-xs font-bold text-white transition-colors cursor-pointer border border-amber-400 shadow-xs">
+          Manage Tiers & Badges
+        </button>
+      }
 
       <button 
         type="button" 
@@ -111,7 +113,7 @@
                 [class.bg-gray-200]="viewMode() !== 'tiers'"
                 [class.text-white]="viewMode() === 'tiers'"
                 [class.text-gray-700]="viewMode() !== 'tiers'">
-            {{ tierRequests().length }}
+            {{ countLatestTiers() }}
           </span>
         }
       </button>
@@ -142,7 +144,7 @@
           type="text" 
           [ngModel]="searchTerm()"
           (ngModelChange)="onSearch($event)"
-          [placeholder]="viewMode() === 'stores' ? 'Search live stores by name, city, badge...' : 'Search applicant name, store, city...'"
+          [placeholder]="viewMode() === 'stores' ? 'Search live stores by name, city, badge...' : (viewMode() === 'tiers' ? 'Search store, merchant, plan...' : 'Search applicant name, store, city...')"
           class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-9 pr-4 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
         <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -635,19 +637,71 @@
         <div>
           <h3 class="text-sm font-black text-slate-900">Tier Upgrade Requests</h3>
           <p class="text-xs text-slate-500 mt-0.5">
-            Sellers apply with payment proof — you only Approve or Reject. Direct assign is disabled.
+            Latest plan per store — open Detail for full upgrade history.
           </p>
         </div>
         <div class="flex items-center gap-2 text-[11px] font-bold">
           <span class="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-800 border border-amber-200">{{ countPendingTiers() }} pending</span>
-          <span class="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200">{{ tierRequests().length }} total</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-600 border border-slate-200">{{ countLatestTiers() }} stores</span>
+          <span class="px-2.5 py-1 rounded-lg bg-slate-50 text-slate-500 border border-slate-200">{{ tierRequests().length }} events</span>
         </div>
       </div>
 
-      @if (tierRequests().length === 0) {
+      <!-- Status + Plan filters -->
+      <div class="rounded-2xl border border-slate-200 bg-white px-4 py-3 flex flex-col lg:flex-row lg:items-center gap-3 shadow-sm">
+        <div class="flex flex-wrap items-center gap-1.5">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 mr-1">Status</span>
+          @for (s of ['ALL', 'Pending', 'Approved', 'Rejected']; track s) {
+            <button type="button"
+              (click)="setTierStatusFilter($any(s))"
+              class="px-2.5 py-1.5 rounded-lg text-[11px] font-bold border transition-colors cursor-pointer"
+              [class.bg-orange-600]="tierStatusFilter() === s"
+              [class.text-white]="tierStatusFilter() === s"
+              [class.border-orange-600]="tierStatusFilter() === s"
+              [class.bg-slate-50]="tierStatusFilter() !== s"
+              [class.text-slate-700]="tierStatusFilter() !== s"
+              [class.border-slate-200]="tierStatusFilter() !== s"
+              [class.hover:bg-slate-100]="tierStatusFilter() !== s">
+              {{ s === 'ALL' ? 'All' : s }}
+            </button>
+          }
+        </div>
+        <div class="flex items-center gap-2 lg:ml-auto">
+          <span class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400 whitespace-nowrap">Plan</span>
+          <select
+            [ngModel]="tierPlanFilter()"
+            (ngModelChange)="setTierPlanFilter($event)"
+            class="bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-slate-700 outline-hidden cursor-pointer focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 min-w-[140px]">
+            <option value="ALL">All plans</option>
+            @for (plan of tierPlanOptions(); track plan) {
+              <option [value]="plan">{{ plan }}</option>
+            }
+          </select>
+        </div>
+      </div>
+
+      @if (tiersLoading()) {
+        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-12 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
+          <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+          </svg>
+          Loading tier upgrade requests...
+        </div>
+      } @else if (latestTierRequests().length === 0) {
         <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-14 text-center">
           <p class="text-sm font-black text-slate-800">No upgrade requests yet</p>
           <p class="text-xs text-slate-500 mt-1 max-w-sm mx-auto">When a merchant submits Gold or Diamond with a receipt, it will show up here for review.</p>
+        </div>
+      } @else if (filteredTierRequests().length === 0) {
+        <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-10 text-center">
+          <p class="text-sm font-black text-slate-800">No requests match these filters</p>
+          <p class="text-xs text-slate-500 mt-1">Try Status = All or clear the plan / search filter.</p>
+          <button type="button"
+            (click)="setTierStatusFilter('ALL'); setTierPlanFilter('ALL'); onSearch('')"
+            class="mt-3 px-3 py-1.5 rounded-lg bg-orange-600 text-white text-xs font-bold cursor-pointer hover:bg-orange-700">
+            Reset filters
+          </button>
         </div>
       } @else {
         <div class="rounded-2xl border border-slate-200 bg-white shadow-sm overflow-hidden">
@@ -664,17 +718,23 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-slate-100">
-                @for (req of tierRequests(); track req.id) {
+                @for (req of filteredTierRequests(); track req.id) {
                   <tr class="hover:bg-slate-50/80 transition-colors">
                     <td class="py-4 px-4 align-top">
                       <div class="flex items-start gap-3">
                         <div class="w-9 h-9 rounded-xl bg-slate-900 text-white text-xs font-black flex items-center justify-center shrink-0">
-                          {{ req.shopName.charAt(0).toUpperCase() }}
+                          {{ (req.shopName || 'S').charAt(0).toUpperCase() }}
                         </div>
                         <div class="min-w-0">
-                          <p class="text-sm font-bold text-slate-900 truncate">{{ req.shopName }}</p>
-                          <p class="text-xs text-slate-500 mt-0.5 truncate">{{ req.merchantName }}</p>
-                          <p class="text-[11px] text-slate-400 mt-0.5">Current: <span class="font-semibold text-slate-600">{{ req.currentTier }}</span></p>
+                          <p class="text-sm font-bold text-slate-900 truncate">{{ req.shopName || '—' }}</p>
+                          <p class="text-xs text-slate-500 mt-0.5 truncate">{{ req.merchantName || '—' }}</p>
+                          <p class="text-[11px] text-slate-400 mt-0.5">
+                            Latest plan:
+                            <span class="font-semibold text-slate-600">{{ req.requestedTier || req.badgeText || req.currentTier || '—' }}</span>
+                            @if (tierHistoryCount(req) > 1) {
+                              <span class="ml-1 text-orange-600 font-bold">· {{ tierHistoryCount(req) }} changes</span>
+                            }
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -682,16 +742,16 @@
                     <td class="py-4 px-4 align-top">
                       <div class="inline-flex flex-col gap-1">
                         <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-bold border w-fit"
-                          [class.bg-amber-50]="req.requestedTier.toLowerCase().includes('gold')"
-                          [class.text-amber-900]="req.requestedTier.toLowerCase().includes('gold')"
-                          [class.border-amber-200]="req.requestedTier.toLowerCase().includes('gold')"
-                          [class.bg-cyan-50]="req.requestedTier.toLowerCase().includes('diamond')"
-                          [class.text-cyan-900]="req.requestedTier.toLowerCase().includes('diamond')"
-                          [class.border-cyan-200]="req.requestedTier.toLowerCase().includes('diamond')"
-                          [class.bg-slate-50]="!req.requestedTier.toLowerCase().includes('gold') && !req.requestedTier.toLowerCase().includes('diamond')"
-                          [class.text-slate-800]="!req.requestedTier.toLowerCase().includes('gold') && !req.requestedTier.toLowerCase().includes('diamond')"
-                          [class.border-slate-200]="!req.requestedTier.toLowerCase().includes('gold') && !req.requestedTier.toLowerCase().includes('diamond')">
-                          {{ req.requestedTier }}
+                          [class.bg-amber-50]="(req.requestedTier || '').toLowerCase().includes('gold')"
+                          [class.text-amber-900]="(req.requestedTier || '').toLowerCase().includes('gold')"
+                          [class.border-amber-200]="(req.requestedTier || '').toLowerCase().includes('gold')"
+                          [class.bg-cyan-50]="(req.requestedTier || '').toLowerCase().includes('diamond') || (req.requestedTier || '').toLowerCase().includes('plat')"
+                          [class.text-cyan-900]="(req.requestedTier || '').toLowerCase().includes('diamond') || (req.requestedTier || '').toLowerCase().includes('plat')"
+                          [class.border-cyan-200]="(req.requestedTier || '').toLowerCase().includes('diamond') || (req.requestedTier || '').toLowerCase().includes('plat')"
+                          [class.bg-slate-50]="!(req.requestedTier || '').toLowerCase().includes('gold') && !(req.requestedTier || '').toLowerCase().includes('diamond') && !(req.requestedTier || '').toLowerCase().includes('plat')"
+                          [class.text-slate-800]="!(req.requestedTier || '').toLowerCase().includes('gold') && !(req.requestedTier || '').toLowerCase().includes('diamond') && !(req.requestedTier || '').toLowerCase().includes('plat')"
+                          [class.border-slate-200]="!(req.requestedTier || '').toLowerCase().includes('gold') && !(req.requestedTier || '').toLowerCase().includes('diamond') && !(req.requestedTier || '').toLowerCase().includes('plat')">
+                          {{ req.requestedTier || req.badgeText || '—' }}
                         </span>
                         <span class="text-sm font-black text-slate-900 font-mono">${{ req.price | number }}</span>
                       </div>
@@ -699,7 +759,7 @@
 
                     <td class="py-4 px-4 align-top">
                       <p class="text-sm font-bold text-slate-900">
-                        {{ req.requestedTier.toLowerCase().includes('diamond') ? '5,000' : (req.requestedTier.toLowerCase().includes('gold') ? '1,000' : '200') }}
+                        {{ tierCapacityLabel(req) }}
                         <span class="text-xs font-semibold text-slate-500">products</span>
                       </p>
                       <p class="text-[11px] text-slate-400 mt-0.5">Warehouse listing limit</p>
@@ -730,7 +790,14 @@
                     </td>
 
                     <td class="py-4 px-4 align-top text-right">
-                      <div class="inline-flex items-center justify-end gap-1.5">
+                      <div class="inline-flex items-center justify-end gap-1.5 flex-wrap">
+                        <button type="button" (click)="openTierHistory(req)"
+                          class="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-800 font-bold text-xs cursor-pointer transition-colors border border-slate-200">
+                          Detail
+                          @if (tierHistoryCount(req) > 1) {
+                            <span class="ml-1 text-[10px] font-extrabold text-orange-600">({{ tierHistoryCount(req) }})</span>
+                          }
+                        </button>
                         @if (req.status === 'Pending') {
                           <button type="button" (click)="approveTierUpgrade(req)" [disabled]="actionInProgress() === req.id"
                             class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs cursor-pointer transition-colors disabled:opacity-50">
@@ -1309,139 +1376,156 @@
 
 <!-- MANAGE SHOP TIERS / CATEGORIES MODAL -->
 @if (manageTiersModalOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
-    <div class="bg-white rounded-2xl max-w-2xl w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-5">
-      
-      <!-- Header -->
-      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-        <div class="flex items-center gap-2.5">
-          <div class="w-9 h-9 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-black border border-orange-200 shadow-xs">
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl w-full max-w-5xl max-h-[92vh] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
+
+      <!-- Header (fixed) -->
+      <div class="shrink-0 flex items-start sm:items-center justify-between gap-3 px-5 py-4 border-b border-gray-100">
+        <div class="flex items-center gap-2.5 min-w-0">
+          <div class="w-9 h-9 shrink-0 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center text-lg font-black border border-orange-200">
             👑
           </div>
-          <div>
-            <h3 class="text-base font-black text-gray-900 tracking-tight">Shop Tiers & Category Badges</h3>
-            <p class="text-[11px] text-gray-400 font-medium">Create and customize tiers like Diamond, Gold, Silver, and Premium badges.</p>
+          <div class="min-w-0">
+            <h3 class="text-base font-black text-gray-900 tracking-tight">Shop Tiers &amp; Category Badges</h3>
+            <p class="text-[11px] text-gray-400 font-medium truncate">Add, edit, or delete packages — price, limits, badge &amp; recommended.</p>
           </div>
         </div>
-        
-        <div class="flex items-center gap-2">
-          <button 
-            type="button" 
+        <div class="flex items-center gap-2 shrink-0">
+          <button
+            type="button"
             (click)="openCreateTierModal()"
-            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs cursor-pointer transition-colors">
-            <span>+ Add Tier</span>
+            class="inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer transition-colors">
+            + Add Tier
           </button>
-          <button 
-            type="button" 
-            (click)="closeManageTiersModal()" 
+          <button
+            type="button"
+            (click)="closeManageTiersModal()"
             class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
             ✕
           </button>
         </div>
       </div>
 
-      <!-- Tiers Table -->
-      <div class="border border-gray-100 rounded-xl overflow-hidden shadow-2xs">
+      <!-- Table body (scroll) -->
+      <div class="flex-1 min-h-0 overflow-auto px-5 py-4">
         @if (shopCategories().length === 0) {
-          <div class="p-8 text-center text-gray-400 text-xs">
+          <div class="p-10 text-center text-gray-400 text-xs border border-dashed border-gray-200 rounded-xl">
             No tiers found. Click "+ Add Tier" to define one.
           </div>
         } @else {
-          <table class="w-full text-left text-xs">
-            <thead class="bg-gray-50/70 border-b border-gray-100 text-gray-500 font-bold uppercase tracking-wider text-[10px]">
-              <tr>
-                <th class="py-2.5 px-3">Icon & Name</th>
-                <th class="py-2.5 px-3">Badge Preview</th>
-                <th class="py-2.5 px-3 text-center">Order</th>
-                <th class="py-2.5 px-3 text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-gray-100">
-              @for (tier of shopCategories(); track tier.id) {
-                <tr class="hover:bg-orange-50/20 transition-colors">
-                  <td class="py-3 px-3">
-                    <div class="flex items-center gap-2">
-                      <span class="text-base">{{ tier.iconUrl || '💎' }}</span>
-                      <div>
-                        <div class="font-bold text-gray-900">{{ tier.name }}</div>
-                        <div class="text-[10px] text-gray-400 font-mono">{{ tier.slug }}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td class="py-3 px-3">
-                    <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-black shadow-2xs"
-                          [style.background-color]="(tier.badgeColor || '#F59E0B') + '1A'"
-                          [style.color]="tier.badgeColor || '#D97706'"
-                          [style.border]="'1px solid ' + (tier.badgeColor || '#F59E0B') + '55'">
-                      <span>{{ tier.iconUrl || '💎' }}</span>
-                      <span>{{ tier.badgeText || tier.name }}</span>
-                    </span>
-                  </td>
-                  <td class="py-3 px-3 text-center font-mono font-bold text-gray-600">
-                    {{ tier.displayOrder }}
-                  </td>
-                  <td class="py-3 px-3 text-right">
-                    <div class="flex items-center justify-end gap-1.5">
-                      <button 
-                        type="button" 
-                        (click)="openEditTierModal(tier)"
-                        class="px-2 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] cursor-pointer transition-colors">
-                        ✏️ Edit
-                      </button>
-                      <button 
-                        type="button" 
-                        (click)="deleteTier(tier)"
-                        class="px-2 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] cursor-pointer transition-colors border border-rose-200">
-                        🗑️ Delete
-                      </button>
-                    </div>
-                  </td>
+          <div class="border border-gray-200 rounded-xl overflow-x-auto">
+            <table class="w-full min-w-[780px] text-left text-xs">
+              <thead class="bg-gray-50 border-b border-gray-200 text-gray-500 font-bold uppercase tracking-wider text-[10px] sticky top-0 z-[1]">
+                <tr>
+                  <th class="py-2.5 px-3 whitespace-nowrap">Tier</th>
+                  <th class="py-2.5 px-3 whitespace-nowrap">Badge</th>
+                  <th class="py-2.5 px-3 text-right whitespace-nowrap">Price</th>
+                  <th class="py-2.5 px-3 text-right whitespace-nowrap">Products</th>
+                  <th class="py-2.5 px-3 text-center whitespace-nowrap">Rec.</th>
+                  <th class="py-2.5 px-3 text-center whitespace-nowrap">#</th>
+                  <th class="py-2.5 px-3 text-right whitespace-nowrap w-[140px]">Actions</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                @for (tier of shopCategories(); track tier.id) {
+                  <tr class="hover:bg-orange-50/30 transition-colors">
+                    <td class="py-2.5 px-3">
+                      <div class="flex items-center gap-2 min-w-0">
+                        <span class="text-base shrink-0 leading-none">{{ tier.iconUrl || '💎' }}</span>
+                        <div class="min-w-0">
+                          <div class="font-bold text-gray-900 truncate max-w-[140px]">{{ tier.name }}</div>
+                          <div class="text-[10px] text-gray-400 font-mono truncate max-w-[140px]">{{ tier.slug }}</div>
+                        </div>
+                      </div>
+                    </td>
+                    <td class="py-2.5 px-3">
+                      <span class="inline-flex max-w-[160px] items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-black truncate"
+                            [style.background-color]="(tier.badgeColor || '#F59E0B') + '1A'"
+                            [style.color]="tier.badgeColor || '#D97706'"
+                            [style.border]="'1px solid ' + (tier.badgeColor || '#F59E0B') + '55'">
+                        <span class="shrink-0">{{ tier.iconUrl || '💎' }}</span>
+                        <span class="truncate">{{ tier.badgeText || tier.name }}</span>
+                      </span>
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-800 whitespace-nowrap">
+                      {{ (tier.priceUsd || 0) === 0 ? 'FREE' : ('$' + (tier.priceUsd || 0)) }}
+                    </td>
+                    <td class="py-2.5 px-3 text-right font-mono font-bold text-gray-700 whitespace-nowrap">
+                      {{ tier.maxProductListings || 200 }}
+                    </td>
+                    <td class="py-2.5 px-3 text-center">
+                      @if (tier.isRecommended) {
+                        <span class="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-[9px] font-extrabold uppercase tracking-wide shadow-sm shadow-amber-500/25">★ Yes</span>
+                      } @else {
+                        <span class="text-gray-300">—</span>
+                      }
+                    </td>
+                    <td class="py-2.5 px-3 text-center font-mono font-bold text-gray-600">
+                      {{ tier.displayOrder }}
+                    </td>
+                    <td class="py-2.5 px-3 text-right whitespace-nowrap">
+                      <div class="inline-flex items-center justify-end gap-1.5">
+                        <button
+                          type="button"
+                          (click)="openEditTierModal(tier)"
+                          class="px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-[11px] cursor-pointer transition-colors">
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          (click)="deleteTier(tier)"
+                          class="px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-[11px] cursor-pointer transition-colors border border-rose-200">
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
         }
       </div>
 
-      <!-- Modal Footer -->
-      <div class="flex items-center justify-end pt-3 border-t border-gray-100">
-        <button 
-          type="button" 
+      <!-- Footer (fixed) -->
+      <div class="shrink-0 flex items-center justify-between gap-3 px-5 py-3 border-t border-gray-100 bg-gray-50/80">
+        <span class="text-[11px] text-gray-400 font-medium">{{ shopCategories().length }} tier(s)</span>
+        <button
+          type="button"
           (click)="closeManageTiersModal()"
-          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-700 bg-white border border-gray-200 hover:bg-gray-100 transition-colors cursor-pointer">
           Close
         </button>
       </div>
-
     </div>
   </div>
 }
 
 <!-- CREATE / EDIT TIER SUB-MODAL -->
 @if (editingTierModalOpen()) {
-  <div class="fixed inset-0 z-60 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
-    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-4">
-      
-      <!-- Header -->
-      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-        <h3 class="text-sm font-black text-gray-900 tracking-tight">
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-3 sm:p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-150">
+    <div class="bg-white rounded-2xl w-full max-w-lg max-h-[90vh] shadow-2xl border border-slate-100 flex flex-col overflow-hidden">
+
+      <!-- Header (fixed) -->
+      <div class="shrink-0 flex items-center justify-between gap-3 px-5 py-3.5 border-b border-gray-100">
+        <h3 class="text-sm font-black text-gray-900 tracking-tight truncate">
           {{ editingTier() ? 'Edit Tier: ' + editingTier()!.name : 'Create New Shop Tier' }}
         </h3>
-        <button 
-          type="button" 
-          (click)="closeEditingTierModal()" 
-          class="w-7 h-7 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors">
+        <button
+          type="button"
+          (click)="closeEditingTierModal()"
+          class="w-7 h-7 shrink-0 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-xs font-bold cursor-pointer transition-colors">
           ✕
         </button>
       </div>
 
-      <!-- Form -->
-      <div class="space-y-3 text-xs">
+      <!-- Form (scroll) -->
+      <div class="flex-1 min-h-0 overflow-y-auto px-5 py-4 space-y-3 text-xs">
         <div>
           <label class="block font-bold text-gray-700 mb-1">Tier Name *</label>
-          <input 
-            type="text" 
-            [ngModel]="tierFormName()" 
+          <input
+            type="text"
+            [ngModel]="tierFormName()"
             (ngModelChange)="tierFormName.set($event)"
             placeholder="e.g. Diamond, Gold, Silver, Platinum"
             class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
@@ -1449,9 +1533,9 @@
 
         <div>
           <label class="block font-bold text-gray-700 mb-1">Badge Text</label>
-          <input 
-            type="text" 
-            [ngModel]="tierFormBadgeText()" 
+          <input
+            type="text"
+            [ngModel]="tierFormBadgeText()"
             (ngModelChange)="tierFormBadgeText.set($event)"
             placeholder="e.g. Diamond Partner"
             class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
@@ -1461,38 +1545,36 @@
           <div>
             <label class="block font-bold text-gray-700 mb-1">Badge Color Hex</label>
             <div class="flex items-center gap-2">
-              <input 
-                type="color" 
-                [ngModel]="tierFormBadgeColor()" 
+              <input
+                type="color"
+                [ngModel]="tierFormBadgeColor()"
                 (ngModelChange)="tierFormBadgeColor.set($event)"
                 class="w-8 h-8 rounded-lg border border-gray-200 cursor-pointer p-0.5">
-              <input 
-                type="text" 
-                [ngModel]="tierFormBadgeColor()" 
+              <input
+                type="text"
+                [ngModel]="tierFormBadgeColor()"
                 (ngModelChange)="tierFormBadgeColor.set($event)"
                 placeholder="#06B6D4"
-                class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-mono outline-hidden">
+                class="flex-1 min-w-0 bg-gray-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-mono outline-hidden">
             </div>
           </div>
-
           <div>
             <label class="block font-bold text-gray-700 mb-1">Badge Icon / Emoji</label>
-            <input 
-              type="text" 
-              [ngModel]="tierFormIcon()" 
+            <input
+              type="text"
+              [ngModel]="tierFormIcon()"
               (ngModelChange)="tierFormIcon.set($event)"
               placeholder="💎"
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs text-center text-base outline-hidden">
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-center text-base outline-hidden">
           </div>
         </div>
 
-        <!-- Quick emoji selectors -->
         <div>
-          <span class="text-[10px] text-gray-400 block font-bold uppercase mb-1">Quick Select Icon:</span>
+          <span class="text-[10px] text-gray-400 block font-bold uppercase mb-1">Quick Select Icon</span>
           <div class="flex items-center gap-1.5 flex-wrap">
-            @for (em of ['💎', '🥇', '🥈', '🥉', '⭐', '👑', '🔥', '🏆', '✨']; track em) {
-              <button 
-                type="button" 
+            @for (em of ['👑', '🏆', '💎', '🥇', '✨', '⭐', '💠', '🔮']; track em) {
+              <button
+                type="button"
                 (click)="tierFormIcon.set(em)"
                 class="w-8 h-8 rounded-lg bg-gray-100 hover:bg-orange-100 text-sm flex items-center justify-center cursor-pointer transition-colors"
                 [class.bg-orange-200]="tierFormIcon() === em">
@@ -1504,72 +1586,81 @@
 
         <div class="grid grid-cols-3 gap-2">
           <div>
-            <label class="block font-bold text-gray-700 mb-1">Display Order</label>
-            <input 
-              type="number" 
-              [ngModel]="tierFormOrder()" 
+            <label class="block font-bold text-gray-700 mb-1">Order</label>
+            <input
+              type="number"
+              [ngModel]="tierFormOrder()"
               (ngModelChange)="tierFormOrder.set(+$event)"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
           </div>
           <div>
             <label class="block font-bold text-gray-700 mb-1">Price (USD)</label>
-            <input 
-              type="number" 
-              [ngModel]="tierFormPriceUsd()" 
+            <input
+              type="number"
+              [ngModel]="tierFormPriceUsd()"
               (ngModelChange)="tierFormPriceUsd.set(+$event)"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
           </div>
           <div>
             <label class="block font-bold text-gray-700 mb-1">Max Products</label>
-            <input 
-              type="number" 
-              [ngModel]="tierFormMaxProducts()" 
+            <input
+              type="number"
+              [ngModel]="tierFormMaxProducts()"
               (ngModelChange)="tierFormMaxProducts.set(+$event)"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden">
           </div>
         </div>
 
+        <label class="flex items-start gap-2.5 p-3 rounded-xl border border-amber-200 bg-amber-50/60 cursor-pointer">
+          <input
+            type="checkbox"
+            class="mt-0.5 rounded border-amber-300 text-amber-600 focus:ring-amber-500"
+            [ngModel]="tierFormIsRecommended()"
+            (ngModelChange)="tierFormIsRecommended.set(!!$event)" />
+          <span>
+            <span class="block font-bold text-gray-800">Mark as Recommended</span>
+            <span class="block text-[10px] text-gray-500 mt-0.5 leading-snug">Only one package can be recommended. Sellers see this badge on the upgrade modal.</span>
+          </span>
+        </label>
+
         <div>
-          <label class="block font-bold text-gray-700 mb-1">Description (Optional)</label>
-          <textarea 
-            rows="2"
-            [ngModel]="tierFormDesc()" 
+          <label class="block font-bold text-gray-700 mb-1">Description (shown on seller packages)</label>
+          <textarea
+            rows="3"
+            [ngModel]="tierFormDesc()"
             (ngModelChange)="tierFormDesc.set($event)"
-            placeholder="Brief tier benefits or prestige description"
-            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs outline-hidden resize-none"></textarea>
+            placeholder="e.g. Growth tier for volume sellers — up to 1,000 products."
+            class="w-full min-h-[72px] bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-xs leading-relaxed outline-hidden resize-y"></textarea>
         </div>
 
-        <!-- Preview -->
-        <div class="p-2.5 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between">
-          <span class="text-[11px] font-bold text-gray-500">Preview:</span>
-          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black shadow-2xs"
+        <div class="p-2.5 bg-gray-50 rounded-xl border border-gray-200 flex items-center justify-between gap-2">
+          <span class="text-[11px] font-bold text-gray-500 shrink-0">Preview:</span>
+          <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-black max-w-[70%] truncate"
                 [style.background-color]="(tierFormBadgeColor() || '#F59E0B') + '1A'"
                 [style.color]="tierFormBadgeColor() || '#D97706'"
                 [style.border]="'1px solid ' + (tierFormBadgeColor() || '#F59E0B') + '55'">
-            <span>{{ tierFormIcon() || '💎' }}</span>
-            <span>{{ tierFormBadgeText().trim() || tierFormName().trim() || 'Tier Badge' }}</span>
+            <span class="shrink-0">{{ tierFormIcon() || '💎' }}</span>
+            <span class="truncate">{{ tierFormBadgeText().trim() || tierFormName().trim() || 'Tier Badge' }}</span>
           </span>
         </div>
-
       </div>
 
-      <!-- Actions -->
-      <div class="flex items-center justify-end gap-2 pt-3 border-t border-gray-100">
-        <button 
-          type="button" 
+      <!-- Actions (fixed — always visible) -->
+      <div class="shrink-0 flex items-center justify-end gap-2 px-5 py-3 border-t border-gray-100 bg-gray-50/80">
+        <button
+          type="button"
           (click)="closeEditingTierModal()"
-          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-white border border-transparent hover:border-gray-200 transition-colors cursor-pointer">
           Cancel
         </button>
-        <button 
-          type="button" 
+        <button
+          type="button"
           (click)="saveTier()"
           [disabled]="isSavingTier()"
-          class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50">
+          class="px-5 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs transition-colors cursor-pointer disabled:opacity-50">
           {{ isSavingTier() ? 'Saving...' : 'Save Tier' }}
         </button>
       </div>
-
     </div>
   </div>
 }
@@ -1754,6 +1845,92 @@
         </button>
       </div>
 
+    </div>
+  </div>
+}
+
+<!-- TIER HISTORY DETAIL MODAL -->
+@if (tierHistoryModalOpen() && tierHistoryShop(); as shop) {
+  <div class="fixed inset-0 z-60 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeTierHistory()"></div>
+    <div class="relative bg-white rounded-2xl max-w-lg w-full p-5 sm:p-6 shadow-2xl border border-gray-100 space-y-4 max-h-[85vh] overflow-y-auto">
+      <div class="flex items-start justify-between gap-3 pb-3 border-b border-slate-100">
+        <div class="min-w-0">
+          <h3 class="text-base font-black text-slate-900 truncate">Tier history</h3>
+          <p class="text-xs text-slate-500 mt-0.5 truncate">{{ shop.shopName }} · {{ shop.merchantName }}</p>
+        </div>
+        <button type="button" (click)="closeTierHistory()"
+          class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center text-sm font-bold cursor-pointer shrink-0">
+          ✕
+        </button>
+      </div>
+
+      <p class="text-[11px] text-slate-500 leading-relaxed">
+        Every store starts on <span class="font-bold text-slate-700">Bronze (Free)</span>.
+        Next steps are whatever they applied for — Gold is not required; they can go straight to Diamond / Platnium / any plan.
+      </p>
+
+      <ol class="relative space-y-0 border-l-2 border-orange-200 ml-2 pl-4">
+        <!-- Starting tier — always Bronze Free -->
+        <li class="relative pb-5">
+          <span class="absolute -left-[21px] top-1 w-3 h-3 rounded-full bg-slate-300 border-2 border-white shadow-sm"></span>
+          <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Started on</p>
+          <p class="text-sm font-bold text-slate-900 mt-0.5">Bronze (Free)</p>
+          <p class="text-[11px] text-slate-500 mt-0.5">Default plan for every new store</p>
+        </li>
+
+        @for (row of tierHistoryRows(); track row.id; let last = $last) {
+          <li class="relative" [class.pb-5]="!last">
+            <span class="absolute -left-[21px] top-1 w-3 h-3 rounded-full border-2 border-white shadow-sm"
+              [class.bg-emerald-500]="row.status === 'Approved'"
+              [class.bg-amber-400]="row.status === 'Pending'"
+              [class.bg-rose-500]="row.status === 'Rejected'"></span>
+            <div class="flex flex-wrap items-center gap-2">
+              <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                {{ row.requestedAt | date:'mediumDate' }}
+                @if (row.requestedAt) {
+                  <span class="font-medium normal-case tracking-normal">· {{ row.requestedAt | date:'shortTime' }}</span>
+                }
+              </p>
+              @if (last) {
+                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-black bg-orange-100 text-orange-800 border border-orange-200">LATEST</span>
+              }
+            </div>
+            <p class="text-sm font-black text-slate-900 mt-0.5">
+              Applied for {{ row.requestedTier || row.badgeText || '—' }}
+            </p>
+            <div class="flex flex-wrap items-center gap-2 mt-1">
+              @if (row.status === 'Approved') {
+                <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-800 border border-emerald-200">Approved</span>
+              } @else if (row.status === 'Pending') {
+                <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-amber-50 text-amber-800 border border-amber-200">Pending</span>
+              } @else {
+                <span class="inline-flex px-2 py-0.5 rounded-md text-[10px] font-bold bg-rose-50 text-rose-800 border border-rose-200">Rejected</span>
+              }
+              <span class="text-[11px] text-slate-500 font-mono">${{ row.price | number }}</span>
+              @if (row.paymentMethod) {
+                <span class="text-[11px] text-slate-500 truncate max-w-[140px]" [title]="row.paymentMethod">{{ row.paymentMethod }}</span>
+              }
+            </div>
+            @if (row.referenceNote) {
+              <p class="text-[11px] text-slate-500 mt-1 line-clamp-2">{{ row.referenceNote }}</p>
+            }
+            @if (row.receiptUrl) {
+              <button type="button" (click)="openReceiptPreview(row.receiptUrl, shop.shopName)"
+                class="mt-1.5 text-[10px] font-bold text-indigo-600 hover:text-indigo-800 cursor-pointer">
+                View receipt
+              </button>
+            }
+          </li>
+        }
+      </ol>
+
+      <div class="pt-2 border-t border-slate-100 flex justify-end">
+        <button type="button" (click)="closeTierHistory()"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-slate-900 hover:bg-slate-800 text-white cursor-pointer">
+          Close
+        </button>
+      </div>
     </div>
   </div>
 }

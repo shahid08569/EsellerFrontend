@@ -9,9 +9,9 @@
     <button 
       type="button" 
       (click)="openRequestModal()"
-      [disabled]="availableBalance() < MIN_WITHDRAWAL"
+      [disabled]="availableBalance() < minimumWithdrawal()"
       class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-      <span>💸 Request Payout (Min. $ 1,000)</span>
+      <span>💸 Request Payout (Min. $ {{ minimumWithdrawal() | number:'1.0-0' }})</span>
     </button>
   </div>
 
@@ -103,10 +103,10 @@
             <input 
               type="number" 
               [(ngModel)]="withdrawAmount"
-              [min]="MIN_WITHDRAWAL"
+              [min]="minimumWithdrawal()"
               [max]="availableBalance()"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
-            <p class="text-[10px] text-gray-400 mt-1">Minimum withdrawal is $ 1,000.</p>
+            <p class="text-[10px] text-gray-400 mt-1">Minimum withdrawal is $ {{ minimumWithdrawal() | number:'1.0-0' }} (set by Super Admin).</p>
           </div>
 
           <div>
@@ -159,7 +159,7 @@
           <button 
             type="button" 
             (click)="submitWithdrawal()" 
-            [disabled]="isSubmitting() || withdrawAmount() < MIN_WITHDRAWAL || withdrawAmount() > availableBalance()"
+            [disabled]="isSubmitting() || withdrawAmount() < minimumWithdrawal() || withdrawAmount() > availableBalance()"
             class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50">
             {{ isSubmitting() ? 'Submitting...' : 'Submit Request' }}
           </button>

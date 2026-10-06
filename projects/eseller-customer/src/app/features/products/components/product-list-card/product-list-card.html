@@ -76,12 +76,19 @@
           <span class="text-text-muted italic">No reviews yet</span>
         }
 
-        <!-- Store Name -->
-        <div class="flex items-center gap-1 text-text-muted">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <!-- Store Name + Tier -->
+        <div class="flex items-center gap-1.5 text-text-muted min-w-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
           </svg>
-          <span>Sold by <strong class="text-text-secondary font-medium">{{ product().shopName }}</strong></span>
+          <span class="shrink-0">Sold by</span>
+          <es-shop-rating-badge
+            [shopName]="product().shopName"
+            [rating]="product().shopRating"
+            [shopBadgeText]="product().shopBadgeText"
+            [shopBadgeColor]="product().shopBadgeColor"
+            [showVerified]="false"
+            size="sm" />
         </div>
       </div>
     </div>

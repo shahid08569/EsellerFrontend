@@ -18,7 +18,8 @@
         <div class="relative">
           <input
             type="text"
-            [(ngModel)]="searchTerm"
+            [ngModel]="searchTerm()"
+            (ngModelChange)="searchTerm.set($event)"
             placeholder="Search support chat..."
             class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
           <span class="absolute left-2.5 top-1.5 text-gray-400 text-xs">🔍</span>
@@ -86,13 +87,13 @@
 
         <div #messagesContainer class="flex-1 overflow-y-auto p-4 bg-gray-50/30 scrollbar-thin flex flex-col">
           <div class="space-y-3 mt-auto">
-            @for (msg of messages(); track msg.createdAt + (msg.id || '')) {
+            @for (msg of messages(); track msg.id || (msg.createdAt + msg.message)) {
               <div class="flex flex-col" [class.items-end]="msg.isMe" [class.items-start]="!msg.isMe">
                 <span class="text-[10px] text-gray-400 px-1 mb-0.5">
                   {{ msg.isMe ? 'You (Shop)' : 'Super Admin' }} • {{ msg.createdAt | date:'shortTime' }}
                 </span>
                 <div
-                  class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed"
+                  class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed space-y-1.5"
                   [class.bg-primary]="msg.isMe"
                   [class.text-white]="msg.isMe"
                   [class.rounded-tr-xs]="msg.isMe"
@@ -101,7 +102,28 @@
                   [class.border]="!msg.isMe"
                   [class.border-gray-200]="!msg.isMe"
                   [class.rounded-tl-xs]="!msg.isMe">
-                  {{ msg.message }}
+                  @if (msg.message) {
+                    <div class="whitespace-pre-wrap">{{ msg.message }}</div>
+                  }
+                  @if (msg.attachmentUrl) {
+                    <div>
+                      @if (isImageAttachment(msg)) {
+                        <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener" class="block">
+                          <img [src]="attachmentHref(msg.attachmentUrl)" [alt]="msg.attachmentFileName || 'attachment'"
+                               class="max-w-[200px] max-h-36 rounded-lg object-cover border"
+                               [class.border-white/30]="msg.isMe"
+                               [class.border-gray-200]="!msg.isMe" />
+                        </a>
+                      } @else {
+                        <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener"
+                           class="inline-flex items-center gap-1 font-bold underline underline-offset-2"
+                           [class.text-white]="msg.isMe"
+                           [class.text-primary]="!msg.isMe">
+                          📎 {{ msg.attachmentFileName || 'Download file' }}
+                        </a>
+                      }
+                    </div>
+                  }
                 </div>
               </div>
             }
@@ -114,19 +136,34 @@
           </div>
         </div>
 
-        <div class="p-3 border-t border-gray-100 bg-white shrink-0">
+        <div class="p-3 border-t border-gray-100 bg-white shrink-0 space-y-2">
+          @if (pendingAttachment(); as att) {
+            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-primary/5 border border-primary/20 text-xs">
+              <span class="truncate font-semibold text-gray-800">📎 {{ att.fileName }}</span>
+              <button type="button" (click)="clearPendingAttachment()" class="text-primary font-bold cursor-pointer">Remove</button>
+            </div>
+          }
           <form (submit)="sendMessage(); $event.preventDefault()" class="flex items-center gap-2">
+            <label class="w-10 h-10 rounded-xl bg-gray-50 border border-gray-200 flex items-center justify-center cursor-pointer hover:bg-gray-100 shrink-0"
+                   [class.opacity-50]="uploadingFile()" title="Attach file">
+              <input type="file" class="hidden" (change)="onFileSelected($event)"
+                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" [disabled]="uploadingFile() || isSending()" />
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+              </svg>
+            </label>
             <input
               type="text"
-              [(ngModel)]="messageText"
+              [ngModel]="messageText()"
+              (ngModelChange)="messageText.set($event)"
               name="messageText"
               placeholder="Type your message to Super Admin..."
               class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
             <button
               type="submit"
-              [disabled]="isSending() || !messageText().trim()"
+              [disabled]="isSending() || uploadingFile() || (!messageText().trim() && !pendingAttachment())"
               class="px-5 py-2.5 bg-primary hover:bg-primary-hover text-white rounded-xl font-bold text-xs shadow-xs transition-colors disabled:opacity-50 cursor-pointer">
-              {{ isSending() ? 'Sending...' : 'Send' }}
+              {{ isSending() ? 'Sending...' : (uploadingFile() ? 'Uploading...' : 'Send') }}
             </button>
           </form>
         </div>

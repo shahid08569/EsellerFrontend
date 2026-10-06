@@ -25,6 +25,11 @@ export class FinanceManager implements OnInit {
   readonly withdrawals = signal<AdminWithdrawalDto[]>([]);
   readonly actionInProgress = signal<string | null>(null);
 
+  /** SuperAdmin-configurable seller minimum withdrawal (USD) */
+  readonly minWithdrawal = signal<number>(1000);
+  readonly minWithdrawalDraft = signal<number>(1000);
+  readonly isSavingMin = signal<boolean>(false);
+
   // Process / Reject Modal State
   readonly processModalOpen = signal<boolean>(false);
   readonly selectedWithdrawal = signal<AdminWithdrawalDto | null>(null);
@@ -32,12 +37,15 @@ export class FinanceManager implements OnInit {
   readonly rejectionReason = signal<string>('');
   readonly isRejecting = signal<boolean>(false);
 
+  private static readonly MIN_WITHDRAWAL_KEY = 'DefaultWithdrawalThreshold';
+
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab') as FinanceTab | null;
     if (tab && ['commissions', 'withdrawals'].includes(tab)) {
       this.activeTab.set(tab);
     }
     this.loadData();
+    this.loadMinWithdrawal();
   }
 
   loadData(): void {
@@ -58,6 +66,51 @@ export class FinanceManager implements OnInit {
       },
       error: () => {}
     });
+  }
+
+  loadMinWithdrawal(): void {
+    this.adminService.getSettings().subscribe({
+      next: (list) => {
+        const settings = Array.isArray(list) ? list : [];
+        const row = settings.find(
+          (s: any) =>
+            s.key === FinanceManager.MIN_WITHDRAWAL_KEY ||
+            s.key === 'SellerMinimumWithdrawal'
+        );
+        const val = row ? parseFloat(String(row.value)) : NaN;
+        const amount = Number.isFinite(val) && val > 0 ? val : 1000;
+        this.minWithdrawal.set(amount);
+        this.minWithdrawalDraft.set(amount);
+      },
+      error: () => {}
+    });
+  }
+
+  saveMinWithdrawal(): void {
+    const amount = Number(this.minWithdrawalDraft());
+    if (!Number.isFinite(amount) || amount < 1) {
+      this.toast.show('Enter a valid minimum withdrawal amount (at least $ 1).', 'error');
+      return;
+    }
+
+    this.isSavingMin.set(true);
+    this.adminService
+      .updateSetting(FinanceManager.MIN_WITHDRAWAL_KEY, {
+        value: String(Math.round(amount * 100) / 100),
+        isActive: true
+      })
+      .subscribe({
+        next: () => {
+          this.isSavingMin.set(false);
+          this.minWithdrawal.set(amount);
+          this.minWithdrawalDraft.set(amount);
+          this.toast.show(`Minimum withdrawal set to $ ${amount.toLocaleString('en-US')}`, 'success');
+        },
+        error: (err) => {
+          this.isSavingMin.set(false);
+          this.toast.show(err?.error?.error || 'Failed to save minimum withdrawal.', 'error');
+        }
+      });
   }
 
   readonly pendingWithdrawals = computed(() =>

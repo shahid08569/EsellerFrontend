@@ -29,6 +29,7 @@ export class WithdrawalList implements OnInit {
   readonly availableBalance = signal<number>(0);
   readonly pendingEarnings = signal<number>(0);
   readonly withdrawalHistory = signal<WithdrawalRequest[]>([]);
+  readonly minimumWithdrawal = signal<number>(1000);
 
   readonly requestModalOpen = signal<boolean>(false);
   readonly withdrawAmount = signal<number>(1000);
@@ -37,8 +38,6 @@ export class WithdrawalList implements OnInit {
   readonly accountNumber = signal<string>('');
   readonly bankName = signal<string>('');
   readonly isSubmitting = signal<boolean>(false);
-
-  readonly MIN_WITHDRAWAL = 1000;
 
   ngOnInit(): void {
     this.loadData();
@@ -53,6 +52,8 @@ export class WithdrawalList implements OnInit {
           next: (sum) => {
             this.availableBalance.set(Number(sum.availableToWithdraw) || 0);
             this.pendingEarnings.set(Number(sum.pendingEarnings) || 0);
+            const min = Number(sum.minimumWithdrawal);
+            this.minimumWithdrawal.set(Number.isFinite(min) && min > 0 ? min : 1000);
             this.sellerSvc.getWithdrawals(1, 50).subscribe({
               next: (res: any) => {
                 const items = Array.isArray(res) ? res : res?.items || [];
@@ -87,9 +88,9 @@ export class WithdrawalList implements OnInit {
   }
 
   openRequestModal(): void {
-    this.withdrawAmount.set(
-      Math.max(this.MIN_WITHDRAWAL, Math.min(this.availableBalance() || this.MIN_WITHDRAWAL, this.availableBalance()))
-    );
+    const min = this.minimumWithdrawal();
+    const bal = this.availableBalance() || 0;
+    this.withdrawAmount.set(Math.max(min, Math.min(bal || min, bal || min)));
     this.accountTitle.set(this.shop()?.name || '');
     this.requestModalOpen.set(true);
   }
@@ -101,9 +102,10 @@ export class WithdrawalList implements OnInit {
   submitWithdrawal(): void {
     const amount = Number(this.withdrawAmount());
     const balance = this.availableBalance();
+    const min = this.minimumWithdrawal();
 
-    if (amount < this.MIN_WITHDRAWAL) {
-      this.toast.show(`Minimum withdrawal amount is $ ${this.MIN_WITHDRAWAL}`, 'error');
+    if (amount < min) {
+      this.toast.show(`Minimum withdrawal amount is $ ${min}`, 'error');
       return;
     }
 
@@ -136,6 +138,7 @@ export class WithdrawalList implements OnInit {
         error: (err) => {
           this.isSubmitting.set(false);
           const msg =
+            err?.error?.error ||
             (typeof err?.error === 'string' ? err.error : '') ||
             err?.message ||
             'Failed to submit withdrawal request.';

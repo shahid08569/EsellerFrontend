@@ -209,10 +209,11 @@
                 <div class="px-4 py-3 grid grid-cols-[1fr_70px_90px_90px] gap-2 items-center border-t border-slate-50 text-xs">
                   <div class="flex items-center gap-2.5 min-w-0">
                     <div class="w-10 h-10 rounded-lg bg-slate-100 border border-slate-200 shrink-0 overflow-hidden flex items-center justify-center text-[10px] font-bold text-slate-400">
-                      @if (item.imageUrl) {
-                        <img [src]="item.imageUrl" alt="" class="w-full h-full object-cover" />
+                      @if (item.imageUrl | imageUrl; as img) {
+                        <img [src]="img" [alt]="item.productName" class="w-full h-full object-cover"
+                          (error)="$any($event.target).style.display='none'" />
                       } @else {
-                        PHOTO
+                        <span class="text-[9px] font-bold text-slate-400">{{ item.productName?.charAt(0) || '?' }}</span>
                       }
                     </div>
                     <p class="font-semibold text-slate-800 leading-snug line-clamp-2">{{ item.productName }}</p>
