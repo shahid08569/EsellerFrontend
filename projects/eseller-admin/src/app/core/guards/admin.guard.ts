@@ -1,10 +1,10 @@
 import { inject } from '@angular/core';
-import { CanActivateFn, Router } from '@angular/router';
+import { CanActivateFn } from '@angular/router';
 import { AuthStore } from 'eseller-shared';
+import { environment } from '../../../environments/environment';
 
 export const adminGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
-  const router = inject(Router);
 
   const role = authStore.currentAccount()?.roleType;
   const expiresAt = authStore.accessTokenExpiresAt();
@@ -42,6 +42,11 @@ export const adminGuard: CanActivateFn = () => {
     }
   }
 
-  // Stay on admin origin — local login (no www bounce)
-  return router.createUrlTree(['/login']);
+  // Use main customer portal login (handoff back to admin after sign-in)
+  if (typeof window !== 'undefined') {
+    window.location.replace(
+      `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}`
+    );
+  }
+  return false;
 };
