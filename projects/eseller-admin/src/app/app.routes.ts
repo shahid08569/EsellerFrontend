@@ -4,6 +4,11 @@ import { AdminLayout } from './layouts/admin-layout/admin-layout';
 
 export const routes: Routes = [
   {
+    path: 'login',
+    loadComponent: () =>
+      import('./features/auth/admin-login').then((m) => m.AdminLogin)
+  },
+  {
     path: '',
     component: AdminLayout,
     canActivate: [adminGuard],

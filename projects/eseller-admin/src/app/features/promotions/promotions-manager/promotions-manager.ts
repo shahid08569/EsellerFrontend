@@ -421,7 +421,12 @@ export class PromotionsManager implements OnInit {
       },
       error: (err) => {
         this.isUploadingBanner.set(false);
-        this.toast.show(err?.error?.error || 'Failed to upload image', 'error');
+        const msg =
+          err?.error ||
+          err?.error?.error ||
+          err?.message ||
+          'Failed to upload image';
+        this.toast.show(typeof msg === 'string' ? msg : 'Failed to upload image', 'error');
       }
     });
   }
@@ -547,9 +552,10 @@ export class PromotionsManager implements OnInit {
         this.isSavingBanner.set(false);
         this.persistBannerDraft();
         const msg =
-          err?.error?.error ||
-          err?.error?.errors?.[0] ||
           (typeof err?.error === 'string' ? err.error : null) ||
+          err?.error?.error ||
+          err?.message ||
+          err?.error?.errors?.[0] ||
           'Failed to publish banner';
         this.toast.show(msg, 'error');
       }
