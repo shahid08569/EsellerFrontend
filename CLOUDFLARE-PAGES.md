@@ -28,11 +28,20 @@ Production branch: `main` · Framework preset: **None** · Env var: `NODE_VERSIO
 
 (`api` stays an **A** record to MonsterASP — do not point it at Pages.)
 
-## GitHub Actions (optional)
+## How deploy actually works
 
-Workflows under `.github/workflows/deploy-*-pages.yml` need repo secrets:
+**Primary:** Cloudflare Pages **Git** connection (same as you set up for each project).  
+Push to `main` → Cloudflare **Deployments** tab builds (not GitHub Actions).
 
-- `CLOUDFLARE_API_TOKEN` — Pages:Edit
-- `CLOUDFLARE_ACCOUNT_ID` — Cloudflare Account ID
+Backend uses GitHub Actions → MonsterASP. Frontend does **not** need that path.
 
-Then push to `main` or run **workflow_dispatch**.
+## GitHub Actions (optional Direct Upload)
+
+Workflows under `.github/workflows/deploy-*-pages.yml` are **manual only** (`workflow_dispatch`) so missing Cloudflare secrets do not spam red failures.
+
+To use them later, add repo secrets:
+
+- `CLOUDFLARE_API_TOKEN` — Account → API Tokens → Pages:Edit  
+- `CLOUDFLARE_ACCOUNT_ID` — right sidebar on any Workers & Pages page  
+
+Then Actions → workflow → **Run workflow**.
