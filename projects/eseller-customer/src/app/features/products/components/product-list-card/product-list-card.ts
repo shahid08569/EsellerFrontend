@@ -1,11 +1,11 @@
 import { Component, input, output, computed, inject } from '@angular/core';
 import { DecimalPipe } from '@angular/common';
 import { Router } from '@angular/router';
-import { ProductListDto, CartService, WishlistService, CompareService, ToastService, AuthActionService } from 'eseller-shared';
+import { ProductListDto, CartService, WishlistService, CompareService, ToastService, AuthActionService, ShopRatingBadge } from 'eseller-shared';
 
 @Component({
   selector: 'app-product-list-card',
-  imports: [DecimalPipe],
+  imports: [DecimalPipe, ShopRatingBadge],
   templateUrl: './product-list-card.html',
   styleUrl: './product-list-card.css'
 })

@@ -247,6 +247,6 @@ export class ContentManager implements OnInit {
 
   openPreview(type: 'blog' | 'cms', slug: string): void {
     const path = type === 'blog' ? `/blog/${slug}` : `/page/${slug}`;
-    window.open(`${environment.customerUrl}${path}`, '_blank');
+    window.open(`${environment.customerUrl}${path}`, '_blank', 'noopener,noreferrer');
   }
 }

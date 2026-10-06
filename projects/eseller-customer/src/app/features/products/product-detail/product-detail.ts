@@ -739,12 +739,17 @@ export class ProductDetail implements OnInit, OnDestroy {
           saveAndRedirect(confirmedRef, !!res.orderId);
         },
         error: (err) => {
-          console.warn('Backend buyNow order placement error, using local fallback:', err);
-          saveAndRedirect(generatedRef, false);
+          this.isSubmittingOrder.set(false);
+          const msg =
+            (typeof err?.error === 'string' ? err.error : null) ||
+            err?.error?.error ||
+            'Could not place your order. Please try again.';
+          this.toastService.show(msg, 'error');
         }
       });
     } else {
-      saveAndRedirect(generatedRef, false);
+      this.isSubmittingOrder.set(false);
+      this.toastService.show('Please sign in and select a valid product variant to place an order.', 'error');
     }
   }
 

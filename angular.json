@@ -270,6 +270,9 @@
         },
         "serve": {
           "builder": "@angular/build:dev-server",
+          "options": {
+            "port": 4203
+          },
           "configurations": {
             "production": {
               "buildTarget": "eseller-affiliate:build:production"

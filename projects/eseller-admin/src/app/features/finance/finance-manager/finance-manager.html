@@ -29,6 +29,37 @@
     </div>
   </div>
 
+  <!-- Min withdrawal (SuperAdmin) -->
+  <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-end justify-between gap-4">
+    <div class="min-w-0">
+      <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Seller payout rule</p>
+      <h2 class="text-sm font-black text-slate-900 mt-0.5">Minimum Withdrawal Amount</h2>
+      <p class="text-xs text-slate-500 mt-1">
+        Sellers cannot request a payout below this amount. Current live value:
+        <span class="font-bold text-orange-700">$ {{ minWithdrawal() | number:'1.0-0' }}</span>
+      </p>
+    </div>
+    <div class="flex items-end gap-2 shrink-0">
+      <div>
+        <label class="block text-[10px] font-bold text-gray-600 mb-1">Amount (USD)</label>
+        <input
+          type="number"
+          min="1"
+          step="1"
+          [ngModel]="minWithdrawalDraft()"
+          (ngModelChange)="minWithdrawalDraft.set(+$event)"
+          class="w-36 bg-slate-50 border border-gray-200 rounded-xl px-3 py-2 text-sm font-bold text-slate-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+      </div>
+      <button
+        type="button"
+        (click)="saveMinWithdrawal()"
+        [disabled]="isSavingMin()"
+        class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-extrabold cursor-pointer disabled:opacity-50 shadow-sm">
+        {{ isSavingMin() ? 'Saving…' : 'Save' }}
+      </button>
+    </div>
+  </div>
+
   <!-- TABS -->
   <div class="bg-white border border-gray-100 rounded-2xl p-3 shadow-2xs flex items-center gap-2">
     <button 

@@ -126,6 +126,18 @@ export class ProductApproval implements OnInit {
     }))
   ]);
 
+  readonly filterShopOptions = computed<AdminSelectOption[]>(() => [
+    { value: '', label: 'All shops' },
+    ...this.shopsList()
+      .slice()
+      .sort((a, b) => a.name.localeCompare(b.name))
+      .map(s => ({
+        value: String(s.id || s.name),
+        label: s.name,
+        subLabel: s.city || s.slug || undefined
+      }))
+  ]);
+
   // Edit Fields
   readonly editProductName = signal<string>('');
   readonly editProductDesc = signal<string>('');
@@ -237,6 +249,13 @@ export class ProductApproval implements OnInit {
 
   confirmDelete(): void {
     if (this.isDeleting()) return;
+
+    // Master Warehouse catalog (status=all) cannot be deleted
+    if (this.statusFilter() === 'all') {
+      this.toast.show('Platform Master Warehouse products cannot be deleted. Edit them instead.', 'warning');
+      this.closeDeleteModal();
+      return;
+    }
 
     if (this.isBatchDelete()) {
       const ids = Array.from(this.selectedProductIds());
@@ -1001,22 +1020,20 @@ export class ProductApproval implements OnInit {
     const applyFilters = <T extends AdminProductDto>(list: T[]): T[] => {
       let result = list;
 
-      // Shop filter only applies to seller listing requests (pending),
-      // NOT to master warehouse catalog products (Platform Master Warehouse).
-      if (this.selectedShopName() || this.selectedShopId()) {
+      // Shop filter — pending & approved merchant listing tables
+      if (
+        (this.statusFilter() === 'pending' || this.statusFilter() === 'approved' || this.statusFilter() === 'rejected') &&
+        (this.selectedShopName() || this.selectedShopId())
+      ) {
         const targetName = this.selectedShopName().trim().toLowerCase();
         const targetId = this.selectedShopId().trim().toLowerCase();
         result = result.filter(p => {
-          const isMaster =
-            (p.shopName || '').toLowerCase().includes('master warehouse') ||
-            (p.shopSlug || '').toLowerCase() === 'master-warehouse' ||
-            (!p.sourceProductId && p.isApproved === true);
-          if (isMaster && this.statusFilter() !== 'pending') {
-            return true;
-          }
+          const shopName = (p.shopName || '').toLowerCase();
+          const shopId = (p.shopId || '').toLowerCase();
           return (
-            (!!targetName && p.shopName?.toLowerCase() === targetName) ||
-            (!!targetId && !!p.shopId && p.shopId.toLowerCase() === targetId)
+            (!!targetId && !!shopId && shopId === targetId) ||
+            (!!targetName && shopName === targetName) ||
+            (!!targetName && shopName.includes(targetName))
           );
         });
       }
@@ -1104,7 +1121,7 @@ export class ProductApproval implements OnInit {
       // Approved merchant store listings only
       this.adminService.getApprovedSellerProducts(1, 500).subscribe({
         next: (res) => {
-          const items = applyFilters((res?.items || []).map(p => ({ ...p, status: 'Approved', isApproved: true })));
+          const items = applyFilters((res?.items || []).map(p => ({ ...p, isApproved: true })));
           this.products.set(items);
           this.totalCount.set(items.length);
           this.isLoading.set(false);
@@ -1173,6 +1190,10 @@ export class ProductApproval implements OnInit {
     this.statusFilter.set(tab);
     this.currentPage.set(1);
     this.selectedProductIds.set(new Set());
+    if (tab === 'all') {
+      this.selectedShopId.set('');
+      this.selectedShopName.set('');
+    }
     this.router.navigate([], {
       relativeTo: this.route,
       queryParams: { status: tab },
@@ -1264,6 +1285,28 @@ export class ProductApproval implements OnInit {
       error: (err) => {
         this.actionInProgress.set(null);
         this.toast.show(err?.error?.error || 'Failed to approve product.', 'error');
+      }
+    });
+  }
+
+  toggleStorefrontLive(product: AdminProductDto): void {
+    const next = !product.isStorefrontLive;
+    this.actionInProgress.set(product.id);
+    this.adminService.setStorefrontLive(product.id, next).subscribe({
+      next: (res) => {
+        this.toast.show(
+          res?.message ||
+            (next
+              ? `"${product.name}" is now live on the website.`
+              : `"${product.name}" removed from website (Warehouse only).`),
+          'success'
+        );
+        this.actionInProgress.set(null);
+        this.loadInitialData();
+      },
+      error: (err) => {
+        this.actionInProgress.set(null);
+        this.toast.show(err?.error?.error || 'Failed to update website visibility.', 'error');
       }
     });
   }

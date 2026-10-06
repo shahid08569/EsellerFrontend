@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { ApiService } from 'eseller-shared';
 import { environment } from '../../../environments/environment';
@@ -166,11 +166,11 @@ export class AdminService {
     );
   }
 
-  createShopCategory(data: { name: string; slug?: string; description?: string; badgeText?: string; badgeColor?: string; iconUrl?: string; displayOrder?: number; priceUsd?: number; maxProductListings?: number }): Observable<any> {
+  createShopCategory(data: { name: string; slug?: string; description?: string; badgeText?: string; badgeColor?: string; iconUrl?: string; displayOrder?: number; priceUsd?: number; maxProductListings?: number; isRecommended?: boolean }): Observable<any> {
     return this.api.post<any>('/admin/shop-categories', data);
   }
 
-  updateShopCategory(id: string, data: { name: string; slug?: string; description?: string; badgeText?: string; badgeColor?: string; iconUrl?: string; displayOrder?: number; isActive?: boolean; priceUsd?: number; maxProductListings?: number }): Observable<any> {
+  updateShopCategory(id: string, data: { name: string; slug?: string; description?: string; badgeText?: string; badgeColor?: string; iconUrl?: string; displayOrder?: number; isActive?: boolean; priceUsd?: number; maxProductListings?: number; isRecommended?: boolean }): Observable<any> {
     return this.api.put<any>(`/admin/shop-categories/${id}`, data);
   }
 
@@ -185,14 +185,31 @@ export class AdminService {
     });
   }
 
-  getTierUpgradeRequests(): Observable<any[]> {
-    return this.api.get<any[]>('/admin/shop-categories/tier-requests').pipe(
-      map(res => {
+  getTierUpgradeRequests(): Observable<any[] | null> {
+    return this.api.get<any>('/admin/shop-categories/tier-requests').pipe(
+      map((res) => {
         if (Array.isArray(res)) return res;
         if (res && Array.isArray((res as any).items)) return (res as any).items;
-        return [];
+        if (res && Array.isArray((res as any).value)) return (res as any).value;
+        if (res && Array.isArray((res as any).data)) return (res as any).data;
+        // 204 / empty body from aborted request — do not treat as []
+        return null;
       }),
-      catchError(() => of([]))
+      catchError((err: any) => {
+        const code = String(err?.errorCode || err?.status || '');
+        const msg = String(err?.error || err?.message || '').toLowerCase();
+        const status = Number(err?.status ?? 0);
+        // Aborted / cancelled → soft null (keep UI). Real errors rethrow for toast.
+        if (
+          status === 0 &&
+          (code === 'HTTP_0' || msg.includes('abort') || msg.includes('cancel') || msg.includes('client abort'))
+        ) {
+          console.warn('tier-requests soft-fail', err);
+          return of(null);
+        }
+        console.error('Failed to load tier upgrade requests', err);
+        return throwError(() => err);
+      })
     );
   }
 
@@ -387,6 +404,14 @@ export class AdminService {
 
   setHotSellingBulk(productIds: string[], isHotSelling: boolean): Observable<{ message: string }> {
     return this.api.put<{ message: string }>('/admin/products/hot-selling-bulk', { productIds, isHotSelling });
+  }
+
+  setStorefrontLive(productId: string, isStorefrontLive: boolean): Observable<{
+    message: string;
+    isStorefrontLive: boolean;
+    status?: string;
+  }> {
+    return this.api.put(`/admin/products/${productId}/storefront-live`, { isStorefrontLive });
   }
 
   deleteShopkeeper(id: string, reason?: string): Observable<{ message: string }> {
@@ -662,8 +687,8 @@ export class AdminService {
   // ═══════════════════════════════════════════════════════════
   // 7. CHAT & CONVERSATIONS
   // ═══════════════════════════════════════════════════════════
-  getConversations(): Observable<any[]> {
-    return this.api.get<any>('/Chat/conversations').pipe(
+  getConversations(pageNumber: number = 1, pageSize: number = 500): Observable<any[]> {
+    return this.api.get<any>(`/Chat/conversations?pageNumber=${pageNumber}&pageSize=${pageSize}`).pipe(
       map(res => {
         if (Array.isArray(res)) return res;
         if (res && Array.isArray(res.items)) return res.items;
@@ -690,12 +715,47 @@ export class AdminService {
     return this.getOrderMessages(conversationId);
   }
 
-  sendChatMessage(orderId: string, message: string): Observable<any> {
-    return this.api.post<any>(`/Chat/${orderId}/messages`, { message });
+  sendChatMessage(
+    orderId: string,
+    message: string,
+    attachment?: {
+      attachmentUrl?: string | null;
+      attachmentFileName?: string | null;
+      attachmentContentType?: string | null;
+      attachmentSizeBytes?: number | null;
+    } | null
+  ): Observable<any> {
+    return this.api.post<any>(`/Chat/${orderId}/messages`, {
+      message,
+      attachmentUrl: attachment?.attachmentUrl,
+      attachmentFileName: attachment?.attachmentFileName,
+      attachmentContentType: attachment?.attachmentContentType,
+      attachmentSizeBytes: attachment?.attachmentSizeBytes
+    });
   }
 
-  sendMessage(conversationId: string, message: string): Observable<any> {
-    return this.sendChatMessage(conversationId, message);
+  uploadChatAttachment(file: File): Observable<{
+    url: string;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+  }> {
+    const form = new FormData();
+    form.append('file', file, file.name);
+    return this.api.postForm(`/Chat/attachments`, form);
+  }
+
+  sendMessage(
+    conversationId: string,
+    message: string,
+    attachment?: {
+      attachmentUrl?: string | null;
+      attachmentFileName?: string | null;
+      attachmentContentType?: string | null;
+      attachmentSizeBytes?: number | null;
+    } | null
+  ): Observable<any> {
+    return this.sendChatMessage(conversationId, message, attachment);
   }
 
   getHomepageProducts(tab: string = 'all', pageNumber: number = 1, pageSize: number = 40): Observable<any> {

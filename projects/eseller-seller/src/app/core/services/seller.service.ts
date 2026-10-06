@@ -170,6 +170,8 @@ export class SellerService {
               maxProductLimit: shop.maxProductLimit ?? detail.maxProductLimit ?? 200,
               tierName: shop.tierName ?? shop.badgeText ?? detail.tierName ?? detail.badgeText ?? 'Bronze (Free)',
               badgeText: shop.badgeText ?? detail.badgeText ?? shop.tierName ?? 'Bronze (Free)',
+              rating: Number(detail.rating ?? shop.rating ?? 0) || 0,
+              logoUrl: detail.logoUrl ?? shop.logoUrl ?? null,
               bannerUrl: detail.bannerUrl ?? shop.bannerUrl ?? null,
               totalProducts: shop.totalProducts ?? detail.totalProducts ?? 0,
               totalOrders: shop.totalOrders ?? detail.totalOrders ?? 0,
@@ -183,6 +185,7 @@ export class SellerService {
               maxProductLimit: shop.maxProductLimit ?? 200,
               tierName: shop.tierName ?? shop.badgeText ?? 'Bronze (Free)',
               badgeText: shop.badgeText ?? shop.tierName ?? 'Bronze (Free)',
+              rating: Number(shop.rating ?? 0) || 0,
               totalProducts: shop.totalProducts ?? 0,
               totalOrders: shop.totalOrders ?? 0,
               totalRevenue: shop.totalRevenue ?? 0
@@ -282,6 +285,26 @@ export class SellerService {
     accountDetails?: string;
   }): Observable<{ id: string; message: string }> {
     return this.api.post(`/SellerWallet/withdrawal-request`, payload);
+  }
+
+  /** GET /shop-categories — active seller tier packages */
+  getShopCategories(): Observable<Array<{
+    id: string;
+    name: string;
+    slug?: string;
+    description?: string | null;
+    badgeText?: string | null;
+    badgeColor?: string | null;
+    iconUrl?: string | null;
+    displayOrder?: number;
+    priceUsd?: number;
+    maxProductListings?: number;
+    isRecommended?: boolean;
+  }>> {
+    return this.api.get<any[]>(`/shop-categories`).pipe(
+      map((res) => Array.isArray(res) ? res : []),
+      catchError(() => of([]))
+    );
   }
 
   /** GET /Chat/{orderId}/messages */
@@ -396,6 +419,7 @@ export class SellerService {
     paymentMethod?: string;
     referenceNote?: string;
     receiptUrl?: string | null;
+    requestedCategoryId?: string | null;
   }): Observable<{ message: string; id: string }> {
     return this.api.post<{ message: string; id: string }>('/Shops/tier-upgrade', data);
   }

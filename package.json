@@ -7,6 +7,7 @@
     "start:admin": "ng serve eseller-admin",
     "start:seller": "ng serve eseller-seller",
     "start:customer": "ng serve eseller-customer",
+    "start:affiliate": "ng serve eseller-affiliate",
     "build": "ng build",
     "build:admin": "ng build eseller-admin",
     "build:seller": "ng build eseller-seller",

@@ -8,6 +8,10 @@ export interface ChatMessageDto {
   readAt?: string | null;
   deliveredAt?: string | null;
   sentAt: string;
+  attachmentUrl?: string | null;
+  attachmentFileName?: string | null;
+  attachmentContentType?: string | null;
+  attachmentSizeBytes?: number | null;
 }
 
 export interface PagedChatMessages {
@@ -21,12 +25,23 @@ export interface PagedChatMessages {
 }
 
 export interface SendChatMessageRequest {
-  message: string;
+  message?: string | null;
+  attachmentUrl?: string | null;
+  attachmentFileName?: string | null;
+  attachmentContentType?: string | null;
+  attachmentSizeBytes?: number | null;
 }
 
 export interface SendChatMessageResponse {
   messageId: string;
   message: string;
+}
+
+export interface ChatAttachmentUploadResult {
+  url: string;
+  fileName: string;
+  contentType: string;
+  sizeBytes: number;
 }
 
 export interface SignalRIncomingMessage {
@@ -36,4 +51,7 @@ export interface SignalRIncomingMessage {
   senderRole: string;
   message: string;
   sentAt: string;
+  attachmentUrl?: string | null;
+  attachmentFileName?: string | null;
+  attachmentContentType?: string | null;
 }

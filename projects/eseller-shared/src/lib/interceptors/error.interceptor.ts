@@ -6,10 +6,14 @@ import { ApiErrorResponse } from '../models/auth/auth.models';
 /**
  * Normalises backend errors to { error, errorCode, errors? }.
  * Preserves FluentValidation `errors` map for field-level UI.
+ * Leaves 401 as HttpErrorResponse so refreshInterceptor (outer) can renew the token.
  */
 export const errorInterceptor: HttpInterceptorFn = (req, next) => {
   return next(req).pipe(
     catchError((error: unknown) => {
+      if (error instanceof HttpErrorResponse && error.status === 401) {
+        return throwError(() => error);
+      }
       const normalised: ApiErrorResponse = normalise(error);
       return throwError(() => normalised);
     })

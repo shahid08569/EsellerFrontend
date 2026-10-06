@@ -22,8 +22,11 @@ export * from './lib/services/wishlist.service';
 export * from './lib/services/compare.service';
 export * from './lib/services/toast.service';
 export * from './lib/services/dashboard.service';
+export * from './lib/services/notification.service';
 export * from './lib/services/order.service';
 export * from './lib/services/chat.service';
+export * from './lib/models/notifications/notification.models';
+export * from './lib/utils/navigation.utils';
 
 // STATE
 export * from './lib/state/auth.store';

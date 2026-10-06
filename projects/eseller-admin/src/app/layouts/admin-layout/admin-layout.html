@@ -115,7 +115,12 @@
                [class.opacity-0]="!isDropdownOpen('shops')"
                [class.opacity-100]="isDropdownOpen('shops')">
             <div class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/60 rounded-xl my-1 border-l-2 border-orange-500">
-              <a [routerLink]="['/shops']" [queryParams]="{tab: 'pending', view: 'applications'}" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+              <a [routerLink]="['/shops']" [queryParams]="{tab: 'pending', view: 'applications'}"
+                class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                [class.text-orange-400]="isShopNav('pending')"
+                [class.font-bold]="isShopNav('pending')"
+                [class.bg-slate-800/80]="isShopNav('pending')">
                 <span>Pending Applications</span>
                 @if (pendingShopsCount() > 0) {
                   <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">
@@ -123,7 +128,12 @@
                   </span>
                 }
               </a>
-              <a [routerLink]="['/shops']" [queryParams]="{view: 'stores'}" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+              <a [routerLink]="['/shops']" [queryParams]="{view: 'stores'}"
+                class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                [class.text-orange-400]="isShopNav('stores')"
+                [class.font-bold]="isShopNav('stores')"
+                [class.bg-slate-800/80]="isShopNav('stores')">
                 <span>Approved Stores</span>
                 @if (totalShopsCount() > 0) {
                   <span class="px-1.5 py-0.2 rounded-full text-[9px] font-bold bg-slate-800 text-emerald-400 border border-emerald-500/30">
@@ -131,10 +141,20 @@
                   </span>
                 }
               </a>
-              <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+              <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}"
+                class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                [class.text-orange-400]="isShopNav('tiers')"
+                [class.font-bold]="isShopNav('tiers')"
+                [class.bg-slate-800/80]="isShopNav('tiers')">
                 <span>Tier Upgrades</span>
               </a>
-              <a [routerLink]="['/shops']" [queryParams]="{tab: 'all', view: 'applications'}" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+              <a [routerLink]="['/shops']" [queryParams]="{tab: 'all', view: 'applications'}"
+                class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                [class.text-orange-400]="isShopNav('all')"
+                [class.font-bold]="isShopNav('all')"
+                [class.bg-slate-800/80]="isShopNav('all')">
                 <span>All Shopkeepers</span>
               </a>
             </div>
@@ -244,7 +264,12 @@
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.405-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
           </svg>
-          <span class="truncate font-semibold" style="color: #ffffff !important;">Live Chat</span>
+          <span class="truncate font-semibold flex-1" style="color: #ffffff !important;">Live Chat</span>
+          @if (chatUnread.totalUnread() > 0) {
+            <span class="shrink-0 inline-flex items-center justify-center min-w-[20px] h-5 px-1.5 rounded-full bg-red-500 text-white text-[10px] font-black shadow-sm animate-pulse">
+              {{ chatUnread.totalUnread() > 99 ? '99+' : chatUnread.totalUnread() }}
+            </span>
+          }
         </a>
 
         <!-- 6. BLOG & CMS -->
@@ -434,7 +459,7 @@
           <a [href]="sellerUrl + '/dashboard'" target="_blank" class="hover:text-emerald-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
             <span class="w-2 h-2 rounded-full bg-emerald-400 shadow-xs shadow-emerald-400/50"></span> Seller Hub ↗
           </a>
-          <a [href]="customerUrl" target="_blank" class="hover:text-blue-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
+          <a [href]="customerUrl" target="_blank" rel="noopener noreferrer" class="hover:text-blue-400 flex items-center gap-1.5 font-bold transition-colors" style="color: #e2e8f0 !important;">
             <span class="w-2 h-2 rounded-full bg-blue-400 shadow-xs shadow-blue-400/50"></span> Storefront ↗
           </a>
         </div>
@@ -521,7 +546,17 @@
             </a>
           </div>
         </div>
-        <a [routerLink]="['/shops']" [queryParams]="{tab: 'pending', view: 'applications'}" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">
+        <a [routerLink]="['/shops']" [queryParams]="{tab: 'pending', view: 'applications'}"
+          (click)="toggleMobileMenu()"
+          class="flex items-center justify-between px-3 py-2 rounded-lg font-bold transition-all"
+          [class.bg-gradient-to-r]="isShopNav('pending')"
+          [class.from-orange-600]="isShopNav('pending')"
+          [class.to-amber-600]="isShopNav('pending')"
+          [class.text-white]="isShopNav('pending')"
+          [class.shadow-md]="isShopNav('pending')"
+          [class.shadow-orange-600/30]="isShopNav('pending')"
+          [class.text-slate-300]="!isShopNav('pending')"
+          [class.hover:bg-slate-800]="!isShopNav('pending')">
           <span>⏳ Pending Shops</span>
           @if (pendingShopsCount() > 0) {
             <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">
@@ -529,8 +564,28 @@
             </span>
           }
         </a>
-        <a [routerLink]="['/shops']" [queryParams]="{view: 'stores'}" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">🏪 Approved Stores</a>
-        <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">Tier Upgrades</a>
+        <a [routerLink]="['/shops']" [queryParams]="{view: 'stores'}"
+          (click)="toggleMobileMenu()"
+          class="block px-3 py-2 rounded-lg font-bold transition-all"
+          [class.bg-gradient-to-r]="isShopNav('stores')"
+          [class.from-orange-600]="isShopNav('stores')"
+          [class.to-amber-600]="isShopNav('stores')"
+          [class.text-white]="isShopNav('stores')"
+          [class.shadow-md]="isShopNav('stores')"
+          [class.shadow-orange-600/30]="isShopNav('stores')"
+          [class.text-slate-300]="!isShopNav('stores')"
+          [class.hover:bg-slate-800]="!isShopNav('stores')">🏪 Approved Stores</a>
+        <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}"
+          (click)="toggleMobileMenu()"
+          class="block px-3 py-2 rounded-lg font-bold transition-all"
+          [class.bg-gradient-to-r]="isShopNav('tiers')"
+          [class.from-orange-600]="isShopNav('tiers')"
+          [class.to-amber-600]="isShopNav('tiers')"
+          [class.text-white]="isShopNav('tiers')"
+          [class.shadow-md]="isShopNav('tiers')"
+          [class.shadow-orange-600/30]="isShopNav('tiers')"
+          [class.text-slate-300]="!isShopNav('tiers')"
+          [class.hover:bg-slate-800]="!isShopNav('tiers')">Tier Upgrades</a>
         <div class="space-y-1">
           <div class="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">📦 Products</div>
           <div class="pl-3 space-y-1">
@@ -546,7 +601,14 @@
           </div>
         </div>
         <a routerLink="/orders" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">🛒 Orders</a>
-        <a routerLink="/chat" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">Live Chat</a>
+        <a routerLink="/chat" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">
+          <span>Live Chat</span>
+          @if (chatUnread.totalUnread() > 0) {
+            <span class="inline-flex items-center justify-center min-w-[18px] h-[18px] px-1 rounded-full bg-red-500 text-white text-[10px] font-black">
+              {{ chatUnread.totalUnread() > 99 ? '99+' : chatUnread.totalUnread() }}
+            </span>
+          }
+        </a>
         <a routerLink="/content" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">📰 Blog & CMS</a>
         <a routerLink="/categories" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">🗂️ Categories & Brands</a>
         <a routerLink="/users" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">👥 Customer Accounts</a>

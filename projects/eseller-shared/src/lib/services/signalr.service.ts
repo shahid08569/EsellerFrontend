@@ -27,12 +27,16 @@ export class SignalRService {
 
   private chatConnection: HubConnection | null = null;
   private notificationConnection: HubConnection | null = null;
+  private chatStartPromise: Promise<void> | null = null;
+  private notificationStartPromise: Promise<void> | null = null;
 
   private receiveMessageHandlers = new Set<(msg: SignalRIncomingMessage) => void>();
   private receiveMessageHubBound = false;
 
   private receiveNotificationHandlers = new Set<(payload: SignalRIncomingNotification) => void>();
   private receiveNotificationHubBound = false;
+  private unreadCountHandlers = new Set<(count: number) => void>();
+  private unreadCountHubBound = false;
 
   readonly chatState = signal<HubConnectionState>(HubConnectionState.Disconnected);
   readonly notificationState = signal<HubConnectionState>(HubConnectionState.Disconnected);
@@ -46,11 +50,30 @@ export class SignalRService {
       return;
     }
 
+    if (this.chatStartPromise) {
+      return this.chatStartPromise;
+    }
+
+    this.chatStartPromise = this.connectChat();
+    try {
+      await this.chatStartPromise;
+    } finally {
+      this.chatStartPromise = null;
+    }
+  }
+
+  private async connectChat(): Promise<void> {
     // If a previous connection exists but is not Connected, rebuild cleanly
     if (this.chatConnection) {
       try { await this.chatConnection.stop(); } catch { /* ignore */ }
       this.chatConnection = null;
       this.receiveMessageHubBound = false;
+    }
+
+    const token = this.authStore.accessToken();
+    if (!token) {
+      this.chatState.set(HubConnectionState.Disconnected);
+      return;
     }
 
     this.chatConnection = this.buildConnection(
@@ -78,6 +101,9 @@ export class SignalRService {
       this.ensureReceiveMessageHubHandler();
     } catch (err) {
       this.chatState.set(HubConnectionState.Disconnected);
+      try { await this.chatConnection?.stop(); } catch { /* ignore */ }
+      this.chatConnection = null;
+      this.receiveMessageHubBound = false;
       throw err;
     }
   }
@@ -96,14 +122,30 @@ export class SignalRService {
   }
 
   async joinOrderRoom(orderRequestId: string): Promise<void> {
-    if (this.chatConnection && this.chatConnection.state === HubConnectionState.Connected) {
-      await this.chatConnection.invoke('JoinOrderRoom', orderRequestId);
-    }
+    await this.joinConversation(orderRequestId);
   }
 
   async leaveOrderRoom(orderRequestId: string): Promise<void> {
+    await this.leaveConversation(orderRequestId);
+  }
+
+  async joinConversation(conversationId: string): Promise<void> {
     if (this.chatConnection && this.chatConnection.state === HubConnectionState.Connected) {
-      await this.chatConnection.invoke('LeaveOrderRoom', orderRequestId);
+      try {
+        await this.chatConnection.invoke('JoinConversation', conversationId);
+      } catch {
+        await this.chatConnection.invoke('JoinOrderRoom', conversationId);
+      }
+    }
+  }
+
+  async leaveConversation(conversationId: string): Promise<void> {
+    if (this.chatConnection && this.chatConnection.state === HubConnectionState.Connected) {
+      try {
+        await this.chatConnection.invoke('LeaveConversation', conversationId);
+      } catch {
+        await this.chatConnection.invoke('LeaveOrderRoom', conversationId);
+      }
     }
   }
 
@@ -135,24 +177,48 @@ export class SignalRService {
       return;
     }
 
+    if (this.notificationStartPromise) {
+      return this.notificationStartPromise;
+    }
+
+    this.notificationStartPromise = this.connectNotifications();
+    try {
+      await this.notificationStartPromise;
+    } finally {
+      this.notificationStartPromise = null;
+    }
+  }
+
+  private async connectNotifications(): Promise<void> {
     if (this.notificationConnection) {
       try { await this.notificationConnection.stop(); } catch { /* ignore */ }
       this.notificationConnection = null;
       this.receiveNotificationHubBound = false;
+      this.unreadCountHubBound = false;
+    }
+
+    const token = this.authStore.accessToken();
+    if (!token) {
+      this.notificationState.set(HubConnectionState.Disconnected);
+      return;
     }
 
     this.notificationConnection = this.buildConnection(
       this.getHubUrl('__ESELLER_NOTIFICATION_HUB_URL__')
     );
 
-    this.notificationConnection.onclose(() =>
-      this.notificationState.set(HubConnectionState.Disconnected)
-    );
+    this.notificationConnection.onclose(() => {
+      this.notificationState.set(HubConnectionState.Disconnected);
+      this.receiveNotificationHubBound = false;
+      this.unreadCountHubBound = false;
+    });
     this.notificationConnection.onreconnecting(() =>
       this.notificationState.set(HubConnectionState.Reconnecting)
     );
     this.notificationConnection.onreconnected(() => {
       this.notificationState.set(HubConnectionState.Connected);
+      this.receiveNotificationHubBound = false;
+      this.unreadCountHubBound = false;
       this.ensureReceiveNotificationHubHandler();
     });
 
@@ -162,6 +228,10 @@ export class SignalRService {
       this.ensureReceiveNotificationHubHandler();
     } catch (err) {
       this.notificationState.set(HubConnectionState.Disconnected);
+      try { await this.notificationConnection?.stop(); } catch { /* ignore */ }
+      this.notificationConnection = null;
+      this.receiveNotificationHubBound = false;
+      this.unreadCountHubBound = false;
       throw err;
     }
   }
@@ -172,6 +242,14 @@ export class SignalRService {
     this.ensureReceiveNotificationHubHandler();
     return () => {
       this.receiveNotificationHandlers.delete(callback);
+    };
+  }
+
+  onUnreadCountChanged(callback: (count: number) => void): () => void {
+    this.unreadCountHandlers.add(callback);
+    this.ensureUnreadCountHubHandler();
+    return () => {
+      this.unreadCountHandlers.delete(callback);
     };
   }
 
@@ -198,12 +276,30 @@ export class SignalRService {
       }
     );
     this.receiveNotificationHubBound = true;
+    this.ensureUnreadCountHubHandler();
+  }
+
+  private ensureUnreadCountHubHandler(): void {
+    if (!this.notificationConnection || this.unreadCountHubBound) return;
+
+    this.notificationConnection.on('UnreadCountChanged', (unreadCount: number) => {
+      for (const handler of this.unreadCountHandlers) {
+        try {
+          handler(Number(unreadCount) || 0);
+        } catch {
+          /* isolate subscriber errors */
+        }
+      }
+    });
+    this.unreadCountHubBound = true;
   }
 
   async stopNotificationConnection(): Promise<void> {
     if (this.notificationConnection) {
       await this.notificationConnection.stop();
       this.notificationConnection = null;
+      this.receiveNotificationHubBound = false;
+      this.unreadCountHubBound = false;
       this.notificationState.set(HubConnectionState.Disconnected);
     }
   }
@@ -223,7 +319,10 @@ export class SignalRService {
         senderAccountId: string,
         senderRole: string,
         message: string,
-        sentAt: string
+        sentAt: string,
+        attachmentUrl?: string | null,
+        attachmentFileName?: string | null,
+        attachmentContentType?: string | null
       ) => {
         const payload: SignalRIncomingMessage = {
           messageId,
@@ -231,7 +330,10 @@ export class SignalRService {
           senderAccountId,
           senderRole,
           message,
-          sentAt
+          sentAt,
+          attachmentUrl,
+          attachmentFileName,
+          attachmentContentType
         };
         for (const handler of this.receiveMessageHandlers) {
           try {

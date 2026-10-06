@@ -1,11 +1,14 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
-import { DashboardService, DashboardNotificationDto, SignalRService } from 'eseller-shared';
+import {
+  NotificationService,
+  AppNotificationDto,
+  SignalRService,
+  ToastService,
+  normalizeNotificationPath
+} from 'eseller-shared';
 
-/**
- * Seller notification bell — REST poll + NotificationHub realtime refresh.
- */
 @Component({
   selector: 'app-notification-bell',
   standalone: true,
@@ -13,23 +16,38 @@ import { DashboardService, DashboardNotificationDto, SignalRService } from 'esel
   templateUrl: './notification-bell.html'
 })
 export class NotificationBell implements OnInit, OnDestroy {
-  private readonly dashboardService = inject(DashboardService);
+  private readonly notificationsApi = inject(NotificationService);
   private readonly router = inject(Router);
   private readonly signalR = inject(SignalRService);
+  private readonly toast = inject(ToastService);
 
   readonly isOpen = signal<boolean>(false);
-  readonly notifications = signal<DashboardNotificationDto[]>([]);
+  readonly notifications = signal<AppNotificationDto[]>([]);
   readonly unreadCount = signal<number>(0);
 
   private pollHandle: ReturnType<typeof setInterval> | null = null;
   private unsubHub: (() => void) | null = null;
+  private unsubCount: (() => void) | null = null;
+  private suppressUntil = 0;
 
   ngOnInit(): void {
     this.refreshUnread();
-    this.pollHandle = setInterval(() => this.refreshUnread(), 10000);
+    this.pollHandle = setInterval(() => this.refreshUnread(), 30000);
 
     void this.signalR.startNotificationConnection().catch(() => {});
-    this.unsubHub = this.signalR.onReceiveNotification(() => this.refreshUnread());
+    this.unsubHub = this.signalR.onReceiveNotification((payload) => {
+      if (Date.now() < this.suppressUntil) return;
+      this.toast.show(payload.title || 'New notification', 'info');
+      this.refreshUnread();
+    });
+    this.unsubCount = this.signalR.onUnreadCountChanged((count) => {
+      if (Date.now() < this.suppressUntil) return;
+      this.unreadCount.set(count);
+      // Keep dropdown list in sync when chat marks NewMessage notifs read
+      if (this.isOpen() || count === 0) {
+        this.refreshUnread();
+      }
+    });
   }
 
   ngOnDestroy(): void {
@@ -39,11 +57,15 @@ export class NotificationBell implements OnInit, OnDestroy {
     }
     this.unsubHub?.();
     this.unsubHub = null;
+    this.unsubCount?.();
+    this.unsubCount = null;
   }
 
   refreshUnread(): void {
-    this.dashboardService.getNotifications(true, 1, 20).subscribe({
+    if (Date.now() < this.suppressUntil) return;
+    this.notificationsApi.getNotifications(true, 1, 20).subscribe({
       next: (res) => {
+        if (Date.now() < this.suppressUntil) return;
         const items = res?.items || [];
         this.notifications.set(items);
         this.unreadCount.set(res?.totalCount ?? items.length);
@@ -53,7 +75,7 @@ export class NotificationBell implements OnInit, OnDestroy {
   }
 
   toggleOpen(): void {
-    this.isOpen.update(v => !v);
+    this.isOpen.update((v) => !v);
     if (this.isOpen()) {
       this.refreshUnread();
     }
@@ -63,36 +85,65 @@ export class NotificationBell implements OnInit, OnDestroy {
     this.isOpen.set(false);
   }
 
-  markRead(notification: DashboardNotificationDto): void {
-    const openChat = String(notification.type || '').toLowerCase().includes('chat');
+  markRead(notification: AppNotificationDto): void {
+    const go = () => this.navigateFor(notification);
     if (notification.isRead) {
-      if (openChat) this.goToChat();
+      go();
       return;
     }
-    this.dashboardService.markNotificationRead(notification.id).subscribe({
+    this.notificationsApi.markRead(notification.id).subscribe({
       next: () => {
-        this.notifications.update(list => list.filter(n => n.id !== notification.id));
-        this.unreadCount.update(c => Math.max(0, c - 1));
-        if (openChat) this.goToChat();
+        this.notifications.update((list) => list.filter((n) => n.id !== notification.id));
+        this.unreadCount.update((c) => Math.max(0, c - 1));
+        go();
       },
-      error: () => {
-        if (openChat) this.goToChat();
-      }
+      error: () => go()
     });
   }
 
   markAllRead(): void {
-    this.dashboardService.markAllNotificationsRead().subscribe({
+    this.suppressUntil = Date.now() + 3000;
+    this.notifications.set([]);
+    this.unreadCount.set(0);
+    this.notificationsApi.markAllRead().subscribe({
       next: () => {
         this.notifications.set([]);
         this.unreadCount.set(0);
       },
-      error: () => {}
+      error: () => {
+        this.suppressUntil = 0;
+        this.refreshUnread();
+      }
     });
   }
 
-  goToChat(): void {
+  navigateFor(n: AppNotificationDto): void {
     this.close();
-    this.router.navigate(['/chat']);
+    const path = normalizeNotificationPath(
+      n.navigationUrl || n.linkPath || this.fallbackPath(n.type),
+      'seller'
+    );
+    if (!path) return;
+    if (path.includes('?')) {
+      const [route, qs] = path.split('?');
+      const queryParams: Record<string, string> = {};
+      for (const part of qs.split('&')) {
+        const [k, v] = part.split('=');
+        if (k) queryParams[k] = decodeURIComponent(v || '');
+      }
+      void this.router.navigate([route], { queryParams });
+    } else {
+      void this.router.navigateByUrl(path);
+    }
+  }
+
+  private fallbackPath(type?: string): string {
+    const t = String(type || '').toLowerCase();
+    if (t.includes('message') || t.includes('chat')) return '/chat';
+    if (t.includes('order') || t.includes('deliver')) return '/orders';
+    if (t.includes('product') || t.includes('listing')) return '/products';
+    if (t.includes('payment') || t.includes('commission') || t.includes('earning')) return '/earnings';
+    if (t.includes('tier') || t.includes('shop')) return '/settings';
+    return '/dashboard';
   }
 }

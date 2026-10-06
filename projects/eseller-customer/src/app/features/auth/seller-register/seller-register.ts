@@ -451,15 +451,16 @@ export class SellerRegister implements OnInit {
       this.docBackError.set('Back document upload incomplete. Please wait or re-upload.');
       hasError = true;
     }
-    if (!this.authStore.isAuthenticated()) {
-      if (!this.password() || this.password().length < 8) {
-        this.passwordError.set('Password must be at least 8 characters.');
-        hasError = true;
-      }
-      if (this.password() !== this.confirmPassword()) {
-        this.confirmPasswordError.set('Passwords do not match.');
-        hasError = true;
-      }
+    if (!this.password() || this.password().length < 8) {
+      this.passwordError.set('Password must be at least 8 characters.');
+      hasError = true;
+    } else if (!/[A-Z]/.test(this.password()) || !/[a-z]/.test(this.password()) || !/[0-9]/.test(this.password()) || !/[^a-zA-Z0-9]/.test(this.password())) {
+      this.passwordError.set('Password needs uppercase, lowercase, number, and special character.');
+      hasError = true;
+    }
+    if (this.password() !== this.confirmPassword()) {
+      this.confirmPasswordError.set('Passwords do not match.');
+      hasError = true;
     }
     if (!this.agreeToTerms()) {
       this.termsError.set('You must accept the Seller Terms of Service to register.');
@@ -487,7 +488,7 @@ export class SellerRegister implements OnInit {
       name: this.name().trim(),
       email: this.email().trim(),
       phone: fullPhone,
-      password: this.password() || 'Password123!',
+      password: this.password(),
       storeName: this.storeName().trim(),
       storeUrl: this.storeUrl().trim(),
       storeDescription: this.storeDescription().trim() || undefined,

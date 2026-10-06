@@ -60,6 +60,17 @@ export class ApiService {
       .pipe(catchError((err) => this.handleError(err)));
   }
 
+  /** Multipart upload — do not set Content-Type (browser sets boundary). */
+  postForm<T>(path: string, formData: FormData, options?: RequestOptions): Observable<T> {
+    return this.http
+      .post<T>(this.buildUrl(path), formData, {
+        withCredentials: true,
+        headers: options?.headers,
+        params: options?.params
+      })
+      .pipe(catchError((err) => this.handleError(err)));
+  }
+
   // ============================================================
   // PUT
   // ============================================================

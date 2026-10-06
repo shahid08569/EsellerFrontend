@@ -41,6 +41,9 @@ export interface ProductDto {
   createdAt: string; // ISO 8601
   /** SuperAdmin platform store rating (0–5) */
   shopRating?: number | null;
+  /** Seller tier badge (Gold / Diamond / Bronze…) */
+  shopBadgeText?: string | null;
+  shopBadgeColor?: string | null;
 }
 // PRODUCT — LIST 
 export interface ProductListDto {
@@ -69,6 +72,13 @@ export interface ProductListDto {
   shopId?: string | null;
   /** SuperAdmin platform store rating (0–5) */
   shopRating?: number | null;
+  /** Seller tier badge (Gold / Diamond / Bronze…) */
+  shopBadgeText?: string | null;
+  shopBadgeColor?: string | null;
+  /** Short description for category cards */
+  description?: string | null;
+  /** Master Warehouse opt-in to customer website */
+  isStorefrontLive?: boolean;
 }
 //PRODUCT BADGE DTO
 export interface ProductBadgeDto {

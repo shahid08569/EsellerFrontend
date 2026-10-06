@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { AuthStore, ToastService, SignalRService, ChatService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
 export interface AdminChatShop {
   id: string;
@@ -21,6 +22,9 @@ export interface AdminToSellerMessage {
   senderName: string;
   message: string;
   timestamp: string;
+  attachmentUrl?: string | null;
+  attachmentFileName?: string | null;
+  attachmentContentType?: string | null;
 }
 
 @Component({
@@ -36,13 +40,20 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private readonly toast = inject(ToastService);
   private readonly signalR = inject(SignalRService);
   private readonly chatService = inject(ChatService);
+  readonly chatUnread = inject(AdminChatUnreadService);
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
 
   readonly isOpen = signal<boolean>(false);
-  readonly unreadCount = signal<number>(0);
   readonly messageText = signal<string>('');
   readonly isSending = signal<boolean>(false);
+  readonly uploadingFile = signal<boolean>(false);
+  readonly pendingAttachment = signal<{
+    url: string;
+    fileName: string;
+    contentType: string;
+    sizeBytes: number;
+  } | null>(null);
 
   readonly shops = signal<AdminChatShop[]>([]);
   readonly selectedShop = signal<AdminChatShop | null>(null);
@@ -54,11 +65,20 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly filteredShops = computed(() => {
     const list = this.shops();
     const term = this.sellerSearchTerm().trim().toLowerCase();
-    if (!term) return list;
-    return list.filter(s =>
-      s.name.toLowerCase().includes(term) ||
-      (s.city && s.city.toLowerCase().includes(term))
-    );
+    let filtered = list;
+    if (term) {
+      filtered = list.filter(s =>
+        s.name.toLowerCase().includes(term) ||
+        (s.city && s.city.toLowerCase().includes(term))
+      );
+    }
+    // Unread merchants first (WhatsApp-style)
+    return [...filtered].sort((a, b) => {
+      const au = this.chatUnread.unreadFor(a.id) > 0 ? 1 : 0;
+      const bu = this.chatUnread.unreadFor(b.id) > 0 ? 1 : 0;
+      if (au !== bu) return bu - au;
+      return a.name.localeCompare(b.name);
+    });
   });
 
   private shouldScrollToBottom = false;
@@ -67,8 +87,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private unsubscribeSignalR?: () => void;
 
   ngOnInit(): void {
+    this.chatUnread.start();
     this.loadShops();
-    this.refreshUnreadBadge();
 
     this.signalR.startChatConnection().then(() => {
       this.unsubscribeSignalR = this.signalR.onReceiveMessage((incoming) => {
@@ -87,10 +107,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
         const shopName = this.shops().find(s => s.id?.toLowerCase() === shopId.toLowerCase())?.name || 'Merchant';
 
-        // Drop temp optimistic seller echoes if any
         this.messagesMap.update(map => {
           const list = (map[shopId] || []).filter(m =>
-            !(m.sender === 'seller' && m.message === incoming.message && String(m.id).startsWith('tmp-'))
+            !(m.sender === 'seller' && String(m.id).startsWith('tmp-')
+              && (m.message === incoming.message
+                || (!!incoming.attachmentUrl && m.attachmentUrl === incoming.attachmentUrl)))
           );
           return {
             ...map,
@@ -104,14 +125,25 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
                 timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                   hour: '2-digit',
                   minute: '2-digit'
-                })
+                }),
+                attachmentUrl: incoming.attachmentUrl || null,
+                attachmentFileName: incoming.attachmentFileName || null,
+                attachmentContentType: incoming.attachmentContentType || null
               }
             ]
           };
         });
 
-        if (!this.isOpen() || this.selectedShop()?.id?.toLowerCase() !== shopId.toLowerCase()) {
-          this.unreadCount.update(c => c + 1);
+        const isActiveOpen =
+          this.isOpen()
+          && this.currentView() === 'chat'
+          && this.selectedShop()?.id?.toLowerCase() === shopId.toLowerCase();
+
+        if (isActiveOpen) {
+          // Already viewing — clear unread immediately
+          this.chatUnread.markConversationRead(shopId);
+        } else {
+          this.chatUnread.bump(shopId, 1);
           this.toast.show(`New chat from ${shopName}`, 'info');
         }
         this.shouldScrollToBottom = true;
@@ -119,25 +151,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     }).catch(() => {});
 
     this.pollTimer = setInterval(() => {
-      this.refreshUnreadBadge();
-      if (this.isOpen() && this.selectedShop()) {
+      this.chatUnread.refresh();
+      if (this.isOpen() && this.selectedShop() && this.currentView() === 'chat') {
         this.fetchLiveMessages(this.selectedShop()!.id);
       }
     }, 8000);
-  }
-
-  private refreshUnreadBadge(): void {
-    this.chatService.getUnreadCount().subscribe({
-      next: (res) => {
-        const n = Number(res?.unreadCount || 0);
-        if (!this.isOpen() && n > this.unreadCount()) {
-          this.unreadCount.set(n);
-        } else if (!this.isOpen()) {
-          this.unreadCount.set(n);
-        }
-      },
-      error: () => {}
-    });
   }
 
   ngOnDestroy(): void {
@@ -230,26 +248,30 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.signalR.joinOrderRoom(shop.id).then(() => {
       this.joinedRoomId = shop.id;
     }).catch(() => {});
-    this.chatService.markConversationAsRead(shop.id).subscribe({
-      next: () => this.refreshUnreadBadge(),
-      error: () => {}
-    });
+    this.chatUnread.markConversationRead(shop.id);
     this.fetchLiveMessages(shop.id);
     this.shouldScrollToBottom = true;
   }
 
   backToDirectory(): void {
     this.currentView.set('directory');
+    this.chatUnread.refresh();
   }
 
   toggleChat(): void {
     const nextState = !this.isOpen();
     this.isOpen.set(nextState);
     if (nextState) {
-      this.unreadCount.set(0);
+      // Do NOT zero the badge on open — only clear when a thread is opened/read
+      this.currentView.set('directory');
       this.shouldScrollToBottom = true;
+      this.chatUnread.refresh();
       if (!this.shops().length) this.loadShops();
     }
+  }
+
+  shopUnread(shopId: string): number {
+    return this.chatUnread.unreadFor(shopId);
   }
 
   closeChat(): void {
@@ -293,7 +315,10 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit'
-            })
+            }),
+            attachmentUrl: m.attachmentUrl || null,
+            attachmentFileName: m.attachmentFileName || null,
+            attachmentContentType: m.attachmentContentType || null
           };
         });
 
@@ -307,13 +332,49 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  onFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = '';
+    if (!file) return;
+
+    if (file.size > 10 * 1024 * 1024) {
+      this.toast.show('Max file size is 10 MB', 'error');
+      return;
+    }
+
+    this.uploadingFile.set(true);
+    this.chatService.uploadAttachment(file).subscribe({
+      next: (res) => {
+        this.uploadingFile.set(false);
+        this.pendingAttachment.set({
+          url: res.url,
+          fileName: res.fileName,
+          contentType: res.contentType,
+          sizeBytes: res.sizeBytes
+        });
+      },
+      error: (err) => {
+        this.uploadingFile.set(false);
+        this.toast.show(err?.error?.error || 'File upload failed', 'error');
+      }
+    });
+  }
+
+  clearPendingAttachment(): void {
+    this.pendingAttachment.set(null);
+  }
+
   sendMessage(): void {
     const text = this.messageText().trim();
+    const attachment = this.pendingAttachment();
     const shop = this.selectedShop();
-    if (!text || !shop || this.isSending()) return;
+    if ((!text && !attachment) || !shop || this.isSending()) return;
 
     this.isSending.set(true);
     const tempId = `tmp-${Date.now()}`;
+    const preview = text || (attachment ? `📎 ${attachment.fileName}` : '');
+    const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     this.messagesMap.update(map => ({
       ...map,
@@ -323,15 +384,24 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           id: tempId,
           sender: 'admin',
           senderName: 'Super Admin',
-          message: text,
-          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          message: preview,
+          timestamp: stamp,
+          attachmentUrl: attachment?.url || null,
+          attachmentFileName: attachment?.fileName || null,
+          attachmentContentType: attachment?.contentType || null
         }
       ]
     }));
     this.messageText.set('');
+    this.pendingAttachment.set(null);
     this.shouldScrollToBottom = true;
 
-    this.adminService.sendChatMessage(shop.id, text).subscribe({
+    this.adminService.sendChatMessage(shop.id, text, attachment ? {
+      attachmentUrl: attachment.url,
+      attachmentFileName: attachment.fileName,
+      attachmentContentType: attachment.contentType,
+      attachmentSizeBytes: attachment.sizeBytes
+    } : null).subscribe({
       next: (res) => {
         this.isSending.set(false);
         const realId = res?.messageId ? String(res.messageId) : tempId;
@@ -347,8 +417,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
                 id: realId,
                 sender: 'admin',
                 senderName: 'Super Admin',
-                message: text,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+                message: preview,
+                timestamp: stamp,
+                attachmentUrl: attachment?.url || null,
+                attachmentFileName: attachment?.fileName || null,
+                attachmentContentType: attachment?.contentType || null
               }
             ]
           };
@@ -363,6 +436,19 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.toast.show(err?.error?.error || 'Failed to send message.', 'error');
       }
     });
+  }
+
+  attachmentHref(url: string | null | undefined): string {
+    if (!url) return '#';
+    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:') || url.startsWith('data:')) {
+      return url;
+    }
+    return this.adminService.formatImageUrl(url) || url;
+  }
+
+  isImageAttachment(msg: AdminToSellerMessage): boolean {
+    const ct = (msg.attachmentContentType || '').toLowerCase();
+    return ct.startsWith('image/') || /\.(png|jpe?g|gif|webp)$/i.test(msg.attachmentFileName || '');
   }
 
   sendQuickAction(action: 'approve_gold' | 'approve_diamond' | 'request_payment' | 'bronze_info'): void {

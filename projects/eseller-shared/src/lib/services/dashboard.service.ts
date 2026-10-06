@@ -1,4 +1,5 @@
-import { Injectable, inject } from '@angular/core';
+﻿import { Injectable, inject } from '@angular/core';
+import { HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { ApiService } from './api.service';
 import {
@@ -48,13 +49,15 @@ export class DashboardService {
     pageNumber = 1,
     pageSize = 20
   ): Observable<{ items: DashboardNotificationDto[]; totalCount: number }> {
-    const params: Record<string, any> = { pageNumber, pageSize };
+    let params = new HttpParams()
+      .set('pageNumber', String(pageNumber))
+      .set('pageSize', String(pageSize));
     if (unreadOnly !== undefined) {
-      params['unreadOnly'] = unreadOnly;
+      params = params.set('unreadOnly', String(unreadOnly));
     }
     return this.api.get<{ items: DashboardNotificationDto[]; totalCount: number }>(
       '/Dashboard/notifications',
-      params
+      { params }
     );
   }
 
