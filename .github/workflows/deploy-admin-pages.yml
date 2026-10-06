@@ -1,7 +1,5 @@
-# Build admin app with a Node version Angular accepts, deploy to Cloudflare Pages.
-# Secrets (repo Settings → Secrets → Actions):
-#   CLOUDFLARE_API_TOKEN   = Cloudflare API token (Pages:Edit)
-#   CLOUDFLARE_ACCOUNT_ID  = Cloudflare Account ID
+# Build admin app, deploy to Cloudflare Pages via Wrangler.
+# Secrets: CLOUDFLARE_API_TOKEN (Pages Edit), CLOUDFLARE_ACCOUNT_ID
 
 name: Deploy Admin → Cloudflare Pages
 
@@ -38,10 +36,9 @@ jobs:
           printf '/*    /index.html   200\n' > dist/eseller-admin/browser/_redirects
 
       - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: eseller-admin
-          directory: dist/eseller-admin/browser
+          command: pages deploy dist/eseller-admin/browser --project-name=eseller-admin --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}

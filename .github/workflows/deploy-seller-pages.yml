@@ -1,7 +1,5 @@
-# Build seller app with a Node version Angular accepts, deploy to Cloudflare Pages.
-# Secrets (repo Settings → Secrets → Actions):
-#   CLOUDFLARE_API_TOKEN   = Cloudflare API token (Pages:Edit)
-#   CLOUDFLARE_ACCOUNT_ID  = Cloudflare Account ID
+# Build seller app, deploy to Cloudflare Pages via Wrangler.
+# Secrets: CLOUDFLARE_API_TOKEN (Pages Edit), CLOUDFLARE_ACCOUNT_ID
 
 name: Deploy Seller → Cloudflare Pages
 
@@ -38,10 +36,9 @@ jobs:
           printf '/*    /index.html   200\n' > dist/eseller-seller/browser/_redirects
 
       - name: Publish to Cloudflare Pages
-        uses: cloudflare/pages-action@v1
+        uses: cloudflare/wrangler-action@v4
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          projectName: eseller-seller
-          directory: dist/eseller-seller/browser
+          command: pages deploy dist/eseller-seller/browser --project-name=eseller-seller --branch=main
           gitHubToken: ${{ secrets.GITHUB_TOKEN }}
