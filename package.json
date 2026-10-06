@@ -13,6 +13,10 @@
     "build:customer": "ng build eseller-customer",
     "build:affiliate": "ng build eseller-affiliate",
     "build:all": "npm run build:customer && npm run build:admin && npm run build:seller && npm run build:affiliate",
+    "build:customer:cf": "node scripts/ng-cf.cjs build eseller-customer --configuration=production",
+    "build:admin:cf": "node scripts/ng-cf.cjs build eseller-admin --configuration=production",
+    "build:seller:cf": "node scripts/ng-cf.cjs build eseller-seller --configuration=production",
+    "build:affiliate:cf": "node scripts/ng-cf.cjs build eseller-affiliate --configuration=production",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },
