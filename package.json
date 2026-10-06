@@ -11,6 +11,8 @@
     "build:admin": "ng build eseller-admin",
     "build:seller": "ng build eseller-seller",
     "build:customer": "ng build eseller-customer",
+    "build:affiliate": "ng build eseller-affiliate",
+    "build:all": "npm run build:customer && npm run build:admin && npm run build:seller && npm run build:affiliate",
     "watch": "ng build --watch --configuration development",
     "test": "ng test"
   },

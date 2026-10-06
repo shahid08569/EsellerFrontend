@@ -3,9 +3,9 @@
  */
 export const environment = {
   production: true,
-  apiUrl: 'https://admin.eseller.com/api/v1',
-  chatHubUrl: 'https://admin.eseller.com/hubs/chat',
-  notificationHubUrl: 'https://admin.eseller.com/hubs/notifications',
+  apiUrl: 'https://api.esellerglobal.com/api/v1',
+  chatHubUrl: 'https://api.esellerglobal.com/hubs/chat',
+  notificationHubUrl: 'https://api.esellerglobal.com/hubs/notifications',
   appName: 'Eseller Admin',
   appRole: 'SuperAdmin' as const
 };
