@@ -82,7 +82,7 @@
             <!-- Card Header: Image + Name -->
             <a [routerLink]="['/categories', category.slug]" class="flex items-center gap-4 group/link">
               <div class="w-16 h-16 rounded-full overflow-hidden bg-rose-50 border-2 border-white group-hover/link:border-primary shadow-xs flex items-center justify-center flex-shrink-0 p-1 transition-all duration-300">
-                @if (getImageUrl(category.imageUrl); as imgUrl) {
+                @if (getImageUrl(category); as imgUrl) {
                   <img
                     [src]="imgUrl"
                     [alt]="category.name"

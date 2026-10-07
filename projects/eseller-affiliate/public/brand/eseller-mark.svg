@@ -1,8 +1,10 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="EG">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="EG Eseller">
   <rect width="128" height="128" rx="28" fill="#0B1224"/>
   <rect x="18" y="22" width="92" height="84" rx="20" fill="#111827"/>
+  <!-- shopping bag hint -->
   <path d="M44 48h40l-4 46H48l-4-46z" fill="#1E293B"/>
   <path d="M54 48v-6a10 10 0 0120 0v6" fill="none" stroke="#F97316" stroke-width="5" stroke-linecap="round"/>
+  <!-- EG wordmark -->
   <text x="64" y="92" text-anchor="middle" font-family="Arial Black, Segoe UI Black, sans-serif" font-size="42" font-weight="900" letter-spacing="-2" fill="#F8FAFC">EG</text>
   <rect x="40" y="100" width="48" height="6" rx="3" fill="#F97316"/>
 </svg>

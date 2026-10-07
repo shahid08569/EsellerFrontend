@@ -8,7 +8,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HomeService, BrandDto, EmptyState, SkeletonLayout } from 'eseller-shared';
+import { HomeService, BrandDto, EmptyState, SkeletonLayout, resolveMediaUrl } from 'eseller-shared';
+import { brandLogoFallback } from '../home/components/catalog-media';
 
 @Component({
   selector: 'app-brands',
@@ -48,17 +49,11 @@ export class Brands implements OnInit {
     });
   }
 
-  getLogoUrl(logoUrl: string | null | undefined): string | null {
-    if (!logoUrl) return null;
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://') || logoUrl.startsWith('data:') || logoUrl.startsWith('blob:')) {
-      return logoUrl;
+  getLogoUrl(brand: BrandDto): string | null {
+    const resolved = resolveMediaUrl(brand.logoUrl);
+    if (!resolved || resolved.includes('/uploads/')) {
+      return brandLogoFallback(brand.slug, brand.name) || resolved;
     }
-    const apiBase =
-      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
-      'https://localhost:7127/api/v1';
-    const host = apiBase.replace(/\/api\/v1\/?$/, '');
-    const path = logoUrl.startsWith('/') ? logoUrl : `/${logoUrl}`;
-    if (path.startsWith('/uploads/')) return `${host}${path}`;
-    return `${host}/uploads${path}`;
+    return resolved;
   }
 }

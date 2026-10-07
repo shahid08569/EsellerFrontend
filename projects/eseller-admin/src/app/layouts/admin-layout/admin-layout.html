@@ -11,7 +11,7 @@
       <!-- BRAND / LOGO -->
       <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800/80 bg-slate-950/70 shrink-0">
         <div class="flex items-center gap-3">
-          <img src="/favicon.svg" alt="EG" class="w-9 h-9 rounded-xl shadow-md shadow-orange-600/30 shrink-0 ring-1 ring-white/10" width="36" height="36" />
+          <img src="/brand/eseller-logo.jpg" alt="EG" class="w-9 h-9 rounded-xl shadow-md shadow-orange-600/30 shrink-0 ring-1 ring-white/10 object-cover bg-[#0B1224]" width="36" height="36" (error)="$any($event.target).src='/brand/eseller-mark.svg'" />
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
               <span class="font-black text-lg tracking-tighter" style="color: #ffffff !important;">EG</span>

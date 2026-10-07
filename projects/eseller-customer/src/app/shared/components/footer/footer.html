@@ -3,7 +3,20 @@
 
     <!-- Column 1: Brand -->
     <div class="sm:col-span-2 md:col-span-1">
-      <h3 class="text-xl font-bold text-white mb-3">Eseller</h3>
+      <a routerLink="/" class="inline-flex items-center gap-3 mb-4 group">
+        <img
+          src="/brand/eseller-logo.jpg"
+          alt="EG Eseller"
+          class="w-16 h-16 md:w-20 md:h-20 rounded-2xl shadow-lg shadow-black/25 ring-2 ring-white/20 object-cover bg-[#0B1224] group-hover:scale-[1.03] transition-transform"
+          width="80"
+          height="80"
+          (error)="$any($event.target).src='/brand/eseller-mark.svg'"
+        />
+        <div class="min-w-0">
+          <p class="text-2xl font-black tracking-tighter text-white leading-none">EG</p>
+          <p class="text-xs font-semibold text-white/70 mt-1 tracking-wide">Eseller Marketplace</p>
+        </div>
+      </a>
       <p class="text-sm text-white/80 leading-relaxed">
         Your one-stop marketplace for everything you love. Shop from trusted sellers, chat directly, and get it delivered.
       </p>
@@ -55,7 +68,7 @@
   <!-- Bottom bar -->
   <div class="border-t border-white/20">
     <div class="max-w-7xl mx-auto px-3 md:px-4 py-4 text-center text-xs text-white/70">
-      © 2026 Eseller — Multi-Vendor Marketplace. All rights reserved.
+      © 2026 EG Eseller — Multi-Vendor Marketplace. All rights reserved.
     </div>
   </div>
 </footer>

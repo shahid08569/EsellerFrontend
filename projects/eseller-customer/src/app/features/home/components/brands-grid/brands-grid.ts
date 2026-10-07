@@ -11,7 +11,8 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { BrandDto } from 'eseller-shared';
+import { BrandDto, resolveMediaUrl } from 'eseller-shared';
+import { brandLogoFallback as resolveBrandFallback } from '../catalog-media';
 
 @Component({
   selector: 'app-brands-grid',
@@ -235,17 +236,16 @@ export class BrandsGrid implements OnDestroy {
     }
   }
 
-  getLogoUrl(logoUrl: string | null | undefined): string | null {
-    if (!logoUrl) return null;
-    if (logoUrl.startsWith('http://') || logoUrl.startsWith('https://') || logoUrl.startsWith('data:') || logoUrl.startsWith('blob:')) {
-      return logoUrl;
+  getLogoUrl(brand: BrandDto): string | null {
+    const resolved = resolveMediaUrl(brand.logoUrl);
+    // Prefer CDN fallback over broken / missing local uploads for known brands
+    if (!resolved || resolved.includes('/uploads/')) {
+      return resolveBrandFallback(brand.slug, brand.name) || resolved;
     }
-    const apiBase =
-      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
-      'https://localhost:7127/api/v1';
-    const host = apiBase.replace(/\/api\/v1\/?$/, '');
-    const path = logoUrl.startsWith('/') ? logoUrl : `/${logoUrl}`;
-    if (path.startsWith('/uploads/')) return `${host}${path}`;
-    return `${host}/uploads${path}`;
+    return resolved;
+  }
+
+  brandLogoFallback(slug?: string | null, name?: string | null): string | null {
+    return resolveBrandFallback(slug, name);
   }
 }

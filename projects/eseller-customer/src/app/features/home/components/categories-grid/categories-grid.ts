@@ -11,7 +11,8 @@ import {
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { CategoryTreeDto } from 'eseller-shared';
+import { CategoryTreeDto, resolveMediaUrl } from 'eseller-shared';
+import { categoryImageFallback as resolveCategoryFallback } from '../catalog-media';
 
 @Component({
   selector: 'app-categories-grid',
@@ -228,17 +229,15 @@ export class CategoriesGrid implements OnDestroy {
     }
   }
 
-  getImageUrl(imageUrl: string | null | undefined): string | null {
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://') || imageUrl.startsWith('data:') || imageUrl.startsWith('blob:')) {
-      return imageUrl;
-    }
-    const apiBase =
-      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
-      'https://localhost:7127/api/v1';
-    const host = apiBase.replace(/\/api\/v1\/?$/, '');
-    const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-    if (path.startsWith('/uploads/')) return `${host}${path}`;
-    return `${host}/uploads${path}`;
+  getImageUrl(category: CategoryTreeDto): string | null {
+    return (
+      resolveMediaUrl(category.imageUrl) ||
+      resolveCategoryFallback(category.slug, category.name)
+    );
+  }
+
+  /** Template helper for img (error) fallback */
+  categoryImageFallback(slug?: string | null, name?: string | null): string | null {
+    return resolveCategoryFallback(slug, name);
   }
 }

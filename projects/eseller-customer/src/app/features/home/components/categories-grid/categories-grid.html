@@ -44,31 +44,24 @@
               class="w-28 sm:w-32 md:w-36 flex-shrink-0 group cursor-pointer bg-gradient-to-b from-gray-50/90 via-white to-white hover:from-rose-50/70 hover:via-white hover:to-white border border-gray-200/80 hover:border-primary/40 rounded-2xl p-3 sm:p-3.5 shadow-card hover:shadow-card-hover hover:-translate-y-0.5 transition-all duration-300 flex flex-col items-center gap-2.5 select-none"
             >
               <!-- Circle image frame -->
-              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-2 shadow-xs group-hover:scale-110 group-hover:shadow-sm transition-all duration-300 flex items-center justify-center border border-gray-100 group-hover:border-primary/30">
-                @if (getImageUrl(category.imageUrl); as imgUrl) {
+              <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white p-1.5 shadow-xs group-hover:scale-110 group-hover:shadow-sm transition-all duration-300 flex items-center justify-center border border-gray-100 group-hover:border-primary/30 overflow-hidden">
+                @if (getImageUrl(category); as imgUrl) {
                   <img
                     [src]="imgUrl"
                     [alt]="category.name"
                     (dragstart)="$event.preventDefault()"
                     draggable="false"
-                    class="w-full h-full object-contain rounded-full transition-transform duration-300 pointer-events-none select-none"
+                    class="w-full h-full object-cover rounded-full transition-transform duration-300 pointer-events-none select-none"
                     loading="lazy"
+                    (error)="$any($event.target).src=categoryImageFallback(category.slug, category.name) || '/brand/eseller-mark.svg'"
                   />
                 } @else {
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    class="w-7 h-7 sm:w-9 sm:h-9 text-text-muted group-hover:text-primary transition-colors select-none"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                  >
-                    <path
-                      stroke-linecap="round"
-                      stroke-linejoin="round"
-                      d="M3.75 6A2.25 2.25 0 016 3.75h2.25A2.25 2.25 0 0110.5 6v2.25a2.25 2.25 0 01-2.25 2.25H6a2.25 2.25 0 01-2.25-2.25V6zM3.75 15.75A2.25 2.25 0 016 13.5h2.25a2.25 2.25 0 012.25 2.25V18a2.25 2.25 0 01-2.25 2.25H6A2.25 2.25 0 013.75 18v-2.25zM13.5 6a2.25 2.25 0 012.25-2.25H18A2.25 2.25 0 0120.25 6v2.25A2.25 2.25 0 0118 10.5h-2.25a2.25 2.25 0 01-2.25-2.25V6zM13.5 15.75a2.25 2.25 0 012.25-2.25H18a2.25 2.25 0 012.25 2.25V18A2.25 2.25 0 0118 20.25h-2.25A2.25 2.25 0 0113.5 18v-2.25z"
-                    />
-                  </svg>
+                  <img
+                    src="/brand/eseller-mark.svg"
+                    [alt]="category.name"
+                    class="w-10 h-10 object-contain rounded-xl pointer-events-none select-none"
+                    loading="lazy"
+                  />
                 }
               </div>
 
