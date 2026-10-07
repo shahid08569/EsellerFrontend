@@ -57,8 +57,10 @@
         }
       </div>
 
-      <!-- Title -->
-      <h3 class="text-base md:text-lg font-bold text-slate-900 tracking-tight group-hover:text-primary transition-colors line-clamp-2 mb-2">
+      <!-- Title — single line + ellipsis so list rows stay even -->
+      <h3
+        class="text-base md:text-lg font-bold text-slate-900 tracking-tight group-hover:text-primary transition-colors truncate whitespace-nowrap mb-2"
+        [title]="fullName()">
         {{ fullName() }}
       </h3>
 

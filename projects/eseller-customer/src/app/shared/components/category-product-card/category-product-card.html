@@ -64,22 +64,22 @@
     </div>
   </div>
 
-  <!-- Price → shop + tier → title -->
-  <div class="px-3 pt-2.5 pb-3 flex flex-col gap-1.5 flex-1">
-    <div class="flex items-baseline gap-2 flex-wrap leading-none">
-      <span class="text-[17px] font-bold text-[#E11D2E] tabular-nums">
+  <!-- Price → shop + tier → title (fixed 1-line rows so card height never varies) -->
+  <div class="px-3 pt-2.5 pb-3 flex flex-col gap-1.5 flex-1 min-h-[6.75rem]">
+    <div class="flex items-baseline gap-2 min-w-0 leading-none">
+      <span class="text-[17px] font-bold text-[#E11D2E] tabular-nums truncate">
         ${{ formattedPrice() }}
       </span>
       @if (hasDiscount()) {
-        <span class="text-xs text-gray-400 line-through tabular-nums">
+        <span class="text-xs text-gray-400 line-through tabular-nums shrink-0">
           ${{ formattedOldPrice() }}
         </span>
       }
     </div>
 
-    <div class="flex items-center gap-1.5 min-w-0 flex-wrap">
+    <div class="flex items-center gap-1.5 min-w-0">
       @if (product().shopName) {
-        <span class="text-[11px] text-slate-500 font-medium truncate max-w-[8rem]" [title]="product().shopName">
+        <span class="text-[11px] text-slate-500 font-medium truncate min-w-0" [title]="product().shopName">
           {{ product().shopName }}
         </span>
       }
@@ -93,15 +93,15 @@
     </div>
 
     <h3
-      class="text-[13px] text-slate-900 font-semibold leading-[1.35] line-clamp-2 group-hover:text-[#E11D2E] transition-colors"
+      class="text-[13px] text-slate-900 font-semibold leading-tight truncate whitespace-nowrap group-hover:text-[#E11D2E] transition-colors"
       [title]="fullName()">
       {{ product().name }}
     </h3>
 
-    @if (shortDesc()) {
-      <p class="text-[11px] text-slate-500 leading-snug line-clamp-1" [title]="shortDesc()">
+    <p class="text-[11px] text-slate-500 leading-tight truncate whitespace-nowrap h-4" [title]="shortDesc() || ''">
+      @if (shortDesc()) {
         {{ shortDesc() }}
-      </p>
-    }
+      }
+    </p>
   </div>
 </div>
