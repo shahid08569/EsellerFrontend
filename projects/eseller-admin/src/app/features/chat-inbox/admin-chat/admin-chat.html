@@ -44,7 +44,9 @@
 
       <div class="flex-1 overflow-y-auto divide-y divide-gray-50">
         @if (isLoading()) {
-          <div class="p-6 text-center text-xs text-gray-400">Loading inbox...</div>
+          <div class="p-2">
+            <es-skeleton-layout variant="chat" [count]="5" />
+          </div>
         } @else if (filteredConversations().length === 0) {
           <div class="p-6 text-center text-gray-400 text-xs">
             No active conversations

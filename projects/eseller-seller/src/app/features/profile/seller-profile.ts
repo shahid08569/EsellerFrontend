@@ -6,13 +6,14 @@ import {
   AuthService,
   DashboardService,
   ToastService,
-  UserProfileDto
+  UserProfileDto,
+  SkeletonLayout
 } from 'eseller-shared';
 
 @Component({
   selector: 'app-seller-profile',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './seller-profile.html'
 })
 export class SellerProfile implements OnInit, OnDestroy {

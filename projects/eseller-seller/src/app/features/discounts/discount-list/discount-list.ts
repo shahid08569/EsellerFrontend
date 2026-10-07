@@ -2,13 +2,13 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, DiscountDto, ShopDto } from '../../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 
 @Component({
   selector: 'app-discount-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
   templateUrl: './discount-list.html'
 })
 export class DiscountList implements OnInit {

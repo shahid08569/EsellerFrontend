@@ -8,11 +8,11 @@ import {
 } from '@angular/core';
 import { CommonModule, Location } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
-import { HomeService, ProductListDto, ProductCard, EmptyState } from 'eseller-shared';
+import { HomeService, ProductListDto, ProductCard, EmptyState, SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-flash-sales',
-  imports: [CommonModule, RouterLink, ProductCard, EmptyState],
+  imports: [CommonModule, RouterLink, ProductCard, EmptyState, SkeletonLayout],
   templateUrl: './flash-sales.html',
   styleUrl: './flash-sales.css'
 })

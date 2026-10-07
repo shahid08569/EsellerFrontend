@@ -58,14 +58,11 @@
   <!-- 3. BRANDS GRID -->
   <!-- ============================================================ -->
   @if (loading()) {
-    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6">
-      @for (i of [1,2,3,4,5,6,7,8,9,10,11,12]; track i) {
-        <div class="bg-white rounded-2xl border border-gray-100 p-5 flex flex-col items-center gap-3 animate-pulse shadow-xs">
-          <div class="w-16 h-16 rounded-full bg-gray-200"></div>
-          <div class="h-4 bg-gray-200 rounded w-20"></div>
-        </div>
-      }
-    </div>
+    <es-skeleton-layout
+      variant="product-grid"
+      [count]="12"
+      gridClass="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4 md:gap-6"
+    />
   } @else if (filteredBrands().length === 0) {
     <es-empty-state
       title="No brands found"

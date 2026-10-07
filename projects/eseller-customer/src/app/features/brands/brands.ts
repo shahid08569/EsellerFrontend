@@ -8,11 +8,11 @@ import {
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { HomeService, BrandDto, EmptyState } from 'eseller-shared';
+import { HomeService, BrandDto, EmptyState, SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-brands',
-  imports: [CommonModule, RouterLink, FormsModule, EmptyState],
+  imports: [CommonModule, RouterLink, FormsModule, EmptyState, SkeletonLayout],
   templateUrl: './brands.html',
   styleUrl: './brands.css'
 })

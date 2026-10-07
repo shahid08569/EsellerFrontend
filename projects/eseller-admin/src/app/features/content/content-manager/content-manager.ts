@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminBlogPostDto, AdminCmsDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
@@ -11,7 +11,7 @@ type ContentTab = 'blog' | 'cms';
 @Component({
   selector: 'app-content-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './content-manager.html'
 })
 export class ContentManager implements OnInit {

@@ -79,9 +79,8 @@
   <!-- 3. ORDERS LIST                                               -->
   <!-- ============================================================ -->
   @if (loading()) {
-    <div class="bg-white rounded-3xl p-12 text-center space-y-3 border border-gray-200/90 shadow-2xs">
-      <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-      <p class="text-xs text-text-muted">Loading your orders...</p>
+    <div class="bg-white rounded-3xl p-4 border border-gray-200/90 shadow-2xs">
+      <es-skeleton-layout variant="list" [count]="6" />
     </div>
   } @else if (filteredOrders().length === 0) {
     <div class="bg-white rounded-3xl p-12 text-center space-y-4 border border-gray-200/90 shadow-2xs">
@@ -215,10 +214,7 @@
         <div class="p-6 overflow-y-auto space-y-6">
           
           @if (trackingLoading()) {
-            <div class="py-12 text-center space-y-2">
-              <div class="w-8 h-8 border-3 border-gray-900 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p class="text-xs text-text-muted">Fetching live tracking milestones...</p>
-            </div>
+            <es-skeleton-layout variant="list" [count]="4" />
           } @else if (selectedTrackingOrder(); as tracking) {
             
             <!-- Current Status Hero Badge -->
@@ -348,10 +344,7 @@
 
         <div class="p-6 overflow-y-auto space-y-5 text-xs">
           @if (detailsLoading()) {
-            <div class="py-12 text-center space-y-2">
-              <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p class="text-xs text-text-muted">Loading invoice details...</p>
-            </div>
+            <es-skeleton-layout variant="detail" />
           } @else if (selectedOrderDetails(); as detail) {
             
             <!-- Delivery Info -->

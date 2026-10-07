@@ -18,10 +18,7 @@
       </div>
 
       @if (isLoadingProfile()) {
-        <div class="py-8 flex items-center justify-center gap-2 text-xs text-gray-400">
-          <span class="w-4 h-4 border-2 border-primary border-t-transparent rounded-full animate-spin"></span>
-          Loading profile...
-        </div>
+        <es-skeleton-layout variant="list" [count]="4" />
       } @else {
         @if (profileError()) {
           <div class="p-3 bg-rose-50 border border-rose-200 rounded-xl text-xs text-rose-700 font-medium">

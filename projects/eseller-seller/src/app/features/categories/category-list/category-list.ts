@@ -2,14 +2,14 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { HomeService, CategoryTreeDto, ToastService } from 'eseller-shared';
+import { HomeService, CategoryTreeDto, ToastService, SkeletonLayout } from 'eseller-shared';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-category-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, ImgFallbackDirective],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, ImgFallbackDirective, SkeletonLayout],
   templateUrl: './category-list.html'
 })
 export class CategoryList implements OnInit {

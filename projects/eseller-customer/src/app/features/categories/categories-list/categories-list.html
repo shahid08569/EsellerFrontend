@@ -58,23 +58,7 @@
   <!-- 3. CATEGORIES GRID -->
   <!-- ============================================================ -->
   @if (loading()) {
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      @for (i of [1,2,3,4,5,6,7,8]; track i) {
-        <div class="bg-white rounded-2xl border border-gray-100 p-5 space-y-4 animate-pulse">
-          <div class="flex items-center gap-4">
-            <div class="w-16 h-16 rounded-full bg-gray-200 flex-shrink-0"></div>
-            <div class="space-y-2 flex-1">
-              <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-              <div class="h-3 bg-gray-200 rounded w-1/2"></div>
-            </div>
-          </div>
-          <div class="space-y-2 pt-2">
-            <div class="h-3 bg-gray-200 rounded w-full"></div>
-            <div class="h-3 bg-gray-200 rounded w-4/5"></div>
-          </div>
-        </div>
-      }
-    </div>
+    <es-skeleton-layout variant="list" [count]="8" />
   } @else if (filteredCategories().length === 0) {
     <es-empty-state
       title="No categories found"

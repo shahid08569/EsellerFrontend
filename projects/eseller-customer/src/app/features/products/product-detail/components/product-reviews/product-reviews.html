@@ -137,21 +137,7 @@
   <!-- REVIEWS LIST -->
   <!-- ============================================================ -->
   @if (loading()) {
-    <div class="space-y-4">
-      @for (i of [1,2,3]; track i) {
-        <div class="bg-white rounded-2xl p-4 border border-gray-100 animate-pulse space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full bg-gray-200"></div>
-            <div class="space-y-1.5">
-              <div class="h-4 w-28 bg-gray-200 rounded"></div>
-              <div class="h-3 w-20 bg-gray-200 rounded"></div>
-            </div>
-          </div>
-          <div class="h-4 w-3/4 bg-gray-200 rounded"></div>
-          <div class="h-3 w-full bg-gray-200 rounded"></div>
-        </div>
-      }
-    </div>
+    <es-skeleton-layout variant="list" [count]="3" />
   } @else if (reviews().length === 0) {
     <div class="bg-gray-50 rounded-2xl p-8 text-center border border-gray-200/80">
       <svg xmlns="http://www.w3.org/2000/svg" class="w-10 h-10 text-gray-400 mx-auto mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">

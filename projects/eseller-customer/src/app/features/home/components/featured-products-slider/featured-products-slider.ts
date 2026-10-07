@@ -9,14 +9,14 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { ProductListDto, ProductCard } from 'eseller-shared';
+import { ProductListDto, ProductCard, SkeletonLayout } from 'eseller-shared';
 
 import Swiper from 'swiper';
 import { Navigation } from 'swiper/modules';
 
 @Component({
   selector: 'app-featured-products-slider',
-  imports: [RouterLink, ProductCard],
+  imports: [RouterLink, ProductCard, SkeletonLayout],
   templateUrl: './featured-products-slider.html'
 })
 export class FeaturedProductsSlider implements OnDestroy {

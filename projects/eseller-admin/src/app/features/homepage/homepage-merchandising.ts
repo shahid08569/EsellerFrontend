@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, RouterLink } from '@angular/router';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import { TablePagination } from '../../shared/components/table-pagination/table-pagination';
 
@@ -22,7 +22,7 @@ interface HomeProduct {
 @Component({
   selector: 'app-homepage-merchandising',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TablePagination],
+  imports: [CommonModule, FormsModule, RouterLink, TablePagination, SkeletonLayout],
   templateUrl: './homepage-merchandising.html'
 })
 export class HomepageMerchandising implements OnInit {

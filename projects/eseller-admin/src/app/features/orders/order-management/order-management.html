@@ -151,12 +151,8 @@
   <!-- ORDERS TABLE -->
   <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
     @if (isLoading()) {
-      <div class="p-16 text-center text-xs text-gray-400">
-        <svg class="animate-spin w-5 h-5 text-orange-600 mx-auto mb-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        <div>Loading orders...</div>
+      <div class="p-2">
+        <es-skeleton-layout variant="table" [count]="7" [columns]="6" />
       </div>
     } @else if (filteredOrders().length === 0) {
       <div class="p-16 text-center text-gray-400">
@@ -426,7 +422,7 @@
         <div class="space-y-2 pt-2 border-t border-gray-100">
           <span class="font-bold text-gray-700 block">Status Timeline</span>
           @if (isLoadingHistory()) {
-            <p class="text-gray-400 text-xs italic">Loading timeline...</p>
+            <es-skeleton-layout variant="list" [count]="4" />
           } @else if (orderHistory().length > 0) {
             <div class="space-y-2 relative pl-4 border-l-2 border-orange-200">
               @for (h of orderHistory(); track h.id) {

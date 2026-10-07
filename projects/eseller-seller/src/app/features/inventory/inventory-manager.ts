@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { SellerService, ShopDto } from '../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { TablePagination } from '../../shared/components/table-pagination/table-pagination';
 
 interface InventoryItem {
@@ -20,7 +20,7 @@ interface InventoryItem {
 @Component({
   selector: 'app-inventory-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TablePagination],
+  imports: [CommonModule, FormsModule, RouterLink, TablePagination, SkeletonLayout],
   templateUrl: './inventory-manager.html'
 })
 export class InventoryManager implements OnInit {

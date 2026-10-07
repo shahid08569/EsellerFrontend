@@ -38,10 +38,7 @@
 
       <div class="flex-1 min-h-0 overflow-y-auto px-5 py-4">
         @if (loading()) {
-          <div class="py-16 text-center">
-            <div class="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto mb-3"></div>
-            <p class="text-xs font-bold text-slate-500">Loading product details…</p>
-          </div>
+          <es-skeleton-layout variant="detail" />
         } @else if (error()) {
           <div class="py-12 text-center text-xs font-bold text-rose-600">{{ error() }}</div>
         } @else {

@@ -4,7 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SellerProductService } from '../../../core/services/product.service';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
-import { ProductListDto, PagedList, ToastService, HomeService, CategoryTreeDto, BrandDto, ChatService } from 'eseller-shared';
+import { ProductListDto, PagedList, ToastService, HomeService, CategoryTreeDto, BrandDto, ChatService, SkeletonLayout } from 'eseller-shared';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
@@ -14,7 +14,7 @@ export type SortOption = 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'nam
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ConfirmModal, TablePagination, ImageUrlPipe],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModal, TablePagination, ImageUrlPipe, SkeletonLayout],
   templateUrl: './product-list.html'
 })
 export class ProductList implements OnInit {

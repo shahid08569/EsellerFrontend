@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ToastService, SignalRService, SignalRIncomingMessage, ChatService } from 'eseller-shared';
+import { ToastService, SignalRService, SignalRIncomingMessage, ChatService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -20,7 +20,7 @@ export interface AdminDisplayMessage {
 @Component({
   selector: 'app-admin-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './admin-chat.html'
 })
 export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {

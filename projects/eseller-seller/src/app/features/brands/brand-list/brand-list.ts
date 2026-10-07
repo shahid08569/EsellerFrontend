@@ -2,14 +2,14 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, BrandDto } from '../../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
 
 @Component({
   selector: 'app-brand-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, ImageUrlPipe, ImgFallbackDirective],
+  imports: [CommonModule, FormsModule, ImageUrlPipe, ImgFallbackDirective, SkeletonLayout],
   templateUrl: './brand-list.html'
 })
 export class BrandList implements OnInit {

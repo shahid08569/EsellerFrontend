@@ -9,14 +9,14 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { ProductListDto, ProductCard } from 'eseller-shared';
+import { ProductListDto, ProductCard, SkeletonLayout } from 'eseller-shared';
 
 import Swiper from 'swiper';
 import { Navigation } from 'swiper/modules';
 
 @Component({
   selector: 'app-flash-sale-section',
-  imports: [RouterLink, ProductCard],
+  imports: [RouterLink, ProductCard, SkeletonLayout],
   templateUrl: './flash-sale-section.html'
 })
 export class FlashSaleSection implements OnDestroy {

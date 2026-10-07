@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { BlogService } from '../../../core/services/blog.service';
 import { CustomerBlogPostDto } from '../../../core/models/blog.models';
+import { SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-blog-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout],
   templateUrl: './blog-list.html'
 })
 export class BlogList implements OnInit {

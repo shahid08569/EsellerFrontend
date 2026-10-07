@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminReviewDto } from '../../../core/models/admin.models';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
@@ -10,7 +10,7 @@ type ReviewStatusFilter = 'pending' | 'approved' | 'all';
 @Component({
   selector: 'app-review-management',
   standalone: true,
-  imports: [CommonModule, TablePagination],
+  imports: [CommonModule, TablePagination, SkeletonLayout],
   templateUrl: './review-management.html'
 })
 export class ReviewManagement implements OnInit {

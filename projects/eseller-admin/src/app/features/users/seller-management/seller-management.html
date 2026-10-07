@@ -158,9 +158,8 @@
         <tbody class="divide-y divide-slate-100">
           @if (isLoading()) {
             <tr>
-              <td colspan="5" class="py-12 text-center text-slate-400 font-medium">
-                <div class="inline-block animate-spin rounded-full h-7 w-7 border-2 border-orange-500 border-t-transparent mb-2"></div>
-                <div>Loading merchant profiles...</div>
+              <td colspan="5" class="p-2">
+                <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
               </td>
             </tr>
           } @else if (pagedSellers().length === 0) {

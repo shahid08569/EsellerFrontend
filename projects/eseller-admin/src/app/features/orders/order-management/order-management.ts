@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminOrderDto, AdminShopDto } from '../../../core/models/admin.models';
 
@@ -11,7 +11,7 @@ type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'de
 @Component({
   selector: 'app-order-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './order-management.html'
 })
 export class OrderManagement implements OnInit {

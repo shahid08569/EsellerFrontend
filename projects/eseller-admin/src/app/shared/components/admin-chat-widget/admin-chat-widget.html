@@ -85,7 +85,7 @@
           <!-- Stores List -->
           <div class="flex-1 overflow-y-auto divide-y divide-gray-100">
             @if (isLoadingShops()) {
-              <div class="p-8 text-center text-xs text-gray-400 font-semibold">Loading merchants...</div>
+              <es-skeleton-layout variant="list" [count]="6" />
             } @else if (filteredShops().length === 0) {
               <div class="p-8 text-center text-xs text-gray-400">
                 <p class="font-bold text-gray-600">No stores found</p>

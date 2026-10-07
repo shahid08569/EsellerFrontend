@@ -63,9 +63,8 @@
     </div>
 
     @if (isLoading()) {
-      <div class="p-8 text-center text-slate-400">
-        <div class="w-8 h-8 border-3 border-primary border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p class="text-xs mt-2">Loading ledger...</p>
+      <div class="p-2">
+        <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
       </div>
     } @else if (transactions().length === 0) {
       <div class="p-10 text-center space-y-2 text-slate-400">

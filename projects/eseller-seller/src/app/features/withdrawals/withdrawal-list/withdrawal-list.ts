@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 
 interface WithdrawalRequest {
   id: string;
@@ -17,7 +17,7 @@ interface WithdrawalRequest {
 @Component({
   selector: 'app-withdrawal-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './withdrawal-list.html'
 })
 export class WithdrawalList implements OnInit {

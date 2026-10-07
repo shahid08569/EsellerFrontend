@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { SellerService, ShopDto, OrderDto } from '../../core/services/seller.service';
 import { forkJoin, of, catchError } from 'rxjs';
+import { SkeletonLayout } from 'eseller-shared';
 
 interface TransactionRecord {
   id: string;
@@ -16,7 +17,7 @@ interface TransactionRecord {
 @Component({
   selector: 'app-earnings-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SkeletonLayout],
   templateUrl: './earnings-overview.html'
 })
 export class EarningsOverview implements OnInit {

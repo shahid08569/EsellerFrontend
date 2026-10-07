@@ -1,11 +1,12 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SellerService, ShopDto, OrderDto } from '../../core/services/seller.service';
+import { SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-analytics',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, SkeletonLayout],
   templateUrl: './analytics.html'
 })
 export class Analytics implements OnInit {

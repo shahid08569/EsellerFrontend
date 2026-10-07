@@ -34,18 +34,7 @@
 
   <!-- LOADING SKELETON -->
   @if (loading()) {
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-      @for (i of [1,2,3,4,5]; track i) {
-        <div class="bg-white rounded-lg border border-gray-200 overflow-hidden animate-pulse">
-          <div class="aspect-square bg-gray-200"></div>
-          <div class="p-4 space-y-2">
-            <div class="h-5 bg-gray-200 rounded w-1/2"></div>
-            <div class="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div class="h-4 bg-gray-200 rounded w-2/3"></div>
-          </div>
-        </div>
-      }
-    </div>
+    <es-skeleton-layout variant="product-grid" [count]="5" />
   }
 
   <!-- EMPTY -->

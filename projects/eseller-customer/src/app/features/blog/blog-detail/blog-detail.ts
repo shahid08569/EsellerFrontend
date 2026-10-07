@@ -3,11 +3,12 @@ import { CommonModule } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { BlogService } from '../../../core/services/blog.service';
 import { CustomerBlogPostDto } from '../../../core/models/blog.models';
+import { SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-blog-detail',
   standalone: true,
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SkeletonLayout],
   templateUrl: './blog-detail.html'
 })
 export class BlogDetail implements OnInit {

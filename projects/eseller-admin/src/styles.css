@@ -1,5 +1,6 @@
 @import 'tailwindcss';
 @import '../../eseller-shared/src/lib/styles/index.css';
+@source '../../eseller-shared/src/**/*.{html,ts}';
 
 :root {
   --color-primary: #ea580c;

@@ -20,7 +20,7 @@
         </div>
 
         @if (isLoadingPlans()) {
-          <div class="py-10 text-center text-xs text-slate-400">Loading packages...</div>
+          <es-skeleton-layout variant="list" [count]="3" />
         } @else {
           <div class="grid sm:grid-cols-3 gap-3 mt-4 mb-4 pr-1">
             @for (plan of plans(); track plan.id) {

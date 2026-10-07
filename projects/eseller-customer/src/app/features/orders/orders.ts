@@ -9,12 +9,13 @@ import {
   ToastService,
   OrderRequestListDto,
   OrderRequestDto,
-  OrderTrackingDto
+  OrderTrackingDto,
+  SkeletonLayout
 } from 'eseller-shared';
 
 @Component({
   selector: 'app-orders',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout],
   templateUrl: './orders.html',
   styleUrl: './orders.css'
 })

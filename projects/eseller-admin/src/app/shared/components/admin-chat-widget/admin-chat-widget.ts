@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthStore, ToastService, SignalRService, ChatService } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, ChatService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -30,7 +30,7 @@ export interface AdminToSellerMessage {
 @Component({
   selector: 'app-admin-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './admin-chat-widget.html',
   styleUrls: ['./admin-chat-widget.css']
 })

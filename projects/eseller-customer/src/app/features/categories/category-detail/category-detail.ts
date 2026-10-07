@@ -19,7 +19,8 @@ import {
   PagedList,
   ProductCard,
   EmptyState,
-  filterBrandsForCategory
+  filterBrandsForCategory,
+  SkeletonLayout
 } from 'eseller-shared';
 
 import {
@@ -42,7 +43,8 @@ import { ProductPagination } from '../../products/components/product-pagination/
     ProductFilterSidebar,
     ProductSortBar,
     ProductListCard,
-    ProductPagination
+    ProductPagination,
+    SkeletonLayout
   ],
   templateUrl: './category-detail.html',
   styleUrl: './category-detail.css'

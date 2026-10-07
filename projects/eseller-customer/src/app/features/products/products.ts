@@ -23,7 +23,8 @@ import {
   CartService,
   WishlistService,
   CompareService,
-  filterBrandsForCategory
+  filterBrandsForCategory,
+  SkeletonLayout
 } from 'eseller-shared';
 
 import {
@@ -46,7 +47,8 @@ import { ProductPagination } from './components/product-pagination/product-pagin
     ProductFilterSidebar,
     ProductSortBar,
     ProductListCard,
-    ProductPagination
+    ProductPagination,
+    SkeletonLayout
   ],
   templateUrl: './products.html',
   styleUrl: './products.css'

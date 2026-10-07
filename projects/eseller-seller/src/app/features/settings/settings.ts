@@ -2,7 +2,7 @@ import { Component, inject, signal, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, ShopDto, UpdateShopDto } from '../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { ConfirmModal } from '../../shared/components/confirm-modal/confirm-modal';
 import { ImageUrlPipe } from '../../shared/pipes/image-url.pipe';
 import { ImgFallbackDirective } from '../../shared/directives/img-fallback.directive';
@@ -10,7 +10,7 @@ import { ImgFallbackDirective } from '../../shared/directives/img-fallback.direc
 @Component({
   selector: 'app-settings',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModal, ImageUrlPipe, ImgFallbackDirective],
+  imports: [CommonModule, FormsModule, ConfirmModal, ImageUrlPipe, ImgFallbackDirective, SkeletonLayout],
   templateUrl: './settings.html'
 })
 export class Settings implements OnInit {

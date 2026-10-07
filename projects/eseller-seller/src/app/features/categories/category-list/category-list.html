@@ -36,17 +36,7 @@
   </div>
 
   @if (isLoading()) {
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-      @for (i of [1,2,3,4,5,6]; track i) {
-        <div class="bg-white rounded-2xl border border-gray-100 p-5 shadow-sm animate-pulse space-y-3">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-gray-200 rounded-xl"></div>
-            <div class="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-          <div class="h-20 bg-gray-100 rounded-xl"></div>
-        </div>
-      }
-    </div>
+    <es-skeleton-layout variant="list" [count]="6" />
   } @else if (filteredCategories().length === 0) {
     <div class="bg-white rounded-2xl border border-gray-100 p-12 text-center max-w-md mx-auto space-y-3">
       <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center mx-auto text-2xl">

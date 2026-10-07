@@ -40,7 +40,8 @@ export const appConfig: ApplicationConfig = {
     },
 
     // ✅ Loading bar setup
-    provideLoadingBar({ latencyThreshold: 100 }),
+    // Avoid flickering top bar on short MonsterASP round-trips
+    provideLoadingBar({ latencyThreshold: 400 }),
     provideLoadingBarRouter(),
     provideLoadingBarInterceptor(),
 

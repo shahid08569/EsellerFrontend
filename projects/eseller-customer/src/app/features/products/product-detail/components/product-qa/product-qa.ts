@@ -1,11 +1,11 @@
 import { Component, input, output, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DatePipe } from '@angular/common';
-import { ProductQuestionDto } from 'eseller-shared';
+import { ProductQuestionDto, SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-product-qa',
-  imports: [FormsModule, DatePipe],
+  imports: [FormsModule, DatePipe, SkeletonLayout],
   templateUrl: './product-qa.html',
   styleUrl: './product-qa.css'
 })

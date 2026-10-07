@@ -142,7 +142,9 @@
 
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       @if (isLoading()) {
-        <div class="p-12 text-center text-xs text-gray-400 font-bold">Loading…</div>
+        <div class="p-2">
+          <es-skeleton-layout variant="list" [count]="6" />
+        </div>
       } @else if (flashSales().length === 0) {
         <div class="p-12 text-center">
           <p class="text-sm font-bold text-gray-700">No flash sales yet</p>
@@ -179,7 +181,9 @@
     <!-- PRODUCT TABLES -->
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       @if (isLoading()) {
-        <div class="p-12 text-center text-xs text-gray-400 font-bold">Loading…</div>
+        <div class="p-2">
+          <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
+        </div>
       } @else if (filteredProducts().length === 0) {
         <div class="p-12 text-center text-xs text-gray-400 font-bold">
           @if (activeTab() === 'featured') {

@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthStore, ToastService, SignalRService } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
@@ -31,7 +31,7 @@ export interface TierUpgradeRequest {
 @Component({
   selector: 'app-shop-management',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './shop-management.html'
 })
 export class ShopManagement implements OnInit, OnDestroy {

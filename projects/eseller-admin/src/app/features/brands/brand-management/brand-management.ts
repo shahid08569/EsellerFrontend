@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminBrandDto } from '../../../core/models/admin.models';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
@@ -10,7 +10,7 @@ import { TablePagination } from '../../../shared/components/table-pagination/tab
 @Component({
   selector: 'app-brand-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
   templateUrl: './brand-management.html'
 })
 export class BrandManagement implements OnInit {

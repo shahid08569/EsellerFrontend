@@ -2,7 +2,7 @@ import { Component, input, output, signal, computed, inject, OnChanges, SimpleCh
 import { CommonModule } from '@angular/common';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { ProductDto, ProductListDto } from 'eseller-shared';
+import { ProductDto, ProductListDto, SkeletonLayout } from 'eseller-shared';
 import {
   SellerProductService,
   ProductImageDto,
@@ -13,7 +13,7 @@ import { ImageUrlPipe } from '../../pipes/image-url.pipe';
 @Component({
   selector: 'app-warehouse-product-detail-modal',
   standalone: true,
-  imports: [CommonModule, ImageUrlPipe],
+  imports: [CommonModule, ImageUrlPipe, SkeletonLayout],
   templateUrl: './warehouse-product-detail-modal.html'
 })
 export class WarehouseProductDetailModal implements OnInit, OnChanges {

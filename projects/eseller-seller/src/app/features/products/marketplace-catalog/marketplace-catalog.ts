@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService, ToastService, ProductListDto, CategoryTreeDto, BrandDto, HomeService, PagedList } from 'eseller-shared';
+import { ApiService, ToastService, ProductListDto, CategoryTreeDto, BrandDto, HomeService, PagedList, SkeletonLayout } from 'eseller-shared';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
 import { SellerProductService } from '../../../core/services/product.service';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
@@ -12,7 +12,7 @@ import { WarehouseProductDetailModal } from '../../../shared/components/warehous
 @Component({
   selector: 'app-marketplace-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal, SkeletonLayout],
   templateUrl: './marketplace-catalog.html'
 })
 export class MarketplaceCatalog implements OnInit {

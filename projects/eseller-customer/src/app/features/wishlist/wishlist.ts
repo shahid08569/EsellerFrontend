@@ -1,11 +1,11 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { WishlistService, CartService, ProductListDto, ToastService, AuthActionService } from 'eseller-shared';
+import { WishlistService, CartService, ProductListDto, ToastService, AuthActionService, SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-wishlist',
-  imports: [CommonModule, RouterLink],
+  imports: [CommonModule, RouterLink, SkeletonLayout],
   templateUrl: './wishlist.html',
   styleUrl: './wishlist.css'
 })

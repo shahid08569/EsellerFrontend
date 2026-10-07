@@ -114,6 +114,61 @@ export class HomeService {
   }
 
   // ============================================================
+  // HOMEPAGE BOOTSTRAP — one round-trip for all product rails
+  // ============================================================
+  /** Single call: featured, flash, new, best, hot, + category sections. */
+  getHomepageSections(limit = 8): Observable<{
+    featured: ProductListDto[];
+    bestSelling: ProductListDto[];
+    hotSelling: ProductListDto[];
+    newArrivals: ProductListDto[];
+    flashSale: ProductListDto[];
+    categories: HomepageCategorySectionDto[];
+  }> {
+    return this.api
+      .get<any>('/homepage/sections', {
+        params: new HttpParams().set('limit', limit)
+      })
+      .pipe(
+        map((res) => ({
+          featured: this.asProductList(res?.featured ?? res?.Featured),
+          bestSelling: this.asProductList(res?.bestSelling ?? res?.BestSelling),
+          hotSelling: this.asProductList(res?.hotSelling ?? res?.HotSelling),
+          newArrivals: this.asProductList(res?.newArrivals ?? res?.NewArrivals),
+          flashSale: this.asProductList(res?.flashSale ?? res?.FlashSale),
+          categories: this.asCategorySections(res?.categories ?? res?.Categories)
+        })),
+        catchError(() =>
+          of({
+            featured: [] as ProductListDto[],
+            bestSelling: [] as ProductListDto[],
+            hotSelling: [] as ProductListDto[],
+            newArrivals: [] as ProductListDto[],
+            flashSale: [] as ProductListDto[],
+            categories: [] as HomepageCategorySectionDto[]
+          })
+        ),
+        shareReplay({ bufferSize: 1, refCount: true })
+      );
+  }
+
+  private asProductList(raw: any): ProductListDto[] {
+    return Array.isArray(raw) ? (raw as ProductListDto[]) : [];
+  }
+
+  private asCategorySections(raw: any): HomepageCategorySectionDto[] {
+    if (!Array.isArray(raw)) return [];
+    return raw.map((s: any) => ({
+      id: String(s.id ?? s.Id ?? ''),
+      name: s.name ?? s.Name ?? 'Category',
+      slug: s.slug ?? s.Slug ?? '',
+      imageUrl: s.imageUrl ?? s.ImageUrl ?? null,
+      displayOrder: Number(s.displayOrder ?? s.DisplayOrder ?? s.homepageDisplayOrder ?? 0),
+      products: this.asProductList(s.products ?? s.Products)
+    }));
+  }
+
+  // ============================================================
   // HOMEPAGE SECTIONS — Dedicated Endpoints
   // ============================================================
   getBestSellingProducts(limit = 8): Observable<ProductListDto[]> {

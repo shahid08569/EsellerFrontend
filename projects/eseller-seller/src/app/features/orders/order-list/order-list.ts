@@ -1,7 +1,7 @@
 import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SellerService } from '../../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 
@@ -36,7 +36,7 @@ const MERCHANT_COMMISSION_RATE = 0.20;
 @Component({
   selector: 'app-order-list',
   standalone: true,
-  imports: [CommonModule, TablePagination, ImageUrlPipe],
+  imports: [CommonModule, TablePagination, ImageUrlPipe, SkeletonLayout],
   templateUrl: './order-list.html'
 })
 export class OrderList implements OnInit {

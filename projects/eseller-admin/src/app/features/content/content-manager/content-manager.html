@@ -83,12 +83,8 @@
   @if (activeTab() === 'blog') {
     <!-- BLOG POSTS -->
     @if (isLoading()) {
-      <div class="p-12 text-center text-xs text-gray-400 bg-white rounded-2xl border border-gray-100 flex items-center justify-center gap-2">
-        <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-          <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-        </svg>
-        Loading blog articles...
+      <div class="p-2 bg-white rounded-2xl border border-gray-100">
+        <es-skeleton-layout variant="list" [count]="6" />
       </div>
     } @else if (blogPosts().length === 0) {
       <div class="p-12 text-center text-gray-400 bg-white rounded-2xl border border-gray-100 shadow-2xs">

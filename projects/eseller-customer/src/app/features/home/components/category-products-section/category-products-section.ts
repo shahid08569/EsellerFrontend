@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { ProductListDto } from 'eseller-shared';
+import { ProductListDto, SkeletonLayout } from 'eseller-shared';
 
 import { CategoryProductCard } from '../../../../shared/components/category-product-card/category-product-card';
 
@@ -18,7 +18,7 @@ import { Navigation } from 'swiper/modules';
 
 @Component({
   selector: 'app-category-products-section',
-  imports: [RouterLink, CategoryProductCard],
+  imports: [RouterLink, CategoryProductCard, SkeletonLayout],
   templateUrl: './category-products-section.html'
 })
 export class CategoryProductsSection implements OnDestroy {

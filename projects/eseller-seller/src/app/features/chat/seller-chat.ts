@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SellerService } from '../../core/services/seller.service';
-import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, ChatMessageDto } from 'eseller-shared';
+import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, ChatMessageDto, SkeletonLayout } from 'eseller-shared';
 
 interface ChatMessage {
   id?: string;
@@ -36,7 +36,7 @@ const SELLER_SUPPORT_ROOM_KEY = 'eseller_seller_support_room';
 @Component({
   selector: 'app-seller-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './seller-chat.html'
 })
 export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {

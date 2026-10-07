@@ -45,3 +45,5 @@ export * from './lib/guards/customer-shop.guard';
 export * from './lib/ui/empty-state/empty-state';
 export * from './lib/ui/product-card/product-card';
 export * from './lib/ui/shop-rating-badge/shop-rating-badge';
+export * from './lib/ui/skeleton/skeleton';
+export * from './lib/ui/skeleton/skeleton-layout';

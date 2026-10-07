@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminCategoryDto } from '../../../core/models/admin.models';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
@@ -12,7 +12,7 @@ type CategoryTab = 'all' | 'homepage';
 @Component({
   selector: 'app-category-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
   templateUrl: './category-management.html'
 })
 export class CategoryManagement implements OnInit {

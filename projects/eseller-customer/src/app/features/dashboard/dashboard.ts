@@ -23,7 +23,8 @@ import {
   DashboardNotificationDto,
   OrderRequestListDto,
   OrderRequestDto,
-  OrderTrackingDto
+  OrderTrackingDto,
+  SkeletonLayout
 } from 'eseller-shared';
 import {
   SearchableSelect,
@@ -36,7 +37,7 @@ export type DashboardTab = 'overview' | 'orders' | 'addresses' | 'profile' | 'no
 
 @Component({
   selector: 'app-dashboard',
-  imports: [CommonModule, FormsModule, RouterLink, SearchableSelect],
+  imports: [CommonModule, FormsModule, RouterLink, SearchableSelect, SkeletonLayout],
   templateUrl: './dashboard.html',
   styleUrl: './dashboard.css'
 })

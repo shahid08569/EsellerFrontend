@@ -89,7 +89,9 @@
     <!-- WITHDRAWALS TABLE -->
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       @if (isLoading()) {
-        <div class="p-12 text-center text-xs text-gray-400">Loading payout records...</div>
+        <div class="p-2">
+          <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
+        </div>
       } @else if (withdrawals().length === 0) {
         <div class="p-12 text-center text-gray-400">
           <p class="text-sm font-bold text-gray-600">No withdrawal requests found</p>

@@ -1,11 +1,11 @@
 import { Component, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
-import { ProductListDto, ProductCard } from 'eseller-shared';
+import { ProductListDto, ProductCard, SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-products-section',
-  imports: [RouterLink, ProductCard],
+  imports: [RouterLink, ProductCard, SkeletonLayout],
   templateUrl: './products-section.html'
 })
 export class ProductsSection {

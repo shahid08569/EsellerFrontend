@@ -157,12 +157,8 @@
   @if (viewMode() === 'stores') {
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       @if (isLoading()) {
-        <div class="p-12 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
-          <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          Loading active storefronts...
+        <div class="p-2">
+          <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
         </div>
       } @else if (filteredActiveStores().length === 0) {
         <div class="p-12 text-center bg-gray-50/50">
@@ -433,12 +429,8 @@
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       
       @if (isLoading()) {
-        <div class="p-12 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
-          <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          Loading merchant requests...
+        <div class="p-2">
+          <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
         </div>
       } @else if (filteredShopkeepers().length === 0) {
         <div class="p-12 text-center bg-gray-50/50">
@@ -681,13 +673,7 @@
       </div>
 
       @if (tiersLoading()) {
-        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm p-12 text-center text-xs text-gray-400 flex items-center justify-center gap-2">
-          <svg class="animate-spin w-5 h-5 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-          </svg>
-          Loading tier upgrade requests...
-        </div>
+        <es-skeleton-layout variant="table" [count]="6" [columns]="6" />
       } @else if (latestTierRequests().length === 0) {
         <div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 p-14 text-center">
           <p class="text-sm font-black text-slate-800">No upgrade requests yet</p>

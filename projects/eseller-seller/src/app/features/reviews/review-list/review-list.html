@@ -63,7 +63,7 @@
 
   <!-- Reviews List -->
   @if (isLoading()) {
-    <div class="p-12 text-center text-xs text-gray-400">Loading reviews...</div>
+    <es-skeleton-layout variant="list" [count]="6" />
   } @else if (filteredReviews().length === 0) {
     <div class="p-12 text-center bg-white rounded-2xl border border-gray-100">
       <p class="text-sm font-bold text-gray-800">No Reviews Found</p>

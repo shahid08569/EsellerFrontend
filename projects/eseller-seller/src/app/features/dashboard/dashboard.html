@@ -167,9 +167,17 @@
       </div>
     </div>
 
-    @if (topWarehouseProducts().length === 0) {
+    @if (warehouseCatalogLoading()) {
+      <div class="p-4">
+        <es-skeleton-layout
+          variant="product-grid"
+          [count]="5"
+          gridClass="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4"
+        />
+      </div>
+    } @else if (topWarehouseProducts().length === 0) {
       <div class="p-8 text-center text-slate-400">
-        <p class="text-xs font-bold text-slate-700">Loading warehouse inventory...</p>
+        <p class="text-xs font-bold text-slate-700">No warehouse products available right now.</p>
       </div>
     } @else {
       <div #warehouseSlider class="flex gap-4 overflow-x-auto p-4 pb-5 scroll-smooth snap-x snap-mandatory" style="scrollbar-width: thin;">
@@ -340,9 +348,8 @@
     </div>
 
     @if (loading()) {
-      <div class="p-8 text-center text-slate-400 space-y-2">
-        <div class="w-8 h-8 border-3 border-slate-900 border-t-transparent rounded-full animate-spin mx-auto"></div>
-        <p class="text-xs">Loading recent orders...</p>
+      <div class="p-2">
+        <es-skeleton-layout variant="table" [count]="6" [columns]="5" />
       </div>
     } @else if (recentOrders().length === 0) {
       <div class="p-10 text-center space-y-1 text-slate-400">

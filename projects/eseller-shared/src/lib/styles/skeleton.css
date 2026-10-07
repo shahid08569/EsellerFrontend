@@ -1,0 +1,43 @@
+/**
+ * Professional skeleton shimmer — used by es-skeleton components.
+ * Apps already import this file via styles/index.css.
+ */
+
+@keyframes es-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: -100% 0;
+  }
+}
+
+.es-skel {
+  display: block;
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--color-border, #e5e7eb) 55%, #fff) 0%,
+    color-mix(in srgb, var(--color-border, #e5e7eb) 25%, #fff) 45%,
+    color-mix(in srgb, var(--color-border, #e5e7eb) 55%, #fff) 100%
+  );
+  background-size: 200% 100%;
+  animation: es-shimmer 1.35s ease-in-out infinite;
+  border-radius: 0.5rem;
+}
+
+.es-skel--circle {
+  border-radius: 9999px;
+}
+
+.es-skel--pill {
+  border-radius: 9999px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .es-skel {
+    animation: none;
+    background: color-mix(in srgb, var(--color-border, #e5e7eb) 40%, #fff);
+  }
+}

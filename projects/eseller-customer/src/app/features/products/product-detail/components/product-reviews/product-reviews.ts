@@ -1,11 +1,11 @@
 import { Component, input, signal, computed, output } from '@angular/core';
 import { DatePipe, DecimalPipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ReviewDto } from 'eseller-shared';
+import { ReviewDto, SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-product-reviews',
-  imports: [DatePipe, DecimalPipe, FormsModule],
+  imports: [DatePipe, DecimalPipe, FormsModule, SkeletonLayout],
   templateUrl: './product-reviews.html',
   styleUrl: './product-reviews.css'
 })

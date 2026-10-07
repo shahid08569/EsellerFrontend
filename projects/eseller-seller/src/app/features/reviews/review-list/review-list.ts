@@ -2,11 +2,12 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, ReviewDto, ShopDto } from '../../../core/services/seller.service';
+import { SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-review-list',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './review-list.html'
 })
 export class ReviewList implements OnInit {

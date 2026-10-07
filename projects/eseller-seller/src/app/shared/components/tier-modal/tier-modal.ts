@@ -11,6 +11,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService } from '../../../core/services/seller.service';
+import { SkeletonLayout } from 'eseller-shared';
 
 export interface TierPlan {
   id: string;
@@ -76,7 +77,7 @@ const FALLBACK_PLANS: TierPlan[] = [
 @Component({
   selector: 'app-tier-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './tier-modal.html'
 })
 export class TierModal implements OnChanges {

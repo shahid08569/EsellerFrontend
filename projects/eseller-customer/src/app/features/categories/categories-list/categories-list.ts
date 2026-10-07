@@ -11,12 +11,13 @@ import { FormsModule } from '@angular/forms';
 import {
   HomeService,
   CategoryTreeDto,
-  EmptyState
+  EmptyState,
+  SkeletonLayout
 } from 'eseller-shared';
 
 @Component({
   selector: 'app-categories-list',
-  imports: [CommonModule, RouterLink, FormsModule, EmptyState],
+  imports: [CommonModule, RouterLink, FormsModule, EmptyState, SkeletonLayout],
   templateUrl: './categories-list.html',
   styleUrl: './categories-list.css'
 })

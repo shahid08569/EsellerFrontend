@@ -17,7 +17,8 @@ import {
   SignalRService,
   ChatService,
   OrderService,
-  SignalRIncomingMessage
+  SignalRIncomingMessage,
+  SkeletonLayout
 } from 'eseller-shared';
 import { HubConnectionState } from '@microsoft/signalr';
 
@@ -75,7 +76,7 @@ export interface StoredOrder {
 
 @Component({
   selector: 'app-chat',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout],
   templateUrl: './chat.html',
   styleUrl: './chat.css'
 })

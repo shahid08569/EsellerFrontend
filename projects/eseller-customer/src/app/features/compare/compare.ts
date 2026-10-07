@@ -8,12 +8,13 @@ import {
   AuthActionService,
   ProductListDto,
   MAX_COMPARE_ITEMS,
-  ToastService
+  ToastService,
+  SkeletonLayout
 } from 'eseller-shared';
 
 @Component({
   selector: 'app-compare',
-  imports: [CommonModule, RouterLink, DecimalPipe],
+  imports: [CommonModule, RouterLink, DecimalPipe, SkeletonLayout],
   templateUrl: './compare.html',
   styleUrl: './compare.css'
 })

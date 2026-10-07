@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminProductDto, AdminShopDto, AdminCategoryDto, AdminBrandDto } from '../../../core/models/admin.models';
 import { SearchableSelect, AdminSelectOption } from '../../../shared/components/searchable-select/searchable-select';
@@ -28,7 +28,7 @@ type ProductStatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 @Component({
   selector: 'app-product-approval',
   standalone: true,
-  imports: [CommonModule, FormsModule, SearchableSelect, TablePagination],
+  imports: [CommonModule, FormsModule, SearchableSelect, TablePagination, SkeletonLayout],
   templateUrl: './product-approval.html'
 })
 export class ProductApproval implements OnInit {

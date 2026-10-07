@@ -6,7 +6,7 @@ import { SellerProductService } from '../../core/services/product.service';
 import { TierModal } from '../../shared/components/tier-modal/tier-modal';
 import { WarehouseProductDetailModal } from '../../shared/components/warehouse-product-detail-modal/warehouse-product-detail-modal';
 import { ImageUrlPipe } from '../../shared/pipes/image-url.pipe';
-import { ApiService, ToastService, ProductListDto, PagedList, HomeService, CategoryTreeDto, SignalRService } from 'eseller-shared';
+import { ApiService, ToastService, ProductListDto, PagedList, HomeService, CategoryTreeDto, SignalRService, SkeletonLayout } from 'eseller-shared';
 
 export interface CategoryStat {
   name: string;
@@ -18,7 +18,7 @@ export interface CategoryStat {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TierModal, WarehouseProductDetailModal, ImageUrlPipe],
+  imports: [CommonModule, RouterLink, TierModal, WarehouseProductDetailModal, ImageUrlPipe, SkeletonLayout],
   templateUrl: './dashboard.html'
 })
 export class Dashboard implements OnInit, OnDestroy {
@@ -44,6 +44,7 @@ export class Dashboard implements OnInit, OnDestroy {
 
   // Top 10 Master Warehouse Catalog Products
   readonly topWarehouseProducts = signal<ProductListDto[]>([]);
+  readonly warehouseCatalogLoading = signal<boolean>(true);
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly isAddingProduct = signal<string | null>(null);
 
@@ -153,12 +154,14 @@ export class Dashboard implements OnInit, OnDestroy {
     });
 
     // Load Top 10 Warehouse Catalog Products for the Slider
+    this.warehouseCatalogLoading.set(true);
     this.api.get<PagedList<ProductListDto>>('/Products/catalog?pageNumber=1&pageSize=10').subscribe({
       next: (res) => {
         this.topWarehouseProducts.set(res.items || []);
         this.syncWarehouseButtonState();
+        this.warehouseCatalogLoading.set(false);
       },
-      error: () => {}
+      error: () => this.warehouseCatalogLoading.set(false)
     });
 
     this.sellerSvc.getSellerOrders(1, 50).subscribe({

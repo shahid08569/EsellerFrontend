@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, OrderDto } from '../../../core/services/seller.service';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 
 interface CustomerProfile {
@@ -20,7 +20,7 @@ interface CustomerProfile {
 @Component({
   selector: 'app-customer-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
   templateUrl: './customer-list.html'
 })
 export class CustomerList implements OnInit {

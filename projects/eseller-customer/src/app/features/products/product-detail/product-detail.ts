@@ -30,7 +30,8 @@ import {
   ToastService,
   OrderService,
   BuyNowRequest,
-  DashboardService
+  DashboardService,
+  SkeletonLayout
 } from 'eseller-shared';
 
 import { ProductGallery } from './components/product-gallery/product-gallery';
@@ -57,7 +58,8 @@ import { toLocalPhoneNumber } from '../../../shared/utils/phone.util';
     ProductReviews,
     ProductQa,
     SearchableSelect,
-    DialCodeSelect
+    DialCodeSelect,
+    SkeletonLayout
   ],
   templateUrl: './product-detail.html',
   styleUrl: './product-detail.css'
