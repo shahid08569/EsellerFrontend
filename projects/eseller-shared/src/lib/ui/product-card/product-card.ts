@@ -17,6 +17,7 @@ import { WishlistService } from '../../services/wishlist.service';
 import { CompareService } from '../../services/compare.service';
 import { ToastService } from '../../services/toast.service';
 import { AuthActionService } from '../../services/auth-action.service';
+import { resolveMediaUrl } from '../../utils/media-url';
 
 export type PreferredBadge =
   | 'flash_sale'
@@ -237,23 +238,20 @@ export class ProductCard implements OnInit, OnDestroy {
   }
 
   getImageUrl(imageUrl: string | null | undefined): string | null {
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
-    const apiBase =
-      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
-      'https://localhost:7127/api/v1';
-    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
-    const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-    // DB already stores "/uploads/..." — do not prefix again
-    if (path.startsWith('/uploads')) return `${host}${path}`;
-    return `${host}/uploads${path}`;
+    return resolveMediaUrl(imageUrl);
   }
 
   // ============================================================
   // ACTIONS
   // ============================================================
   onCardClick(): void {
-    this.router.navigateByUrl(this.productLink());
+    const p = this.product();
+    this.router.navigateByUrl(this.productLink(), {
+      state: {
+        primaryImageUrl: p.primaryImageUrl ?? null,
+        productName: p.name
+      }
+    });
   }
 
   onAddToCart(event: Event): void {

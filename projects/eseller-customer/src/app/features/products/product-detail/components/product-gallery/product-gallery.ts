@@ -1,5 +1,5 @@
 import { Component, input, signal, computed, effect } from '@angular/core';
-import { ProductImageDto, ProductBadgeDto } from 'eseller-shared';
+import { ProductImageDto, ProductBadgeDto, resolveMediaUrl } from 'eseller-shared';
 
 @Component({
   selector: 'app-product-gallery',
@@ -145,14 +145,6 @@ export class ProductGallery {
   }
 
   getImageUrl(url: string | null | undefined): string | null {
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const apiBase =
-      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
-      'https://localhost:7127/api/v1';
-    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
-    const path = url.startsWith('/') ? url : `/${url}`;
-    if (path.startsWith('/uploads')) return `${host}${path}`;
-    return `${host}/uploads${path}`;
+    return resolveMediaUrl(url);
   }
 }

@@ -239,7 +239,7 @@ export class HeroCarousel implements OnInit, OnDestroy {
   formatImageUrl(imageUrl?: string | null): string {
     if (!imageUrl) return 'assets/placeholder.jpg';
     if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
-    const apiBase = (window as any).__ESELLER_API_URL__ as string || 'https://localhost:7127/api/v1';
+    const apiBase = (window as any).__ESELLER_API_URL__ as string || 'https://api.esellerglobal.com/api/v1';
     const host = apiBase.replace(/\/api\/v1\/?$/, '');
     const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
     if (path.startsWith('/uploads')) {

@@ -9,7 +9,8 @@ import {
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { EMPTY, Subscription, forkJoin, of } from 'rxjs';
+import { catchError, distinctUntilChanged, filter, map, switchMap, tap } from 'rxjs/operators';
 
 import {
   HomeService,
@@ -31,7 +32,8 @@ import {
   OrderService,
   BuyNowRequest,
   DashboardService,
-  SkeletonLayout
+  SkeletonLayout,
+  resolveMediaUrl
 } from 'eseller-shared';
 
 import { ProductGallery } from './components/product-gallery/product-gallery';
@@ -387,12 +389,69 @@ export class ProductDetail implements OnInit, OnDestroy {
   // LIFECYCLE
   // ============================================================
   ngOnInit(): void {
-    this.routeSub = this.route.paramMap.subscribe((params) => {
-      const slug = params.get('slug');
-      if (slug) {
-        this.loadProductDetails(slug);
-      }
-    });
+    // Instant cover from list navigation (avoids blank gallery flash)
+    const navState = (typeof history !== 'undefined' ? history.state : null) as
+      | { primaryImageUrl?: string | null }
+      | null;
+    if (navState?.primaryImageUrl) {
+      this.images.set([
+        {
+          id: 'nav-preview',
+          productId: '',
+          imageUrl: navState.primaryImageUrl,
+          sortOrder: 0,
+          isCover: true
+        }
+      ]);
+    }
+
+    this.routeSub = this.route.paramMap
+      .pipe(
+        map((params) => (params.get('slug') || '').trim()),
+        filter((slug): slug is string => !!slug),
+        distinctUntilChanged(),
+        tap(() => {
+          if (typeof window !== 'undefined') {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+          }
+          this.loading.set(true);
+          this.error.set(null);
+          this.quantity.set(1);
+          this.directSelectedVariantId.set(null);
+          this.selectedAttributes.set({});
+          this.variants.set([]);
+          this.reviews.set([]);
+          this.questions.set([]);
+          this.relatedProducts.set([]);
+        }),
+        switchMap((slug) =>
+          this.homeService.getProductBySlug(slug).pipe(
+            switchMap((prod) =>
+              forkJoin({
+                product: of(prod),
+                images: this.homeService.getProductImages(prod.id).pipe(catchError(() => of([] as ProductImageDto[]))),
+                variants: this.homeService
+                  .getProductVariants(prod.id)
+                  .pipe(catchError(() => of([] as ProductVariantDto[])))
+              })
+            ),
+            catchError(() => {
+              this.error.set('Product not found or currently unavailable.');
+              this.loading.set(false);
+              return EMPTY;
+            })
+          )
+        )
+      )
+      .subscribe(({ product, images, variants }) => {
+        this.product.set(product);
+        this.images.set(images?.length ? images : this.images());
+        this.variants.set(variants || []);
+        this.initDefaultVariantAttributes(variants || []);
+        this.loading.set(false);
+        // Secondary content after first paint — keeps page feeling instant
+        this.loadDeferredResources(product);
+      });
   }
 
   ngOnDestroy(): void {
@@ -402,73 +461,23 @@ export class ProductDetail implements OnInit, OnDestroy {
     }
   }
 
-  // ============================================================
-  // DATA FETCHING
-  // ============================================================
-  private loadProductDetails(slug: string): void {
-    if (typeof window !== 'undefined') {
-      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
-    }
-
-    this.loading.set(true);
-    this.error.set(null);
-    this.quantity.set(1);
-    this.directSelectedVariantId.set(null);
-    this.selectedAttributes.set({});
-
-    this.homeService.getProductBySlug(slug).subscribe({
-      next: (prod) => {
-        this.product.set(prod);
-        this.loading.set(false);
-
-        // Fetch sub-resources in parallel
-        this.loadSubResources(prod);
-      },
-      error: (err) => {
-        this.error.set('Product not found or currently unavailable.');
-        this.loading.set(false);
-      }
-    });
-  }
-
-  private loadSubResources(prod: ProductDto): void {
-    // 1. Images
-    this.homeService.getProductImages(prod.id).subscribe({
-      next: (imgs) => this.images.set(imgs),
-      error: () => this.images.set([])
-    });
-
-    // 2. Variants
-    this.homeService.getProductVariants(prod.id).subscribe({
-      next: (vars) => {
-        this.variants.set(vars);
-        // Pre-select first attribute values if available
-        this.initDefaultVariantAttributes(vars);
-      },
-      error: () => this.variants.set([])
-    });
-
-    // 3. Reviews
+  /** Reviews / Q&A / related — after core product is already visible */
+  private loadDeferredResources(prod: ProductDto): void {
     this.reloadReviews(prod.id);
 
-    // 4. Q&A
     this.homeService.getProductQuestions(prod.id).subscribe({
       next: (res) => this.questions.set(res.items),
       error: () => this.questions.set([])
     });
 
-    // 5. Related Products (same category)
     if (prod.categoryId) {
-      this.homeService
-        .getProducts({ categoryId: prod.categoryId, pageSize: 6 })
-        .subscribe({
-          next: (res) => {
-            // Exclude current product
-            const filtered = res.items.filter((p) => p.id !== prod.id);
-            this.relatedProducts.set(filtered.slice(0, 5));
-          },
-          error: () => this.relatedProducts.set([])
-        });
+      this.homeService.getProducts({ categoryId: prod.categoryId, pageSize: 6 }).subscribe({
+        next: (res) => {
+          const filtered = res.items.filter((p) => p.id !== prod.id);
+          this.relatedProducts.set(filtered.slice(0, 5));
+        },
+        error: () => this.relatedProducts.set([])
+      });
     }
   }
 
@@ -921,17 +930,7 @@ export class ProductDetail implements OnInit, OnDestroy {
   }
 
   getImageUrl(url: string | null | undefined): string | null {
-    if (!url) return null;
-    if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('data:')) {
-      return url;
-    }
-    const apiBase = typeof window !== 'undefined' ? ((window as any).__ESELLER_API_URL__ as string) : '';
-    const host = apiBase ? apiBase.replace(/\/api\/v1\/?$/, '') : 'https://localhost:7127';
-    const path = url.startsWith('/') ? url : `/${url}`;
-    if (path.startsWith('/uploads/')) {
-      return `${host}${path}`;
-    }
-    return `${host}/uploads${path}`;
+    return resolveMediaUrl(url);
   }
 
   onSubmitQuestion(text: string): void {
