@@ -24,6 +24,8 @@ export interface VariantFormItem {
 }
 
 type ProductStatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
+/** On All Products: warehouse only, all sellers, or everything */
+type ProductSourceFilter = 'warehouse' | 'sellers' | 'all-sources';
 
 @Component({
   selector: 'app-product-approval',
@@ -47,6 +49,8 @@ export class ProductApproval implements OnInit {
   readonly selectedBrandId = signal<string>('');
   
   readonly statusFilter = signal<ProductStatusFilter>('all');
+  /** All Products source scope — warehouse / sellers / both */
+  readonly sourceFilter = signal<ProductSourceFilter>('warehouse');
   readonly searchTerm = signal<string>('');
   
   readonly products = signal<AdminProductDto[]>([]);
@@ -127,7 +131,7 @@ export class ProductApproval implements OnInit {
   ]);
 
   readonly filterShopOptions = computed<AdminSelectOption[]>(() => [
-    { value: '', label: 'All shops' },
+    { value: '', label: 'All sellers' },
     ...this.shopsList()
       .slice()
       .sort((a, b) => a.name.localeCompare(b.name))
@@ -361,10 +365,6 @@ export class ProductApproval implements OnInit {
   }
 
   ngOnInit(): void {
-    // Master Warehouse is the only create destination — ignore shop assign query params.
-    this.selectedShopId.set('');
-    this.selectedShopName.set('');
-
     this.route.queryParams.subscribe(params => {
       const status = params['status'];
       if (status && ['all', 'pending', 'approved', 'rejected'].includes(status)) {
@@ -372,6 +372,20 @@ export class ProductApproval implements OnInit {
       } else {
         this.statusFilter.set('all');
       }
+
+      const shopId = (params['shopId'] || '').trim();
+      const shopName = (params['shopName'] || '').trim();
+      if (shopId || shopName) {
+        this.selectedShopId.set(shopId);
+        this.selectedShopName.set(shopName);
+        if (this.statusFilter() === 'all') {
+          this.sourceFilter.set('sellers');
+        }
+      } else if (this.statusFilter() === 'all') {
+        this.selectedShopId.set('');
+        this.selectedShopName.set('');
+      }
+
       this.currentPage.set(1);
       this.selectedProductIds.set(new Set());
       this.loadInitialData();
@@ -1020,11 +1034,16 @@ export class ProductApproval implements OnInit {
     const applyFilters = <T extends AdminProductDto>(list: T[]): T[] => {
       let result = list;
 
-      // Shop filter — pending & approved merchant listing tables
-      if (
-        (this.statusFilter() === 'pending' || this.statusFilter() === 'approved' || this.statusFilter() === 'rejected') &&
-        (this.selectedShopName() || this.selectedShopId())
-      ) {
+      // Shop filter — seller views + All Products when sellers/all-sources
+      const shopFilterActive =
+        !!this.selectedShopName() || !!this.selectedShopId();
+      const shopFilterAllowed =
+        this.statusFilter() === 'pending' ||
+        this.statusFilter() === 'approved' ||
+        this.statusFilter() === 'rejected' ||
+        (this.statusFilter() === 'all' && this.sourceFilter() !== 'warehouse');
+
+      if (shopFilterAllowed && shopFilterActive) {
         const targetName = this.selectedShopName().trim().toLowerCase();
         const targetId = this.selectedShopId().trim().toLowerCase();
         result = result.filter(p => {
@@ -1091,19 +1110,64 @@ export class ProductApproval implements OnInit {
         }
       });
     } else if (this.statusFilter() === 'all') {
-      // Super Admin master warehouse products ONLY — never mix merchant requests
-      this.adminService.getProducts(undefined, undefined, 1, 500).subscribe({
-        next: (catalogRes) => {
-          const items = applyFilters(catalogRes?.items || []);
-          this.products.set(items);
-          this.totalCount.set(items.length);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.toast.show(err?.error?.error || 'Failed to load master catalog products.', 'error');
-        }
-      });
+      const scope = this.sourceFilter();
+
+      if (scope === 'warehouse') {
+        this.adminService.getProducts(undefined, undefined, 1, 500).subscribe({
+          next: (catalogRes) => {
+            const items = applyFilters(catalogRes?.items || []);
+            this.products.set(items);
+            this.totalCount.set(items.length);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            this.toast.show(err?.error?.error || 'Failed to load master catalog products.', 'error');
+          }
+        });
+      } else if (scope === 'sellers') {
+        forkJoin({
+          approved: this.adminService.getApprovedSellerProducts(1, 500).pipe(catchError(() => of({ items: [] as AdminProductDto[] }))),
+          pending: this.adminService.getPendingProducts(1, 500).pipe(catchError(() => of({ items: [] as AdminProductDto[] })))
+        }).subscribe({
+          next: ({ approved, pending }) => {
+            const map = new Map<string, AdminProductDto>();
+            for (const p of [...(approved?.items || []), ...(pending?.items || [])]) {
+              if (p?.id) map.set(p.id, p);
+            }
+            const items = applyFilters(Array.from(map.values()));
+            this.products.set(items);
+            this.totalCount.set(items.length);
+            this.isLoading.set(false);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            this.toast.show('Failed to load seller products.', 'error');
+          }
+        });
+      } else {
+        // Everything: warehouse + all seller listings
+        forkJoin({
+          catalog: this.adminService.getProducts(undefined, undefined, 1, 500).pipe(catchError(() => of({ items: [] as AdminProductDto[] }))),
+          approved: this.adminService.getApprovedSellerProducts(1, 500).pipe(catchError(() => of({ items: [] as AdminProductDto[] }))),
+          pending: this.adminService.getPendingProducts(1, 500).pipe(catchError(() => of({ items: [] as AdminProductDto[] })))
+        }).subscribe({
+          next: ({ catalog, approved, pending }) => {
+            const map = new Map<string, AdminProductDto>();
+            for (const p of [...(catalog?.items || []), ...(approved?.items || []), ...(pending?.items || [])]) {
+              if (p?.id) map.set(p.id, p);
+            }
+            const items = applyFilters(Array.from(map.values()));
+            this.products.set(items);
+            this.totalCount.set(items.length);
+            this.isLoading.set(false);
+          },
+          error: () => {
+            this.isLoading.set(false);
+            this.toast.show('Failed to load products.', 'error');
+          }
+        });
+      }
     } else if (this.statusFilter() === 'rejected') {
       this.adminService.getRejectedProducts(1, 500).subscribe({
         next: (res) => {
@@ -1191,6 +1255,7 @@ export class ProductApproval implements OnInit {
     this.currentPage.set(1);
     this.selectedProductIds.set(new Set());
     if (tab === 'all') {
+      this.sourceFilter.set('warehouse');
       this.selectedShopId.set('');
       this.selectedShopName.set('');
     }
@@ -1201,12 +1266,22 @@ export class ProductApproval implements OnInit {
     });
   }
 
+  onSourceFilterChange(scope: ProductSourceFilter): void {
+    this.sourceFilter.set(scope);
+    this.currentPage.set(1);
+    if (scope === 'warehouse') {
+      this.selectedShopId.set('');
+      this.selectedShopName.set('');
+    }
+    this.fetchProducts();
+  }
+
   pageTitle(): string {
     switch (this.statusFilter()) {
-      case 'pending': return 'Pending Products';
-      case 'approved': return 'Approved Products';
-      case 'rejected': return 'Rejected Products';
-      default: return 'All Products';
+      case 'pending': return 'Seller Pending Products';
+      case 'approved': return 'Seller Live Products';
+      case 'rejected': return 'Seller Rejected Products';
+      default: return 'Global Warehouse Products';
     }
   }
 

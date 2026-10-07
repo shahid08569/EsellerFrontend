@@ -36,7 +36,16 @@ export const routes: Routes = [
                 m => m.MarketplaceCatalog
               )
           },
-          { path: 'new', redirectTo: 'catalog', pathMatch: 'full' },
+          {
+            path: 'new',
+            loadComponent: () =>
+              import('./features/products/product-form/product-form').then(m => m.ProductForm)
+          },
+          {
+            path: ':id/edit',
+            loadComponent: () =>
+              import('./features/products/product-form/product-form').then(m => m.ProductForm)
+          },
           { path: ':productId/variants', redirectTo: '/products', pathMatch: 'full' }
         ]
       },

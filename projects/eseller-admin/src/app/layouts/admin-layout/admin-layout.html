@@ -11,10 +11,10 @@
       <!-- BRAND / LOGO -->
       <div class="h-16 flex items-center justify-between px-5 border-b border-slate-800/80 bg-slate-950/70 shrink-0">
         <div class="flex items-center gap-3">
-          <img src="/favicon.svg" alt="EsellerGlobal" class="w-9 h-9 rounded-xl shadow-md shadow-orange-600/30 shrink-0" width="36" height="36" />
+          <img src="/favicon.svg" alt="EG" class="w-9 h-9 rounded-xl shadow-md shadow-orange-600/30 shrink-0 ring-1 ring-white/10" width="36" height="36" />
           <div class="min-w-0">
             <div class="flex items-center gap-1.5">
-              <span class="font-black text-base tracking-tight" style="color: #ffffff !important;">EsellerGlobal</span>
+              <span class="font-black text-lg tracking-tighter" style="color: #ffffff !important;">EG</span>
               <span class="px-1.5 py-0.2 text-[9px] font-black uppercase tracking-wider rounded bg-orange-500/20 text-orange-400 border border-orange-500/30">
                 Admin
               </span>
@@ -196,7 +196,7 @@
                 [class.text-orange-400]="isProductNav('all')"
                 [class.font-bold]="isProductNav('all')"
                 [class.bg-slate-800/80]="isProductNav('all')">
-                All Products
+                Global Warehouse
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'pending'}"
                 class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
@@ -204,7 +204,7 @@
                 [class.text-orange-400]="isProductNav('pending')"
                 [class.font-bold]="isProductNav('pending')"
                 [class.bg-slate-800/80]="isProductNav('pending')">
-                <span>Pending Products</span>
+                <span>Seller Pending</span>
                 @if (pendingProductsCount() > 0) {
                   <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingProductsCount() }}</span>
                 }
@@ -215,7 +215,7 @@
                 [class.text-orange-400]="isProductNav('approved')"
                 [class.font-bold]="isProductNav('approved')"
                 [class.bg-slate-800/80]="isProductNav('approved')">
-                Approved Products
+                Seller Live Products
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'rejected'}"
                 class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
@@ -223,7 +223,7 @@
                 [class.text-orange-400]="isProductNav('rejected')"
                 [class.font-bold]="isProductNav('rejected')"
                 [class.bg-slate-800/80]="isProductNav('rejected')">
-                Rejected Products
+                Seller Rejected
               </a>
             </div>
           </div>
@@ -587,15 +587,15 @@
         <div class="space-y-1">
           <div class="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">📦 Products</div>
           <div class="pl-3 space-y-1">
-            <a [routerLink]="['/products']" [queryParams]="{status: 'all'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">All Products</a>
+            <a [routerLink]="['/products']" [queryParams]="{status: 'all'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Global Warehouse</a>
             <a [routerLink]="['/products']" [queryParams]="{status: 'pending'}" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
-              <span>Pending Products</span>
+              <span>Seller Pending</span>
               @if (pendingProductsCount() > 0) {
                 <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingProductsCount() }}</span>
               }
             </a>
-            <a [routerLink]="['/products']" [queryParams]="{status: 'approved'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Approved Products</a>
-            <a [routerLink]="['/products']" [queryParams]="{status: 'rejected'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Rejected Products</a>
+            <a [routerLink]="['/products']" [queryParams]="{status: 'approved'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Seller Live Products</a>
+            <a [routerLink]="['/products']" [queryParams]="{status: 'rejected'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Seller Rejected</a>
           </div>
         </div>
         <a routerLink="/orders" routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 text-white font-bold shadow-md shadow-orange-600/30" (click)="toggleMobileMenu()" class="block px-3 py-2 rounded-lg font-bold text-slate-300 hover:bg-slate-800 transition-all">🛒 Orders</a>

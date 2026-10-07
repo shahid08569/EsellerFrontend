@@ -50,6 +50,22 @@ export class OrderManagement implements OnInit {
   readonly orderHistory = signal<any[]>([]);
   readonly isLoadingHistory = signal<boolean>(false);
 
+  // Place order (Super Admin → any seller)
+  readonly placeOrderOpen = signal<boolean>(false);
+  readonly isPlacingOrder = signal<boolean>(false);
+  readonly placeShopId = signal<string>('');
+  readonly placeProducts = signal<{ id: string; name: string; shopName?: string }[]>([]);
+  readonly placeProductId = signal<string>('');
+  readonly placeVariants = signal<{ id: string; sku: string; price: number; stockQty: number }[]>([]);
+  readonly placeVariantId = signal<string>('');
+  readonly placeQty = signal<number>(1);
+  readonly placeCustomerName = signal<string>('Platform Admin');
+  readonly placeCustomerPhone = signal<string>('');
+  readonly placeAddress = signal<string>('');
+  readonly placeCity = signal<string>('');
+  readonly placeLoadingProducts = signal<boolean>(false);
+  readonly placeLoadingVariants = signal<boolean>(false);
+
   formatImageUrl(url?: string | null): string {
     return this.adminService.formatImageUrl(url);
   }
@@ -510,5 +526,110 @@ export class OrderManagement implements OnInit {
     this.detailsModalOpen.set(false);
     this.selectedOrder.set(null);
     this.orderHistory.set([]);
+  }
+
+  openPlaceOrder(): void {
+    this.placeOrderOpen.set(true);
+    this.placeShopId.set('');
+    this.placeProducts.set([]);
+    this.placeProductId.set('');
+    this.placeVariants.set([]);
+    this.placeVariantId.set('');
+    this.placeQty.set(1);
+    this.placeCustomerName.set('Platform Admin');
+    this.placeCustomerPhone.set('');
+    this.placeAddress.set('');
+    this.placeCity.set('');
+  }
+
+  closePlaceOrder(): void {
+    if (this.isPlacingOrder()) return;
+    this.placeOrderOpen.set(false);
+  }
+
+  onPlaceShopChange(shopId: string): void {
+    this.placeShopId.set(shopId);
+    this.placeProductId.set('');
+    this.placeVariantId.set('');
+    this.placeVariants.set([]);
+    this.placeProducts.set([]);
+    if (!shopId) return;
+
+    this.placeLoadingProducts.set(true);
+    this.adminService.getApprovedSellerProducts(1, 500).subscribe({
+      next: (res) => {
+        const sid = shopId.toLowerCase();
+        const items = (res?.items || [])
+          .filter((p: any) => String(p.shopId || '').toLowerCase() === sid)
+          .map((p: any) => ({ id: p.id, name: p.name, shopName: p.shopName }));
+        this.placeProducts.set(items);
+        this.placeLoadingProducts.set(false);
+      },
+      error: () => {
+        this.placeLoadingProducts.set(false);
+        this.toast.show('Failed to load seller products.', 'error');
+      }
+    });
+  }
+
+  onPlaceProductChange(productId: string): void {
+    this.placeProductId.set(productId);
+    this.placeVariantId.set('');
+    this.placeVariants.set([]);
+    if (!productId) return;
+
+    this.placeLoadingVariants.set(true);
+    this.adminService.getProductVariants(productId).subscribe({
+      next: (variants) => {
+        this.placeVariants.set(
+          (variants || []).map((v: any) => ({
+            id: v.id || v.variantId,
+            sku: v.sku || 'SKU',
+            price: Number(v.price) || 0,
+            stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
+          }))
+        );
+        this.placeLoadingVariants.set(false);
+      },
+      error: () => {
+        this.placeLoadingVariants.set(false);
+        this.toast.show('Failed to load variants.', 'error');
+      }
+    });
+  }
+
+  submitPlaceOrder(): void {
+    const variantId = this.placeVariantId();
+    const qty = Math.max(1, Number(this.placeQty()) || 1);
+    if (!this.placeShopId()) {
+      this.toast.show('Select a seller shop first.', 'warning');
+      return;
+    }
+    if (!variantId) {
+      this.toast.show('Select a product variant.', 'warning');
+      return;
+    }
+
+    this.isPlacingOrder.set(true);
+    this.adminService.placeAdminOrder({
+      productVariantId: variantId,
+      quantity: qty,
+      customerName: this.placeCustomerName().trim() || 'Platform Admin',
+      customerPhone: this.placeCustomerPhone().trim() || undefined,
+      shippingAddress: this.placeAddress().trim() || undefined,
+      city: this.placeCity().trim() || undefined,
+      orderNotes: 'Placed by Super Admin'
+    }).subscribe({
+      next: (res) => {
+        this.isPlacingOrder.set(false);
+        this.placeOrderOpen.set(false);
+        this.toast.show(res?.message || 'Order placed successfully.', 'success');
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isPlacingOrder.set(false);
+        this.toast.show(err?.error?.error || 'Failed to place order.', 'error');
+      }
+    });
   }
 }

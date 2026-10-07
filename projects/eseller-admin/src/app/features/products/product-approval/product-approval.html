@@ -5,21 +5,21 @@
     <div>
       <div class="flex items-center gap-2 mb-1">
         <span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider">
-          @if (statusFilter() === 'all') { Master Warehouse }
-          @else if (statusFilter() === 'pending') { Merchant Requests }
-          @else if (statusFilter() === 'approved') { Live Listings }
-          @else { Rejected }
+          @if (statusFilter() === 'all') { Global Products }
+          @else if (statusFilter() === 'pending') { Seller Requests }
+          @else if (statusFilter() === 'approved') { Seller Live }
+          @else { Seller Rejected }
         </span>
       </div>
       <h1 class="text-lg sm:text-xl font-black text-white tracking-tight">
-        @if (statusFilter() === 'all') { All Products }
-        @else if (statusFilter() === 'pending') { Pending Products }
-        @else if (statusFilter() === 'approved') { Approved Products }
-        @else { Rejected Products }
+        @if (statusFilter() === 'all') { Global Warehouse Products }
+        @else if (statusFilter() === 'pending') { Seller Pending Products }
+        @else if (statusFilter() === 'approved') { Seller Live Products }
+        @else { Seller Rejected Products }
       </h1>
       <p class="text-orange-100 text-xs font-medium">
         @if (statusFilter() === 'all') {
-          Super Admin master catalog — create &amp; edit warehouse products. Use <strong>Live on Website</strong> only for products you want on the customer site; others stay warehouse-only for sellers.
+          Filter by Platform Warehouse, All Sellers, or a single shop. Create master products here; seller-owned products appear when Sellers / Everything is selected.
         } @else if (statusFilter() === 'pending') {
           Seller listing requests waiting for Super Admin review. Approve to activate on their shop.
         } @else if (statusFilter() === 'approved') {
@@ -72,8 +72,25 @@
   <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
     <div class="flex flex-wrap items-center gap-2.5">
       @if (statusFilter() === 'all') {
-        <div class="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700 whitespace-nowrap">
-          Platform Master Warehouse
+        <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+          <button type="button" (click)="onSourceFilterChange('warehouse')"
+            [class]="sourceFilter() === 'warehouse'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+            Warehouse
+          </button>
+          <button type="button" (click)="onSourceFilterChange('sellers')"
+            [class]="sourceFilter() === 'sellers'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+            All Sellers
+          </button>
+          <button type="button" (click)="onSourceFilterChange('all-sources')"
+            [class]="sourceFilter() === 'all-sources'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+            Everything
+          </button>
         </div>
       } @else if (statusFilter() === 'pending') {
         <div class="px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800 whitespace-nowrap">
@@ -85,11 +102,16 @@
         </div>
       }
 
-      @if (statusFilter() === 'pending' || statusFilter() === 'approved' || statusFilter() === 'rejected') {
-        <div class="relative min-w-[200px] flex-1 sm:flex-initial">
+      @if (
+        statusFilter() === 'pending' ||
+        statusFilter() === 'approved' ||
+        statusFilter() === 'rejected' ||
+        (statusFilter() === 'all' && sourceFilter() !== 'warehouse')
+      ) {
+        <div class="relative min-w-[220px] flex-1 sm:flex-initial">
           <app-searchable-select
-            placeholder="All shops"
-            searchPlaceholder="Search shops…"
+            placeholder="All sellers"
+            searchPlaceholder="Search seller / shop…"
             [options]="filterShopOptions()"
             [selectedValue]="selectedShopId() || selectedShopName()"
             (valueChange)="onShopFilterChange($event)"

@@ -10,6 +10,7 @@ import { TablePagination } from '../../../shared/components/table-pagination/tab
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 
 export type SortOption = 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc';
+export type ProductOriginTab = 'own' | 'warehouse';
 
 @Component({
   selector: 'app-product-list',
@@ -36,9 +37,18 @@ export class ProductList implements OnInit {
   readonly searchTerm = signal<string>('');
   readonly selectedCategory = signal<string>('all');
   readonly selectedBrand = signal<string>('all');
-  // Default: only admin-approved products appear as live store inventory
-  readonly selectedStatus = signal<string>('approved');
+  /** Own creations vs warehouse clones (SourceProductId) */
+  readonly originTab = signal<ProductOriginTab>('own');
+  // Default: show all statuses within the selected origin
+  readonly selectedStatus = signal<string>('all');
   readonly sortBy = signal<SortOption>('newest');
+
+  readonly ownCount = computed(() =>
+    this.products().filter(p => !p.sourceProductId).length
+  );
+  readonly warehouseCount = computed(() =>
+    this.products().filter(p => !!p.sourceProductId).length
+  );
 
   // Pagination State
   readonly currentPage = signal<number>(1);
@@ -57,6 +67,14 @@ export class ProductList implements OnInit {
     const brand = this.selectedBrand();
     const status = this.selectedStatus();
     const sort = this.sortBy();
+    const origin = this.originTab();
+
+    // 0. Origin: own (no source) vs warehouse listing (has sourceProductId)
+    if (origin === 'own') {
+      list = list.filter(p => !p.sourceProductId);
+    } else {
+      list = list.filter(p => !!p.sourceProductId);
+    }
 
     // 1. Search Query
     if (search) {
@@ -232,8 +250,17 @@ export class ProductList implements OnInit {
     this.currentPage.set(1);
   }
 
+  onOriginTabChange(tab: ProductOriginTab) {
+    this.originTab.set(tab);
+    this.currentPage.set(1);
+  }
+
   onFilterChange() {
     this.currentPage.set(1);
+  }
+
+  isOwnProduct(p: ProductListDto): boolean {
+    return !p.sourceProductId;
   }
 
   promptDelete(id: string, name: string) {

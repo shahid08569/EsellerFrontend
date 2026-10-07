@@ -1,36 +1,61 @@
 <div class="space-y-6">
 
-  <!-- Header Banner with Direct Action to Browse Master Catalog -->
+  <!-- Header -->
   <div class="bg-white rounded-2xl border border-slate-200/80 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <div class="flex items-center gap-2">
         <h2 class="text-xl font-black text-slate-900 tracking-tight">
-          My Store Listed Products
+          My Store Products
         </h2>
         <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold">
-          20% Commission Active
+          20% Commission
         </span>
       </div>
       <p class="text-xs text-slate-500 mt-1">
-        Master products selected from the warehouse catalog. You earn a flat 20% net commission on each sale.
+        Own products need Super Admin approval. Warehouse listings come from the global catalog.
       </p>
     </div>
 
-    <!-- Browse Master Catalog Button -->
-    <a routerLink="/products/catalog" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer border border-slate-800 shrink-0">
-      <span>Product Warehouse (Add Products)</span>
-    </a>
+    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+      <a routerLink="/products/new" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm shadow-emerald-600/25 transition-all cursor-pointer">
+        <span>+ Add Own Product</span>
+      </a>
+      <a routerLink="/products/catalog" class="inline-flex items-center gap-2 px-4 py-2.5 bg-slate-900 hover:bg-black text-white text-xs font-bold rounded-xl shadow-xs transition-all cursor-pointer border border-slate-800">
+        <span>Warehouse Catalog</span>
+      </a>
+    </div>
+  </div>
+
+  <!-- Origin tabs: Own vs Warehouse -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-2 shadow-sm inline-flex gap-1 w-full sm:w-auto">
+    <button
+      type="button"
+      (click)="onOriginTabChange('own')"
+      [class]="originTab() === 'own'
+        ? 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-extrabold shadow-sm'
+        : 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50'">
+      My Own Products
+      <span class="ml-1.5 opacity-80">({{ ownCount() }})</span>
+    </button>
+    <button
+      type="button"
+      (click)="onOriginTabChange('warehouse')"
+      [class]="originTab() === 'warehouse'
+        ? 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-extrabold shadow-sm'
+        : 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50'">
+      From Warehouse
+      <span class="ml-1.5 opacity-80">({{ warehouseCount() }})</span>
+    </button>
   </div>
 
   <!-- Search & Filter Controls -->
   <div class="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-sm flex flex-col sm:flex-row gap-3 items-center justify-between">
-    <!-- Search Query -->
     <div class="relative w-full sm:w-72">
-      <input 
-        type="text" 
-        [ngModel]="searchTerm()" 
+      <input
+        type="text"
+        [ngModel]="searchTerm()"
         (ngModelChange)="searchTerm.set($event); onFilterChange()"
-        placeholder="Filter your listed products..."
+        placeholder="Filter products..."
         class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
       />
       <svg class="w-4 h-4 text-slate-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -38,10 +63,9 @@
       </svg>
     </div>
 
-    <!-- Filters & Sort -->
     <div class="flex items-center gap-2 w-full sm:w-auto">
-      <select 
-        [ngModel]="selectedCategory()" 
+      <select
+        [ngModel]="selectedCategory()"
         (ngModelChange)="selectedCategory.set($event); onFilterChange()"
         class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
         <option value="all">All Categories</option>
@@ -50,18 +74,19 @@
         }
       </select>
 
-      <select 
-        [ngModel]="selectedStatus()" 
+      <select
+        [ngModel]="selectedStatus()"
         (ngModelChange)="selectedStatus.set($event); onFilterChange()"
         class="w-full sm:w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
         <option value="all">All Status</option>
         <option value="approved">Approved</option>
         <option value="pending">Pending Approval</option>
+        <option value="rejected">Rejected</option>
       </select>
 
       @if (searchTerm() || selectedCategory() !== 'all' || selectedStatus() !== 'all') {
-        <button 
-          type="button" 
+        <button
+          type="button"
           (click)="resetFilters()"
           class="px-3 py-2 text-xs font-bold text-slate-500 hover:text-slate-800 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer shrink-0">
           Reset
@@ -81,15 +106,27 @@
         <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-2xl mx-auto">
           📦
         </div>
-        <h3 class="text-sm font-bold text-slate-900">No products in your store yet</h3>
-        <p class="text-xs text-slate-500 max-w-sm mx-auto">
-          Browse the Master Warehouse Catalog to select and list products in your store.
-        </p>
-        <div class="pt-2">
-          <a routerLink="/products/catalog" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer">
-            <span>+ Browse Master Catalog</span>
-          </a>
-        </div>
+        @if (originTab() === 'own') {
+          <h3 class="text-sm font-bold text-slate-900">No own products yet</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">
+            Create a product in one step. Super Admin reviews and approves before it goes live.
+          </p>
+          <div class="pt-2">
+            <a routerLink="/products/new" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer">
+              <span>+ Add Own Product</span>
+            </a>
+          </div>
+        } @else {
+          <h3 class="text-sm font-bold text-slate-900">No warehouse listings yet</h3>
+          <p class="text-xs text-slate-500 max-w-sm mx-auto">
+            Browse the Global Warehouse and add products to your store.
+          </p>
+          <div class="pt-2">
+            <a routerLink="/products/catalog" class="inline-flex items-center gap-1.5 px-4 py-2 bg-primary hover:bg-primary-hover text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer">
+              <span>+ Browse Warehouse</span>
+            </a>
+          </div>
+        }
       </div>
     } @else {
       <div class="seller-table-wrap">
@@ -107,15 +144,21 @@
               <tr>
                 <td>
                   <div class="flex items-center gap-3">
-                    <img 
-                      [src]="(p.primaryImageUrl | imageUrl) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect fill=%22%23e2e8f0%22 width=%2248%22 height=%2248%22/%3E%3C/svg%3E'" 
-                      [alt]="p.name" 
+                    <img
+                      [src]="(p.primaryImageUrl | imageUrl) || 'data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect fill=%22%23e2e8f0%22 width=%2248%22 height=%2248%22/%3E%3C/svg%3E'"
+                      [alt]="p.name"
                       class="w-11 h-11 object-cover rounded-xl border border-slate-200 shrink-0 bg-slate-100"
                       (error)="$any($event.target).src='data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2248%22 height=%2248%22%3E%3Crect fill=%22%23e2e8f0%22 width=%2248%22 height=%2248%22/%3E%3C/svg%3E'"
                     />
                     <div class="min-w-0">
                       <p class="cell-title truncate max-w-[240px]">{{ p.name }}</p>
-                      <p class="cell-sub">{{ p.categoryName || 'Catalog' }} · {{ p.brandName || 'Brand' }}</p>
+                      <p class="cell-sub">
+                        {{ p.categoryName || 'Catalog' }} · {{ p.brandName || 'Brand' }}
+                        ·
+                        <span [class]="isOwnProduct(p) ? 'text-emerald-700 font-bold' : 'text-slate-500 font-bold'">
+                          {{ isOwnProduct(p) ? 'Own' : 'Warehouse' }}
+                        </span>
+                      </p>
                     </div>
                   </div>
                 </td>
@@ -126,6 +169,8 @@
                 <td class="text-center">
                   @if (p.isApproved) {
                     <span class="badge badge-ok">Approved</span>
+                  } @else if (p.rejectionReason) {
+                    <span class="badge badge-danger">Rejected</span>
                   } @else {
                     <span class="badge badge-warn">Pending</span>
                   }
@@ -139,8 +184,8 @@
                       title="Chat with Super Admin about this product">
                       Ask Admin
                     </button>
-                    <button type="button" (click)="promptDelete(p.id, p.name)" class="btn-quiet" title="Remove from Store">
-                      Remove
+                    <button type="button" (click)="promptDelete(p.id, p.name)" class="btn-quiet" title="Delete / remove product">
+                      {{ isOwnProduct(p) ? 'Delete' : 'Remove' }}
                     </button>
                   </div>
                 </td>
@@ -162,13 +207,14 @@
     }
   </div>
 
-  <!-- Remove Confirm Modal -->
   <app-confirm-modal
     [isOpen]="!!productToDelete()"
-    title="Remove Product from Store?"
-    message="Are you sure you want to remove this product from your shop? You can add it back anytime from the Marketplace Catalog."
+    [title]="originTab() === 'own' ? 'Delete Own Product?' : 'Remove Warehouse Listing?'"
+    [message]="originTab() === 'own'
+      ? 'This permanently removes your product from your store (soft delete). You can add a new one later.'
+      : 'This removes the warehouse listing from your shop. You can add it again from the catalog.'"
     [itemHighlight]="productToDelete()?.name || ''"
-    confirmText="Yes, Remove from Store"
+    [confirmText]="originTab() === 'own' ? 'Yes, Delete Product' : 'Yes, Remove Listing'"
     cancelText="Cancel"
     type="danger"
     (confirmed)="confirmDelete()"

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { map, Observable } from 'rxjs';
+import { catchError, map, Observable } from 'rxjs';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminBrandDto } from '../../../core/models/admin.models';
@@ -147,10 +147,20 @@ export class BrandManagement implements OnInit {
       const brandId = this.editingId();
       const upload$: Observable<string> = brandId
         ? this.adminService.uploadBrandLogo(brandId, file).pipe(
-            map((res) => res?.logoUrl || (res as any)?.imageUrl || '')
+            map((res) => res?.logoUrl || (res as any)?.imageUrl || ''),
+            catchError(() =>
+              this.adminService.uploadAdminMedia(file, 'brands').pipe(
+                map((res) => res?.logoUrl || res?.imageUrl || '')
+              )
+            )
           )
-        : this.adminService.uploadBannerImage(file).pipe(
-            map((res) => res?.imageUrl || (res as any)?.logoUrl || '')
+        : this.adminService.uploadAdminMedia(file, 'brands').pipe(
+            map((res) => res?.logoUrl || res?.imageUrl || ''),
+            catchError(() =>
+              this.adminService.uploadBannerImage(file).pipe(
+                map((res) => res?.imageUrl || (res as any)?.logoUrl || '')
+              )
+            )
           );
 
       upload$.subscribe({

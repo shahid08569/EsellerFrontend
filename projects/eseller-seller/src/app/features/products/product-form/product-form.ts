@@ -15,8 +15,7 @@ import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-m
 import { StepBasicComponent, FlatCategoryOption } from './steps/step-basic/step-basic.component';
 import { StepMediaComponent, QueuedImage } from './steps/step-media/step-media.component';
 import { StepVariantsComponent, FormVariant } from './steps/step-variants/step-variants.component';
-import { StepReviewComponent } from './steps/step-review/step-review.component';
-import { forkJoin, of, switchMap, catchError } from 'rxjs';
+import { forkJoin, of, catchError, Observable } from 'rxjs';
 
 @Component({
   selector: 'app-product-form',
@@ -28,8 +27,7 @@ import { forkJoin, of, switchMap, catchError } from 'rxjs';
     ConfirmModal,
     StepBasicComponent,
     StepMediaComponent,
-    StepVariantsComponent,
-    StepReviewComponent
+    StepVariantsComponent
   ],
   templateUrl: './product-form.html'
 })
@@ -445,14 +443,58 @@ export class ProductForm implements OnInit {
     });
   }
 
-  // Step 4: Final Coordinated Submit
+  scrollToSection(id: string): void {
+    document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  /** Build variant create requests — always at least one default SKU when none provided. */
+  private buildVariantRequests(productId: string): Observable<{ variantId: string; message: string } | null>[] {
+    const listed = this.hasVariants() ? this.variants() : [];
+    const source: FormVariant[] = listed.length > 0
+      ? listed
+      : [{
+          sku: this.slugSku(this.name() || 'SKU'),
+          price: Number(this.basePrice()) || 0,
+          stockQty: 1,
+          lowStockThreshold: 2,
+          attributes: [{ name: 'Option', value: 'Standard' }]
+        }];
+
+    return source.map(v => {
+      const validAttrs = (v.attributes || [])
+        .filter(a => a.name?.trim() && a.value?.trim())
+        .map(a => ({ attributeName: a.name.trim(), attributeValue: a.value.trim() }));
+
+      const safeAttrs = validAttrs.length > 0
+        ? validAttrs
+        : [{ attributeName: 'Option', attributeValue: 'Standard' }];
+
+      const req: CreateVariantRequest = {
+        sku: (v.sku || this.slugSku(this.name())).trim(),
+        price: Number(v.price) || Number(this.basePrice()) || 0,
+        stockQty: Number(v.stockQty) || 0,
+        lowStockThreshold: Number(v.lowStockThreshold) || 2,
+        attributes: safeAttrs
+      };
+      return this.productService.createProductVariant(productId, req).pipe(
+        catchError(() => of(null))
+      );
+    });
+  }
+
+  private slugSku(name: string): string {
+    const base = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20);
+    return `${base || 'SKU'}-${Date.now().toString(36).slice(-4)}`;
+  }
+
+  // Single-form submit (create/update + images + variants)
   onFinalSubmit() {
     if (!this.canProceedFromStep1()) {
-      this.currentStep.set(1);
+      this.toast.show('Please complete name, price, and category.', 'warning');
       return;
     }
-    if (!this.canProceedFromStep3()) {
-      this.currentStep.set(3);
+    if (this.hasVariants() && this.variants().length > 0 && !this.canProceedFromStep3()) {
+      this.toast.show('Please fix variant details before submitting.', 'warning');
       return;
     }
 
@@ -546,7 +588,6 @@ export class ProductForm implements OnInit {
             return;
           }
 
-          // Step 2 Upload Images (if any queued)
           const queued = this.queuedImages();
           const imageUpload$ = queued.length > 0 
             ? this.productService.uploadMultipleImages(newProductId, queued.map(q => q.file)).pipe(
@@ -557,39 +598,11 @@ export class ProductForm implements OnInit {
           this.submittingStep.set(`2/3 Uploading ${queued.length} product photos...`);
 
           imageUpload$.subscribe(() => {
-            // Step 3 Create Variants (if any enabled)
-            const variantsToCreate = this.hasVariants() ? this.variants() : [];
-            
-            if (variantsToCreate.length > 0) {
-              this.submittingStep.set(`3/3 Creating ${variantsToCreate.length} inventory variants...`);
-              
-              const variantRequests$ = variantsToCreate.map(v => {
-                const validAttrs = (v.attributes || [])
-                  .filter(a => a.name?.trim() && a.value?.trim())
-                  .map(a => ({ attributeName: a.name.trim(), attributeValue: a.value.trim() }));
-
-                const safeAttrs = validAttrs.length > 0 
-                  ? validAttrs 
-                  : [{ attributeName: 'Option', attributeValue: 'Standard' }];
-
-                const req: CreateVariantRequest = {
-                  sku: v.sku.trim(),
-                  price: Number(v.price),
-                  stockQty: Number(v.stockQty),
-                  lowStockThreshold: Number(v.lowStockThreshold),
-                  attributes: safeAttrs
-                };
-                return this.productService.createProductVariant(newProductId, req).pipe(
-                  catchError(() => of(null))
-                );
-              });
-
-              forkJoin(variantRequests$).subscribe(() => {
-                this.finishCreation(newProductId);
-              });
-            } else {
+            this.submittingStep.set('3/3 Creating inventory variants...');
+            const variantRequests$ = this.buildVariantRequests(newProductId);
+            forkJoin(variantRequests$).subscribe(() => {
               this.finishCreation(newProductId);
-            }
+            });
           });
         },
         error: (err) => {
@@ -608,7 +621,7 @@ export class ProductForm implements OnInit {
     }
     this.queuedImages.set([]);
     this.savedProduct.set({ id: newProductId, name: this.name(), isEdit: false });
-    this.toast.show('Product listing published successfully!', 'success');
+    this.toast.show('Product submitted for Super Admin approval.', 'success');
   }
 
   closeSuccessModal() {

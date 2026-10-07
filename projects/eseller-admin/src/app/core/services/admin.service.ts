@@ -618,6 +618,21 @@ export class AdminService {
     );
   }
 
+  /** Super Admin places an order against any seller / live warehouse variant */
+  placeAdminOrder(data: {
+    productVariantId: string;
+    quantity: number;
+    customerName?: string;
+    customerPhone?: string;
+    shippingAddress?: string;
+    city?: string;
+    state?: string;
+    country?: string;
+    orderNotes?: string;
+  }): Observable<{ orderId: string; message: string }> {
+    return this.api.post<{ orderId: string; message: string }>('/admin/orders/place', data);
+  }
+
   getOrderById(id: string): Observable<AdminOrderDto | null> {
     return this.api.get<AdminOrderDto>(`/admin/orders/${id}`).pipe(
       catchError(() => of(null))
@@ -1046,13 +1061,36 @@ export class AdminService {
     return this.api.delete<any>(`/admin/payment-logos/${id}`);
   }
 
+  /** Shared admin media upload (logos / images). */
+  uploadAdminMedia(file: File, folder = 'logos'): Observable<{ imageUrl: string; logoUrl?: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.api.post<any>(`/admin/media/upload?folder=${encodeURIComponent(folder)}`, formData).pipe(
+      map((res: any) => ({
+        imageUrl: res?.imageUrl ?? res?.ImageUrl ?? res?.logoUrl ?? res?.LogoUrl ?? res?.url ?? '',
+        logoUrl: res?.logoUrl ?? res?.LogoUrl ?? res?.imageUrl ?? res?.ImageUrl ?? ''
+      }))
+    );
+  }
+
   uploadPaymentLogoImage(file: File): Observable<{ imageUrl: string }> {
     const formData = new FormData();
     formData.append('file', file);
+    const mapUrl = (res: any) => ({
+      imageUrl: res?.imageUrl ?? res?.ImageUrl ?? res?.logoUrl ?? res?.LogoUrl ?? res?.url ?? res?.value ?? ''
+    });
+
+    // Prefer dedicated route; fall back so logo forms keep working if API is mid-deploy / older build
     return this.api.post<any>('/admin/payment-logos/upload', formData).pipe(
-      map((res: any) => ({
-        imageUrl: res?.imageUrl ?? res?.ImageUrl ?? res?.url ?? res?.value ?? ''
-      }))
+      map(mapUrl),
+      catchError(() =>
+        this.api.post<any>('/admin/media/upload?folder=payment-logos', formData).pipe(
+          map(mapUrl),
+          catchError(() =>
+            this.api.post<any>('/admin/banners/upload', formData).pipe(map(mapUrl))
+          )
+        )
+      )
     );
   }
 
