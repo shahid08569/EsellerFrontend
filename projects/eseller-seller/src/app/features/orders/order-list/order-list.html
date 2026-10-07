@@ -85,7 +85,7 @@
                   <p class="cell-mono text-emerald-700 font-bold">$ {{ (order.merchantProfit ?? getCommission(order.totalAmount)) | number:'1.2-2' }}</p>
                 </td>
                 <td class="text-center">
-                  <span class="badge">{{ order.status }}</span>
+                  <span class="badge">{{ formatStatus(order.status) }}</span>
                 </td>
                 <td class="text-center">
                   <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold border"
@@ -140,7 +140,7 @@
             <h3 class="text-lg font-black text-slate-900 tracking-tight">Order Details</h3>
             <div class="flex flex-wrap items-center gap-1.5">
               <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wide bg-violet-100 text-violet-800 border border-violet-200">
-                {{ order.status }}
+                {{ formatStatus(order.status) }}
               </span>
               <span class="px-2.5 py-1 rounded-full text-[10px] font-extrabold border"
                     [class.bg-emerald-50]="isPaid(order)"

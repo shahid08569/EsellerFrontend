@@ -246,7 +246,9 @@
       <div class="px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div>
           <h2 class="text-sm font-black text-slate-900">Seller wallet & earnings</h2>
-          <p class="text-xs text-slate-500">Shop balances, pending order earnings, and available earnings per merchant.</p>
+          <p class="text-xs text-slate-500">
+            Click Pending or Available to edit. Default 20% stays Pending until delivery; Super Admin can adjust anytime.
+          </p>
         </div>
         <button
           type="button"
@@ -283,11 +285,43 @@
                     <div class="font-bold text-gray-900">{{ row.shopName || '—' }}</div>
                     <div class="text-[11px] text-gray-500">{{ row.shopkeeperName }}</div>
                   </td>
-                  <td class="py-3.5 px-4 text-right font-bold text-amber-700">
-                    $ {{ row.pendingEarnings | number:'1.2-2' }}
+                  <td class="py-3.5 px-4 text-right">
+                    @if (row.editingPending) {
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        [ngModel]="row.pendingDraft"
+                        (ngModelChange)="updatePendingDraft(row.accountId, +$event)"
+                        class="w-24 sm:w-28 bg-amber-50 border border-amber-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-right text-amber-900 focus:ring-2 focus:ring-amber-500/20 focus:border-amber-500 outline-hidden" />
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="startEditPending(row.accountId)"
+                        title="Click to edit pending earnings"
+                        class="font-bold text-amber-700 hover:text-amber-900 hover:underline cursor-pointer">
+                        $ {{ row.pendingEarnings | number:'1.2-2' }}
+                      </button>
+                    }
                   </td>
-                  <td class="py-3.5 px-4 text-right font-bold text-emerald-700">
-                    $ {{ row.availableEarnings | number:'1.2-2' }}
+                  <td class="py-3.5 px-4 text-right">
+                    @if (row.editingAvailable) {
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        [ngModel]="row.availableDraft"
+                        (ngModelChange)="updateAvailableDraft(row.accountId, +$event)"
+                        class="w-24 sm:w-28 bg-emerald-50 border border-emerald-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-right text-emerald-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden" />
+                    } @else {
+                      <button
+                        type="button"
+                        (click)="startEditAvailable(row.accountId)"
+                        title="Click to edit available earnings"
+                        class="font-bold text-emerald-700 hover:text-emerald-900 hover:underline cursor-pointer">
+                        $ {{ row.availableEarnings | number:'1.2-2' }}
+                      </button>
+                    }
                   </td>
                   <td class="py-3.5 px-4 text-right font-black text-gray-900">
                     $ {{ row.walletBalance | number:'1.2-2' }}
@@ -300,6 +334,22 @@
                         class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold cursor-pointer">
                         Bank details
                       </button>
+                      @if (row.editingPending || row.editingAvailable) {
+                        <button
+                          type="button"
+                          (click)="cancelEarningsEdit(row.accountId)"
+                          [disabled]="savingEarningsAccountId() === row.accountId"
+                          class="px-2.5 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 text-[11px] font-bold cursor-pointer disabled:opacity-50">
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          (click)="saveSellerEarnings(row)"
+                          [disabled]="savingEarningsAccountId() === row.accountId"
+                          class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50">
+                          {{ savingEarningsAccountId() === row.accountId ? 'Saving…' : 'Save earnings' }}
+                        </button>
+                      }
                       <input
                         type="number"
                         min="0"

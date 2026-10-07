@@ -143,10 +143,20 @@ export class OrderList implements OnInit {
     });
   }
 
+  formatStatus(status: string): string {
+    const s = (status || '').toLowerCase().replace(/[\s_-]/g, '');
+    if (s === 'ontheway' || s === 'packed') return 'On the Way';
+    if (s === 'outfordelivery') return 'Out for Delivery';
+    if (s === 'returnrequested') return 'Return Requested';
+    if (s === 'refundpending') return 'Refund Pending';
+    if (!status) return '—';
+    return status.replace(/([a-z])([A-Z])/g, '$1 $2');
+  }
+
   deliveryLabel(status: string): string {
-    const s = (status || '').toLowerCase();
+    const s = (status || '').toLowerCase().replace(/[\s_-]/g, '');
     if (s === 'delivered') return 'Delivered';
-    if (s === 'shipped' || s === 'outfordelivery') return 'In transit';
+    if (s === 'shipped' || s === 'outfordelivery' || s === 'ontheway' || s === 'packed') return 'In transit';
     if (s === 'cancelled' || s === 'refunded') return 'Cancelled';
     return 'Pending';
   }
@@ -157,13 +167,13 @@ export class OrderList implements OnInit {
   }
 
   payoutHint(order: Order): string {
-    const s = (order.status || '').toLowerCase();
+    const s = (order.status || '').toLowerCase().replace(/[\s_-]/g, '');
     if (s === 'delivered') {
-      return 'Order delivered. Your 20% profit credits to wallet when Super Admin confirms delivery.';
+      return 'Order delivered. Your 20% share moves from Pending to Available; Super Admin can still adjust amounts.';
     }
     if (!this.isPaid(order)) {
-      return 'Payment is pending Super Admin approval. You can view status only.';
+      return 'Your 20% merchant share stays Pending until Super Admin marks payment Paid and delivers the order.';
     }
-    return 'Payment marked Paid by Super Admin. Fulfilment status is also managed by Super Admin.';
+    return 'Payment marked Paid. 20% stays Pending until delivery; Super Admin can adjust earnings anytime.';
   }
 }

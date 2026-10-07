@@ -15,6 +15,10 @@ type FinanceTab = 'commissions' | 'withdrawals' | 'seller-earnings' | 'payout-me
 
 interface SellerWalletRow extends AdminSellerWalletDto {
   balanceDraft: number;
+  pendingDraft: number;
+  availableDraft: number;
+  editingPending: boolean;
+  editingAvailable: boolean;
 }
 
 @Component({
@@ -61,6 +65,7 @@ export class FinanceManager implements OnInit {
     cvc?: string | null;
   } | null>(null);
   readonly savingWalletAccountId = signal<string | null>(null);
+  readonly savingEarningsAccountId = signal<string | null>(null);
 
   readonly payoutMethods = signal<AdminWithdrawalPaymentMethodDto[]>([]);
   readonly isLoadingPayoutMethods = signal<boolean>(false);
@@ -118,7 +123,11 @@ export class FinanceManager implements OnInit {
         this.sellerWallets.set(
           (rows || []).map(r => ({
             ...r,
-            balanceDraft: r.walletBalance
+            balanceDraft: r.walletBalance,
+            pendingDraft: r.pendingEarnings,
+            availableDraft: r.availableEarnings,
+            editingPending: false,
+            editingAvailable: false
           }))
         );
         this.isLoadingWallets.set(false);
@@ -133,6 +142,80 @@ export class FinanceManager implements OnInit {
         row.accountId === accountId ? { ...row, balanceDraft: value } : row
       )
     );
+  }
+
+  startEditPending(accountId: string): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId
+          ? { ...row, editingPending: true, pendingDraft: row.pendingEarnings }
+          : row
+      )
+    );
+  }
+
+  startEditAvailable(accountId: string): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId
+          ? { ...row, editingAvailable: true, availableDraft: row.availableEarnings }
+          : row
+      )
+    );
+  }
+
+  updatePendingDraft(accountId: string, value: number): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId ? { ...row, pendingDraft: value } : row
+      )
+    );
+  }
+
+  updateAvailableDraft(accountId: string, value: number): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId ? { ...row, availableDraft: value } : row
+      )
+    );
+  }
+
+  cancelEarningsEdit(accountId: string): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId
+          ? {
+              ...row,
+              editingPending: false,
+              editingAvailable: false,
+              pendingDraft: row.pendingEarnings,
+              availableDraft: row.availableEarnings
+            }
+          : row
+      )
+    );
+  }
+
+  saveSellerEarnings(row: SellerWalletRow): void {
+    const pending = Number(row.editingPending ? row.pendingDraft : row.pendingEarnings);
+    const available = Number(row.editingAvailable ? row.availableDraft : row.availableEarnings);
+    if (!Number.isFinite(pending) || pending < 0 || !Number.isFinite(available) || available < 0) {
+      this.toast.show('Enter valid Pending / Available amounts (0 or greater).', 'error');
+      return;
+    }
+
+    this.savingEarningsAccountId.set(row.accountId);
+    this.adminService.updateSellerEarnings(row.accountId, pending, available).subscribe({
+      next: () => {
+        this.savingEarningsAccountId.set(null);
+        this.toast.show(`Earnings updated for ${row.shopkeeperName}.`, 'success');
+        this.loadSellerWallets();
+      },
+      error: (err) => {
+        this.savingEarningsAccountId.set(null);
+        this.toast.show(err?.error?.error || 'Failed to update seller earnings.', 'error');
+      }
+    });
   }
 
   viewSellerBank(accountId: string, name: string): void {

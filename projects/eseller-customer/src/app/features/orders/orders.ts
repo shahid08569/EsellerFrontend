@@ -184,7 +184,8 @@ export class Orders implements OnInit {
     const s = status.toUpperCase();
     if (s.includes('PENDING')) return 'Pending Seller Confirmation';
     if (s.includes('CONFIRM')) return 'Confirmed by Seller';
-    if (s.includes('PROCESS')) return 'Processing / Packed';
+    if (s.includes('PROCESS')) return 'Processing / On the Way';
+    if (s.includes('ONTHEWAY') || s.includes('ON THE WAY') || s.includes('PACK')) return 'On the Way';
     if (s.includes('SHIP') || s.includes('DISPATCH')) return 'Dispatched & On the Way';
     if (s.includes('DELIVER')) return 'Delivered';
     return status;
@@ -194,7 +195,7 @@ export class Orders implements OnInit {
     const s = currentStatus.toUpperCase();
     let currentStep = 1;
     if (s.includes('DELIVER') || s.includes('COMPLETE')) currentStep = 4;
-    else if (s.includes('SHIP') || s.includes('DISPATCH')) currentStep = 3;
+    else if (s.includes('SHIP') || s.includes('DISPATCH') || s.includes('ONTHEWAY') || s.includes('PACK')) currentStep = 3;
     else if (s.includes('CONFIRM') || s.includes('PROCESS')) currentStep = 2;
     else currentStep = 1;
 

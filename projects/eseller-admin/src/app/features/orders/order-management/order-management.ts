@@ -128,7 +128,7 @@ export class OrderManagement implements OnInit {
     { value: 1, label: 'Pending' },
     { value: 2, label: 'Confirmed' },
     { value: 3, label: 'Processing' },
-    { value: 4, label: 'Packed' },
+    { value: 4, label: 'On the Way' },
     { value: 5, label: 'Shipped' },
     { value: 6, label: 'Out For Delivery' },
     { value: 7, label: 'Delivered' },
@@ -145,7 +145,7 @@ export class OrderManagement implements OnInit {
    */
   getNextStatusOptions(currentStatus: number | string): { value: number; label: string }[] {
     const current = this.getStatusNumber(currentStatus);
-    // Values: 1 Pending, 2 Confirmed, 3 Processing, 4 Packed, 5 Shipped,
+    // Values: 1 Pending, 2 Confirmed, 3 Processing, 4 OnTheWay, 5 Shipped,
     // 6 OutForDelivery, 7 Delivered, 8 Cancelled, 9 ReturnRequested,
     // 10 Returned, 11 RefundPending, 12 Refunded
     const nextByStatus: Record<number, number[]> = {
@@ -471,7 +471,7 @@ export class OrderManagement implements OnInit {
     if (s.includes('pending') && !s.includes('refund')) return 1;
     if (s.includes('confirm')) return 2;
     if (s.includes('process')) return 3;
-    if (s.includes('pack')) return 4;
+    if (s.includes('ontheway') || s.includes('on the way') || s.includes('on-the-way') || s.includes('pack')) return 4;
     if (s.includes('ship')) return 5;
     if (s.includes('delivery') || s.includes('transit') || s.includes('pickup')) return 6;
     if (s.includes('deliver')) return 7;

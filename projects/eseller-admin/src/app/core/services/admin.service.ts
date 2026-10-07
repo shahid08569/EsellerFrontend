@@ -950,6 +950,17 @@ export class AdminService {
     );
   }
 
+  updateSellerEarnings(
+    accountId: string,
+    pendingEarnings: number,
+    availableEarnings: number
+  ): Observable<{ message?: string; pendingEarnings?: number; availableEarnings?: number }> {
+    return this.api.put<{ message?: string; pendingEarnings?: number; availableEarnings?: number }>(
+      `/admin/seller-wallets/${accountId}/earnings`,
+      { pendingEarnings, availableEarnings }
+    );
+  }
+
   getSellerBankDetails(accountId: string): Observable<{
     bankName: string;
     cardHolderName: string;
