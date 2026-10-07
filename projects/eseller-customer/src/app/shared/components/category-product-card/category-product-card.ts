@@ -6,7 +6,8 @@ import {
   WishlistService,
   CompareService,
   ToastService,
-  AuthActionService
+  AuthActionService,
+  resolveMediaUrl
 } from 'eseller-shared';
 
 @Component({
@@ -97,15 +98,7 @@ export class CategoryProductCard {
   });
 
   getImageUrl(imageUrl: string | null | undefined): string | null {
-    if (!imageUrl) return null;
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) return imageUrl;
-    const apiBase =
-      ((typeof window !== 'undefined' ? (window as any).__ESELLER_API_URL__ : '') as string) ||
-      'https://localhost:7127/api/v1';
-    const host = apiBase.replace(/\/api\/v1\/?$/, '').replace(/\/+$/, '');
-    const path = imageUrl.startsWith('/') ? imageUrl : `/${imageUrl}`;
-    if (path.startsWith('/uploads')) return `${host}${path}`;
-    return `${host}/uploads${path}`;
+    return resolveMediaUrl(imageUrl);
   }
 
   onCardClick(): void {
