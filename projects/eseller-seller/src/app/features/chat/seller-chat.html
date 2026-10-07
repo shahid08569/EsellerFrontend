@@ -123,13 +123,9 @@
                       }
                     </div>
                   }
-                  @if (msg.isMe) {
+                  @if (msg.isMe && tickState(msg) !== 'pending') {
                     <div class="flex items-center justify-end gap-0.5 mt-1 text-[10px]">
-                      @if (tickState(msg) === 'read') {
-                        <span class="text-sky-200 font-bold tracking-tighter">✓✓</span>
-                      } @else if (tickState(msg) !== 'pending') {
-                        <span class="opacity-80">✓</span>
-                      }
+                      <span class="opacity-80">✓</span>
                     </div>
                   }
                 </div>
