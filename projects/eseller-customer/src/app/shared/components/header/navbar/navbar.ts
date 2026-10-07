@@ -12,9 +12,13 @@ import {
   AuthStore,
   AuthService,
   ToastService,
-  AuthActionService
+  AuthActionService,
+  resolveMediaUrl
 } from 'eseller-shared';
 import { environment } from '../../../../../environments/environment';
+
+const DEFAULT_NAV_LOGO = '/brand/eseller-global-nav.png';
+const DEFAULT_TAGLINE = 'Shop Without Borders';
 
 @Component({
   imports: [RouterLink],
@@ -44,6 +48,8 @@ export class Navbar implements OnInit, OnDestroy {
   readonly brands = signal<BrandDto[]>([]);
   readonly isBrandsDropdownOpen = signal<boolean>(false);
   readonly currentUrl = signal<string>(this.router.url);
+  readonly navLogoSrc = signal<string>(DEFAULT_NAV_LOGO);
+  readonly brandingTagline = signal<string>(DEFAULT_TAGLINE);
 
   private routerSub: Subscription | null = null;
 
@@ -98,6 +104,15 @@ export class Navbar implements OnInit, OnDestroy {
       next: (bList) => this.brands.set(bList)
     });
 
+    this.homeService.getPlatformBranding().subscribe({
+      next: (b) => {
+        const raw = (b.navLogoUrl || DEFAULT_NAV_LOGO).trim();
+        const resolved = raw.startsWith('/brand/') ? raw : (resolveMediaUrl(raw) || DEFAULT_NAV_LOGO);
+        this.navLogoSrc.set(resolved);
+        this.brandingTagline.set((b.tagline || DEFAULT_TAGLINE).trim() || DEFAULT_TAGLINE);
+      }
+    });
+
     this.routerSub = this.router.events
       .pipe(filter((e) => e instanceof NavigationEnd))
       .subscribe(() => {
@@ -106,6 +121,13 @@ export class Navbar implements OnInit, OnDestroy {
         this.closeBrandsDropdown();
         this.closeMobileMenu();
       });
+  }
+
+  onNavLogoError(event: Event): void {
+    const img = event.target as HTMLImageElement | null;
+    if (img && img.src !== DEFAULT_NAV_LOGO && !img.src.endsWith(DEFAULT_NAV_LOGO)) {
+      img.src = DEFAULT_NAV_LOGO;
+    }
   }
 
   ngOnDestroy(): void {

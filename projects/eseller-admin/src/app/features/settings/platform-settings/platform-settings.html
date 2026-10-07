@@ -86,7 +86,71 @@
         </div>
       </div>
 
-      <!-- 3. PLATFORM CONTROLS -->
+      <!-- 3. BRANDING — Nav & Footer logos (SuperAdmin) -->
+      <div class="space-y-4">
+        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
+          🎨 Website Branding (Nav &amp; Footer Logos)
+        </h3>
+        <p class="text-[11px] text-gray-500 -mt-2">
+          Path: <span class="font-semibold text-gray-700">Admin → Settings → System &amp; Platform Settings</span>.
+          Upload replaces the storefront navbar and footer logos. Changes apply within ~30 seconds.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Nav logo -->
+          <div class="p-4 rounded-xl border border-gray-100 bg-gray-50 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-gray-900">Navbar logo</span>
+              <button type="button" (click)="resetNavLogo()" class="text-[11px] font-semibold text-orange-600 hover:underline cursor-pointer">Reset default</button>
+            </div>
+            <div class="flex items-center justify-center min-h-[72px] rounded-lg bg-white border border-dashed border-gray-200 p-3">
+              <img [src]="previewUrl(navLogoUrl())" alt="Nav logo preview" class="h-12 w-auto max-w-full object-contain" />
+            </div>
+            <p class="text-[11px] text-gray-400">Icon mark only (shown with tagline). Prefer PNG with transparent / white background.</p>
+            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50">
+              <span>{{ isUploadingNav() ? 'Uploading…' : 'Upload nav logo' }}</span>
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" [disabled]="isUploadingNav()" (change)="onNavLogoSelected($event)" />
+            </label>
+          </div>
+
+          <!-- Footer logo -->
+          <div class="p-4 rounded-xl border border-gray-100 bg-gray-50 space-y-3">
+            <div class="flex items-center justify-between gap-2">
+              <span class="text-xs font-bold text-gray-900">Footer logo</span>
+              <button type="button" (click)="resetFooterLogo()" class="text-[11px] font-semibold text-orange-600 hover:underline cursor-pointer">Reset default</button>
+            </div>
+            <div class="flex items-center justify-center min-h-[72px] rounded-lg bg-white border border-dashed border-gray-200 p-3">
+              <img [src]="previewUrl(footerLogoUrl())" alt="Footer logo preview" class="h-16 w-auto max-w-full object-contain" />
+            </div>
+            <p class="text-[11px] text-gray-400">Full logo (EsellerGlobal + tagline) as shown on the footer gray-50 background.</p>
+            <label class="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50">
+              <span>{{ isUploadingFooter() ? 'Uploading…' : 'Upload footer logo' }}</span>
+              <input type="file" accept="image/png,image/jpeg,image/webp,image/svg+xml" class="hidden" [disabled]="isUploadingFooter()" (change)="onFooterLogoSelected($event)" />
+            </label>
+          </div>
+        </div>
+
+        <div class="flex flex-col sm:flex-row sm:items-end gap-3">
+          <div class="flex-1">
+            <label class="block text-xs font-bold text-gray-700 mb-1">Navbar tagline</label>
+            <input
+              type="text"
+              [ngModel]="brandingTagline()"
+              (ngModelChange)="brandingTagline.set($event)"
+              maxlength="80"
+              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"
+              placeholder="Shop Without Borders" />
+          </div>
+          <button
+            type="button"
+            (click)="saveBrandingTagline()"
+            class="px-4 py-2 rounded-xl border border-orange-200 bg-orange-50 text-orange-700 text-xs font-bold hover:bg-orange-100 cursor-pointer">
+            Save tagline
+          </button>
+        </div>
+      </div>
+
+      <!-- 4. PLATFORM CONTROLS -->
       <div class="space-y-4">
         <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
           🛡️ Moderation & Availability Controls

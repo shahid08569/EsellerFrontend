@@ -125,6 +125,13 @@ export interface BrandDto {
   createdAt: string;
 }
 // HOMEPAGE PAYMENT SHOWCASE LOGO
+/** Storefront nav / footer branding (Settings-backed). */
+export interface PlatformBrandingDto {
+  navLogoUrl: string;
+  footerLogoUrl: string;
+  tagline: string;
+}
+
 export interface PaymentShowcaseLogoDto {
   id: string;
   name: string;

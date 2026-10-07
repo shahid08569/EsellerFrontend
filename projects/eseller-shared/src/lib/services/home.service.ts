@@ -12,6 +12,7 @@ import {
   BrandDto,
   HomepageBannerDto,
   PaymentShowcaseLogoDto,
+  PlatformBrandingDto,
   FlashSaleDto,
   GetProductsQuery,
   PagedList,
@@ -30,6 +31,7 @@ export class HomeService {
   private brands$?: Observable<BrandDto[]>;
   private banners$?: Observable<HomepageBannerDto[]>;
   private paymentLogos$?: Observable<PaymentShowcaseLogoDto[]>;
+  private branding$?: Observable<PlatformBrandingDto>;
 
   // ============================================================
   // BANNERS
@@ -82,6 +84,37 @@ export class HomeService {
 
   invalidatePaymentLogosCache(): void {
     this.paymentLogos$ = undefined;
+  }
+
+  // ============================================================
+  // PLATFORM BRANDING (nav / footer logos)
+  // ============================================================
+  getPlatformBranding(forceRefresh = false): Observable<PlatformBrandingDto> {
+    if (!this.branding$ || forceRefresh) {
+      this.branding$ = this.api.get<any>('/homepage/branding').pipe(
+        map((res) => {
+          const raw = res?.value ?? res?.data ?? res ?? {};
+          return {
+            navLogoUrl: String(raw.navLogoUrl ?? raw.NavLogoUrl ?? '/brand/eseller-global-nav.png'),
+            footerLogoUrl: String(raw.footerLogoUrl ?? raw.FooterLogoUrl ?? '/brand/eseller-global-logo.png'),
+            tagline: String(raw.tagline ?? raw.Tagline ?? 'Shop Without Borders')
+          } as PlatformBrandingDto;
+        }),
+        catchError(() =>
+          of({
+            navLogoUrl: '/brand/eseller-global-nav.png',
+            footerLogoUrl: '/brand/eseller-global-logo.png',
+            tagline: 'Shop Without Borders'
+          } as PlatformBrandingDto)
+        ),
+        shareReplay(1)
+      );
+    }
+    return this.branding$;
+  }
+
+  invalidateBrandingCache(): void {
+    this.branding$ = undefined;
   }
 
   // ============================================================
