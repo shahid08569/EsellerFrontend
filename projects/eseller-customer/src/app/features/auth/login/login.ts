@@ -222,6 +222,12 @@ export class Login implements OnInit {
         let message = 'Unable to sign in. Please try again.';
 
         if (
+          code === 'TIMEOUT' ||
+          String(errMsg).toLowerCase().includes('timed out') ||
+          String(errMsg).toLowerCase().includes('timeout')
+        ) {
+          message = 'Server was slow or restarting. Please try Sign In again.';
+        } else if (
           code === 'HTTP_503' ||
           String(errMsg).toLowerCase().includes('updating eseller')
         ) {

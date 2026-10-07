@@ -215,12 +215,6 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./features/auth/seller-register/seller-register').then(m => m.SellerRegister),
         title: 'Eseller — Merchant Registration'
-      },
-      {
-        path: 'superadmin-register',
-        loadComponent: () =>
-          import('./features/auth/superadmin-register/superadmin-register').then(m => m.SuperAdminRegister),
-        title: 'Eseller — SuperAdmin Signup'
       }
     ]
   },

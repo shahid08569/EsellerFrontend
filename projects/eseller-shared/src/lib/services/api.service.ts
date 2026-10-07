@@ -16,7 +16,7 @@ interface RequestOptions {
 }
 
 /** Avoid infinite spinners when API/host is down (e.g. IIS 503). */
-const REQUEST_TIMEOUT_MS = 12_000;
+const REQUEST_TIMEOUT_MS = 25_000;
 
 /**
  * ============================================================

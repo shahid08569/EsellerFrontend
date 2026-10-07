@@ -11,8 +11,6 @@ import {
   RegisterCustomerResponse,
   RegisterSellerCommand,
   RegisterSellerResponse,
-  RegisterSuperAdminCommand,
-  RegisterSuperAdminResponse,
   RegisterAffiliateCommand,
   RegisterAffiliateResponse,
   RefreshTokenResponse,
@@ -56,30 +54,6 @@ export class AuthService {
         longitude: loc.longitude,
         deviceType: loc.deviceType
       } satisfies LoginCommand)
-    );
-  }
-
-  /** True when no SuperAdmin exists yet (bootstrap signup open). */
-  isSuperAdminSignupAvailable(): Observable<boolean> {
-    return this.api.get<{ available?: boolean }>('/Auth/superadmin-signup-available').pipe(
-      map((res) => res?.available === true)
-    );
-  }
-
-  registerSuperAdmin(payload: {
-    name: string;
-    email: string;
-    password: string;
-  }): Observable<RegisterSuperAdminResponse> {
-    return this.withLocation((loc) =>
-      this.api.post<RegisterSuperAdminResponse>('/Auth/register/superadmin', {
-        name: payload.name,
-        email: payload.email,
-        password: payload.password,
-        latitude: loc.latitude,
-        longitude: loc.longitude,
-        deviceType: loc.deviceType
-      } satisfies RegisterSuperAdminCommand)
     );
   }
 
