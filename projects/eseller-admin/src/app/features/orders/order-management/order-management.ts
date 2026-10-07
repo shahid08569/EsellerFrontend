@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
@@ -15,18 +15,19 @@ import {
 } from '../../../core/models/admin.models';
 
 type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type PlaceOrderMode = 'modal' | 'page';
 
 @Component({
   selector: 'app-order-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, NgTemplateOutlet, FormsModule, SkeletonLayout],
   templateUrl: './order-management.html'
 })
 export class OrderManagement implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
-  private placeOrderOpenedFromQuery = false;
+  private readonly router = inject(Router);
 
   readonly isLoading = signal<boolean>(true);
   readonly orders = signal<AdminOrderDto[]>([]);
@@ -60,8 +61,11 @@ export class OrderManagement implements OnInit {
   readonly orderHistory = signal<any[]>([]);
   readonly isLoadingHistory = signal<boolean>(false);
 
-  // Place order (Super Admin → any seller) — catalog-style picker
-  readonly placeOrderOpen = signal<boolean>(false);
+  // Place order (Super Admin → any seller)
+  // modal = "+ Place Order" button; page = sidebar "Create Order" link
+  readonly placeOrderMode = signal<PlaceOrderMode | null>(null);
+  readonly placeOrderOpen = computed(() => this.placeOrderMode() !== null);
+  readonly isPlaceOrderPage = computed(() => this.placeOrderMode() === 'page');
   readonly isPlacingOrder = signal<boolean>(false);
   readonly placeShopId = signal<string>('');
   readonly placeCatalogProducts = signal<AdminProductDto[]>([]);
@@ -172,9 +176,12 @@ export class OrderManagement implements OnInit {
     this.loadShops();
     this.loadOrders();
     this.route.queryParams.subscribe(params => {
-      if (params['action'] === 'create' && !this.placeOrderOpenedFromQuery) {
-        this.placeOrderOpenedFromQuery = true;
-        this.openPlaceOrder();
+      if (params['action'] === 'create') {
+        if (this.placeOrderMode() !== 'page') {
+          this.openPlaceOrder('page');
+        }
+      } else if (this.placeOrderMode() === 'page') {
+        this.placeOrderMode.set(null);
       }
     });
   }
@@ -579,8 +586,8 @@ export class OrderManagement implements OnInit {
     this.orderHistory.set([]);
   }
 
-  openPlaceOrder(): void {
-    this.placeOrderOpen.set(true);
+  openPlaceOrder(mode: PlaceOrderMode = 'modal'): void {
+    this.placeOrderMode.set(mode);
     this.placeShopId.set('');
     this.placeCatalogProducts.set([]);
     this.placeCategories.set([]);
@@ -669,7 +676,11 @@ export class OrderManagement implements OnInit {
 
   closePlaceOrder(): void {
     if (this.isPlacingOrder()) return;
-    this.placeOrderOpen.set(false);
+    const wasPage = this.placeOrderMode() === 'page';
+    this.placeOrderMode.set(null);
+    if (wasPage) {
+      void this.router.navigate(['/orders'], { queryParams: {} });
+    }
   }
 
   submitPlaceOrder(): void {
@@ -700,9 +711,13 @@ export class OrderManagement implements OnInit {
     }).subscribe({
       next: (res) => {
         this.isPlacingOrder.set(false);
-        this.placeOrderOpen.set(false);
+        const wasPage = this.placeOrderMode() === 'page';
+        this.placeOrderMode.set(null);
         this.toast.show(res?.message || 'Order placed successfully.', 'success');
         this.loadOrders();
+        if (wasPage) {
+          void this.router.navigate(['/orders'], { queryParams: {} });
+        }
       },
       error: (err) => {
         this.isPlacingOrder.set(false);
