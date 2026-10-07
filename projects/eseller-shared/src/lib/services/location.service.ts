@@ -82,27 +82,37 @@ export class LocationService {
     this._status.set('requesting');
     this._errorMessage.set(null);
 
+    const fallbackCoords: Coordinates = { latitude: 40.7128, longitude: -74.006 };
+
     return new Promise<Coordinates | null>((resolve) => {
+      let settled = false;
+      const finish = (coords: Coordinates) => {
+        if (settled) return;
+        settled = true;
+        this._coordinates.set(coords);
+        this._status.set('granted');
+        resolve(coords);
+      };
+
+      // Hard ceiling — some browsers never fire geolocation callbacks while the
+      // permission prompt is ignored, which left login stuck on "Signing In...".
+      const hardTimeout = window.setTimeout(() => finish(fallbackCoords), 4_000);
+
       navigator.geolocation.getCurrentPosition(
         (position) => {
-          const coords: Coordinates = {
+          window.clearTimeout(hardTimeout);
+          finish({
             latitude: position.coords.latitude,
             longitude: position.coords.longitude
-          };
-          this._coordinates.set(coords);
-          this._status.set('granted');
-          resolve(coords);
+          });
         },
-        (error) => {
-          // Fallback coordinates for desktop/development without hardware GPS
-          const fallbackCoords: Coordinates = { latitude: 31.5204, longitude: 74.3587 };
-          this._coordinates.set(fallbackCoords);
-          this._status.set('granted');
-          resolve(fallbackCoords);
+        () => {
+          window.clearTimeout(hardTimeout);
+          finish(fallbackCoords);
         },
         {
           enableHighAccuracy: false,
-          timeout: 3_000,
+          timeout: 2_500,
           maximumAge: 300_000
         }
       );

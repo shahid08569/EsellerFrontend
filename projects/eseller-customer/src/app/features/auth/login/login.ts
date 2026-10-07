@@ -222,6 +222,11 @@ export class Login implements OnInit {
         let message = 'Unable to sign in. Please try again.';
 
         if (
+          code === 'HTTP_503' ||
+          String(errMsg).toLowerCase().includes('updating eseller')
+        ) {
+          message = 'API is updating right now. Wait ~30 seconds and try again.';
+        } else if (
           code === 'HTTP_0' ||
           code === 'HTTP_undefined' ||
           String(errMsg).toLowerCase().includes('http failure') ||
