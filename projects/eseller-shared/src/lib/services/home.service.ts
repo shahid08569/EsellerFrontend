@@ -95,15 +95,15 @@ export class HomeService {
         map((res) => {
           const raw = res?.value ?? res?.data ?? res ?? {};
           return {
-            navLogoUrl: String(raw.navLogoUrl ?? raw.NavLogoUrl ?? '/brand/eseller-global-nav.png'),
-            footerLogoUrl: String(raw.footerLogoUrl ?? raw.FooterLogoUrl ?? '/brand/eseller-global-logo.png'),
+            navLogoUrl: String(raw.navLogoUrl ?? raw.NavLogoUrl ?? '/brand/eseller-global-nav.png?v=orange3'),
+            footerLogoUrl: String(raw.footerLogoUrl ?? raw.FooterLogoUrl ?? '/brand/eseller-global-logo.png?v=orange3'),
             tagline: String(raw.tagline ?? raw.Tagline ?? 'Shop Without Borders')
           } as PlatformBrandingDto;
         }),
         catchError(() =>
           of({
-            navLogoUrl: '/brand/eseller-global-nav.png',
-            footerLogoUrl: '/brand/eseller-global-logo.png',
+            navLogoUrl: '/brand/eseller-global-nav.png?v=orange3',
+            footerLogoUrl: '/brand/eseller-global-logo.png?v=orange3',
             tagline: 'Shop Without Borders'
           } as PlatformBrandingDto)
         ),

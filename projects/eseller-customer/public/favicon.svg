@@ -1,8 +1,14 @@
-﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="EG">
-  <rect width="128" height="128" rx="28" fill="#0B1224"/>
-  <rect x="18" y="22" width="92" height="84" rx="20" fill="#111827"/>
-  <path d="M44 48h40l-4 46H48l-4-46z" fill="#1E293B"/>
-  <path d="M54 48v-6a10 10 0 0120 0v6" fill="none" stroke="#F97316" stroke-width="5" stroke-linecap="round"/>
-  <text x="64" y="92" text-anchor="middle" font-family="Arial Black, Segoe UI Black, sans-serif" font-size="42" font-weight="900" letter-spacing="-2" fill="#F8FAFC">EG</text>
-  <rect x="40" y="100" width="48" height="6" rx="3" fill="#F97316"/>
+﻿<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="EsellerGlobal">
+  <rect width="128" height="128" rx="28" fill="#FFF7ED"/>
+  <!-- Simplified E-cart + globe mark in brand orange -->
+  <g fill="#EA580C">
+    <path d="M28 52h14v10H34v8h8v10h-8v12h12v10H28z"/>
+    <path d="M18 62h8v6H18zm-4 14h12v6H14zm2 14h10v6H16z"/>
+    <circle cx="36" cy="108" r="5"/>
+    <circle cx="52" cy="108" r="5"/>
+    <circle cx="78" cy="64" r="28"/>
+  </g>
+  <circle cx="78" cy="64" r="22" fill="#FFF7ED"/>
+  <path fill="#C2410C" d="M62 52c8-10 22-14 34-10-6 4-10 12-10 22s4 18 10 22c-12 4-26 0-34-10 4-4 6-10 6-16s-2-12-6-16z"/>
+  <path d="M54 88c18 10 40 8 54-6" fill="none" stroke="#EA580C" stroke-width="5" stroke-linecap="round"/>
 </svg>

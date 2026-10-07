@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { AuthActionService, HomeService, resolveMediaUrl } from 'eseller-shared';
 
-const DEFAULT_FOOTER_LOGO = '/brand/eseller-global-logo.png';
+const DEFAULT_FOOTER_LOGO = '/brand/eseller-global-logo.png?v=orange3';
 
 @Component({
   imports: [RouterLink],
@@ -21,7 +21,10 @@ export class Footer implements OnInit {
     this.homeService.getPlatformBranding().subscribe({
       next: (b) => {
         const raw = (b.footerLogoUrl || DEFAULT_FOOTER_LOGO).trim();
-        const resolved = raw.startsWith('/brand/') ? raw : (resolveMediaUrl(raw) || DEFAULT_FOOTER_LOGO);
+        let resolved = raw.startsWith('/brand/') ? raw : (resolveMediaUrl(raw) || DEFAULT_FOOTER_LOGO);
+        if (resolved.startsWith('/brand/') && !resolved.includes('?')) {
+          resolved = `${resolved}?v=orange3`;
+        }
         this.footerLogoSrc.set(resolved);
       }
     });

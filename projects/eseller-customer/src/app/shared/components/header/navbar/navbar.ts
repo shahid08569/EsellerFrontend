@@ -17,7 +17,7 @@ import {
 } from 'eseller-shared';
 import { environment } from '../../../../../environments/environment';
 
-const DEFAULT_NAV_LOGO = '/brand/eseller-global-nav.png';
+const DEFAULT_NAV_LOGO = '/brand/eseller-global-nav.png?v=orange3';
 const DEFAULT_TAGLINE = 'Shop Without Borders';
 
 @Component({
@@ -107,7 +107,11 @@ export class Navbar implements OnInit, OnDestroy {
     this.homeService.getPlatformBranding().subscribe({
       next: (b) => {
         const raw = (b.navLogoUrl || DEFAULT_NAV_LOGO).trim();
-        const resolved = raw.startsWith('/brand/') ? raw : (resolveMediaUrl(raw) || DEFAULT_NAV_LOGO);
+        let resolved = raw.startsWith('/brand/') ? raw : (resolveMediaUrl(raw) || DEFAULT_NAV_LOGO);
+        // Cache-bust local brand assets so orange logo updates show immediately
+        if (resolved.startsWith('/brand/') && !resolved.includes('?')) {
+          resolved = `${resolved}?v=orange3`;
+        }
         this.navLogoSrc.set(resolved);
         this.brandingTagline.set((b.tagline || DEFAULT_TAGLINE).trim() || DEFAULT_TAGLINE);
       }
