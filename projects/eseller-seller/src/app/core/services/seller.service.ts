@@ -287,6 +287,49 @@ export class SellerService {
     return this.api.post(`/SellerWallet/withdrawal-request`, payload);
   }
 
+  /** GET /SellerWallet/bank-details (masked) */
+  getBankDetails(): Observable<{
+    bankName?: string;
+    cardHolderName?: string;
+    cardNumberLast4?: string;
+    cardNumberMasked?: string;
+    expMonth?: number;
+    expYear?: number;
+    hasCvcSaved?: boolean;
+    updatedAt?: string;
+  } | null> {
+    return this.api.get<any>('/SellerWallet/bank-details').pipe(
+      map((res) => {
+        if (!res || (!res.bankName && !res.BankName && !res.cardNumberLast4 && !res.CardNumberLast4)) {
+          return null;
+        }
+        return {
+          bankName: res.bankName ?? res.BankName ?? '',
+          cardHolderName: res.cardHolderName ?? res.CardHolderName ?? '',
+          cardNumberLast4: res.cardNumberLast4 ?? res.CardNumberLast4 ?? '',
+          cardNumberMasked: res.cardNumberMasked ?? res.CardNumberMasked ?? '',
+          expMonth: Number(res.expMonth ?? res.ExpMonth ?? 0),
+          expYear: Number(res.expYear ?? res.ExpYear ?? 0),
+          hasCvcSaved: !!(res.hasCvcSaved ?? res.HasCvcSaved),
+          updatedAt: res.updatedAt ?? res.UpdatedAt
+        };
+      }),
+      catchError(() => of(null))
+    );
+  }
+
+  /** PUT /SellerWallet/bank-details */
+  saveBankDetails(payload: {
+    bankName: string;
+    cardHolderName: string;
+    cardNumber: string;
+    expMonth: number;
+    expYear: number;
+    cvc: string;
+  }): Observable<any> {
+    return this.api.put('/SellerWallet/bank-details', payload);
+  }
+
   /** GET /SellerWallet/payment-methods — active Super Admin payout channels */
   getWithdrawalPaymentMethods(): Observable<Array<{
     id: string;

@@ -41,6 +41,7 @@ export class AdminLayout implements OnInit {
     dashboard: true,
     shops: false,
     products: false,
+    orders: false,
     catalog: false,
     homepage: false,
     users: false,
@@ -82,22 +83,46 @@ export class AdminLayout implements OnInit {
     return this.router.url.startsWith('/dashboard');
   }
 
-  isProductNav(status: 'all' | 'pending' | 'pending-global' | 'pending-own' | 'approved' | 'rejected'): boolean {
+  isProductNav(item: 'all' | 'listing' | 'own-req' | 'live' | 'rejected'): boolean {
     const url = this.currentUrl() || this.router.url || '';
     if (!url.startsWith('/products')) return false;
-    if (status === 'all') {
-      return !url.includes('status=') || url.includes('status=all');
-    }
-    if (status === 'pending-global') {
-      return url.includes('status=pending') && (!url.includes('kind=') || url.includes('kind=global') || url.includes('kind=warehouse'));
-    }
-    if (status === 'pending-own') {
-      return url.includes('status=pending') && (url.includes('kind=own') || url.includes('kind=seller') || url.includes('kind=new'));
-    }
+
+    const q = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(q);
+    let status = (params.get('status') || 'all').toLowerCase();
+    const kind = (params.get('kind') || '').toLowerCase();
+    const tab = (params.get('tab') || 'pending').toLowerCase();
+
     if (status === 'pending') {
-      return url.includes('status=pending');
+      status = kind === 'own' || kind === 'seller' || kind === 'new' ? 'own-req' : 'listing';
+    } else if (status === 'approved') {
+      status = 'live';
     }
-    return url.includes(`status=${status}`);
+
+    switch (item) {
+      case 'all':
+        return status === 'all';
+      case 'listing':
+        return status === 'listing';
+      case 'own-req':
+        return status === 'own-req';
+      case 'live':
+        return status === 'live';
+      case 'rejected':
+        return status === 'rejected';
+      default:
+        return false;
+    }
+  }
+
+  isOrderNav(item: 'list' | 'create'): boolean {
+    const url = this.currentUrl() || this.router.url || '';
+    if (!url.startsWith('/orders')) return false;
+    const q = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(q);
+    const action = (params.get('action') || '').toLowerCase();
+    if (item === 'create') return action === 'create';
+    return action !== 'create';
   }
 
   /** Shop Management submenu — match by view (+ tab for applications). */
@@ -128,6 +153,8 @@ export class AdminLayout implements OnInit {
       this.openDropdowns.update(c => ({ ...c, shops: true }));
     } else if (url.startsWith('/products')) {
       this.openDropdowns.update(c => ({ ...c, products: true }));
+    } else if (url.startsWith('/orders')) {
+      this.openDropdowns.update(c => ({ ...c, orders: true }));
     } else if (url.startsWith('/categories') || url.startsWith('/brands') || url.startsWith('/promotions')) {
       this.openDropdowns.update(c => ({ ...c, catalog: true }));
     } else if (url.startsWith('/homepage')) {

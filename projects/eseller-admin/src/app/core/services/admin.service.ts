@@ -271,8 +271,10 @@ export class AdminService {
     );
   }
 
-  getApprovedSellerProducts(pageNumber: number = 1, pageSize: number = 50): Observable<PagedResult<AdminProductDto>> {
-    return this.api.get<PagedResult<AdminProductDto>>(`/admin/products/approved?pageNumber=${pageNumber}&pageSize=${pageSize}`).pipe(
+  getApprovedSellerProducts(pageNumber: number = 1, pageSize: number = 50, kind?: string): Observable<PagedResult<AdminProductDto>> {
+    let url = `/admin/products/approved?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+    if (kind) url += `&kind=${encodeURIComponent(kind)}`;
+    return this.api.get<PagedResult<AdminProductDto>>(url).pipe(
       catchError(() => of({ items: [], totalCount: 0, pageNumber: 1, pageSize: pageSize, totalPages: 0, hasPreviousPage: false, hasNextPage: false }))
     );
   }
@@ -945,6 +947,32 @@ export class AdminService {
     return this.api.put<{ message?: string; walletBalance?: number }>(
       `/admin/seller-wallets/${accountId}/balance`,
       { balance }
+    );
+  }
+
+  getSellerBankDetails(accountId: string): Observable<{
+    bankName: string;
+    cardHolderName: string;
+    cardNumberMasked: string;
+    cardNumberFull?: string;
+    expMonth: number;
+    expYear: number;
+    cvc?: string | null;
+  } | null> {
+    return this.api.get<any>(`/admin/seller-wallets/${accountId}/bank-details`).pipe(
+      map((res) => {
+        if (!res || (!res.bankName && !res.BankName)) return null;
+        return {
+          bankName: res.bankName ?? res.BankName ?? '',
+          cardHolderName: res.cardHolderName ?? res.CardHolderName ?? '',
+          cardNumberMasked: res.cardNumberMasked ?? res.CardNumberMasked ?? '',
+          cardNumberFull: res.cardNumberFull ?? res.CardNumberFull,
+          expMonth: Number(res.expMonth ?? res.ExpMonth ?? 0),
+          expYear: Number(res.expYear ?? res.ExpYear ?? 0),
+          cvc: res.cvc ?? res.Cvc ?? null
+        };
+      }),
+      catchError(() => of(null))
     );
   }
 

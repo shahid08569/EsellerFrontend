@@ -273,7 +273,7 @@
                 <th class="py-3.5 px-4 text-right">Pending</th>
                 <th class="py-3.5 px-4 text-right">Available</th>
                 <th class="py-3.5 px-4 text-right">Wallet balance</th>
-                <th class="py-3.5 px-4 text-right">Adjust balance</th>
+                <th class="py-3.5 px-4 text-right">Bank / Adjust</th>
               </tr>
             </thead>
             <tbody class="divide-y divide-gray-50">
@@ -293,14 +293,20 @@
                     $ {{ row.walletBalance | number:'1.2-2' }}
                   </td>
                   <td class="py-3.5 px-4">
-                    <div class="flex items-center justify-end gap-2">
+                    <div class="flex flex-wrap items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        (click)="viewSellerBank(row.accountId, row.shopkeeperName)"
+                        class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-[11px] font-bold cursor-pointer">
+                        Bank details
+                      </button>
                       <input
                         type="number"
                         min="0"
                         step="0.01"
                         [ngModel]="row.balanceDraft"
                         (ngModelChange)="updateWalletBalanceDraft(row.accountId, +$event)"
-                        class="w-28 bg-slate-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-right focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+                        class="w-24 sm:w-28 bg-slate-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-right focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
                       <button
                         type="button"
                         (click)="saveSellerWalletBalance(row)"
@@ -510,6 +516,39 @@
           class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs cursor-pointer disabled:opacity-50">
           {{ isSavingMethod() ? 'Saving…' : 'Save method' }}
         </button>
+      </div>
+    </div>
+  </div>
+}
+
+@if (bankModalOpen()) {
+  <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4" (click)="closeBankModal()">
+    <div class="bg-white rounded-2xl max-w-md w-full shadow-2xl overflow-hidden" (click)="$event.stopPropagation()">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-black text-gray-900">Seller bank details</h3>
+          <p class="text-[11px] text-gray-500">{{ bankModalTitle() }}</p>
+        </div>
+        <button type="button" (click)="closeBankModal()" class="text-gray-400 hover:text-gray-700 font-bold cursor-pointer">✕</button>
+      </div>
+      <div class="p-5 space-y-3">
+        @if (bankModalLoading()) {
+          <p class="text-xs text-gray-400 text-center py-6">Loading…</p>
+        } @else if (!bankModalDetails()) {
+          <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-3 text-center">
+            This seller has not submitted bank / card details yet.
+          </p>
+        } @else {
+          <div class="text-xs space-y-2">
+            <div class="flex justify-between gap-2"><span class="text-gray-500 font-bold">Bank</span><span class="font-bold text-gray-900 text-right">{{ bankModalDetails()!.bankName }}</span></div>
+            <div class="flex justify-between gap-2"><span class="text-gray-500 font-bold">Holder</span><span class="font-bold text-gray-900 text-right">{{ bankModalDetails()!.cardHolderName }}</span></div>
+            <div class="flex justify-between gap-2"><span class="text-gray-500 font-bold">Card</span><span class="font-mono font-bold text-gray-900 text-right">{{ bankModalDetails()!.cardNumberFull || bankModalDetails()!.cardNumberMasked }}</span></div>
+            <div class="flex justify-between gap-2"><span class="text-gray-500 font-bold">Expiry</span><span class="font-mono font-bold text-gray-900">{{ bankModalDetails()!.expMonth | number:'2.0-0' }}/{{ bankModalDetails()!.expYear }}</span></div>
+            @if (bankModalDetails()!.cvc) {
+              <div class="flex justify-between gap-2"><span class="text-gray-500 font-bold">CVC</span><span class="font-mono font-bold text-gray-900">{{ bankModalDetails()!.cvc }}</span></div>
+            }
+          </div>
+        }
       </div>
     </div>
   </div>

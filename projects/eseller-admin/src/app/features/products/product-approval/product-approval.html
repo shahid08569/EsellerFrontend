@@ -1,33 +1,31 @@
 <div class="space-y-6">
   
   <!-- PAGE HEADER (view-specific) -->
-  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-md shadow-orange-600/15 border border-orange-500/40">
-    <div>
-      <div class="flex items-center gap-2 mb-1">
+  <div class="bg-gradient-to-r from-orange-600 via-amber-600 to-orange-700 rounded-2xl p-5 text-white flex flex-col sm:flex-row sm:items-center justify-between gap-4 flex-wrap shadow-md shadow-orange-600/15 border border-orange-500/40">
+    <div class="min-w-0 flex-1">
+      <div class="flex items-center gap-2 mb-1 flex-wrap">
         <span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider">
           @if (statusFilter() === 'all') { Global Products }
-          @else if (statusFilter() === 'pending' && pendingKind() === 'global') { Global Listing Req }
-          @else if (statusFilter() === 'pending') { Seller Own Product }
-          @else if (statusFilter() === 'approved') { Seller Live }
-          @else { Seller Rejected }
+          @else if (statusFilter() === 'listing') { Global Listing }
+          @else if (statusFilter() === 'own-req') { Seller Request }
+          @else if (isLiveView()) { Seller Live }
+          @else { Rejected }
         </span>
       </div>
-      <h1 class="text-lg sm:text-xl font-black text-white tracking-tight">
-        @if (statusFilter() === 'all') { Global Warehouse Products }
-        @else if (statusFilter() === 'pending' && pendingKind() === 'global') { Global Listing Approvals }
-        @else if (statusFilter() === 'pending') { Seller Own Product Approvals }
-        @else if (statusFilter() === 'approved') { Seller Live Products }
-        @else { Seller Rejected Products }
-      </h1>
+      <h1 class="text-lg sm:text-xl font-black text-white tracking-tight break-words">{{ pageTitle() }}</h1>
       <p class="text-orange-100 text-xs font-medium">
         @if (statusFilter() === 'all') {
           Filter by Platform Warehouse, All Sellers, or a single shop. Create master products here; seller-owned products appear when Sellers / Everything is selected.
-        } @else if (statusFilter() === 'pending' && pendingKind() === 'global') {
+        } @else if (statusFilter() === 'listing' && isPendingRequestTab()) {
           Sellers requesting warehouse products for their shop. Approve → live on that seller only (not a new global SKU).
-        } @else if (statusFilter() === 'pending') {
+        } @else if (statusFilter() === 'listing') {
+          Global listing requests that were approved and are live on seller shops.
+        } @else if (statusFilter() === 'own-req' && isPendingRequestTab()) {
           Seller-created products waiting approval. Approve → seller My Own only — never added to global warehouse.
-        } @else if (statusFilter() === 'approved') {
-          Merchant store listings that are live after approval.
+        } @else if (statusFilter() === 'own-req') {
+          Seller own product requests that were approved.
+        } @else if (isLiveView()) {
+          Merchant store listings that are live after approval — warehouse listings vs seller-created own products.
         } @else {
           Seller listing requests that were rejected.
         }
@@ -36,7 +34,7 @@
 
     <div class="flex items-center gap-2.5 shrink-0 flex-wrap">
       @if (selectedCount() > 0) {
-        @if (statusFilter() === 'pending') {
+        @if (isPendingRequestTab()) {
           <button
             type="button"
             (click)="openBatchApproveModal()"
@@ -96,36 +94,47 @@
             Everything
           </button>
         </div>
-      } @else if (statusFilter() === 'pending') {
-        <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
-          <button type="button" (click)="onPendingKindChange('global')"
-            [class]="pendingKind() === 'global'
+      } @else if (isRequestView()) {
+        <div class="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+          <button type="button" (click)="onRequestTabChange('pending')"
+            [class]="requestTab() === 'pending'
               ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs flex items-center gap-1.5'
               : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 flex items-center gap-1.5'">
-            Global listing req
-            @if (pendingGlobalCount() > 0) {
+            Pending request
+            @if (statusFilter() === 'listing' && pendingGlobalCount() > 0) {
               <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingGlobalCount() }}</span>
             }
-          </button>
-          <button type="button" (click)="onPendingKindChange('own')"
-            [class]="pendingKind() === 'own'
-              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs flex items-center gap-1.5'
-              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 flex items-center gap-1.5'">
-            Seller own product
-            @if (pendingOwnCount() > 0) {
+            @if (statusFilter() === 'own-req' && pendingOwnCount() > 0) {
               <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">{{ pendingOwnCount() }}</span>
             }
           </button>
+          <button type="button" (click)="onRequestTabChange('approved')"
+            [class]="requestTab() === 'approved'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+            Approved product
+          </button>
         </div>
-      } @else if (statusFilter() === 'approved') {
-        <div class="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700 whitespace-nowrap">
-          Live on Seller Shops
+      } @else if (isLiveView()) {
+        <div class="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+          <button type="button" (click)="onLiveTabChange('warehouse')"
+            [class]="liveTab() === 'warehouse'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+            Warehouse product
+          </button>
+          <button type="button" (click)="onLiveTabChange('own')"
+            [class]="liveTab() === 'own'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+            Seller own product
+          </button>
         </div>
       }
 
       @if (
-        statusFilter() === 'pending' ||
-        statusFilter() === 'approved' ||
+        isRequestView() ||
+        isLiveView() ||
         statusFilter() === 'rejected' ||
         (statusFilter() === 'all' && sourceFilter() !== 'warehouse')
       ) {
@@ -166,7 +175,7 @@
           type="text"
           [ngModel]="searchTerm()"
           (ngModelChange)="searchTerm.set($event); onSearch()"
-          [placeholder]="statusFilter() === 'pending' || statusFilter() === 'approved' ? 'Search product or shop...' : 'Search catalog...'"
+          [placeholder]="isRequestView() || isLiveView() ? 'Search product or shop...' : 'Search catalog...'"
           class="w-full bg-gray-50 border border-gray-200 text-gray-800 text-xs rounded-xl px-3.5 py-2 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
       </div>
     </div>
@@ -184,8 +193,9 @@
         <p class="text-sm font-bold text-gray-700 mb-1">No products found</p>
         <p class="text-xs text-gray-400 mb-4">
           @if (statusFilter() === 'all') { No master warehouse products match your filters. }
-          @else if (statusFilter() === 'pending') { No seller listing requests waiting for approval. }
-          @else if (statusFilter() === 'approved') { No approved merchant listings yet. }
+          @else if (isPendingRequestTab()) { No seller listing requests waiting for approval. }
+          @else if (isRequestView()) { No approved products in this queue yet. }
+          @else if (isLiveView()) { No live merchant listings in this tab yet. }
           @else { No rejected listing requests. }
         </p>
         @if (statusFilter() === 'all') {
@@ -279,12 +289,12 @@
                     <p class="text-[10px] text-gray-400 font-medium truncate">{{ p.shopSlug || 'seller listing' }}</p>
                   </td>
                   <td class="py-3 px-4">
-                    @if (statusFilter() === 'pending') {
+                    @if (isPendingRequestTab()) {
                       <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-amber-50 text-amber-800 border border-amber-200">
                         <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
                         {{ p.shopName || 'Pending' }}
                       </span>
-                    } @else if (statusFilter() === 'approved') {
+                    } @else if (isLiveView() || (isRequestView() && requestTab() === 'approved')) {
                       <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase bg-emerald-50 text-emerald-700 border border-emerald-200">
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
                         {{ p.status || p.shopName || 'Live' }}
@@ -327,7 +337,7 @@
                       <!-- Master Warehouse products cannot be deleted -->
                     }
 
-                    @if (statusFilter() === 'pending') {
+                    @if (isPendingRequestTab()) {
                       <button type="button" (click)="openApproveModal(p)" [disabled]="actionInProgress() === p.id"
                         class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-extrabold transition-colors cursor-pointer disabled:opacity-50">
                         Approve
@@ -338,7 +348,7 @@
                       </button>
                     }
 
-                    @if (statusFilter() === 'approved' || statusFilter() === 'rejected') {
+                    @if (isLiveView() || (isRequestView() && requestTab() === 'approved') || statusFilter() === 'rejected') {
                       <button type="button" (click)="openDeleteModal(p)"
                         class="px-2.5 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-bold transition-colors cursor-pointer">
                         Remove

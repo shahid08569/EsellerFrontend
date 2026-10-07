@@ -48,6 +48,18 @@ export class FinanceManager implements OnInit {
 
   readonly sellerWallets = signal<SellerWalletRow[]>([]);
   readonly isLoadingWallets = signal<boolean>(false);
+  readonly bankModalOpen = signal<boolean>(false);
+  readonly bankModalTitle = signal<string>('');
+  readonly bankModalLoading = signal<boolean>(false);
+  readonly bankModalDetails = signal<{
+    bankName: string;
+    cardHolderName: string;
+    cardNumberMasked: string;
+    cardNumberFull?: string;
+    expMonth: number;
+    expYear: number;
+    cvc?: string | null;
+  } | null>(null);
   readonly savingWalletAccountId = signal<string | null>(null);
 
   readonly payoutMethods = signal<AdminWithdrawalPaymentMethodDto[]>([]);
@@ -121,6 +133,28 @@ export class FinanceManager implements OnInit {
         row.accountId === accountId ? { ...row, balanceDraft: value } : row
       )
     );
+  }
+
+  viewSellerBank(accountId: string, name: string): void {
+    this.bankModalTitle.set(name || 'Seller');
+    this.bankModalDetails.set(null);
+    this.bankModalOpen.set(true);
+    this.bankModalLoading.set(true);
+    this.adminService.getSellerBankDetails(accountId).subscribe({
+      next: (d) => {
+        this.bankModalDetails.set(d);
+        this.bankModalLoading.set(false);
+      },
+      error: () => {
+        this.bankModalLoading.set(false);
+        this.toast.show('Failed to load bank details.', 'error');
+      }
+    });
+  }
+
+  closeBankModal(): void {
+    this.bankModalOpen.set(false);
+    this.bankModalDetails.set(null);
   }
 
   saveSellerWalletBalance(row: SellerWalletRow): void {

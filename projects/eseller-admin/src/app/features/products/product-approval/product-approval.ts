@@ -23,7 +23,9 @@ export interface VariantFormItem {
   imagePreviewUrl?: string | null;
 }
 
-type ProductStatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
+type ProductStatusFilter = 'all' | 'listing' | 'own-req' | 'live' | 'rejected';
+type RequestTab = 'pending' | 'approved';
+type LiveProductTab = 'warehouse' | 'own';
 /** On All Products: warehouse only, all sellers, or everything */
 type ProductSourceFilter = 'warehouse' | 'sellers' | 'all-sources';
 /** Pending queue: warehouse listing requests vs seller-created own products */
@@ -53,8 +55,10 @@ export class ProductApproval implements OnInit {
   readonly statusFilter = signal<ProductStatusFilter>('all');
   /** All Products source scope — warehouse / sellers / both */
   readonly sourceFilter = signal<ProductSourceFilter>('warehouse');
-  /** Pending: global warehouse listing req vs seller own new product */
+  /** Pending: global warehouse listing req vs seller own new product (legacy alias) */
   readonly pendingKind = signal<PendingKindFilter>('global');
+  readonly requestTab = signal<RequestTab>('pending');
+  readonly liveTab = signal<LiveProductTab>('warehouse');
   readonly pendingGlobalCount = signal<number>(0);
   readonly pendingOwnCount = signal<number>(0);
   readonly searchTerm = signal<string>('');
@@ -372,19 +376,7 @@ export class ProductApproval implements OnInit {
 
   ngOnInit(): void {
     this.route.queryParams.subscribe(params => {
-      const status = params['status'];
-      if (status && ['all', 'pending', 'approved', 'rejected'].includes(status)) {
-        this.statusFilter.set(status as ProductStatusFilter);
-      } else {
-        this.statusFilter.set('all');
-      }
-
-      const kind = (params['kind'] || '').toLowerCase();
-      if (kind === 'own' || kind === 'seller' || kind === 'new') {
-        this.pendingKind.set('own');
-      } else {
-        this.pendingKind.set('global');
-      }
+      this.applyRouteParams(params);
 
       const shopId = (params['shopId'] || '').trim();
       const shopName = (params['shopName'] || '').trim();
@@ -403,6 +395,51 @@ export class ProductApproval implements OnInit {
       this.selectedProductIds.set(new Set());
       this.loadInitialData();
     });
+  }
+
+  private applyRouteParams(params: Record<string, string>): void {
+    let status = (params['status'] || 'all').toLowerCase();
+    const kind = (params['kind'] || '').toLowerCase();
+    const tab = (params['tab'] || 'pending').toLowerCase();
+    const liveTabParam = (params['liveTab'] || 'warehouse').toLowerCase();
+
+    if (status === 'pending') {
+      status = kind === 'own' || kind === 'seller' || kind === 'new' ? 'own-req' : 'listing';
+    } else if (status === 'approved') {
+      status = 'live';
+    }
+
+    if (['all', 'listing', 'own-req', 'live', 'rejected'].includes(status)) {
+      this.statusFilter.set(status as ProductStatusFilter);
+    } else {
+      this.statusFilter.set('all');
+    }
+
+    if (kind === 'own' || kind === 'seller' || kind === 'new') {
+      this.pendingKind.set('own');
+    } else {
+      this.pendingKind.set('global');
+    }
+
+    this.requestTab.set(tab === 'approved' ? 'approved' : 'pending');
+    this.liveTab.set(liveTabParam === 'own' ? 'own' : 'warehouse');
+  }
+
+  isRequestView(): boolean {
+    const s = this.statusFilter();
+    return s === 'listing' || s === 'own-req';
+  }
+
+  isPendingRequestTab(): boolean {
+    return this.isRequestView() && this.requestTab() === 'pending';
+  }
+
+  isLiveView(): boolean {
+    return this.statusFilter() === 'live';
+  }
+
+  requestKind(): PendingKindFilter {
+    return this.statusFilter() === 'own-req' ? 'own' : 'global';
   }
 
   loadInitialData(): void {
@@ -1055,11 +1092,13 @@ export class ProductApproval implements OnInit {
       // Shop filter — seller views + All Products when sellers/all-sources
       const shopFilterActive =
         !!this.selectedShopName() || !!this.selectedShopId();
+      const sf = this.statusFilter();
       const shopFilterAllowed =
-        this.statusFilter() === 'pending' ||
-        this.statusFilter() === 'approved' ||
-        this.statusFilter() === 'rejected' ||
-        (this.statusFilter() === 'all' && this.sourceFilter() !== 'warehouse');
+        sf === 'listing' ||
+        sf === 'own-req' ||
+        sf === 'live' ||
+        sf === 'rejected' ||
+        (sf === 'all' && this.sourceFilter() !== 'warehouse');
 
       if (shopFilterAllowed && shopFilterActive) {
         const targetName = this.selectedShopName().trim().toLowerCase();
@@ -1111,22 +1150,57 @@ export class ProductApproval implements OnInit {
       return result;
     };
 
-    if (this.statusFilter() === 'pending') {
-      const kind = this.pendingKind();
-      this.adminService.getPendingProducts(1, 200, kind).subscribe({
+    if (this.isRequestView()) {
+      const kind = this.requestKind();
+      if (this.requestTab() === 'pending') {
+        this.adminService.getPendingProducts(1, 200, kind).subscribe({
+          next: (res) => {
+            let items = res?.items || [];
+            items = applyFilters(items);
+            this.products.set(items);
+            this.totalCount.set(items.length);
+            this.pendingProducts.set(items);
+            if (kind === 'global') this.pendingGlobalCount.set(res?.totalCount ?? items.length);
+            else this.pendingOwnCount.set(res?.totalCount ?? items.length);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            this.toast.show(err?.error?.error || 'Failed to fetch pending products.', 'error');
+          }
+        });
+      } else {
+        this.adminService.getApprovedSellerProducts(1, 500, kind).subscribe({
+          next: (res) => {
+            const items = applyFilters((res?.items || []).map(p => ({ ...p, isApproved: true })));
+            this.products.set(items);
+            this.totalCount.set(items.length);
+            this.isLoading.set(false);
+          },
+          error: (err) => {
+            this.isLoading.set(false);
+            this.toast.show(err?.error?.error || 'Failed to fetch approved products.', 'error');
+          }
+        });
+      }
+    } else if (this.statusFilter() === 'live') {
+      const apiKind = this.liveTab();
+      this.adminService.getApprovedSellerProducts(1, 500, apiKind).subscribe({
         next: (res) => {
           let items = res?.items || [];
-          items = applyFilters(items);
+          if (this.liveTab() === 'warehouse') {
+            items = items.filter(p => !!p.sourceProductId);
+          } else {
+            items = items.filter(p => !p.sourceProductId);
+          }
+          items = applyFilters(items.map(p => ({ ...p, isApproved: true })));
           this.products.set(items);
           this.totalCount.set(items.length);
-          this.pendingProducts.set(items);
-          if (kind === 'global') this.pendingGlobalCount.set(res?.totalCount ?? items.length);
-          else this.pendingOwnCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
         error: (err) => {
           this.isLoading.set(false);
-          this.toast.show(err?.error?.error || 'Failed to fetch pending products.', 'error');
+          this.toast.show(err?.error?.error || 'Failed to fetch live seller products.', 'error');
         }
       });
     } else if (this.statusFilter() === 'all') {
@@ -1201,20 +1275,6 @@ export class ProductApproval implements OnInit {
           this.toast.show(err?.error?.error || 'Failed to fetch rejected products.', 'error');
         }
       });
-    } else if (this.statusFilter() === 'approved') {
-      // Approved merchant store listings only
-      this.adminService.getApprovedSellerProducts(1, 500).subscribe({
-        next: (res) => {
-          const items = applyFilters((res?.items || []).map(p => ({ ...p, isApproved: true })));
-          this.products.set(items);
-          this.totalCount.set(items.length);
-          this.isLoading.set(false);
-        },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.toast.show(err?.error?.error || 'Failed to fetch approved products.', 'error');
-        }
-      });
     } else {
       this.adminService.getProducts(undefined, undefined, 1, 500).subscribe({
         next: (res) => {
@@ -1270,29 +1330,29 @@ export class ProductApproval implements OnInit {
     this.fetchProducts();
   }
 
-  onStatusTabChange(tab: ProductStatusFilter): void {
-    this.statusFilter.set(tab);
+  onRequestTabChange(tab: RequestTab): void {
+    this.requestTab.set(tab);
     this.currentPage.set(1);
     this.selectedProductIds.set(new Set());
-    if (tab === 'all') {
-      this.sourceFilter.set('warehouse');
-      this.selectedShopId.set('');
-      this.selectedShopName.set('');
-    }
+    const status = this.statusFilter();
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { status: tab, kind: tab === 'pending' ? this.pendingKind() : null },
+      queryParams: {
+        status,
+        kind: this.requestKind(),
+        tab
+      },
       queryParamsHandling: 'merge'
     });
   }
 
-  onPendingKindChange(kind: PendingKindFilter): void {
-    this.pendingKind.set(kind);
+  onLiveTabChange(tab: LiveProductTab): void {
+    this.liveTab.set(tab);
     this.currentPage.set(1);
     this.selectedProductIds.set(new Set());
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { status: 'pending', kind },
+      queryParams: { status: 'live', liveTab: tab },
       queryParamsHandling: 'merge'
     });
   }
@@ -1309,13 +1369,20 @@ export class ProductApproval implements OnInit {
 
   pageTitle(): string {
     switch (this.statusFilter()) {
-      case 'pending':
-        return this.pendingKind() === 'own'
-          ? 'Seller Own Product Approvals'
-          : 'Global Listing Approvals';
-      case 'approved': return 'Seller Live Products';
-      case 'rejected': return 'Seller Rejected Products';
-      default: return 'Global Warehouse Products';
+      case 'listing':
+        return this.requestTab() === 'approved'
+          ? 'Global Listing — Approved Products'
+          : 'Global Listing Requests';
+      case 'own-req':
+        return this.requestTab() === 'approved'
+          ? 'Seller Product Requests — Approved'
+          : 'Seller Product Requests';
+      case 'live':
+        return this.liveTab() === 'own' ? 'Seller Own Live Products' : 'Warehouse Listing Live Products';
+      case 'rejected':
+        return 'Rejected Products';
+      default:
+        return 'Global Warehouse Products';
     }
   }
 

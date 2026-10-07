@@ -1,17 +1,18 @@
 <div class="space-y-6">
 
-  <!-- Header -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Withdrawals & Payouts</h1>
-      <p class="text-sm text-gray-500 mt-0.5">Transfer your settled store profits to your US bank account via ACH or wire transfer.</p>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Withdrawals &amp; Payouts</h1>
+      <p class="text-sm text-gray-500 mt-0.5">Add your bank / card details to request a payout from your available balance.</p>
     </div>
-    <button 
-      type="button" 
-      (click)="openRequestModal()"
-      [disabled]="availableBalance() < minimumWithdrawal()"
-      class="px-4 py-2 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
-      <span>💸 Request Payout (Min. $ {{ minimumWithdrawal() | number:'1.0-0' }})</span>
+    <button
+      type="button"
+      (click)="openBankModal()"
+      class="px-4 py-2.5 bg-primary hover:bg-primary-hover text-white font-bold text-xs rounded-xl shadow-xs transition-colors flex items-center gap-2 cursor-pointer shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5z" />
+      </svg>
+      <span>Add bank detail to withdraw</span>
     </button>
   </div>
 
@@ -19,44 +20,25 @@
     <es-skeleton-layout variant="page" />
   } @else {
 
-    <!-- Balance Banner -->
     <div class="bg-gradient-to-r from-slate-900 to-indigo-950 rounded-3xl p-6 text-white shadow-xl flex flex-col sm:flex-row sm:items-center justify-between gap-4">
       <div>
-        <p class="text-xs font-bold text-indigo-300 uppercase tracking-widest">Available Balance For Payout</p>
+        <p class="text-xs font-bold text-indigo-300 uppercase tracking-widest">Available Balance For Withdraw</p>
         <p class="text-3xl font-black mt-2">$ {{ availableBalance() | number:'1.2-2' }}</p>
-        <p class="text-xs text-slate-400 mt-1">Available after Super Admin marks orders Delivered and credits your wallet.</p>
+        <p class="text-xs text-slate-400 mt-1">Credited when Super Admin marks orders Delivered.</p>
       </div>
-
-      <div class="text-right">
-        <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
-          ● Payout Gateway Active
-        </span>
+      <div class="text-left sm:text-right space-y-2">
+        @if (hasSavedBank()) {
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30">
+            ● Bank card on file · {{ savedMasked() }}
+          </span>
+        } @else {
+          <span class="inline-block px-3 py-1 rounded-full text-xs font-bold bg-amber-500/20 text-amber-200 border border-amber-500/30">
+            ● Add bank details to withdraw
+          </span>
+        }
       </div>
     </div>
 
-    <!-- Platform payment details (Super Admin) -->
-    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-4">
-      <div class="border-b border-gray-100 pb-3">
-        <h3 class="text-base font-bold text-gray-900">Payment details</h3>
-        <p class="text-xs text-gray-500 mt-0.5">Send your withdrawal to one of these Super Admin payout channels.</p>
-      </div>
-      @if (platformPaymentMethods().length === 0) {
-        <p class="text-xs text-amber-700 bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-          No active payout methods are configured yet. Contact Super Admin before submitting a request.
-        </p>
-      } @else {
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          @for (m of platformPaymentMethods(); track m.id) {
-            <div class="p-4 rounded-xl border border-indigo-100 bg-indigo-50/40 space-y-1">
-              <p class="text-sm font-black text-indigo-950">{{ m.name }}</p>
-              <p class="text-xs text-indigo-900/80 whitespace-pre-wrap leading-relaxed">{{ m.details }}</p>
-            </div>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Payout History Table -->
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6 space-y-4">
       <div class="border-b border-gray-100 pb-3 flex items-center justify-between">
         <h3 class="text-base font-bold text-gray-900">Withdrawal Request History</h3>
@@ -102,97 +84,113 @@
         </div>
       }
     </div>
-
   }
 
-  <!-- Request Modal -->
-  @if (requestModalOpen()) {
-    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-center justify-center p-4">
-      <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl space-y-4">
-        <div class="flex items-center justify-between border-b border-gray-100 pb-3">
-          <h3 class="text-base font-bold text-gray-900">Request Fund Withdrawal</h3>
-          <button (click)="closeRequestModal()" class="text-gray-400 hover:text-gray-700 font-bold text-xs p-1">✕</button>
+  <!-- Bank / card details modal (AmEx-style form) -->
+  @if (bankModalOpen()) {
+    <div class="fixed inset-0 z-50 bg-slate-950/70 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4" (click)="closeBankModal()">
+      <div class="bg-white rounded-t-3xl sm:rounded-3xl max-w-lg w-full shadow-2xl max-h-[95vh] overflow-y-auto" (click)="$event.stopPropagation()">
+        <div class="sticky top-0 bg-white z-10 px-5 sm:px-6 pt-5 pb-3 border-b border-gray-100 flex items-center justify-between">
+          <div>
+            <h3 class="text-base font-black text-gray-900">Add bank detail to withdraw</h3>
+            <p class="text-[11px] text-gray-500 mt-0.5">American Express / Visa / Mastercard style card details</p>
+          </div>
+          <button type="button" (click)="closeBankModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold text-sm cursor-pointer">✕</button>
         </div>
 
-        <div class="space-y-3">
-          <div class="p-3 bg-indigo-50 border border-indigo-100 rounded-xl text-xs flex justify-between">
-            <span class="text-indigo-800 font-medium">Available Balance:</span>
-            <span class="text-indigo-950 font-black">$ {{ availableBalance() | number:'1.2-2' }}</span>
+        <div class="p-5 sm:p-6 space-y-5">
+          <!-- Live card preview -->
+          <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#1B1F3B] via-[#2A2F5A] to-[#0F766E] text-white p-5 shadow-xl min-h-[168px]">
+            <div class="absolute -right-8 -top-8 w-32 h-32 rounded-full bg-white/10 blur-2xl pointer-events-none"></div>
+            <div class="flex items-start justify-between mb-6">
+              <span class="text-[10px] font-bold uppercase tracking-[0.2em] text-white/70">Eseller Payout Card</span>
+              <span class="text-xs font-black tracking-wide">AMEX / BANK</span>
+            </div>
+            <p class="font-mono text-lg sm:text-xl tracking-widest font-semibold mb-5">{{ cardPreview() }}</p>
+            <div class="flex items-end justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-[9px] uppercase tracking-wider text-white/50">Card holder</p>
+                <p class="text-xs font-bold truncate uppercase">{{ cardHolderName() || 'YOUR NAME' }}</p>
+              </div>
+              <div class="text-right shrink-0">
+                <p class="text-[9px] uppercase tracking-wider text-white/50">Expires</p>
+                <p class="text-xs font-bold font-mono">{{ expPreview() }}</p>
+              </div>
+            </div>
           </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Withdrawal Amount (USD) *</label>
-            <input 
-              type="number" 
-              [(ngModel)]="withdrawAmount"
-              [min]="minimumWithdrawal()"
-              [max]="availableBalance()"
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
-            <p class="text-[10px] text-gray-400 mt-1">Minimum withdrawal is $ {{ minimumWithdrawal() | number:'1.0-0' }} (set by Super Admin).</p>
-          </div>
+          <div class="grid grid-cols-1 gap-3">
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Bank name *</label>
+              <input type="text" [ngModel]="bankName()" (ngModelChange)="bankName.set($event)"
+                placeholder="e.g. Chase, Bank of America, American Express"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Platform payout method *</label>
-            @if (platformPaymentMethods().length === 0) {
-              <p class="text-xs text-rose-600 font-medium">No methods available — cannot submit until Super Admin adds one.</p>
-            } @else {
-              <select 
-                [ngModel]="selectedPaymentMethodId()"
-                (ngModelChange)="selectedPaymentMethodId.set($event)"
-                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
-                @for (m of platformPaymentMethods(); track m.id) {
-                  <option [value]="m.id">{{ m.name }}</option>
-                }
-              </select>
-              @if (selectedPlatformMethod(); as sel) {
-                <p class="text-[10px] text-gray-500 mt-1.5 p-2 bg-gray-50 rounded-lg border border-gray-100 whitespace-pre-wrap">
-                  <span class="font-bold text-gray-700">Pay to:</span> {{ sel.details }}
-                </p>
-              }
-            }
-          </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Card holder name *</label>
+              <input type="text" [ngModel]="cardHolderName()" (ngModelChange)="cardHolderName.set($event)"
+                placeholder="Name printed on card"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-semibold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Bank / Channel Name</label>
-            <input 
-              type="text" 
-              [(ngModel)]="bankName"
-              placeholder="e.g. Chase, Bank of America, Wells Fargo..."
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
-          </div>
+            <div>
+              <label class="block text-[11px] font-bold text-gray-700 mb-1">Card number *</label>
+              <input type="text" inputmode="numeric" autocomplete="cc-number"
+                [ngModel]="cardNumber()" (ngModelChange)="onCardNumberInput($event)"
+                placeholder="•••• •••• •••• ••••"
+                maxlength="19"
+                class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-semibold tracking-wider focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Account Title</label>
-            <input 
-              type="text" 
-              [(ngModel)]="accountTitle"
-              placeholder="Name on bank / wallet account"
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
-          </div>
+            <div class="grid grid-cols-3 gap-2.5">
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Exp month *</label>
+                <input type="text" inputmode="numeric" maxlength="2"
+                  [ngModel]="expMonth()" (ngModelChange)="expMonth.set(($event || '').replace(/\D/g, '').slice(0, 2))"
+                  placeholder="MM"
+                  class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-semibold text-center focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">Exp year *</label>
+                <input type="text" inputmode="numeric" maxlength="4"
+                  [ngModel]="expYear()" (ngModelChange)="expYear.set(($event || '').replace(/\D/g, '').slice(0, 4))"
+                  placeholder="YYYY"
+                  class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-semibold text-center focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-700 mb-1">CVC *</label>
+                <input type="password" inputmode="numeric" maxlength="4" autocomplete="cc-csc"
+                  [ngModel]="cvc()" (ngModelChange)="cvc.set(($event || '').replace(/\D/g, '').slice(0, 4))"
+                  placeholder="•••"
+                  class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2.5 text-sm font-mono font-semibold text-center focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+              </div>
+            </div>
 
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Account Number / IBAN *</label>
-            <input 
-              type="text" 
-              [(ngModel)]="accountNumber"
-              placeholder="e.g. routing 021000021 & account ending 4567"
-              class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
+            <div class="p-3 rounded-xl bg-indigo-50 border border-indigo-100 space-y-2">
+              <div class="flex justify-between text-xs">
+                <span class="text-indigo-800 font-medium">Available balance</span>
+                <span class="text-indigo-950 font-black">$ {{ availableBalance() | number:'1.2-2' }}</span>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-indigo-900 mb-1">Withdraw amount (USD) *</label>
+                <input type="number" [min]="minimumWithdrawal()" [max]="availableBalance()"
+                  [ngModel]="withdrawAmount()" (ngModelChange)="withdrawAmount.set(+$event || 0)"
+                  class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
+                <p class="text-[10px] text-indigo-700/80 mt-1">Minimum $ {{ minimumWithdrawal() | number:'1.0-0' }} (set by Super Admin).</p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
-          <button 
-            type="button" 
-            (click)="closeRequestModal()" 
-            class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 cursor-pointer">
-            Cancel
+        <div class="sticky bottom-0 bg-white border-t border-gray-100 px-5 sm:px-6 py-4 flex flex-col sm:flex-row gap-2 sm:justify-end">
+          <button type="button" (click)="saveBankOnly()" [disabled]="isSavingBank() || isSubmittingWithdraw()"
+            class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-800 font-bold text-xs cursor-pointer disabled:opacity-50 order-2 sm:order-1">
+            {{ isSavingBank() ? 'Saving…' : 'Save bank details only' }}
           </button>
-          <button 
-            type="button" 
-            (click)="submitWithdrawal()" 
-            [disabled]="isSubmitting() || withdrawAmount() < minimumWithdrawal() || withdrawAmount() > availableBalance() || platformPaymentMethods().length === 0"
-            class="px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-xl text-xs font-bold shadow-xs cursor-pointer disabled:opacity-50">
-            {{ isSubmitting() ? 'Submitting...' : 'Submit Request' }}
+          <button type="button" (click)="submitWithdrawWithBank()" [disabled]="isSavingBank() || isSubmittingWithdraw()"
+            class="px-4 py-2.5 rounded-xl bg-primary hover:bg-primary-hover text-white font-extrabold text-xs shadow-md cursor-pointer disabled:opacity-50 order-1 sm:order-2">
+            {{ isSubmittingWithdraw() ? 'Submitting…' : 'Save &amp; request withdraw' }}
           </button>
         </div>
       </div>

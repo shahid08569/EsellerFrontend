@@ -1,6 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { ActivatedRoute } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
@@ -24,6 +25,8 @@ type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'de
 export class OrderManagement implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
+  private readonly route = inject(ActivatedRoute);
+  private placeOrderOpenedFromQuery = false;
 
   readonly isLoading = signal<boolean>(true);
   readonly orders = signal<AdminOrderDto[]>([]);
@@ -168,6 +171,12 @@ export class OrderManagement implements OnInit {
   ngOnInit(): void {
     this.loadShops();
     this.loadOrders();
+    this.route.queryParams.subscribe(params => {
+      if (params['action'] === 'create' && !this.placeOrderOpenedFromQuery) {
+        this.placeOrderOpenedFromQuery = true;
+        this.openPlaceOrder();
+      }
+    });
   }
 
   loadShops(): void {
