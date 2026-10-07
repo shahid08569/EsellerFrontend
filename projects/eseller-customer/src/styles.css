@@ -10,15 +10,16 @@
 @import 'swiper/css/pagination';
 
 :root {
-  --color-primary: #E11D48;
-  --color-primary-hover: #BE123C;
-  --color-primary-active: #9F1239;
-  --color-primary-tint: #FFF1F2;
-  --color-primary-focus-ring: rgba(225, 29, 72, 0.15);
+  /* EsellerGlobal orange brand */
+  --color-primary: #EA580C;
+  --color-primary-hover: #C2410C;
+  --color-primary-active: #9A3412;
+  --color-primary-tint: #FFF7ED;
+  --color-primary-focus-ring: rgba(234, 88, 12, 0.15);
 }
 
 body {
-  background-color: #FFF5F6;
+  background-color: #FFF7ED;
 }
 /* ============================================================
    Swiper custom overrides
@@ -38,7 +39,7 @@ body {
 }
 
 .hero-swiper .swiper-pagination-bullet-active {
-  background: #E11D48;
+  background: #EA580C;
   width: 28px;
   border-radius: 9999px;
   box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.9);

@@ -26,10 +26,10 @@
         }
       </button>
 
-      <!-- Logo (center): transparent mark + tagline, tinted blog gray-50 — no chip/bg -->
-      <a routerLink="/" (click)="closeMobileMenu()" class="inline-flex items-center gap-2" aria-label="EsellerGlobal home">
-        <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-8 w-auto max-w-[42px] object-contain brand-logo-gray50" (error)="onNavLogoError($event)" />
-        <span class="text-[9px] font-semibold uppercase tracking-[0.12em] text-gray-50 leading-tight max-w-[72px]">{{ brandingTagline() }}</span>
+      <!-- Logo (center): mark on top, tagline under — larger logo, smaller text -->
+      <a routerLink="/" (click)="closeMobileMenu()" class="inline-flex flex-col items-center justify-center gap-0.5" aria-label="EsellerGlobal home">
+        <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-10 w-auto max-w-[56px] object-contain" (error)="onNavLogoError($event)" />
+        <span class="text-[7px] font-semibold uppercase tracking-[0.08em] text-white/95 leading-none whitespace-nowrap">{{ brandingTagline() }}</span>
       </a>
 
       <!-- Right icons -->
@@ -113,11 +113,11 @@
         </div>
       </div>
 
-      <!-- CENTER: Logo — transparent icon + tagline in blog gray-50 (no chip/bg) -->
+      <!-- CENTER: Logo up, tagline down — larger mark, smaller text -->
       <div class="flex justify-center">
-        <a routerLink="/" class="inline-flex items-center gap-2.5" aria-label="EsellerGlobal home">
-          <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-10 w-auto max-w-[52px] object-contain brand-logo-gray50" (error)="onNavLogoError($event)" />
-          <span class="text-[10px] font-semibold uppercase tracking-[0.14em] text-gray-50 leading-tight">{{ brandingTagline() }}</span>
+        <a routerLink="/" class="inline-flex flex-col items-center justify-center gap-1" aria-label="EsellerGlobal home">
+          <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-12 md:h-14 w-auto max-w-[72px] object-contain" (error)="onNavLogoError($event)" />
+          <span class="text-[8px] md:text-[9px] font-semibold uppercase tracking-[0.12em] text-white/95 leading-none">{{ brandingTagline() }}</span>
         </a>
       </div>
 

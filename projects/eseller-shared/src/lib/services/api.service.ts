@@ -5,8 +5,8 @@ import {
   HttpParams
 } from '@angular/common/http';
 import { Injectable, inject } from '@angular/core';
-import { Observable, throwError } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { Observable, throwError, TimeoutError } from 'rxjs';
+import { catchError, timeout } from 'rxjs/operators';
 
 import { ApiErrorResponse } from '../models/auth/auth.models';
 
@@ -14,6 +14,9 @@ interface RequestOptions {
   headers?: HttpHeaders;
   params?: HttpParams;
 }
+
+/** Avoid infinite spinners when API/host is down (e.g. IIS 503). */
+const REQUEST_TIMEOUT_MS = 12_000;
 
 /**
  * ============================================================
@@ -44,7 +47,7 @@ export class ApiService {
         headers: options?.headers,
         params: options?.params
       })
-      .pipe(catchError((err) => this.handleError(err)));
+      .pipe(timeout(REQUEST_TIMEOUT_MS), catchError((err) => this.handleError(err)));
   }
 
   // ============================================================
@@ -57,7 +60,7 @@ export class ApiService {
         headers: options?.headers,
         params: options?.params
       })
-      .pipe(catchError((err) => this.handleError(err)));
+      .pipe(timeout(REQUEST_TIMEOUT_MS), catchError((err) => this.handleError(err)));
   }
 
   /** Multipart upload — do not set Content-Type (browser sets boundary). */
@@ -68,7 +71,7 @@ export class ApiService {
         headers: options?.headers,
         params: options?.params
       })
-      .pipe(catchError((err) => this.handleError(err)));
+      .pipe(timeout(REQUEST_TIMEOUT_MS * 2), catchError((err) => this.handleError(err)));
   }
 
   // ============================================================
@@ -81,7 +84,7 @@ export class ApiService {
         headers: options?.headers,
         params: options?.params
       })
-      .pipe(catchError((err) => this.handleError(err)));
+      .pipe(timeout(REQUEST_TIMEOUT_MS), catchError((err) => this.handleError(err)));
   }
 
   // ============================================================
@@ -94,7 +97,7 @@ export class ApiService {
         headers: options?.headers,
         params: options?.params
       })
-      .pipe(catchError((err) => this.handleError(err)));
+      .pipe(timeout(REQUEST_TIMEOUT_MS), catchError((err) => this.handleError(err)));
   }
 
   // ============================================================
@@ -107,7 +110,7 @@ export class ApiService {
         headers: options?.headers,
         params: options?.params
       })
-      .pipe(catchError((err) => this.handleError(err)));
+      .pipe(timeout(REQUEST_TIMEOUT_MS), catchError((err) => this.handleError(err)));
   }
 
   // ============================================================
@@ -119,6 +122,13 @@ export class ApiService {
   }
 
   private handleError(err: unknown): Observable<never> {
+    if (err instanceof TimeoutError) {
+      return throwError(() => ({
+        error: 'Request timed out. The server may be restarting — try again shortly.',
+        errorCode: 'TIMEOUT'
+      } as ApiErrorResponse));
+    }
+
     // errorInterceptor already normalised — pass through
     if (err && typeof err === 'object' && 'error' in err && 'errorCode' in err && !('status' in err)) {
       return throwError(() => err as ApiErrorResponse);
