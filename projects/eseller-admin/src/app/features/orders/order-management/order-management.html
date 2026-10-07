@@ -556,109 +556,223 @@
   </div>
 }
 
-<!-- Place Order Modal (Super Admin → seller) -->
+<!-- Place Order Modal (Super Admin → seller catalog) -->
 @if (placeOrderOpen()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-4" (click)="closePlaceOrder()">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full overflow-hidden" (click)="$event.stopPropagation()">
-      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-4" (click)="closePlaceOrder()">
+    <div
+      class="bg-white rounded-2xl shadow-2xl max-w-6xl w-full max-h-[92vh] flex flex-col overflow-hidden border border-gray-100"
+      (click)="$event.stopPropagation()">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between shrink-0">
         <div>
-          <h3 class="text-base font-black text-gray-900">Place Order to Seller</h3>
-          <p class="text-[11px] text-gray-500 mt-0.5">Order will appear in that shop’s order list.</p>
+          <h3 class="text-base font-black text-gray-900">Place Custom Order</h3>
+          <p class="text-[11px] text-gray-500 mt-0.5">
+            Browse approved seller products — shop is set from the item you pick. Order appears in that seller’s list.
+          </p>
         </div>
         <button type="button" (click)="closePlaceOrder()" class="text-gray-400 hover:text-gray-700 text-lg font-bold cursor-pointer">&times;</button>
       </div>
 
-      <div class="p-5 space-y-3.5 max-h-[70vh] overflow-y-auto">
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Seller shop</label>
-          <select
-            [ngModel]="placeShopId()"
-            (ngModelChange)="onPlaceShopChange($event)"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500">
-            <option value="">Select seller…</option>
-            @for (s of shops(); track s.id) {
-              <option [value]="s.id">{{ s.name }}</option>
+      <div class="flex flex-col lg:flex-row flex-1 min-h-0">
+        <!-- LEFT: product grid + checkout -->
+        <div class="flex-1 flex flex-col min-h-0 min-w-0 border-b lg:border-b-0 lg:border-r border-gray-100">
+          <div class="px-4 py-2.5 bg-gray-50/80 border-b border-gray-100 flex items-center justify-between gap-2 shrink-0">
+            <span class="text-[11px] font-bold text-gray-600 uppercase tracking-wide">
+              Approved products
+              <span class="text-orange-600 ml-1">{{ filteredPlaceProducts().length }}</span>
+            </span>
+            @if (placeSelectedProduct()) {
+              <span class="text-[10px] font-semibold text-gray-500 truncate max-w-[50%]">
+                Shop: <span class="text-gray-800">{{ placeSelectedProduct()!.shopName || '—' }}</span>
+              </span>
             }
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Product</label>
-          <select
-            [ngModel]="placeProductId()"
-            (ngModelChange)="onPlaceProductChange($event)"
-            [disabled]="!placeShopId() || placeLoadingProducts()"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 disabled:opacity-50">
-            <option value="">{{ placeLoadingProducts() ? 'Loading…' : 'Select approved product…' }}</option>
-            @for (p of placeProducts(); track p.id) {
-              <option [value]="p.id">{{ p.name }}</option>
-            }
-          </select>
-        </div>
-
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Variant</label>
-          <select
-            [ngModel]="placeVariantId()"
-            (ngModelChange)="placeVariantId.set($event)"
-            [disabled]="!placeProductId() || placeLoadingVariants()"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 disabled:opacity-50">
-            <option value="">{{ placeLoadingVariants() ? 'Loading…' : 'Select variant…' }}</option>
-            @for (v of placeVariants(); track v.id) {
-              <option [value]="v.id">{{ v.sku }} — Rs {{ v.price }} (stock {{ v.stockQty }})</option>
-            }
-          </select>
-        </div>
-
-        <div class="grid grid-cols-2 gap-3">
-          <div>
-            <label class="block text-[11px] font-bold text-gray-600 mb-1">Quantity</label>
-            <input type="number" min="1" [ngModel]="placeQty()" (ngModelChange)="placeQty.set(+$event || 1)"
-              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
           </div>
-          <div>
-            <label class="block text-[11px] font-bold text-gray-600 mb-1">Buyer name</label>
-            <input type="text" [ngModel]="placeCustomerName()" (ngModelChange)="placeCustomerName.set($event)"
-              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
+
+          <div class="flex-1 overflow-y-auto p-4 min-h-[200px] lg:min-h-[280px]">
+            @if (placeLoadingProducts()) {
+              <es-skeleton-layout variant="product-grid" [count]="8" />
+            } @else if (filteredPlaceProducts().length === 0) {
+              <div class="py-12 text-center text-gray-400">
+                <p class="text-sm font-bold text-gray-600">No products match your filters</p>
+                <p class="text-xs mt-1">Try clearing filters or a different search term.</p>
+                <button type="button" (click)="clearPlaceFilters()"
+                  class="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white text-xs font-bold cursor-pointer hover:bg-orange-700">
+                  Clear filters
+                </button>
+              </div>
+            } @else {
+              <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-3">
+                @for (p of filteredPlaceProducts(); track p.id) {
+                  <button
+                    type="button"
+                    (click)="selectPlaceProduct(p)"
+                    [class]="isPlaceProductSelected(p.id)
+                      ? 'text-left rounded-xl border-2 border-orange-500 bg-orange-50/50 shadow-sm ring-2 ring-orange-500/20 p-2.5 flex flex-col gap-2 transition-all cursor-pointer'
+                      : 'text-left rounded-xl border border-gray-200 bg-white hover:border-orange-300 hover:shadow-xs p-2.5 flex flex-col gap-2 transition-all cursor-pointer'">
+                    <div class="w-full aspect-square rounded-lg bg-gray-100 overflow-hidden relative">
+                      @if (getPlaceProductImage(p)) {
+                        <img [src]="getPlaceProductImage(p)" [alt]="p.name" class="w-full h-full object-cover"
+                          (error)="onImgError($event)" />
+                      } @else {
+                        <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">No image</div>
+                      }
+                      <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md bg-black/60 text-[9px] font-bold text-white truncate max-w-[90%]">
+                        {{ p.shopName || 'Shop' }}
+                      </span>
+                    </div>
+                    <div class="space-y-0.5 min-w-0">
+                      <p class="text-[10px] text-gray-400 font-semibold truncate">{{ p.brandName || 'Brand' }}</p>
+                      <p class="text-[11px] font-bold text-gray-900 line-clamp-2 leading-snug">{{ p.name }}</p>
+                      <p class="text-xs font-extrabold text-orange-600">Rs {{ p.basePrice | number:'1.0-0' }}</p>
+                    </div>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+
+          <!-- Checkout / customer details -->
+          <div class="shrink-0 border-t border-gray-100 bg-gray-50/60 p-4 space-y-3 max-h-[45vh] overflow-y-auto">
+            @if (placeSelectedProduct(); as sel) {
+              <div class="flex items-start gap-3 pb-2 border-b border-gray-200/80">
+                <div class="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0">
+                  @if (getPlaceProductImage(sel)) {
+                    <img [src]="getPlaceProductImage(sel)" [alt]="sel.name" class="w-full h-full object-cover" (error)="onImgError($event)" />
+                  }
+                </div>
+                <div class="min-w-0 flex-1">
+                  <p class="text-xs font-black text-gray-900 truncate">{{ sel.name }}</p>
+                  <p class="text-[10px] text-gray-500">{{ sel.shopName }} · {{ sel.categoryName }}</p>
+                </div>
+              </div>
+            } @else {
+              <p class="text-[11px] text-gray-500 font-medium">Select a product above to configure variant and delivery details.</p>
+            }
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">Variant</label>
+                <select
+                  [ngModel]="placeVariantId()"
+                  (ngModelChange)="placeVariantId.set($event)"
+                  [disabled]="!placeProductId() || placeLoadingVariants()"
+                  class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 disabled:opacity-50">
+                  <option value="">{{ placeLoadingVariants() ? 'Loading variants…' : (placeProductId() ? 'Select variant…' : 'Pick a product first') }}</option>
+                  @for (v of placeVariants(); track v.id) {
+                    <option [value]="v.id">{{ v.sku }} — Rs {{ v.price }} (stock {{ v.stockQty }})</option>
+                  }
+                </select>
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">Quantity</label>
+                <input type="number" min="1" [ngModel]="placeQty()" (ngModelChange)="placeQty.set(+$event || 1)"
+                  class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">Buyer name</label>
+                <input type="text" [ngModel]="placeCustomerName()" (ngModelChange)="placeCustomerName.set($event)"
+                  class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">Phone (optional)</label>
+                <input type="text" [ngModel]="placeCustomerPhone()" (ngModelChange)="placeCustomerPhone.set($event)"
+                  class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+              <div>
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">City (optional)</label>
+                <input type="text" [ngModel]="placeCity()" (ngModelChange)="placeCity.set($event)"
+                  class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+              <div class="sm:col-span-2">
+                <label class="block text-[11px] font-bold text-gray-600 mb-1">Address (optional)</label>
+                <input type="text" [ngModel]="placeAddress()" (ngModelChange)="placeAddress.set($event)"
+                  class="w-full px-3 py-2.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+            </div>
+
+            <div class="flex items-center justify-end gap-2.5 pt-1">
+              <button type="button" [disabled]="isPlacingOrder()" (click)="closePlaceOrder()"
+                class="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-bold text-xs cursor-pointer disabled:opacity-50">
+                Cancel
+              </button>
+              <button type="button" [disabled]="isPlacingOrder()" (click)="submitPlaceOrder()"
+                class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md cursor-pointer disabled:opacity-50">
+                @if (isPlacingOrder()) {
+                  <svg class="animate-spin w-3.5 h-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                  </svg>
+                  <span>Placing…</span>
+                } @else {
+                  <span>Place Order</span>
+                }
+              </button>
+            </div>
           </div>
         </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Phone (optional)</label>
-          <input type="text" [ngModel]="placeCustomerPhone()" (ngModelChange)="placeCustomerPhone.set($event)"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
-        </div>
+        <!-- RIGHT: filters -->
+        <aside class="w-full lg:w-72 shrink-0 bg-white p-4 space-y-4 overflow-y-auto max-h-[40vh] lg:max-h-none">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black text-gray-800 uppercase tracking-wide">Filters</h4>
+            <button type="button" (click)="clearPlaceFilters()"
+              class="text-[10px] font-bold text-orange-600 hover:text-orange-700 cursor-pointer">
+              Clear all
+            </button>
+          </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">Address (optional)</label>
-          <input type="text" [ngModel]="placeAddress()" (ngModelChange)="placeAddress.set($event)"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
-        </div>
+          <div>
+            <label class="block text-[11px] font-bold text-gray-600 mb-1">Search</label>
+            <input
+              type="text"
+              [ngModel]="placeFilterSearch()"
+              (ngModelChange)="placeFilterSearch.set($event)"
+              placeholder="Product, shop, brand…"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/20" />
+          </div>
 
-        <div>
-          <label class="block text-[11px] font-bold text-gray-600 mb-1">City (optional)</label>
-          <input type="text" [ngModel]="placeCity()" (ngModelChange)="placeCity.set($event)"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold outline-hidden focus:border-orange-500" />
-        </div>
-      </div>
+          <div>
+            <label class="block text-[11px] font-bold text-gray-600 mb-1">Shop</label>
+            <select
+              [ngModel]="placeFilterShopId()"
+              (ngModelChange)="placeFilterShopId.set($event)"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
+              <option value="all">All shops</option>
+              @for (s of shops(); track s.id) {
+                <option [value]="s.id">{{ s.name }}</option>
+              }
+            </select>
+          </div>
 
-      <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-2.5">
-        <button type="button" [disabled]="isPlacingOrder()" (click)="closePlaceOrder()"
-          class="px-4 py-2 rounded-xl border border-gray-200 bg-white hover:bg-gray-100 text-gray-700 font-bold text-xs cursor-pointer disabled:opacity-50">
-          Cancel
-        </button>
-        <button type="button" [disabled]="isPlacingOrder()" (click)="submitPlaceOrder()"
-          class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md cursor-pointer disabled:opacity-50">
-          @if (isPlacingOrder()) {
-            <svg class="animate-spin w-3.5 h-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
-            </svg>
-            <span>Placing…</span>
-          } @else {
-            <span>Place Order</span>
-          }
-        </button>
+          <div>
+            <label class="block text-[11px] font-bold text-gray-600 mb-1">Category</label>
+            <select
+              [ngModel]="placeFilterCategoryId()"
+              (ngModelChange)="placeFilterCategoryId.set($event)"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
+              <option value="all">All categories</option>
+              @for (cat of placeCategories(); track cat.id) {
+                <option [value]="cat.id">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-bold text-gray-600 mb-1">Brand</label>
+            <select
+              [ngModel]="placeFilterBrandId()"
+              (ngModelChange)="placeFilterBrandId.set($event)"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
+              <option value="all">All brands</option>
+              @for (b of placeBrands(); track b.id) {
+                <option [value]="b.id">{{ b.name }}</option>
+              }
+            </select>
+          </div>
+
+          <p class="text-[10px] text-gray-400 leading-relaxed pt-2 border-t border-gray-100">
+            After placing, approve payment and update status from the orders table — sellers see updates in their order list.
+          </p>
+        </aside>
       </div>
     </div>
   </div>

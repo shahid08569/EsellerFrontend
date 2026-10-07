@@ -14,6 +14,9 @@ export interface FormVariant {
   stockQty: number;
   lowStockThreshold: number;
   attributes: FormVariantAttribute[];
+  imageFile?: File | null;
+  imagePreviewUrl?: string | null;
+  imageUrl?: string | null;
 }
 
 @Component({
@@ -114,5 +117,40 @@ export class StepVariantsComponent {
       });
     }
     this.variantsChange.emit(current);
+  }
+
+  onVariantImageSelected(index: number, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const current = [...this.variants()];
+      if (!current[index]) return;
+      current[index] = {
+        ...current[index],
+        imageFile: file,
+        imagePreviewUrl: e.target?.result as string
+      };
+      this.variantsChange.emit(current);
+    };
+    reader.readAsDataURL(file);
+    input.value = '';
+  }
+
+  clearVariantImage(index: number): void {
+    const current = [...this.variants()];
+    if (!current[index]) return;
+    current[index] = {
+      ...current[index],
+      imageFile: null,
+      imagePreviewUrl: null
+    };
+    this.variantsChange.emit(current);
+  }
+
+  variantImageSrc(v: FormVariant): string | null {
+    return v.imagePreviewUrl || v.imageUrl || null;
   }
 }

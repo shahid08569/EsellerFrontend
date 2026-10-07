@@ -15,7 +15,7 @@ import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-m
 import { StepBasicComponent, FlatCategoryOption } from './steps/step-basic/step-basic.component';
 import { StepMediaComponent, QueuedImage } from './steps/step-media/step-media.component';
 import { StepVariantsComponent, FormVariant } from './steps/step-variants/step-variants.component';
-import { forkJoin, of, catchError, Observable } from 'rxjs';
+import { forkJoin, of, catchError, Observable, switchMap, map } from 'rxjs';
 
 @Component({
   selector: 'app-product-form',
@@ -278,7 +278,8 @@ export class ProductForm implements OnInit {
             price: v.price,
             stockQty: v.stockQty,
             lowStockThreshold: v.lowStockThreshold,
-            attributes: (v.attributes || []).map(a => ({ name: a.attributeName, value: a.attributeValue }))
+            attributes: (v.attributes || []).map(a => ({ name: a.attributeName, value: a.attributeValue })),
+            imageUrl: v.imageUrl ?? null
           }));
           this.variants.set(formVars);
         }
@@ -477,6 +478,15 @@ export class ProductForm implements OnInit {
         attributes: safeAttrs
       };
       return this.productService.createProductVariant(productId, req).pipe(
+        switchMap(varRes => {
+          if (v.imageFile && varRes?.variantId) {
+            return this.productService.uploadVariantImage(productId, varRes.variantId, v.imageFile).pipe(
+              map(() => varRes),
+              catchError(() => of(varRes))
+            );
+          }
+          return of(varRes);
+        }),
         catchError(() => of(null))
       );
     });
@@ -589,20 +599,30 @@ export class ProductForm implements OnInit {
           }
 
           const queued = this.queuedImages();
-          const imageUpload$ = queued.length > 0 
-            ? this.productService.uploadMultipleImages(newProductId, queued.map(q => q.file)).pipe(
-                catchError(() => of(null))
-              )
-            : of(null);
-
           this.submittingStep.set(`2/3 Uploading ${queued.length} product photos...`);
 
-          imageUpload$.subscribe(() => {
+          const afterImages = () => {
             this.submittingStep.set('3/3 Creating inventory variants...');
             const variantRequests$ = this.buildVariantRequests(newProductId);
-            forkJoin(variantRequests$).subscribe(() => {
-              this.finishCreation(newProductId);
+            forkJoin(variantRequests$).subscribe({
+              next: () => this.finishCreation(newProductId),
+              error: () => this.finishCreation(newProductId)
             });
+          };
+
+          if (queued.length === 0) {
+            afterImages();
+            return;
+          }
+
+          this.productService.uploadMultipleImages(newProductId, queued.map(q => q.file)).subscribe({
+            next: () => afterImages(),
+            error: (imgErr) => {
+              this.isSubmitting.set(false);
+              const msg = imgErr?.error || imgErr?.error?.error || imgErr?.message || 'Photo upload failed';
+              this.toast.show(`Product created but images failed: ${msg}. Open the product to re-upload photos.`, 'error');
+              this.finishCreation(newProductId);
+            }
           });
         },
         error: (err) => {

@@ -26,7 +26,9 @@ import {
   AdminSettingDto,
   AdminAuditLogDto,
   AdminReviewDto,
-  UserLocationLogDto
+  UserLocationLogDto,
+  AdminSellerWalletDto,
+  AdminWithdrawalPaymentMethodDto
 } from '../models/admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -251,8 +253,14 @@ export class AdminService {
   // ═══════════════════════════════════════════════════════════
   // 3. PRODUCTS
   // ═══════════════════════════════════════════════════════════
-  getPendingProducts(pageNumber: number = 1, pageSize: number = 50): Observable<PagedResult<AdminProductDto>> {
-    return this.api.get<PagedResult<AdminProductDto>>(`/admin/products/pending?pageNumber=${pageNumber}&pageSize=${pageSize}`).pipe(
+  getPendingProducts(
+    pageNumber: number = 1,
+    pageSize: number = 50,
+    kind?: 'global' | 'own' | string | null
+  ): Observable<PagedResult<AdminProductDto>> {
+    let url = `/admin/products/pending?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+    if (kind) url += `&kind=${encodeURIComponent(kind)}`;
+    return this.api.get<PagedResult<AdminProductDto>>(url).pipe(
       catchError(() => of({ items: [], totalCount: 0, pageNumber: 1, pageSize: 50, totalPages: 0, hasPreviousPage: false, hasNextPage: false }))
     );
   }
@@ -914,6 +922,78 @@ export class AdminService {
 
   processWithdrawal(id: string, transactionReference?: string): Observable<any> {
     return this.api.put<any>(`/admin/affiliate/withdrawals/${id}/process`, { transactionReference });
+  }
+
+  getSellerWallets(): Observable<AdminSellerWalletDto[]> {
+    return this.api.get<any>('/admin/seller-wallets').pipe(
+      map(res => {
+        const list = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+        return list.map((w: any) => ({
+          accountId: String(w.accountId ?? w.AccountId ?? ''),
+          shopkeeperName: w.shopkeeperName ?? w.ShopkeeperName ?? 'Shopkeeper',
+          shopName: w.shopName ?? w.ShopName ?? null,
+          walletBalance: Number(w.walletBalance ?? w.WalletBalance ?? 0),
+          pendingEarnings: Number(w.pendingEarnings ?? w.PendingEarnings ?? 0),
+          availableEarnings: Number(w.availableEarnings ?? w.AvailableEarnings ?? 0)
+        })) as AdminSellerWalletDto[];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  updateSellerWalletBalance(accountId: string, balance: number): Observable<{ message?: string; walletBalance?: number }> {
+    return this.api.put<{ message?: string; walletBalance?: number }>(
+      `/admin/seller-wallets/${accountId}/balance`,
+      { balance }
+    );
+  }
+
+  private mapWithdrawalPaymentMethod(m: any): AdminWithdrawalPaymentMethodDto {
+    return {
+      id: String(m.id ?? m.Id ?? ''),
+      name: m.name ?? m.Name ?? '',
+      details: m.details ?? m.Details ?? '',
+      isActive: (m.isActive ?? m.IsActive) !== false
+    };
+  }
+
+  getWithdrawalPaymentMethods(): Observable<AdminWithdrawalPaymentMethodDto[]> {
+    return this.api.get<any>('/admin/withdrawal-payment-methods').pipe(
+      map(res => {
+        const list = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+        return list.map((m: any) => this.mapWithdrawalPaymentMethod(m));
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  createWithdrawalPaymentMethod(data: {
+    name: string;
+    details: string;
+    isActive: boolean;
+  }): Observable<{ item: AdminWithdrawalPaymentMethodDto; message?: string }> {
+    return this.api.post<any>('/admin/withdrawal-payment-methods', data).pipe(
+      map(res => ({
+        item: this.mapWithdrawalPaymentMethod(res?.item ?? res),
+        message: res?.message
+      }))
+    );
+  }
+
+  updateWithdrawalPaymentMethod(
+    id: string,
+    data: { name: string; details: string; isActive: boolean }
+  ): Observable<{ item: AdminWithdrawalPaymentMethodDto; message?: string }> {
+    return this.api.put<any>(`/admin/withdrawal-payment-methods/${id}`, data).pipe(
+      map(res => ({
+        item: this.mapWithdrawalPaymentMethod(res?.item ?? res),
+        message: res?.message
+      }))
+    );
+  }
+
+  deleteWithdrawalPaymentMethod(id: string): Observable<{ message?: string }> {
+    return this.api.delete<{ message?: string }>(`/admin/withdrawal-payment-methods/${id}`);
   }
 
   // ═══════════════════════════════════════════════════════════

@@ -175,41 +175,37 @@
         <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
           @for (item of queuedImages(); track $index; let idx = $index) {
             <div class="group relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-square shadow-2xs hover:shadow-md transition-all">
-              <img [src]="item.previewUrl" [alt]="item.name" class="w-full h-full object-cover">
+              <img [src]="item.previewUrl" [alt]="item.name" class="w-full h-full object-cover pointer-events-none">
               
-              <!-- First Image is the Cover -->
               @if (idx === 0) {
-                <div class="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1">
+                <div class="absolute top-1.5 left-1.5 z-20 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs flex items-center gap-1 pointer-events-none">
                   ★ Cover
                 </div>
               }
 
-              <!-- Overlay Actions on Hover -->
-              <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col justify-between p-2">
-                <div class="flex justify-end">
-                  <button 
-                    type="button" 
-                    (click)="removeQueued.emit(idx)" 
-                    class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center hover:bg-rose-700 transition-colors shadow-xs"
-                    title="Remove photo">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                @if (idx > 0) {
-                  <button 
-                    type="button" 
-                    (click)="reorderCover.emit(idx)" 
-                    class="w-full py-1 bg-white/90 hover:bg-white text-gray-900 font-bold text-[10px] rounded-md transition-colors shadow-xs">
-                    Make Cover
-                  </button>
-                }
+              <!-- Actions always clickable (not blocked by filename overlay) -->
+              <div class="absolute top-1.5 right-1.5 z-30 flex flex-col gap-1">
+                <button 
+                  type="button" 
+                  (click)="removeQueued.emit(idx); $event.stopPropagation()" 
+                  class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center hover:bg-rose-700 transition-colors shadow-xs cursor-pointer"
+                  title="Remove photo">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
 
-              <!-- Footer with file size -->
-              <div class="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/70 to-transparent p-1.5 text-center">
+              @if (idx > 0) {
+                <button 
+                  type="button" 
+                  (click)="reorderCover.emit(idx); $event.stopPropagation()" 
+                  class="absolute bottom-8 inset-x-1.5 z-30 py-1.5 bg-white hover:bg-emerald-50 text-gray-900 font-bold text-[10px] rounded-md transition-colors shadow-md border border-gray-200 cursor-pointer">
+                  Make Cover
+                </button>
+              }
+
+              <div class="absolute bottom-0 inset-x-0 z-10 bg-gradient-to-t from-black/70 to-transparent p-1.5 text-center pointer-events-none">
                 <p class="text-[10px] text-white/90 truncate px-1">{{ item.name }}</p>
                 <p class="text-[9px] text-white/60">{{ formatBytes(item.size) }}</p>
               </div>

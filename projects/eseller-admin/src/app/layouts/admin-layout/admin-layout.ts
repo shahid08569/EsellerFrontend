@@ -31,6 +31,8 @@ export class AdminLayout implements OnInit {
   readonly pendingShopsCount = signal<number>(0);
   readonly totalShopsCount = signal<number>(0);
   readonly pendingProductsCount = signal<number>(0);
+  readonly pendingGlobalCount = signal<number>(0);
+  readonly pendingOwnCount = signal<number>(0);
   /** Tracks full URL (incl. query) so sidebar active styles update on tab/view changes */
   readonly currentUrl = signal<string>('');
 
@@ -80,11 +82,20 @@ export class AdminLayout implements OnInit {
     return this.router.url.startsWith('/dashboard');
   }
 
-  isProductNav(status: 'all' | 'pending' | 'approved' | 'rejected'): boolean {
+  isProductNav(status: 'all' | 'pending' | 'pending-global' | 'pending-own' | 'approved' | 'rejected'): boolean {
     const url = this.currentUrl() || this.router.url || '';
     if (!url.startsWith('/products')) return false;
     if (status === 'all') {
       return !url.includes('status=') || url.includes('status=all');
+    }
+    if (status === 'pending-global') {
+      return url.includes('status=pending') && (!url.includes('kind=') || url.includes('kind=global') || url.includes('kind=warehouse'));
+    }
+    if (status === 'pending-own') {
+      return url.includes('status=pending') && (url.includes('kind=own') || url.includes('kind=seller') || url.includes('kind=new'));
+    }
+    if (status === 'pending') {
+      return url.includes('status=pending');
     }
     return url.includes(`status=${status}`);
   }
@@ -144,9 +155,17 @@ export class AdminLayout implements OnInit {
       error: () => {}
     });
 
-    this.adminService.getPendingProducts(1, 1).subscribe({
+    this.adminService.getPendingProducts(1, 1, 'global').subscribe({
       next: (res) => {
-        this.pendingProductsCount.set(res?.totalCount || 0);
+        this.pendingGlobalCount.set(res?.totalCount || 0);
+        this.pendingProductsCount.set((res?.totalCount || 0) + this.pendingOwnCount());
+      },
+      error: () => {}
+    });
+    this.adminService.getPendingProducts(1, 1, 'own').subscribe({
+      next: (res) => {
+        this.pendingOwnCount.set(res?.totalCount || 0);
+        this.pendingProductsCount.set(this.pendingGlobalCount() + (res?.totalCount || 0));
       },
       error: () => {}
     });

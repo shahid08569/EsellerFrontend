@@ -4,71 +4,26 @@
     (mouseenter)="onMouseEnter()"
     (mouseleave)="onMouseLeave()">
 
-    <!-- PINTEREST 3D LUXURY SHOWCASE HERO (INLINE CSS GRADIENT, ZERO CLIPPING, BULLETPROOF CONTRAST) -->
+    <!-- Showcase hero: product centered-right so left blur copy never covers it -->
     <div 
       [style.background]="getBackgroundStyle(currentBanner())"
-      class="relative overflow-hidden w-full min-h-[560px] sm:min-h-[620px] lg:min-h-[660px] flex items-center justify-between px-6 sm:px-12 md:px-16 lg:px-24 py-8 sm:py-10 lg:py-12 transition-all duration-700">
+      class="relative overflow-hidden w-full min-h-[480px] sm:min-h-[560px] lg:min-h-[620px] flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-6 lg:gap-0 px-4 sm:px-8 md:px-12 lg:px-16 xl:px-24 py-8 sm:py-10 transition-all duration-700">
 
-      <!-- AMBIENT STAGE LIGHTING SPOTLIGHT & GLOW -->
       <div [class]="isDarkText() ? 'absolute inset-0 bg-white/20 pointer-events-none' : 'absolute inset-0 hero-stage-spotlight pointer-events-none'"></div>
-      <div [class]="isDarkText() ? 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] rounded-full bg-black/5 blur-3xl pointer-events-none' : 'absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[460px] h-[460px] rounded-full bg-white/10 blur-3xl pointer-events-none'"></div>
+      <div [class]="isDarkText() ? 'absolute top-1/2 left-[58%] -translate-x-1/2 -translate-y-1/2 w-[360px] sm:w-[460px] h-[360px] sm:h-[460px] rounded-full bg-black/5 blur-3xl pointer-events-none' : 'absolute top-1/2 left-[58%] -translate-x-1/2 -translate-y-1/2 w-[360px] sm:w-[460px] h-[360px] sm:h-[460px] rounded-full bg-white/10 blur-3xl pointer-events-none'"></div>
 
-      <!-- ══════════════════════════════════════════════════════════════
-           CENTER STAGE: GIANT 3D PRODUCT ("पीछे से आता है اور آگے جاتا ہے")
-           ══════════════════════════════════════════════════════════════ -->
-      <div class="absolute inset-0 flex flex-col items-center justify-center pointer-events-none z-10 pt-4 pb-2">
+      <!-- LEFT: copy (no blur over product) -->
+      <div class="relative z-30 w-full lg:w-[38%] xl:w-[36%] max-w-md flex flex-col justify-between shrink-0 order-2 lg:order-1 pointer-events-auto">
         
-        <!-- Old Product: Zooms forward towards camera when leaving -->
-        @if (zoomPhase() === 'zooming' && departingBanner()) {
-          <div class="absolute flex flex-col items-center justify-center product-zoom-out">
-            <img 
-              [src]="formatImageUrl(departingBanner()?.imageUrl)" 
-              [alt]="departingBanner()?.title"
-              class="h-[320px] sm:h-[400px] md:h-[460px] lg:h-[490px] w-auto max-w-[42vw] lg:max-w-[460px] object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.65)]">
-          </div>
-        }
-
-        <!-- New Product: Bursts from depth behind to the foreground -->
-        <div 
-          [class]="'flex flex-col items-center justify-center ' + 
-            (zoomPhase() === 'zooming' 
-              ? (isIncomingActive() ? 'product-zoom-in-active' : 'product-zoom-in-start') 
-              : 'hero-idle-float')">
+        <div [class]="'p-3 sm:p-4 rounded-2xl sm:rounded-3xl transition-colors ' + 
+          (isDarkText() ? 'bg-white/80 border border-white/50 shadow-sm' : 'bg-black/25 border border-white/15 shadow-sm')">
           
-          <img 
-            [src]="formatImageUrl(currentBanner()?.imageUrl)" 
-            [alt]="currentBanner()?.title || 'Showcase Product'"
-            class="h-[320px] sm:h-[400px] md:h-[460px] lg:h-[490px] w-auto max-w-[42vw] lg:max-w-[460px] object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.65)] select-none">
-        </div>
-
-        <!-- Breathing Ground Shadow -->
-        <div class="w-56 sm:w-72 md:w-80 lg:w-[420px] h-7 sm:h-9 bg-black/55 rounded-full blur-xl -mt-5 sm:-mt-6 hero-idle-shadow"></div>
-
-        <!-- Under-Jacket Tagline (Pinterest placement) -->
-        <div class="mt-2 text-center">
-          <span [class]="'text-xs sm:text-sm font-bold tracking-wider select-none ' + 
-            (isDarkText() ? 'text-slate-900 drop-shadow-xs' : 'text-white/95 hero-text-shadow-light')">
-            {{ currentBanner()?.subtitle || 'Confidence, wrapped in warmth' }}
-          </span>
-        </div>
-
-      </div>
-
-      <!-- ══════════════════════════════════════════════════════════════
-           LEFT SIDE OVERLAY: CONTROLS, HEADLINE, TEXT & CTA
-           ══════════════════════════════════════════════════════════════ -->
-      <div class="relative z-20 max-w-[320px] sm:max-w-[380px] lg:max-w-[420px] flex flex-col justify-between h-full pointer-events-auto">
-        
-        <div [class]="'-m-2 p-3 sm:p-4 rounded-3xl backdrop-blur-xs transition-colors ' + 
-          (isDarkText() ? 'bg-white/25 border border-white/40 shadow-xs' : 'bg-black/15 border border-white/10 shadow-xs')">
-          
-          <!-- < > Arrow Navigation Controls -->
-          <div class="flex items-center gap-2 mb-5 sm:mb-6">
+          <div class="flex items-center gap-2 mb-4 sm:mb-5">
             <button
               type="button"
               (click)="prevSlide()"
               aria-label="Previous slide"
-              [class]="'w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 ' + 
+              [class]="'w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 ' + 
                 (isDarkText() 
                   ? 'bg-slate-900/10 hover:bg-slate-950 text-slate-900 hover:text-white border border-slate-900/20' 
                   : 'hero-glass-pill hover:bg-white hover:text-slate-950 text-white')">
@@ -80,7 +35,7 @@
               type="button"
               (click)="nextSlide()"
               aria-label="Next slide"
-              [class]="'w-10 h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 ' + 
+              [class]="'w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95 ' + 
                 (isDarkText() 
                   ? 'bg-slate-900/10 hover:bg-slate-950 text-slate-900 hover:text-white border border-slate-900/20' 
                   : 'hero-glass-pill hover:bg-white hover:text-slate-950 text-white')">
@@ -90,23 +45,20 @@
             </button>
           </div>
 
-          <!-- Bold Headline (Pinterest Typography) -->
-          <h1 [class]="'text-3xl sm:text-4xl lg:text-[50px] font-black tracking-tight leading-[1.08] text-slide-up ' + 
+          <h1 [class]="'text-2xl sm:text-3xl lg:text-4xl xl:text-[44px] font-black tracking-tight leading-[1.1] text-slide-up ' + 
             (isDarkText() ? 'hero-text-shadow-dark text-slate-950' : 'hero-text-shadow-light text-white')">
             {{ currentBanner()?.title || 'Stand out Without trying' }}
           </h1>
 
-          <!-- Description Paragraph -->
-          <p [class]="'text-xs sm:text-sm leading-relaxed mt-3.5 ' + 
+          <p [class]="'text-xs sm:text-sm leading-relaxed mt-3 ' + 
             (isDarkText() ? 'text-slate-800 font-semibold' : 'text-white/95 font-medium drop-shadow-sm')">
             {{ currentBanner()?.description || 'It\'s not just about staying warm. It\'s about stepping outside and instantly feeling confident, comfortable, and completely yourself.' }}
           </p>
 
-          <!-- Get the look > Button -->
-          <div class="mt-5 sm:mt-6">
+          <div class="mt-4 sm:mt-5">
             <a 
               [routerLink]="currentBanner()?.linkUrl || '/products'"
-              [class]="'inline-flex items-center gap-2.5 px-6 sm:px-7 py-3 rounded-full font-black text-xs sm:text-sm hover:scale-105 active:scale-95 transition-all shadow-xl group/btn cursor-pointer ' + 
+              [class]="'inline-flex items-center gap-2 px-5 sm:px-6 py-2.5 sm:py-3 rounded-full font-black text-xs sm:text-sm hover:scale-105 active:scale-95 transition-all shadow-xl group/btn cursor-pointer ' + 
                 (isDarkText() 
                   ? 'bg-slate-950 text-white hover:bg-slate-800 shadow-slate-900/25' 
                   : 'bg-white text-slate-950 hover:bg-slate-100 shadow-black/25')">
@@ -118,55 +70,82 @@
           </div>
         </div>
 
-        <!-- Social Icons (Pinterest bottom-left corner) -->
-        <div [class]="'flex items-center gap-4 text-xs font-bold mt-8 pt-2 ' + (isDarkText() ? 'text-slate-600' : 'text-white/70')">
+        <div [class]="'hidden lg:flex items-center gap-4 text-xs font-bold mt-6 ' + (isDarkText() ? 'text-slate-600' : 'text-white/70')">
           <span [class]="'transition-colors cursor-pointer ' + (isDarkText() ? 'hover:text-slate-950' : 'hover:text-white')">IG</span>
           <span [class]="'transition-colors cursor-pointer ' + (isDarkText() ? 'hover:text-slate-950' : 'hover:text-white')">FB</span>
           <span [class]="'transition-colors cursor-pointer ' + (isDarkText() ? 'hover:text-slate-950' : 'hover:text-white')">WEB</span>
-          <span [class]="'transition-colors cursor-pointer ' + (isDarkText() ? 'hover:text-slate-950' : 'hover:text-white')">BE</span>
         </div>
-
       </div>
 
-      <!-- ══════════════════════════════════════════════════════════════
-           RIGHT SIDE OVERLAY: PRICE, SIZE CHIPS & NEXT MINI PRODUCT
-           ══════════════════════════════════════════════════════════════ -->
-      <div class="relative z-20 flex flex-col justify-between items-end h-full pointer-events-auto text-right">
+      <!-- CENTER-RIGHT: product (shifted right, clear of left panel) -->
+      <div class="relative z-10 flex-1 flex flex-col items-center lg:items-end justify-center pointer-events-none order-1 lg:order-2 min-h-[240px] sm:min-h-[320px] lg:pr-4 xl:pr-8">
+        <div class="relative flex flex-col items-center justify-center w-full max-w-[520px] lg:translate-x-4 xl:translate-x-10">
+          @if (zoomPhase() === 'zooming' && departingBanner()) {
+            <div class="absolute flex flex-col items-center justify-center product-zoom-out">
+              <img 
+                [src]="formatImageUrl(departingBanner()?.imageUrl)" 
+                [alt]="departingBanner()?.title"
+                class="h-[220px] sm:h-[320px] md:h-[380px] lg:h-[440px] w-auto max-w-[85%] sm:max-w-[70%] lg:max-w-[480px] object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.65)]">
+            </div>
+          }
+
+          <div 
+            [class]="'flex flex-col items-center justify-center ' + 
+              (zoomPhase() === 'zooming' 
+                ? (isIncomingActive() ? 'product-zoom-in-active' : 'product-zoom-in-start') 
+                : 'hero-idle-float')">
+            <img 
+              [src]="formatImageUrl(currentBanner()?.imageUrl)" 
+              [alt]="currentBanner()?.title || 'Showcase Product'"
+              class="h-[220px] sm:h-[320px] md:h-[380px] lg:h-[440px] w-auto max-w-[85%] sm:max-w-[70%] lg:max-w-[480px] object-contain drop-shadow-[0_30px_50px_rgba(0,0,0,0.65)] select-none">
+          </div>
+
+          <div class="w-40 sm:w-56 md:w-72 h-5 sm:h-7 bg-black/55 rounded-full blur-xl -mt-3 sm:-mt-5 hero-idle-shadow"></div>
+
+          <div class="mt-2 text-center px-2">
+            <span [class]="'text-xs sm:text-sm font-bold tracking-wider select-none ' + 
+              (isDarkText() ? 'text-slate-900 drop-shadow-xs' : 'text-white/95 hero-text-shadow-light')">
+              {{ currentBanner()?.subtitle || 'Confidence, wrapped in warmth' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT: price / sizes / next -->
+      <div class="relative z-30 w-full lg:w-[200px] xl:w-[220px] flex flex-row lg:flex-col justify-between items-center lg:items-end gap-4 shrink-0 order-3 pointer-events-auto">
         
-        <div [class]="'-m-2 p-3 sm:p-4 rounded-3xl backdrop-blur-xs transition-colors ' + 
-          (isDarkText() ? 'bg-white/25 border border-white/40 shadow-xs' : 'bg-black/15 border border-white/10 shadow-xs')">
-          <!-- Price Display -->
-          <div class="text-right">
-            <div [class]="'text-4xl sm:text-5xl font-black tracking-tight ' + 
+        <div [class]="'p-3 sm:p-4 rounded-2xl sm:rounded-3xl transition-colors w-full sm:w-auto ' + 
+          (isDarkText() ? 'bg-white/80 border border-white/50 shadow-sm' : 'bg-black/25 border border-white/15 shadow-sm')">
+          <div class="text-left lg:text-right">
+            <div [class]="'text-3xl sm:text-4xl font-black tracking-tight ' + 
               (isDarkText() ? 'hero-text-shadow-dark text-slate-950' : 'hero-text-shadow-light text-white')">
               ${{ currentBanner()?.price || 149 }}
             </div>
             @if (currentBanner()?.originalPrice) {
-              <div [class]="'text-base sm:text-lg font-bold line-through mt-0.5 ' + 
+              <div [class]="'text-sm sm:text-base font-bold line-through mt-0.5 ' + 
                 (isDarkText() ? 'text-slate-600' : 'text-white/70')">
                 ${{ currentBanner()?.originalPrice || 199 }}
               </div>
             }
           </div>
 
-          <!-- Size Selector -->
-          <div class="mt-6 text-right">
+          <div class="mt-4 text-left lg:text-right">
             <span [class]="'text-[11px] font-bold block mb-2 tracking-wider ' + 
               (isDarkText() ? 'text-slate-900' : 'text-white/90 drop-shadow-xs')">
               Choose your size:
             </span>
-            <div class="flex items-center justify-end gap-2">
+            <div class="flex items-center justify-start lg:justify-end gap-2 flex-wrap">
               @for (size of currentSizesList(); track size) {
                 <button
                   type="button"
                   (click)="selectSize(size)"
                   [class]="currentSelectedSize() === size 
                     ? (isDarkText()
-                        ? 'w-10 h-10 rounded-full bg-slate-950 text-white font-black text-xs shadow-lg scale-105 transition-all cursor-pointer'
-                        : 'w-10 h-10 rounded-full bg-white text-slate-950 font-black text-xs shadow-lg scale-105 transition-all cursor-pointer')
+                        ? 'w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-slate-950 text-white font-black text-xs shadow-lg scale-105 transition-all cursor-pointer'
+                        : 'w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-white text-slate-950 font-black text-xs shadow-lg scale-105 transition-all cursor-pointer')
                     : (isDarkText()
-                        ? 'w-10 h-10 rounded-full bg-black/10 hover:bg-black/20 text-slate-950 border border-black/20 font-bold text-xs transition-all cursor-pointer'
-                        : 'w-10 h-10 rounded-full hero-glass-pill-dark hover:bg-black/50 text-white font-bold text-xs transition-all cursor-pointer')">
+                        ? 'w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-black/10 hover:bg-black/20 text-slate-950 border border-black/20 font-bold text-xs transition-all cursor-pointer'
+                        : 'w-9 h-9 sm:w-10 sm:h-10 rounded-full hero-glass-pill-dark hover:bg-black/50 text-white font-bold text-xs transition-all cursor-pointer')">
                   {{ size }}
                 </button>
               }
@@ -174,23 +153,17 @@
           </div>
         </div>
 
-        <!-- NEXT PRODUCT MINIATURE (Pinterest bottom-right signature feature) -->
         @if (nextBanner()) {
           <button
             type="button"
             (click)="nextSlide()"
             aria-label="Next product"
-            class="group/next relative flex flex-col items-center cursor-pointer transition-all hover:scale-110 active:scale-95 mt-8">
-            
-            <!-- Miniature Cutout of Next Product -->
+            class="group/next relative flex flex-col items-center cursor-pointer transition-all hover:scale-110 active:scale-95 shrink-0">
             <img 
               [src]="formatImageUrl(nextBanner()?.imageUrl)" 
               [alt]="nextBanner()?.title"
-              class="h-16 sm:h-20 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover/next:scale-105">
-
-            <!-- Miniature Floor Shadow -->
-            <div class="w-14 h-2.5 bg-black/40 rounded-full blur-xs -mt-1"></div>
-
+              class="h-14 sm:h-16 w-auto object-contain drop-shadow-[0_12px_16px_rgba(0,0,0,0.5)] transition-transform duration-300 group-hover/next:scale-105">
+            <div class="w-12 h-2 bg-black/40 rounded-full blur-xs -mt-1"></div>
             <div [class]="'mt-1 text-[10px] font-black uppercase tracking-widest flex items-center gap-1 ' + 
               (isDarkText() ? 'text-slate-800 group-hover/next:text-slate-950' : 'text-white/90 hero-text-shadow-light group-hover/next:text-white')">
               <span>NEXT</span>
@@ -200,15 +173,12 @@
             </div>
           </button>
         }
-
       </div>
 
     </div>
-
   </div>
 } @else {
-  <!-- SKELETON PLACEHOLDER -->
-  <div class="w-full min-h-[560px] sm:min-h-[620px] bg-gradient-to-r from-amber-600/30 via-orange-600/30 to-amber-700/30 animate-pulse flex items-center justify-center border-b border-orange-200/20">
+  <div class="w-full min-h-[480px] sm:min-h-[560px] bg-gradient-to-r from-amber-600/30 via-orange-600/30 to-amber-700/30 animate-pulse flex items-center justify-center border-b border-orange-200/20">
     <div class="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
   </div>
 }

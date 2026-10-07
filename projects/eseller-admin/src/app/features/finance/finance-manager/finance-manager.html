@@ -83,6 +83,22 @@
         : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
       Commission Ledger ({{ commissions().length }})
     </button>
+    <button 
+      type="button" 
+      (click)="activeTab.set('seller-earnings')"
+      [class]="activeTab() === 'seller-earnings' 
+        ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200 shadow-2xs' 
+        : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+      Seller Earnings ({{ sellerWallets().length }})
+    </button>
+    <button 
+      type="button" 
+      (click)="activeTab.set('payout-methods')"
+      [class]="activeTab() === 'payout-methods' 
+        ? 'px-4 py-2 rounded-xl bg-orange-50 text-orange-700 font-bold text-xs border border-orange-200 shadow-2xs' 
+        : 'px-4 py-2 rounded-xl text-gray-600 hover:bg-gray-50 font-bold text-xs border border-transparent'">
+      Payout Methods ({{ payoutMethods().length }})
+    </button>
   </div>
 
   @if (activeTab() === 'withdrawals') {
@@ -174,7 +190,7 @@
         </div>
       }
     </div>
-  } @else {
+  } @else if (activeTab() === 'commissions') {
     <!-- COMMISSIONS TABLE -->
     <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
       @if (commissions().length === 0) {
@@ -217,6 +233,150 @@
                     <span [class]="c.status === 'Paid' ? 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-800 mt-1 inline-block' : 'px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-100 text-amber-800 mt-1 inline-block'">
                       {{ c.status }}
                     </span>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  } @else if (activeTab() === 'seller-earnings') {
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+        <div>
+          <h2 class="text-sm font-black text-slate-900">Seller wallet & earnings</h2>
+          <p class="text-xs text-slate-500">Shop balances, pending order earnings, and available earnings per merchant.</p>
+        </div>
+        <button
+          type="button"
+          (click)="loadSellerWallets()"
+          class="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-xs font-bold text-slate-700 cursor-pointer">
+          Refresh
+        </button>
+      </div>
+      @if (isLoadingWallets()) {
+        <div class="p-2">
+          <es-skeleton-layout variant="table" [count]="6" [columns]="6" />
+        </div>
+      } @else if (sellerWallets().length === 0) {
+        <div class="p-12 text-center text-gray-400">
+          <p class="text-sm font-bold text-gray-600">No seller wallets found</p>
+          <p class="text-xs mt-1">Approved shopkeepers with shops will appear here.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+                <th class="py-3.5 px-4">Shop / Merchant</th>
+                <th class="py-3.5 px-4 text-right">Pending</th>
+                <th class="py-3.5 px-4 text-right">Available</th>
+                <th class="py-3.5 px-4 text-right">Wallet balance</th>
+                <th class="py-3.5 px-4 text-right">Adjust balance</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (row of sellerWallets(); track row.accountId) {
+                <tr class="hover:bg-orange-50/20 transition-colors">
+                  <td class="py-3.5 px-4">
+                    <div class="font-bold text-gray-900">{{ row.shopName || '—' }}</div>
+                    <div class="text-[11px] text-gray-500">{{ row.shopkeeperName }}</div>
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-bold text-amber-700">
+                    $ {{ row.pendingEarnings | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-bold text-emerald-700">
+                    $ {{ row.availableEarnings | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4 text-right font-black text-gray-900">
+                    $ {{ row.walletBalance | number:'1.2-2' }}
+                  </td>
+                  <td class="py-3.5 px-4">
+                    <div class="flex items-center justify-end gap-2">
+                      <input
+                        type="number"
+                        min="0"
+                        step="0.01"
+                        [ngModel]="row.balanceDraft"
+                        (ngModelChange)="updateWalletBalanceDraft(row.accountId, +$event)"
+                        class="w-28 bg-slate-50 border border-gray-200 rounded-xl px-2.5 py-1.5 text-xs font-bold text-right focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+                      <button
+                        type="button"
+                        (click)="saveSellerWalletBalance(row)"
+                        [disabled]="savingWalletAccountId() === row.accountId"
+                        class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer disabled:opacity-50">
+                        {{ savingWalletAccountId() === row.accountId ? 'Saving…' : 'Save' }}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+    </div>
+  } @else if (activeTab() === 'payout-methods') {
+    <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
+      <div class="px-4 py-3 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+        <div>
+          <h2 class="text-sm font-black text-slate-900">Seller payout methods</h2>
+          <p class="text-xs text-slate-500">Channels shown to sellers when they request withdrawals (e.g. JazzCash, bank transfer).</p>
+        </div>
+        <button
+          type="button"
+          (click)="openCreateMethodModal()"
+          class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-extrabold cursor-pointer shadow-sm">
+          + Add method
+        </button>
+      </div>
+      @if (isLoadingPayoutMethods()) {
+        <div class="p-2">
+          <es-skeleton-layout variant="table" [count]="4" [columns]="4" />
+        </div>
+      } @else if (payoutMethods().length === 0) {
+        <div class="p-12 text-center text-gray-400">
+          <p class="text-sm font-bold text-gray-600">No payout methods configured</p>
+          <p class="text-xs mt-1">Add at least one active method for seller withdrawal requests.</p>
+        </div>
+      } @else {
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-sm">
+            <thead>
+              <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
+                <th class="py-3.5 px-4">Name</th>
+                <th class="py-3.5 px-4">Details</th>
+                <th class="py-3.5 px-4 text-center">Active</th>
+                <th class="py-3.5 px-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-50">
+              @for (m of payoutMethods(); track m.id) {
+                <tr class="hover:bg-orange-50/20 transition-colors">
+                  <td class="py-3.5 px-4 font-bold text-gray-900">{{ m.name }}</td>
+                  <td class="py-3.5 px-4 text-xs text-gray-600 whitespace-pre-wrap max-w-md">{{ m.details }}</td>
+                  <td class="py-3.5 px-4 text-center">
+                    <span [class]="m.isActive ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800' : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-gray-100 text-gray-600'">
+                      {{ m.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td class="py-3.5 px-4 text-right">
+                    <div class="flex items-center justify-end gap-2">
+                      <button
+                        type="button"
+                        (click)="openEditMethodModal(m)"
+                        class="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold cursor-pointer">
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        (click)="deletePayoutMethod(m)"
+                        [disabled]="deletingMethodId() === m.id"
+                        class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer border border-rose-200 disabled:opacity-50">
+                        Delete
+                      </button>
+                    </div>
                   </td>
                 </tr>
               }
@@ -289,6 +449,66 @@
           (click)="confirmProcessOrReject()"
           [class]="isRejecting() ? 'px-4 py-2 rounded-xl text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-xs cursor-pointer' : 'px-4 py-2 rounded-xl text-xs font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs cursor-pointer'">
           {{ isRejecting() ? 'Confirm Rejection' : 'Mark as Dispatched' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- PAYOUT METHOD MODAL -->
+@if (methodModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeMethodModal()"></div>
+    <div class="relative bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-4 border border-gray-100">
+      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
+        <h3 class="text-base font-bold text-gray-900">
+          {{ editingMethodId() ? 'Edit payout method' : 'Add payout method' }}
+        </h3>
+        <button type="button" (click)="closeMethodModal()" class="text-gray-400 hover:text-gray-600 cursor-pointer">✕</button>
+      </div>
+
+      <div class="space-y-3">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Name *</label>
+          <input
+            type="text"
+            [ngModel]="methodFormName()"
+            (ngModelChange)="methodFormName.set($event)"
+            placeholder="e.g. JazzCash, Bank Transfer"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Details</label>
+          <textarea
+            [ngModel]="methodFormDetails()"
+            (ngModelChange)="methodFormDetails.set($event)"
+            rows="4"
+            placeholder="Account number, IBAN, or instructions shown to sellers"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"></textarea>
+        </div>
+        <label class="inline-flex items-center gap-2 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            [ngModel]="methodFormActive()"
+            (ngModelChange)="methodFormActive.set($event)"
+            class="rounded border-gray-300 text-orange-600 focus:ring-orange-500" />
+          <span class="text-xs font-bold text-gray-700">Active (visible to sellers)</span>
+        </label>
+      </div>
+
+      <div class="flex items-center justify-end gap-3 pt-3 border-t border-gray-100">
+        <button
+          type="button"
+          (click)="closeMethodModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-100 transition-colors cursor-pointer">
+          Cancel
+        </button>
+        <button
+          type="button"
+          (click)="savePayoutMethod()"
+          [disabled]="isSavingMethod()"
+          class="px-4 py-2 rounded-xl text-xs font-bold bg-orange-600 hover:bg-orange-700 text-white shadow-xs cursor-pointer disabled:opacity-50">
+          {{ isSavingMethod() ? 'Saving…' : 'Save method' }}
         </button>
       </div>
     </div>

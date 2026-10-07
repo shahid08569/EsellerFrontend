@@ -109,7 +109,7 @@ export class SellerProductService {
   uploadImage(id: string, file: File): Observable<{ id: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.api.post<{ id: string }>(`/Products/${id}/images`, formData);
+    return this.api.postForm<{ id: string }>(`/Products/${id}/images`, formData);
   }
 
   uploadMultipleImages(id: string, files: File[]): Observable<{ count: number; imageIds: string[]; message: string }> {
@@ -117,7 +117,7 @@ export class SellerProductService {
     for (const f of files) {
       formData.append('files', f);
     }
-    return this.api.post<{ count: number; imageIds: string[]; message: string }>(`/Products/${id}/images/bulk`, formData);
+    return this.api.postForm<{ count: number; imageIds: string[]; message: string }>(`/Products/${id}/images/bulk`, formData);
   }
 
   deleteProductImage(productId: string, imageId: string): Observable<{ message: string }> {
@@ -144,7 +144,7 @@ export class SellerProductService {
   uploadVariantImage(productId: string, id: string, file: File): Observable<{ imageUrl: string; message: string }> {
     const formData = new FormData();
     formData.append('file', file);
-    return this.api.post<{ imageUrl: string; message: string }>(`/products/${productId}/variants/${id}/image`, formData);
+    return this.api.postForm<{ imageUrl: string; message: string }>(`/products/${productId}/variants/${id}/image`, formData);
   }
 
   deleteVariantImage(productId: string, id: string): Observable<{ message: string }> {

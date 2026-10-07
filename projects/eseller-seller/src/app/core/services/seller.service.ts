@@ -287,6 +287,29 @@ export class SellerService {
     return this.api.post(`/SellerWallet/withdrawal-request`, payload);
   }
 
+  /** GET /SellerWallet/payment-methods — active Super Admin payout channels */
+  getWithdrawalPaymentMethods(): Observable<Array<{
+    id: string;
+    name: string;
+    details: string;
+    isActive: boolean;
+  }>> {
+    return this.api.get<any>('/SellerWallet/payment-methods').pipe(
+      map((res) => {
+        const list = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
+        return list
+          .map((m: any) => ({
+            id: String(m.id ?? m.Id ?? ''),
+            name: m.name ?? m.Name ?? '',
+            details: m.details ?? m.Details ?? '',
+            isActive: (m.isActive ?? m.IsActive) !== false
+          }))
+          .filter((m: { isActive: boolean; name: string }) => m.isActive && m.name);
+      }),
+      catchError(() => of([]))
+    );
+  }
+
   /** GET /shop-categories — active seller tier packages */
   getShopCategories(): Observable<Array<{
     id: string;

@@ -14,6 +14,13 @@ interface WithdrawalRequest {
   processedAt?: string | null;
 }
 
+interface WithdrawalPaymentMethod {
+  id: string;
+  name: string;
+  details: string;
+  isActive: boolean;
+}
+
 @Component({
   selector: 'app-withdrawal-list',
   standalone: true,
@@ -31,16 +38,35 @@ export class WithdrawalList implements OnInit {
   readonly withdrawalHistory = signal<WithdrawalRequest[]>([]);
   readonly minimumWithdrawal = signal<number>(1000);
 
+  readonly platformPaymentMethods = signal<WithdrawalPaymentMethod[]>([]);
   readonly requestModalOpen = signal<boolean>(false);
   readonly withdrawAmount = signal<number>(1000);
-  readonly paymentMethod = signal<string>('Bank Transfer');
+  readonly selectedPaymentMethodId = signal<string>('');
   readonly accountTitle = signal<string>('');
   readonly accountNumber = signal<string>('');
   readonly bankName = signal<string>('');
   readonly isSubmitting = signal<boolean>(false);
 
   ngOnInit(): void {
+    this.loadPaymentMethods();
     this.loadData();
+  }
+
+  loadPaymentMethods(): void {
+    this.sellerSvc.getWithdrawalPaymentMethods().subscribe({
+      next: (methods) => {
+        this.platformPaymentMethods.set(methods || []);
+        if (methods?.length && !this.selectedPaymentMethodId()) {
+          this.selectedPaymentMethodId.set(methods[0].id);
+        }
+      },
+      error: () => this.platformPaymentMethods.set([])
+    });
+  }
+
+  selectedPlatformMethod(): WithdrawalPaymentMethod | null {
+    const id = this.selectedPaymentMethodId();
+    return this.platformPaymentMethods().find(m => m.id === id) ?? null;
   }
 
   loadData(): void {
@@ -92,6 +118,10 @@ export class WithdrawalList implements OnInit {
     const bal = this.availableBalance() || 0;
     this.withdrawAmount.set(Math.max(min, Math.min(bal || min, bal || min)));
     this.accountTitle.set(this.shop()?.name || '');
+    const methods = this.platformPaymentMethods();
+    if (methods.length && !methods.some(m => m.id === this.selectedPaymentMethodId())) {
+      this.selectedPaymentMethodId.set(methods[0].id);
+    }
     this.requestModalOpen.set(true);
   }
 
@@ -114,18 +144,25 @@ export class WithdrawalList implements OnInit {
       return;
     }
 
+    const platformMethod = this.selectedPlatformMethod();
+    if (!platformMethod) {
+      this.toast.show('Select a platform payout method configured by Super Admin.', 'error');
+      return;
+    }
+
     if (!this.accountNumber().trim()) {
       this.toast.show('Please provide your bank or mobile wallet account number', 'error');
       return;
     }
 
     this.isSubmitting.set(true);
-    const details = `${this.accountTitle()} - ${this.accountNumber()} (${this.bankName().trim() || 'Bank'})`;
+    const sellerDest = `${this.accountTitle()} - ${this.accountNumber()} (${this.bankName().trim() || 'Bank'})`;
+    const details = `${sellerDest} | Pay to: ${platformMethod.details}`;
 
     this.sellerSvc
       .requestWithdrawal({
         amount,
-        payoutMethod: this.paymentMethod(),
+        payoutMethod: platformMethod.name,
         accountDetails: details
       })
       .subscribe({

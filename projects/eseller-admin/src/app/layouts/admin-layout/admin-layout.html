@@ -186,7 +186,7 @@
 
           <div class="overflow-hidden transition-all duration-300 ease-in-out"
                [class.max-h-0]="!isDropdownOpen('products')"
-               [class.max-h-56]="isDropdownOpen('products')"
+               [class.max-h-72]="isDropdownOpen('products')"
                [class.opacity-0]="!isDropdownOpen('products')"
                [class.opacity-100]="isDropdownOpen('products')">
             <div class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/60 rounded-xl my-1 border-l-2 border-orange-500">
@@ -198,15 +198,26 @@
                 [class.bg-slate-800/80]="isProductNav('all')">
                 Global Warehouse
               </a>
-              <a [routerLink]="['/products']" [queryParams]="{status: 'pending'}"
+              <a [routerLink]="['/products']" [queryParams]="{status: 'pending', kind: 'global'}"
                 class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
                 style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isProductNav('pending')"
-                [class.font-bold]="isProductNav('pending')"
-                [class.bg-slate-800/80]="isProductNav('pending')">
-                <span>Seller Pending</span>
-                @if (pendingProductsCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingProductsCount() }}</span>
+                [class.text-orange-400]="isProductNav('pending-global')"
+                [class.font-bold]="isProductNav('pending-global')"
+                [class.bg-slate-800/80]="isProductNav('pending-global')">
+                <span>Global listing approvals</span>
+                @if (pendingGlobalCount() > 0) {
+                  <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingGlobalCount() }}</span>
+                }
+              </a>
+              <a [routerLink]="['/products']" [queryParams]="{status: 'pending', kind: 'own'}"
+                class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                [class.text-orange-400]="isProductNav('pending-own')"
+                [class.font-bold]="isProductNav('pending-own')"
+                [class.bg-slate-800/80]="isProductNav('pending-own')">
+                <span>Seller own product approvals</span>
+                @if (pendingOwnCount() > 0) {
+                  <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">{{ pendingOwnCount() }}</span>
                 }
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'approved'}"
@@ -588,10 +599,16 @@
           <div class="px-3 py-1 text-[11px] font-bold text-slate-400 uppercase tracking-wider">📦 Products</div>
           <div class="pl-3 space-y-1">
             <a [routerLink]="['/products']" [queryParams]="{status: 'all'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Global Warehouse</a>
-            <a [routerLink]="['/products']" [queryParams]="{status: 'pending'}" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
-              <span>Seller Pending</span>
-              @if (pendingProductsCount() > 0) {
-                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingProductsCount() }}</span>
+            <a [routerLink]="['/products']" [queryParams]="{status: 'pending', kind: 'global'}" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
+              <span>Global listing approvals</span>
+              @if (pendingGlobalCount() > 0) {
+                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingGlobalCount() }}</span>
+              }
+            </a>
+            <a [routerLink]="['/products']" [queryParams]="{status: 'pending', kind: 'own'}" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
+              <span>Seller own product approvals</span>
+              @if (pendingOwnCount() > 0) {
+                <span class="px-1.5 py-0.2 rounded-full text-[9px] font-black bg-rose-500 text-white">{{ pendingOwnCount() }}</span>
               }
             </a>
             <a [routerLink]="['/products']" [queryParams]="{status: 'approved'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Seller Live Products</a>

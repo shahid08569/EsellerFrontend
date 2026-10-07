@@ -26,6 +26,8 @@ export interface VariantFormItem {
 type ProductStatusFilter = 'all' | 'pending' | 'approved' | 'rejected';
 /** On All Products: warehouse only, all sellers, or everything */
 type ProductSourceFilter = 'warehouse' | 'sellers' | 'all-sources';
+/** Pending queue: warehouse listing requests vs seller-created own products */
+type PendingKindFilter = 'global' | 'own';
 
 @Component({
   selector: 'app-product-approval',
@@ -51,6 +53,10 @@ export class ProductApproval implements OnInit {
   readonly statusFilter = signal<ProductStatusFilter>('all');
   /** All Products source scope — warehouse / sellers / both */
   readonly sourceFilter = signal<ProductSourceFilter>('warehouse');
+  /** Pending: global warehouse listing req vs seller own new product */
+  readonly pendingKind = signal<PendingKindFilter>('global');
+  readonly pendingGlobalCount = signal<number>(0);
+  readonly pendingOwnCount = signal<number>(0);
   readonly searchTerm = signal<string>('');
   
   readonly products = signal<AdminProductDto[]>([]);
@@ -373,6 +379,13 @@ export class ProductApproval implements OnInit {
         this.statusFilter.set('all');
       }
 
+      const kind = (params['kind'] || '').toLowerCase();
+      if (kind === 'own' || kind === 'seller' || kind === 'new') {
+        this.pendingKind.set('own');
+      } else {
+        this.pendingKind.set('global');
+      }
+
       const shopId = (params['shopId'] || '').trim();
       const shopName = (params['shopName'] || '').trim();
       if (shopId || shopName) {
@@ -439,10 +452,15 @@ export class ProductApproval implements OnInit {
       error: () => {}
     });
 
-    // 2. Load pending products counter
-    this.adminService.getPendingProducts(1, 100).subscribe({
-      next: (res) => {
-        this.pendingProducts.set(res?.items || []);
+    // 2. Load pending counters (split: warehouse listing vs seller-own)
+    forkJoin({
+      global: this.adminService.getPendingProducts(1, 1, 'global').pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
+      own: this.adminService.getPendingProducts(1, 1, 'own').pipe(catchError(() => of({ items: [], totalCount: 0 } as any)))
+    }).subscribe({
+      next: ({ global, own }) => {
+        this.pendingGlobalCount.set(global?.totalCount || 0);
+        this.pendingOwnCount.set(own?.totalCount || 0);
+        this.pendingProducts.set([]);
       },
       error: () => {}
     });
@@ -1094,14 +1112,16 @@ export class ProductApproval implements OnInit {
     };
 
     if (this.statusFilter() === 'pending') {
-      // Merchant listing requests only
-      this.adminService.getPendingProducts(1, 200).subscribe({
+      const kind = this.pendingKind();
+      this.adminService.getPendingProducts(1, 200, kind).subscribe({
         next: (res) => {
           let items = res?.items || [];
           items = applyFilters(items);
           this.products.set(items);
           this.totalCount.set(items.length);
           this.pendingProducts.set(items);
+          if (kind === 'global') this.pendingGlobalCount.set(res?.totalCount ?? items.length);
+          else this.pendingOwnCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -1261,7 +1281,18 @@ export class ProductApproval implements OnInit {
     }
     this.router.navigate([], {
       relativeTo: this.route,
-      queryParams: { status: tab },
+      queryParams: { status: tab, kind: tab === 'pending' ? this.pendingKind() : null },
+      queryParamsHandling: 'merge'
+    });
+  }
+
+  onPendingKindChange(kind: PendingKindFilter): void {
+    this.pendingKind.set(kind);
+    this.currentPage.set(1);
+    this.selectedProductIds.set(new Set());
+    this.router.navigate([], {
+      relativeTo: this.route,
+      queryParams: { status: 'pending', kind },
       queryParamsHandling: 'merge'
     });
   }
@@ -1278,7 +1309,10 @@ export class ProductApproval implements OnInit {
 
   pageTitle(): string {
     switch (this.statusFilter()) {
-      case 'pending': return 'Seller Pending Products';
+      case 'pending':
+        return this.pendingKind() === 'own'
+          ? 'Seller Own Product Approvals'
+          : 'Global Listing Approvals';
       case 'approved': return 'Seller Live Products';
       case 'rejected': return 'Seller Rejected Products';
       default: return 'Global Warehouse Products';
@@ -1350,8 +1384,8 @@ export class ProductApproval implements OnInit {
       next: () => {
         this.toast.show(
           product.sourceProductId
-            ? `"${product.name}" approved — now live on the seller’s shop.`
-            : `Product "${product.name}" approved successfully!`,
+            ? `"${product.name}" approved — live on seller shop (warehouse listing).`
+            : `"${product.name}" approved — appears in seller My Own Products (not global warehouse).`,
           'success'
         );
         this.actionInProgress.set(null);

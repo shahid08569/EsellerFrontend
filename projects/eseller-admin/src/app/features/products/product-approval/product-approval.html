@@ -6,22 +6,26 @@
       <div class="flex items-center gap-2 mb-1">
         <span class="px-2 py-0.5 rounded-full bg-white/20 text-white text-[10px] font-black uppercase tracking-wider">
           @if (statusFilter() === 'all') { Global Products }
-          @else if (statusFilter() === 'pending') { Seller Requests }
+          @else if (statusFilter() === 'pending' && pendingKind() === 'global') { Global Listing Req }
+          @else if (statusFilter() === 'pending') { Seller Own Product }
           @else if (statusFilter() === 'approved') { Seller Live }
           @else { Seller Rejected }
         </span>
       </div>
       <h1 class="text-lg sm:text-xl font-black text-white tracking-tight">
         @if (statusFilter() === 'all') { Global Warehouse Products }
-        @else if (statusFilter() === 'pending') { Seller Pending Products }
+        @else if (statusFilter() === 'pending' && pendingKind() === 'global') { Global Listing Approvals }
+        @else if (statusFilter() === 'pending') { Seller Own Product Approvals }
         @else if (statusFilter() === 'approved') { Seller Live Products }
         @else { Seller Rejected Products }
       </h1>
       <p class="text-orange-100 text-xs font-medium">
         @if (statusFilter() === 'all') {
           Filter by Platform Warehouse, All Sellers, or a single shop. Create master products here; seller-owned products appear when Sellers / Everything is selected.
+        } @else if (statusFilter() === 'pending' && pendingKind() === 'global') {
+          Sellers requesting warehouse products for their shop. Approve → live on that seller only (not a new global SKU).
         } @else if (statusFilter() === 'pending') {
-          Seller listing requests waiting for Super Admin review. Approve to activate on their shop.
+          Seller-created products waiting approval. Approve → seller My Own only — never added to global warehouse.
         } @else if (statusFilter() === 'approved') {
           Merchant store listings that are live after approval.
         } @else {
@@ -93,8 +97,25 @@
           </button>
         </div>
       } @else if (statusFilter() === 'pending') {
-        <div class="px-2.5 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] font-bold text-amber-800 whitespace-nowrap">
-          Awaiting Approval
+        <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+          <button type="button" (click)="onPendingKindChange('global')"
+            [class]="pendingKind() === 'global'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs flex items-center gap-1.5'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 flex items-center gap-1.5'">
+            Global listing req
+            @if (pendingGlobalCount() > 0) {
+              <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingGlobalCount() }}</span>
+            }
+          </button>
+          <button type="button" (click)="onPendingKindChange('own')"
+            [class]="pendingKind() === 'own'
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs flex items-center gap-1.5'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 flex items-center gap-1.5'">
+            Seller own product
+            @if (pendingOwnCount() > 0) {
+              <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">{{ pendingOwnCount() }}</span>
+            }
+          </button>
         </div>
       } @else if (statusFilter() === 'approved') {
         <div class="px-2.5 py-1.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] font-bold text-emerald-700 whitespace-nowrap">

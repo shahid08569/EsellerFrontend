@@ -1,10 +1,17 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminOrderDto, AdminShopDto } from '../../../core/models/admin.models';
+import {
+  AdminBrandDto,
+  AdminCategoryDto,
+  AdminOrderDto,
+  AdminProductDto,
+  AdminShopDto
+} from '../../../core/models/admin.models';
 
 type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
 
@@ -50,12 +57,19 @@ export class OrderManagement implements OnInit {
   readonly orderHistory = signal<any[]>([]);
   readonly isLoadingHistory = signal<boolean>(false);
 
-  // Place order (Super Admin → any seller)
+  // Place order (Super Admin → any seller) — catalog-style picker
   readonly placeOrderOpen = signal<boolean>(false);
   readonly isPlacingOrder = signal<boolean>(false);
   readonly placeShopId = signal<string>('');
-  readonly placeProducts = signal<{ id: string; name: string; shopName?: string }[]>([]);
+  readonly placeCatalogProducts = signal<AdminProductDto[]>([]);
+  readonly placeCategories = signal<AdminCategoryDto[]>([]);
+  readonly placeBrands = signal<AdminBrandDto[]>([]);
+  readonly placeFilterSearch = signal<string>('');
+  readonly placeFilterShopId = signal<string>('all');
+  readonly placeFilterCategoryId = signal<string>('all');
+  readonly placeFilterBrandId = signal<string>('all');
   readonly placeProductId = signal<string>('');
+  readonly placeSelectedProduct = signal<AdminProductDto | null>(null);
   readonly placeVariants = signal<{ id: string; sku: string; price: number; stockQty: number }[]>([]);
   readonly placeVariantId = signal<string>('');
   readonly placeQty = signal<number>(1);
@@ -65,6 +79,34 @@ export class OrderManagement implements OnInit {
   readonly placeCity = signal<string>('');
   readonly placeLoadingProducts = signal<boolean>(false);
   readonly placeLoadingVariants = signal<boolean>(false);
+
+  readonly filteredPlaceProducts = computed(() => {
+    let list = [...this.placeCatalogProducts()];
+    const term = this.placeFilterSearch().trim().toLowerCase();
+    const shopId = this.placeFilterShopId();
+    const categoryId = this.placeFilterCategoryId();
+    const brandId = this.placeFilterBrandId();
+
+    if (shopId && shopId !== 'all') {
+      const sid = shopId.toLowerCase();
+      list = list.filter(p => String(p.shopId || '').toLowerCase() === sid);
+    }
+    if (categoryId && categoryId !== 'all') {
+      list = list.filter(p => p.categoryId === categoryId);
+    }
+    if (brandId && brandId !== 'all') {
+      list = list.filter(p => p.brandId === brandId);
+    }
+    if (term) {
+      list = list.filter(p =>
+        (p.name && p.name.toLowerCase().includes(term)) ||
+        (p.shopName && p.shopName.toLowerCase().includes(term)) ||
+        (p.categoryName && p.categoryName.toLowerCase().includes(term)) ||
+        (p.brandName && p.brandName.toLowerCase().includes(term))
+      );
+    }
+    return list;
+  });
 
   formatImageUrl(url?: string | null): string {
     return this.adminService.formatImageUrl(url);
@@ -531,7 +573,14 @@ export class OrderManagement implements OnInit {
   openPlaceOrder(): void {
     this.placeOrderOpen.set(true);
     this.placeShopId.set('');
-    this.placeProducts.set([]);
+    this.placeCatalogProducts.set([]);
+    this.placeCategories.set([]);
+    this.placeBrands.set([]);
+    this.placeFilterSearch.set('');
+    this.placeFilterShopId.set('all');
+    this.placeFilterCategoryId.set('all');
+    this.placeFilterBrandId.set('all');
+    this.placeSelectedProduct.set(null);
     this.placeProductId.set('');
     this.placeVariants.set([]);
     this.placeVariantId.set('');
@@ -540,55 +589,62 @@ export class OrderManagement implements OnInit {
     this.placeCustomerPhone.set('');
     this.placeAddress.set('');
     this.placeCity.set('');
+    this.loadPlaceOrderCatalog();
   }
 
-  closePlaceOrder(): void {
-    if (this.isPlacingOrder()) return;
-    this.placeOrderOpen.set(false);
-  }
-
-  onPlaceShopChange(shopId: string): void {
-    this.placeShopId.set(shopId);
-    this.placeProductId.set('');
-    this.placeVariantId.set('');
-    this.placeVariants.set([]);
-    this.placeProducts.set([]);
-    if (!shopId) return;
-
+  loadPlaceOrderCatalog(): void {
     this.placeLoadingProducts.set(true);
-    this.adminService.getApprovedSellerProducts(1, 500).subscribe({
-      next: (res) => {
-        const sid = shopId.toLowerCase();
-        const items = (res?.items || [])
-          .filter((p: any) => String(p.shopId || '').toLowerCase() === sid)
-          .map((p: any) => ({ id: p.id, name: p.name, shopName: p.shopName }));
-        this.placeProducts.set(items);
+    forkJoin({
+      products: this.adminService.getApprovedSellerProducts(1, 500),
+      categories: this.adminService.getCategories().pipe(catchError(() => of([] as AdminCategoryDto[]))),
+      brands: this.adminService.getBrands().pipe(catchError(() => of([] as AdminBrandDto[])))
+    }).subscribe({
+      next: ({ products, categories, brands }) => {
+        this.placeCatalogProducts.set(products?.items || []);
+        this.placeCategories.set(categories || []);
+        this.placeBrands.set(brands || []);
         this.placeLoadingProducts.set(false);
       },
       error: () => {
         this.placeLoadingProducts.set(false);
-        this.toast.show('Failed to load seller products.', 'error');
+        this.toast.show('Failed to load products for ordering.', 'error');
       }
     });
   }
 
-  onPlaceProductChange(productId: string): void {
-    this.placeProductId.set(productId);
+  clearPlaceFilters(): void {
+    this.placeFilterSearch.set('');
+    this.placeFilterShopId.set('all');
+    this.placeFilterCategoryId.set('all');
+    this.placeFilterBrandId.set('all');
+  }
+
+  getPlaceProductImage(product: AdminProductDto): string {
+    const url = product.primaryImageUrl || product.images?.[0]?.imageUrl || null;
+    return this.formatImageUrl(url);
+  }
+
+  selectPlaceProduct(product: AdminProductDto): void {
+    this.placeSelectedProduct.set(product);
+    this.placeProductId.set(product.id);
+    this.placeShopId.set(product.shopId || '');
     this.placeVariantId.set('');
     this.placeVariants.set([]);
-    if (!productId) return;
+    if (!product.id) return;
 
     this.placeLoadingVariants.set(true);
-    this.adminService.getProductVariants(productId).subscribe({
+    this.adminService.getProductVariants(product.id).subscribe({
       next: (variants) => {
-        this.placeVariants.set(
-          (variants || []).map((v: any) => ({
-            id: v.id || v.variantId,
-            sku: v.sku || 'SKU',
-            price: Number(v.price) || 0,
-            stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
-          }))
-        );
+        const mapped = (variants || []).map((v: any) => ({
+          id: v.id || v.variantId,
+          sku: v.sku || 'SKU',
+          price: Number(v.price) || 0,
+          stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
+        }));
+        this.placeVariants.set(mapped);
+        if (mapped.length === 1) {
+          this.placeVariantId.set(mapped[0].id);
+        }
         this.placeLoadingVariants.set(false);
       },
       error: () => {
@@ -598,11 +654,24 @@ export class OrderManagement implements OnInit {
     });
   }
 
+  isPlaceProductSelected(productId: string): boolean {
+    return this.placeProductId() === productId;
+  }
+
+  closePlaceOrder(): void {
+    if (this.isPlacingOrder()) return;
+    this.placeOrderOpen.set(false);
+  }
+
   submitPlaceOrder(): void {
     const variantId = this.placeVariantId();
     const qty = Math.max(1, Number(this.placeQty()) || 1);
+    if (!this.placeProductId()) {
+      this.toast.show('Select a product from the catalog.', 'warning');
+      return;
+    }
     if (!this.placeShopId()) {
-      this.toast.show('Select a seller shop first.', 'warning');
+      this.toast.show('Selected product has no seller shop.', 'warning');
       return;
     }
     if (!variantId) {

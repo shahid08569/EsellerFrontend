@@ -377,3 +377,19 @@ export interface AdminReviewDto {
   productName?: string | null;
   shopName?: string | null;
 }
+
+export interface AdminSellerWalletDto {
+  accountId: string;
+  shopkeeperName: string;
+  shopName?: string | null;
+  walletBalance: number;
+  pendingEarnings: number;
+  availableEarnings: number;
+}
+
+export interface AdminWithdrawalPaymentMethodDto {
+  id: string;
+  name: string;
+  details: string;
+  isActive: boolean;
+}

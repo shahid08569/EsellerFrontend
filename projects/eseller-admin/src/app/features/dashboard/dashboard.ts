@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { forkJoin } from 'rxjs';
 import { ToastService, AuthStore } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import {
@@ -33,6 +34,13 @@ export class Dashboard implements OnInit {
   readonly pendingShops = signal<AdminShopkeeperDto[]>([]);
   readonly totalProducts = signal<number>(0);
   readonly pendingProducts = signal<AdminProductDto[]>([]);
+  readonly pendingGlobalProducts = signal<AdminProductDto[]>([]);
+  readonly pendingOwnProducts = signal<AdminProductDto[]>([]);
+  readonly pendingProductTab = signal<'global' | 'own'>('global');
+
+  readonly visiblePendingProducts = computed(() =>
+    this.pendingProductTab() === 'global' ? this.pendingGlobalProducts() : this.pendingOwnProducts()
+  );
 
   // Filterable list panels (replaced graphs)
   readonly revenueMonthsFilter = signal<number>(9);
@@ -170,10 +178,15 @@ export class Dashboard implements OnInit {
       error: () => {}
     });
 
-    // Fetch pending products
-    this.adminService.getPendingProducts(1, 10).subscribe({
-      next: (res) => {
-        this.pendingProducts.set(res?.items || []);
+    // Fetch pending products — split global listing vs seller-own
+    forkJoin({
+      global: this.adminService.getPendingProducts(1, 20, 'global'),
+      own: this.adminService.getPendingProducts(1, 20, 'own')
+    }).subscribe({
+      next: ({ global, own }) => {
+        this.pendingGlobalProducts.set(global?.items || []);
+        this.pendingOwnProducts.set(own?.items || []);
+        this.pendingProducts.set([...(global?.items || []), ...(own?.items || [])]);
         this.isLoading.set(false);
       },
       error: () => {

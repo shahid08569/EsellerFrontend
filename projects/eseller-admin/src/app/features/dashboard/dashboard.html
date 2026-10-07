@@ -392,17 +392,39 @@
 
       <!-- SECTION 2: PENDING PRODUCTS QUEUE -->
       <div class="bg-white border border-gray-100 rounded-3xl p-5 shadow-xs space-y-4">
-        <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-          <div class="flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-gray-100">
+          <div class="flex items-center gap-2 flex-wrap">
             <span class="text-sm font-black text-gray-900">Pending Product Approvals</span>
             <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-rose-50 text-rose-700">{{ pendingProducts().length }}</span>
           </div>
-          <a routerLink="/products" class="text-xs font-bold text-orange-600 hover:text-orange-700">View In Products Hub →</a>
+          <div class="flex items-center gap-2 flex-wrap">
+            <div class="inline-flex items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
+              <button type="button" (click)="pendingProductTab.set('global')"
+                [class]="pendingProductTab() === 'global'
+                  ? 'px-2.5 py-1 rounded-lg bg-white text-slate-900 text-[10px] font-extrabold shadow-xs flex items-center gap-1'
+                  : 'px-2.5 py-1 rounded-lg text-slate-600 text-[10px] font-bold flex items-center gap-1'">
+                Global listing
+                @if (pendingGlobalProducts().length > 0) {
+                  <span class="px-1.5 py-0.5 rounded-full bg-amber-400 text-slate-950 text-[9px] font-black">{{ pendingGlobalProducts().length }}</span>
+                }
+              </button>
+              <button type="button" (click)="pendingProductTab.set('own')"
+                [class]="pendingProductTab() === 'own'
+                  ? 'px-2.5 py-1 rounded-lg bg-white text-slate-900 text-[10px] font-extrabold shadow-xs flex items-center gap-1'
+                  : 'px-2.5 py-1 rounded-lg text-slate-600 text-[10px] font-bold flex items-center gap-1'">
+                Seller own product
+                @if (pendingOwnProducts().length > 0) {
+                  <span class="px-1.5 py-0.5 rounded-full bg-rose-500 text-white text-[9px] font-black">{{ pendingOwnProducts().length }}</span>
+                }
+              </button>
+            </div>
+            <a [routerLink]="['/products']" [queryParams]="{status: 'pending', kind: pendingProductTab()}" class="text-xs font-bold text-orange-600 hover:text-orange-700">View In Products Hub →</a>
+          </div>
         </div>
 
-        @if (pendingProducts().length === 0) {
+        @if (visiblePendingProducts().length === 0) {
           <div class="p-8 text-center text-xs text-gray-400 bg-gray-50/50 rounded-2xl">
-            No products currently awaiting moderation.
+            No {{ pendingProductTab() === 'global' ? 'global listing' : 'seller-own' }} products awaiting moderation.
           </div>
         } @else {
           <div class="overflow-x-auto">
@@ -417,7 +439,7 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
-                @for (p of pendingProducts(); track p.id) {
+                @for (p of visiblePendingProducts(); track p.id) {
                   <tr class="hover:bg-gray-50/60 transition-colors">
                     <td class="py-3 px-3">
                       <div class="flex items-center gap-2.5">

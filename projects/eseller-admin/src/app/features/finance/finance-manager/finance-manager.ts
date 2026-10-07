@@ -4,9 +4,18 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminCommissionDto, AdminWithdrawalDto } from '../../../core/models/admin.models';
+import {
+  AdminCommissionDto,
+  AdminWithdrawalDto,
+  AdminSellerWalletDto,
+  AdminWithdrawalPaymentMethodDto
+} from '../../../core/models/admin.models';
 
-type FinanceTab = 'commissions' | 'withdrawals';
+type FinanceTab = 'commissions' | 'withdrawals' | 'seller-earnings' | 'payout-methods';
+
+interface SellerWalletRow extends AdminSellerWalletDto {
+  balanceDraft: number;
+}
 
 @Component({
   selector: 'app-finance-manager',
@@ -37,15 +46,37 @@ export class FinanceManager implements OnInit {
   readonly rejectionReason = signal<string>('');
   readonly isRejecting = signal<boolean>(false);
 
+  readonly sellerWallets = signal<SellerWalletRow[]>([]);
+  readonly isLoadingWallets = signal<boolean>(false);
+  readonly savingWalletAccountId = signal<string | null>(null);
+
+  readonly payoutMethods = signal<AdminWithdrawalPaymentMethodDto[]>([]);
+  readonly isLoadingPayoutMethods = signal<boolean>(false);
+  readonly methodModalOpen = signal<boolean>(false);
+  readonly editingMethodId = signal<string | null>(null);
+  readonly methodFormName = signal<string>('');
+  readonly methodFormDetails = signal<string>('');
+  readonly methodFormActive = signal<boolean>(true);
+  readonly isSavingMethod = signal<boolean>(false);
+  readonly deletingMethodId = signal<string | null>(null);
+
   private static readonly MIN_WITHDRAWAL_KEY = 'DefaultWithdrawalThreshold';
+  private static readonly FINANCE_TABS: FinanceTab[] = [
+    'withdrawals',
+    'commissions',
+    'seller-earnings',
+    'payout-methods'
+  ];
 
   ngOnInit(): void {
     const tab = this.route.snapshot.queryParamMap.get('tab') as FinanceTab | null;
-    if (tab && ['commissions', 'withdrawals'].includes(tab)) {
+    if (tab && FinanceManager.FINANCE_TABS.includes(tab)) {
       this.activeTab.set(tab);
     }
     this.loadData();
     this.loadMinWithdrawal();
+    this.loadSellerWallets();
+    this.loadPayoutMethods();
   }
 
   loadData(): void {
@@ -65,6 +96,136 @@ export class FinanceManager implements OnInit {
         this.commissions.set(data || []);
       },
       error: () => {}
+    });
+  }
+
+  loadSellerWallets(): void {
+    this.isLoadingWallets.set(true);
+    this.adminService.getSellerWallets().subscribe({
+      next: (rows) => {
+        this.sellerWallets.set(
+          (rows || []).map(r => ({
+            ...r,
+            balanceDraft: r.walletBalance
+          }))
+        );
+        this.isLoadingWallets.set(false);
+      },
+      error: () => this.isLoadingWallets.set(false)
+    });
+  }
+
+  updateWalletBalanceDraft(accountId: string, value: number): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId ? { ...row, balanceDraft: value } : row
+      )
+    );
+  }
+
+  saveSellerWalletBalance(row: SellerWalletRow): void {
+    const balance = Number(row.balanceDraft);
+    if (!Number.isFinite(balance) || balance < 0) {
+      this.toast.show('Enter a valid wallet balance (0 or greater).', 'error');
+      return;
+    }
+
+    this.savingWalletAccountId.set(row.accountId);
+    this.adminService.updateSellerWalletBalance(row.accountId, balance).subscribe({
+      next: () => {
+        this.savingWalletAccountId.set(null);
+        this.toast.show(`Wallet balance updated for ${row.shopkeeperName}.`, 'success');
+        this.loadSellerWallets();
+      },
+      error: (err) => {
+        this.savingWalletAccountId.set(null);
+        this.toast.show(err?.error?.error || 'Failed to update wallet balance.', 'error');
+      }
+    });
+  }
+
+  loadPayoutMethods(): void {
+    this.isLoadingPayoutMethods.set(true);
+    this.adminService.getWithdrawalPaymentMethods().subscribe({
+      next: (methods) => {
+        this.payoutMethods.set(methods || []);
+        this.isLoadingPayoutMethods.set(false);
+      },
+      error: () => this.isLoadingPayoutMethods.set(false)
+    });
+  }
+
+  openCreateMethodModal(): void {
+    this.editingMethodId.set(null);
+    this.methodFormName.set('');
+    this.methodFormDetails.set('');
+    this.methodFormActive.set(true);
+    this.methodModalOpen.set(true);
+  }
+
+  openEditMethodModal(method: AdminWithdrawalPaymentMethodDto): void {
+    this.editingMethodId.set(method.id);
+    this.methodFormName.set(method.name);
+    this.methodFormDetails.set(method.details);
+    this.methodFormActive.set(method.isActive);
+    this.methodModalOpen.set(true);
+  }
+
+  closeMethodModal(): void {
+    this.methodModalOpen.set(false);
+    this.editingMethodId.set(null);
+  }
+
+  savePayoutMethod(): void {
+    const name = this.methodFormName().trim();
+    const details = this.methodFormDetails().trim();
+    if (!name) {
+      this.toast.show('Method name is required.', 'error');
+      return;
+    }
+
+    const payload = {
+      name,
+      details,
+      isActive: this.methodFormActive()
+    };
+
+    this.isSavingMethod.set(true);
+    const editId = this.editingMethodId();
+    const req$ = editId
+      ? this.adminService.updateWithdrawalPaymentMethod(editId, payload)
+      : this.adminService.createWithdrawalPaymentMethod(payload);
+
+    req$.subscribe({
+      next: () => {
+        this.isSavingMethod.set(false);
+        this.toast.show(editId ? 'Payout method updated.' : 'Payout method added.', 'success');
+        this.closeMethodModal();
+        this.loadPayoutMethods();
+      },
+      error: (err) => {
+        this.isSavingMethod.set(false);
+        this.toast.show(err?.error?.error || 'Failed to save payout method.', 'error');
+      }
+    });
+  }
+
+  deletePayoutMethod(method: AdminWithdrawalPaymentMethodDto): void {
+    if (!confirm(`Delete payout method "${method.name}"? Sellers will no longer see it.`)) {
+      return;
+    }
+
+    this.deletingMethodId.set(method.id);
+    this.adminService.deleteWithdrawalPaymentMethod(method.id).subscribe({
+      next: () => {
+        this.deletingMethodId.set(null);
+        this.toast.show('Payout method deleted.', 'info');
+        this.loadPayoutMethods();
+      },
+      error: (err) => {
+        this.deletingMethodId.set(null);
+        this.toast.show(err?.error?.error || 'Failed to delete payout method.', 'error');
+      }
     });
   }
 
