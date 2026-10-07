@@ -29,6 +29,7 @@ export interface ProductImageDto {
   productId: string;
   imageUrl: string;
   sortOrder: number;
+  isCover?: boolean;
 }
 
 export interface VariantAttributeDto {
@@ -122,6 +123,10 @@ export class SellerProductService {
 
   deleteProductImage(productId: string, imageId: string): Observable<{ message: string }> {
     return this.api.delete<{ message: string }>(`/Products/${productId}/images/${imageId}`);
+  }
+
+  setCoverImage(productId: string, imageId: string): Observable<{ message: string }> {
+    return this.api.put<{ message: string }>(`/Products/${productId}/images/${imageId}/cover`, {});
   }
 
   // Variants

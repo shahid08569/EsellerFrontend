@@ -34,6 +34,7 @@ export class StepMediaComponent {
   @Output() reorderCover = new EventEmitter<number>();
   @Output() directUploadFile = new EventEmitter<File>();
   @Output() deleteExistingImage = new EventEmitter<ProductImageDto>();
+  @Output() setExistingCover = new EventEmitter<ProductImageDto>();
 
   readonly isDragging = signal<boolean>(false);
   readonly isBulkMode = signal<boolean>(true);

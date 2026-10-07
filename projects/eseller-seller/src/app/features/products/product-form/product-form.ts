@@ -239,8 +239,16 @@ export class ProductForm implements OnInit {
     this.productService.getProductImages(productId).subscribe({
       next: (imgs) => {
         if (imgs && imgs.length > 0) {
-          this.existingImages.set(imgs);
-          this.primaryImageUrl.set(imgs[0].imageUrl);
+          const normalized = imgs.map((img: any) => ({
+            ...img,
+            id: String(img.id ?? img.Id ?? ''),
+            imageUrl: img.imageUrl ?? img.ImageUrl ?? '',
+            sortOrder: Number(img.sortOrder ?? img.SortOrder ?? 0),
+            isCover: !!(img.isCover ?? img.IsCover)
+          }));
+          this.existingImages.set(normalized);
+          const cover = normalized.find(i => i.isCover) || normalized[0];
+          this.primaryImageUrl.set(cover.imageUrl);
         } else if (this.primaryImageUrl()) {
           this.existingImages.set([{
             id: 'cover-' + productId,
@@ -412,6 +420,20 @@ export class ProductForm implements OnInit {
       error: (err) => {
         this.isUploadingNewImage.set(false);
         this.toast.show(err.error?.message || 'Failed to upload photo', 'error');
+      }
+    });
+  }
+
+  onSetExistingCover(img: ProductImageDto): void {
+    const pId = this.productId();
+    if (!pId || !img?.id) return;
+    this.productService.setCoverImage(pId, img.id).subscribe({
+      next: () => {
+        this.toast.show('Cover image updated.', 'success');
+        this.loadProductImages(pId);
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || err?.error?.message || 'Failed to set cover image.', 'error');
       }
     });
   }

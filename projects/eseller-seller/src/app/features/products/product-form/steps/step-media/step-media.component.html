@@ -69,25 +69,34 @@
           <div class="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-5 gap-3">
             @for (img of existingImages(); track img.id; let idx = $index) {
               <div class="group relative rounded-xl overflow-hidden border border-gray-200 bg-gray-50 aspect-square shadow-2xs hover:shadow-md transition-all">
-                <img [src]="img.imageUrl | imageUrl" [alt]="'Product photo'" class="w-full h-full object-cover" appFallback>
+                <img [src]="img.imageUrl | imageUrl" [alt]="'Product photo'" class="w-full h-full object-cover pointer-events-none" appFallback>
                 
-                @if (img.sortOrder === 0 || idx === 0) {
-                  <div class="absolute top-1.5 left-1.5 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs">
-                    ★ Primary
+                @if (img.isCover || img.sortOrder === 0 || idx === 0) {
+                  <div class="absolute top-1.5 left-1.5 z-20 bg-primary text-white text-[9px] font-black uppercase px-2 py-0.5 rounded-md shadow-xs pointer-events-none">
+                    ★ Cover
                   </div>
                 }
 
-                <div class="absolute inset-0 bg-slate-900/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center p-2">
+                <div class="absolute top-1.5 right-1.5 z-30">
                   <button 
                     type="button" 
-                    (click)="deleteExistingImage.emit(img)" 
-                    class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-md">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    (click)="deleteExistingImage.emit(img); $event.stopPropagation()" 
+                    class="w-7 h-7 rounded-lg bg-rose-600 text-white flex items-center justify-center hover:bg-rose-700 transition-colors shadow-xs cursor-pointer"
+                    title="Remove photo">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
                     </svg>
-                    Delete
                   </button>
                 </div>
+
+                @if (!(img.isCover || img.sortOrder === 0 || idx === 0)) {
+                  <button 
+                    type="button" 
+                    (click)="setExistingCover.emit(img); $event.stopPropagation()" 
+                    class="absolute bottom-1.5 inset-x-1.5 z-30 py-1.5 bg-white hover:bg-emerald-50 text-gray-900 font-bold text-[10px] rounded-md transition-colors shadow-md border border-gray-200 cursor-pointer">
+                    Make Cover
+                  </button>
+                }
               </div>
             }
           </div>
