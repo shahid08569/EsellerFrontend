@@ -952,7 +952,7 @@
               </div>
               <div>
                 <span class="text-slate-400 block text-[11px]">City / Country</span>
-                <span class="font-bold text-white">{{ applicant.city || 'N/A' }}, {{ applicant.country || 'Pakistan' }}</span>
+                <span class="font-bold text-white">{{ applicant.city || 'N/A' }}, {{ applicant.country || 'United States' }}</span>
               </div>
               <div>
                 <span class="text-slate-400 block text-[11px]">Registration Date</span>
@@ -1080,7 +1080,7 @@
 
         <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
           <span class="text-gray-400 block font-medium">City / Location</span>
-          <span class="font-bold text-gray-900">{{ store.city || 'N/A' }}, {{ store.country || 'Pakistan' }}</span>
+          <span class="font-bold text-gray-900">{{ store.city || 'N/A' }}, {{ store.country || 'United States' }}</span>
         </div>
 
         <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
@@ -1780,7 +1780,7 @@
               type="text" 
               [ngModel]="editPhone()" 
               (ngModelChange)="editPhone.set($event)"
-              placeholder="+92 300 1234567"
+              placeholder="+1 (555) 123-4567"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
           </div>
           <div>
@@ -1789,7 +1789,7 @@
               type="text" 
               [ngModel]="editCity()" 
               (ngModelChange)="editCity.set($event)"
-              placeholder="e.g. Lahore, Karachi, Islamabad"
+              placeholder="e.g. New York, Los Angeles, Chicago"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-hidden">
           </div>
         </div>

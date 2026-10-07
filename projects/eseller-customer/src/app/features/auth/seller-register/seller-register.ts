@@ -3,7 +3,12 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
 import { AuthService, AuthStore, ToastService } from 'eseller-shared';
-import { COUNTRIES_DATA, CountryStateData } from '../../../shared/data/countries-states.data';
+import {
+  COUNTRIES_DATA,
+  CountryStateData,
+  DEFAULT_DIAL_CODE,
+  phonePlaceholderForDialCode
+} from '../../../shared/data/countries-states.data';
 
 export interface VerificationDocOption {
   id: string;
@@ -36,8 +41,8 @@ export class SellerRegister implements OnInit {
   readonly phone = signal<string>('');
 
   // Country Code Picker
-  readonly selectedCountryCode = signal<string>('+92');
-  readonly selectedCountryFlag = signal<string>('🇵🇰');
+  readonly selectedCountryCode = signal<string>(DEFAULT_DIAL_CODE);
+  readonly selectedCountryFlag = signal<string>('🇺🇸');
   readonly countryCodeSearch = signal<string>('');
   readonly isCountryCodeDropdownOpen = signal<boolean>(false);
 
@@ -51,6 +56,10 @@ export class SellerRegister implements OnInit {
         c.code.toLowerCase().includes(query)
     );
   });
+
+  readonly phonePlaceholder = computed(() =>
+    phonePlaceholderForDialCode(this.selectedCountryCode())
+  );
 
   // Shop & Brand Details
   readonly storeName = signal<string>('');
@@ -89,7 +98,7 @@ export class SellerRegister implements OnInit {
       id: 'cnic',
       name: 'Identity Card (CNIC / National ID)',
       label: 'CNIC / National ID Card',
-      placeholder: '35201-1234567-1 or CNIC Number',
+      placeholder: 'XXX-XX-1234 or State ID Number',
       hint: 'Upload clear Front & Back scans or photos of your official Government Identity Card.',
       requiresBackSide: true
     },

@@ -247,7 +247,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     } else if (actionType === 'diamond') {
       msg = 'Hello Admin, I would like to request an upgrade to Diamond ($2000 / 5,000 product limit) for my store.';
     } else if (actionType === 'payment') {
-      msg = 'I have submitted payment for my Tier Upgrade via Bank Transfer / Raast. Please reply with the payment details you need, and I will share my real transfer reference for verification.';
+      msg = 'I have submitted payment for my Tier Upgrade via Bank Transfer / ACH or Wire. Please reply with the payment details you need, and I will share my real transfer reference for verification.';
     } else if (actionType === 'limit') {
       msg = 'My store is reaching the 200 product limit on the Bronze plan. I would like to expand my catalog capacity.';
     }

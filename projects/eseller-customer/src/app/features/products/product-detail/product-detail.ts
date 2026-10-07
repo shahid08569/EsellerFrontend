@@ -44,7 +44,10 @@ import {
   SelectOption
 } from '../../../shared/components/searchable-select/searchable-select';
 import { DialCodeSelect, DialCodeOption } from '../../../shared/components/dial-code-select/dial-code-select';
-import { COUNTRIES_DATA } from '../../../shared/data/countries-states.data';
+import {
+  COUNTRIES_DATA,
+  phonePlaceholderForDialCode
+} from '../../../shared/data/countries-states.data';
 import { toLocalPhoneNumber } from '../../../shared/utils/phone.util';
 
 @Component({
@@ -159,15 +162,9 @@ export class ProductDetail implements OnInit, OnDestroy {
     return this.selectedCountryData()?.flag || '🌍';
   });
 
-  readonly phonePlaceholder = computed(() => {
-    const code = this.selectedDialCode();
-    if (code === '+92') return '300 1234567';
-    if (code === '+971') return '50 123 4567';
-    if (code === '+966') return '50 123 4567';
-    if (code === '+1') return '(555) 000-0000';
-    if (code === '+44') return '7911 123456';
-    return 'Enter phone number';
-  });
+  readonly phonePlaceholder = computed(() =>
+    phonePlaceholderForDialCode(this.selectedDialCode())
+  );
 
   readonly stateOptions = computed<SelectOption[]>(() => {
     const c = COUNTRIES_DATA.find((x) => x.name === this.selectedCountry());

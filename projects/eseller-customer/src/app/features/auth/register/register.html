@@ -47,7 +47,7 @@
           [ngModel]="name()"
           (ngModelChange)="name.set($event); nameError.set(null); errorMessage.set(null)"
           name="name"
-          placeholder="Muhammad Ahmed"
+          placeholder="John Smith"
           class="w-full pl-8 pr-3 py-2 bg-gray-50/80 border rounded-xl text-xs sm:text-sm text-text-primary placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all"
           [class.border-rose-300]="nameError()"
           [class.border-gray-200]="!nameError()"

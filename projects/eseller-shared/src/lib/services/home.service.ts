@@ -11,6 +11,7 @@ import {
   CategoryTreeDto,
   BrandDto,
   HomepageBannerDto,
+  PaymentShowcaseLogoDto,
   FlashSaleDto,
   GetProductsQuery,
   PagedList,
@@ -28,6 +29,7 @@ export class HomeService {
   private categories$?: Observable<CategoryTreeDto[]>;
   private brands$?: Observable<BrandDto[]>;
   private banners$?: Observable<HomepageBannerDto[]>;
+  private paymentLogos$?: Observable<PaymentShowcaseLogoDto[]>;
 
   // ============================================================
   // BANNERS
@@ -45,6 +47,41 @@ export class HomeService {
   /** Clear cached banners so the next homepage load picks up admin publishes. */
   invalidateBannersCache(): void {
     this.banners$ = undefined;
+  }
+
+  // ============================================================
+  // PAYMENT SHOWCASE LOGOS
+  // ============================================================
+  getPaymentShowcaseLogos(forceRefresh = false): Observable<PaymentShowcaseLogoDto[]> {
+    if (!this.paymentLogos$ || forceRefresh) {
+      this.paymentLogos$ = this.api.get<any>('/homepage/payment-logos').pipe(
+        map((res) => {
+          const list = Array.isArray(res)
+            ? res
+            : Array.isArray(res?.value)
+              ? res.value
+              : Array.isArray(res?.data)
+                ? res.data
+                : [];
+          return list.map((x: any) => ({
+            id: String(x.id ?? x.Id ?? ''),
+            name: x.name ?? x.Name ?? 'Payment',
+            imageUrl: x.imageUrl ?? x.ImageUrl ?? '',
+            sortOrder: Number(x.sortOrder ?? x.SortOrder ?? 0),
+            isActive: (x.isActive ?? x.IsActive) !== false,
+            createdAt: x.createdAt ?? x.CreatedAt ?? '',
+            updatedAt: x.updatedAt ?? x.UpdatedAt ?? ''
+          })) as PaymentShowcaseLogoDto[];
+        }),
+        catchError(() => of([])),
+        shareReplay(1)
+      );
+    }
+    return this.paymentLogos$;
+  }
+
+  invalidatePaymentLogosCache(): void {
+    this.paymentLogos$ = undefined;
   }
 
   // ============================================================

@@ -632,7 +632,7 @@ export class ShopManagement implements OnInit, OnDestroy {
     this.editPhone.set(shop.phone || '');
     this.editAddress.set(shop.address || '');
     this.editCity.set(shop.city || '');
-    this.editCountry.set(shop.country || 'Pakistan');
+    this.editCountry.set(shop.country || 'United States');
     this.editLogoUrl.set(shop.logoUrl || '');
     this.editBannerUrl.set(shop.bannerUrl || '');
     this.editStoreModalOpen.set(true);
@@ -722,7 +722,7 @@ export class ShopManagement implements OnInit, OnDestroy {
       phone: this.editPhone().trim() || undefined,
       address: this.editAddress().trim() || undefined,
       city: this.editCity().trim() || undefined,
-      country: this.editCountry().trim() || 'Pakistan'
+      country: this.editCountry().trim() || 'United States'
     };
 
     this.adminService.updateShop(shop.id, payload).subscribe({

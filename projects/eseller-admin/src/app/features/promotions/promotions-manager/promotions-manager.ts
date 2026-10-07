@@ -3,10 +3,10 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminCouponDto, AdminFlashSaleDto, AdminBannerDto } from '../../../core/models/admin.models';
+import { AdminCouponDto, AdminFlashSaleDto, AdminBannerDto, AdminPaymentLogoDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
 
-type PromoTab = 'coupons' | 'flash-sales' | 'banners';
+type PromoTab = 'coupons' | 'flash-sales' | 'banners' | 'payment-logos';
 
 @Component({
   selector: 'app-promotions-manager',
@@ -24,13 +24,14 @@ export class PromotionsManager implements OnInit {
   readonly coupons = signal<AdminCouponDto[]>([]);
   readonly flashSales = signal<AdminFlashSaleDto[]>([]);
   readonly banners = signal<AdminBannerDto[]>([]);
+  readonly paymentLogos = signal<AdminPaymentLogoDto[]>([]);
 
   // Modal State for Coupon
   readonly couponModalOpen = signal<boolean>(false);
   readonly cCode = signal<string>('');
   readonly cDiscountType = signal<'Percentage' | 'Fixed'>('Percentage');
   readonly cValue = signal<number>(10);
-  readonly cMinOrder = signal<number>(500);
+  readonly cMinOrder = signal<number>(50);
   readonly cExpiresAt = signal<string>('');
 
   // Modal State for Flash Sale
@@ -67,6 +68,17 @@ export class PromotionsManager implements OnInit {
   readonly deleteModalOpen = signal(false);
   readonly bannerToDelete = signal<AdminBannerDto | null>(null);
   readonly isDeletingBanner = signal(false);
+
+  // Payment logo showcase (homepage marquee)
+  readonly paymentLogoModalOpen = signal(false);
+  readonly editingPaymentLogoId = signal<string | null>(null);
+  readonly pName = signal('');
+  readonly pImageUrl = signal('');
+  readonly pSortOrder = signal(1);
+  readonly pIsActive = signal(true);
+  readonly isUploadingPaymentLogo = signal(false);
+  readonly isSavingPaymentLogo = signal(false);
+  readonly busyPaymentLogoId = signal<string | null>(null);
 
   private readonly bannerDraftKey = 'eseller.admin.bannerDraft';
 
@@ -177,6 +189,14 @@ export class PromotionsManager implements OnInit {
       },
       error: () => this.isLoading.set(false)
     });
+
+    this.adminService.getPaymentLogos().subscribe({
+      next: (data) => {
+        const sorted = (data || []).slice().sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0));
+        this.paymentLogos.set(sorted);
+      },
+      error: () => {}
+    });
   }
 
   // --- COUPON ACTIONS ---
@@ -184,7 +204,7 @@ export class PromotionsManager implements OnInit {
     this.cCode.set('');
     this.cDiscountType.set('Percentage');
     this.cValue.set(10);
-    this.cMinOrder.set(500);
+    this.cMinOrder.set(50);
     this.cExpiresAt.set('');
     this.couponModalOpen.set(true);
   }
@@ -619,6 +639,120 @@ export class PromotionsManager implements OnInit {
         this.isDeletingBanner.set(false);
         this.toast.show(err?.error?.error || 'Failed to delete banner', 'error');
       }
+    });
+  }
+
+  // --- PAYMENT LOGOS (homepage infinite showcase) ---
+  openPaymentLogoModal(logo?: AdminPaymentLogoDto): void {
+    if (logo) {
+      this.editingPaymentLogoId.set(logo.id);
+      this.pName.set(logo.name || '');
+      this.pImageUrl.set(logo.imageUrl || '');
+      this.pSortOrder.set(logo.sortOrder ?? 1);
+      this.pIsActive.set(logo.isActive !== false);
+    } else {
+      this.editingPaymentLogoId.set(null);
+      this.pName.set('');
+      this.pImageUrl.set('');
+      this.pSortOrder.set((this.paymentLogos().length || 0) + 1);
+      this.pIsActive.set(true);
+    }
+    this.paymentLogoModalOpen.set(true);
+  }
+
+  closePaymentLogoModal(): void {
+    if (this.isSavingPaymentLogo() || this.isUploadingPaymentLogo()) return;
+    this.paymentLogoModalOpen.set(false);
+  }
+
+  onPaymentLogoFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement;
+    if (!input.files || input.files.length === 0) return;
+    const file = input.files[0];
+    this.isUploadingPaymentLogo.set(true);
+    this.adminService.uploadPaymentLogoImage(file).subscribe({
+      next: (res) => {
+        this.isUploadingPaymentLogo.set(false);
+        if (res?.imageUrl) {
+          this.pImageUrl.set(res.imageUrl);
+          this.toast.show('Logo uploaded', 'success');
+        }
+      },
+      error: (err) => {
+        this.isUploadingPaymentLogo.set(false);
+        this.toast.show(err?.error?.error || 'Failed to upload logo', 'error');
+      }
+    });
+  }
+
+  savePaymentLogo(): void {
+    const imageUrl = this.pImageUrl().trim();
+    const name = this.pName().trim() || 'Payment method';
+    if (!imageUrl) {
+      this.toast.show('Upload a payment logo image first.', 'error');
+      return;
+    }
+    if (this.isSavingPaymentLogo() || this.isUploadingPaymentLogo()) return;
+
+    const payload = {
+      name,
+      imageUrl,
+      sortOrder: Number(this.pSortOrder()) || 1,
+      isActive: this.pIsActive() !== false
+    };
+
+    this.isSavingPaymentLogo.set(true);
+    const id = this.editingPaymentLogoId();
+    const req$ = id
+      ? this.adminService.updatePaymentLogo(id, payload)
+      : this.adminService.createPaymentLogo(payload);
+
+    req$.subscribe({
+      next: () => {
+        this.isSavingPaymentLogo.set(false);
+        this.paymentLogoModalOpen.set(false);
+        this.toast.show(id ? 'Payment logo updated' : 'Payment logo added to homepage showcase', 'success');
+        this.loadData();
+      },
+      error: (err) => {
+        this.isSavingPaymentLogo.set(false);
+        this.toast.show(err?.error?.error || 'Failed to save payment logo', 'error');
+      }
+    });
+  }
+
+  togglePaymentLogoVisibility(logo: AdminPaymentLogoDto): void {
+    if (this.busyPaymentLogoId()) return;
+    const next = logo.isActive === false;
+    this.busyPaymentLogoId.set(logo.id);
+    this.adminService.updatePaymentLogo(logo.id, {
+      name: logo.name,
+      imageUrl: logo.imageUrl,
+      sortOrder: logo.sortOrder ?? 0,
+      isActive: next
+    }).subscribe({
+      next: () => {
+        this.busyPaymentLogoId.set(null);
+        this.paymentLogos.update((list) =>
+          list.map((x) => (x.id === logo.id ? { ...x, isActive: next } : x))
+        );
+        this.toast.show(next ? `"${logo.name}" is Live` : `"${logo.name}" is Hidden`, 'success');
+      },
+      error: (err) => {
+        this.busyPaymentLogoId.set(null);
+        this.toast.show(err?.error?.error || 'Failed to update visibility', 'error');
+      }
+    });
+  }
+
+  deletePaymentLogo(logo: AdminPaymentLogoDto): void {
+    if (!confirm(`Delete payment logo "${logo.name}"?`)) return;
+    this.adminService.deletePaymentLogo(logo.id).subscribe({
+      next: () => {
+        this.toast.show('Payment logo deleted', 'info');
+        this.loadData();
+      },
+      error: (err) => this.toast.show(err?.error?.error || 'Failed to delete logo', 'error')
     });
   }
 }

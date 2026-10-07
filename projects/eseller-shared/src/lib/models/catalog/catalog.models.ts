@@ -124,6 +124,16 @@ export interface BrandDto {
   isActive: boolean;
   createdAt: string;
 }
+// HOMEPAGE PAYMENT SHOWCASE LOGO
+export interface PaymentShowcaseLogoDto {
+  id: string;
+  name: string;
+  imageUrl: string;
+  sortOrder: number;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
 // HOMEPAGE BANNER
 export interface HomepageBannerDto {
   id: string;

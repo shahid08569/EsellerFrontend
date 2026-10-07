@@ -19,7 +19,8 @@ import {
 } from '../../shared/components/searchable-select/searchable-select';
 import { DialCodeSelect, DialCodeOption } from '../../shared/components/dial-code-select/dial-code-select';
 import {
-  COUNTRIES_DATA
+  COUNTRIES_DATA,
+  phonePlaceholderForDialCode
 } from '../../shared/data/countries-states.data';
 import { toLocalPhoneNumber } from '../../shared/utils/phone.util';
 
@@ -101,15 +102,9 @@ export class Cart implements OnInit {
     return this.selectedCountryData()?.flag || '🌍';
   });
 
-  readonly phonePlaceholder = computed(() => {
-    const code = this.selectedDialCode();
-    if (code === '+92') return '300 1234567';
-    if (code === '+971') return '50 123 4567';
-    if (code === '+966') return '50 123 4567';
-    if (code === '+1') return '(555) 000-0000';
-    if (code === '+44') return '7911 123456';
-    return 'Enter phone number';
-  });
+  readonly phonePlaceholder = computed(() =>
+    phonePlaceholderForDialCode(this.selectedDialCode())
+  );
 
   // Searchable Cascading State options based on selectedCountry
   readonly stateOptions = computed<SelectOption[]>(() => {
@@ -289,7 +284,7 @@ export class Cart implements OnInit {
     }
 
     if (!this.customerPhone().trim() || this.customerPhone().trim().length < 7) {
-      this.phoneError.set('Please enter a valid phone number (e.g. 0300-1234567).');
+      this.phoneError.set('Please enter a valid phone number (e.g. (555) 123-4567).');
       hasErrors = true;
     }
 

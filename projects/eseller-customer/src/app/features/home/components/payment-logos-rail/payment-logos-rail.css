@@ -1,0 +1,28 @@
+.payment-rail-viewport {
+  mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 6%, #000 94%, transparent);
+}
+
+.payment-rail-track {
+  animation: payment-rail-scroll 28s linear infinite;
+  will-change: transform;
+}
+
+.payment-rail:hover .payment-rail-track {
+  animation-play-state: paused;
+}
+
+@keyframes payment-rail-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .payment-rail-track {
+    animation: none;
+  }
+}

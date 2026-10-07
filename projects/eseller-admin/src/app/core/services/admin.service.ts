@@ -20,6 +20,7 @@ import {
   AdminCouponDto,
   AdminFlashSaleDto,
   AdminBannerDto,
+  AdminPaymentLogoDto,
   AdminBlogPostDto,
   AdminCmsDto,
   AdminSettingDto,
@@ -1011,6 +1012,46 @@ export class AdminService {
     return this.api.post<any>('/admin/banners/upload', formData).pipe(
       map((res: any) => ({
         imageUrl: res?.imageUrl ?? res?.ImageUrl ?? res?.logoUrl ?? res?.LogoUrl ?? res?.url ?? res?.value ?? ''
+      }))
+    );
+  }
+
+  getPaymentLogos(): Observable<AdminPaymentLogoDto[]> {
+    return this.api.get<any>('/admin/payment-logos').pipe(
+      map((res) => {
+        const list = Array.isArray(res) ? res : Array.isArray(res?.items) ? res.items : [];
+        return list.map((x: any) => ({
+          id: String(x.id ?? x.Id ?? ''),
+          name: x.name ?? x.Name ?? 'Payment',
+          imageUrl: x.imageUrl ?? x.ImageUrl ?? '',
+          sortOrder: Number(x.sortOrder ?? x.SortOrder ?? 0),
+          isActive: (x.isActive ?? x.IsActive) !== false,
+          createdAt: x.createdAt ?? x.CreatedAt,
+          updatedAt: x.updatedAt ?? x.UpdatedAt
+        })) as AdminPaymentLogoDto[];
+      }),
+      catchError(() => of([]))
+    );
+  }
+
+  createPaymentLogo(data: { name: string; imageUrl: string; sortOrder: number; isActive: boolean }): Observable<any> {
+    return this.api.post<any>('/admin/payment-logos', data);
+  }
+
+  updatePaymentLogo(id: string, data: { name: string; imageUrl: string; sortOrder: number; isActive: boolean }): Observable<any> {
+    return this.api.put<any>(`/admin/payment-logos/${id}`, data);
+  }
+
+  deletePaymentLogo(id: string): Observable<any> {
+    return this.api.delete<any>(`/admin/payment-logos/${id}`);
+  }
+
+  uploadPaymentLogoImage(file: File): Observable<{ imageUrl: string }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.api.post<any>('/admin/payment-logos/upload', formData).pipe(
+      map((res: any) => ({
+        imageUrl: res?.imageUrl ?? res?.ImageUrl ?? res?.url ?? res?.value ?? ''
       }))
     );
   }

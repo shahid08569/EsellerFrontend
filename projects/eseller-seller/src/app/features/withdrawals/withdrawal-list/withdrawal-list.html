@@ -4,7 +4,7 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h1 class="text-2xl font-black text-gray-900 tracking-tight">Withdrawals & Payouts</h1>
-      <p class="text-sm text-gray-500 mt-0.5">Transfer your settled store profits to your local bank account, Easypaisa, or JazzCash.</p>
+      <p class="text-sm text-gray-500 mt-0.5">Transfer your settled store profits to your US bank account via ACH or wire transfer.</p>
     </div>
     <button 
       type="button" 
@@ -114,10 +114,10 @@
             <select 
               [(ngModel)]="paymentMethod"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
-              <option value="Bank Transfer">Bank Account (1LINK / IBAN)</option>
-              <option value="Easypaisa">Easypaisa Mobile Wallet</option>
-              <option value="JazzCash">JazzCash Mobile Wallet</option>
-              <option value="Nayapay">NayaPay / SadaPay</option>
+              <option value="Bank Transfer">Bank Account (ACH / Wire)</option>
+              <option value="PayPal">PayPal</option>
+              <option value="Zelle">Zelle</option>
+              <option value="Venmo">Venmo</option>
             </select>
           </div>
 
@@ -126,7 +126,7 @@
             <input 
               type="text" 
               [(ngModel)]="bankName"
-              placeholder="e.g. Meezan Bank, HBL, Alfalah, Telenor Bank..."
+              placeholder="e.g. Chase, Bank of America, Wells Fargo..."
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
           </div>
 
@@ -144,7 +144,7 @@
             <input 
               type="text" 
               [(ngModel)]="accountNumber"
-              placeholder="e.g. 03001234567 or PK76MEZN..."
+              placeholder="e.g. routing 021000021 & account ending 4567"
               class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs font-mono focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
           </div>
         </div>

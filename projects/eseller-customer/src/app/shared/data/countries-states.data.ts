@@ -2860,3 +2860,24 @@ export const COUNTRIES_DATA: CountryStateData[] = RAW_COUNTRIES_DATA
     )
   }))
   .sort((a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' }));
+
+export const DEFAULT_DIAL_CODE = '+1';
+export const DEFAULT_COUNTRY_NAME = 'United States';
+
+/** Example local-number format for phone inputs (dial code shown separately). */
+export function phonePlaceholderForDialCode(phoneCode: string): string {
+  switch (phoneCode) {
+    case '+92':
+      return '300 1234567';
+    case '+971':
+      return '50 123 4567';
+    case '+966':
+      return '50 123 4567';
+    case '+1':
+      return '(555) 123-4567';
+    case '+44':
+      return '7911 123456';
+    default:
+      return 'Enter phone number';
+  }
+}

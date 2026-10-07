@@ -8,6 +8,7 @@ import {
   ProductListDto,
   BrandDto,
   HomepageCategorySectionDto,
+  PaymentShowcaseLogoDto,
   SkeletonLayout
 } from 'eseller-shared';
 
@@ -20,11 +21,13 @@ import { BestSellingSection } from '../components/best-selling-section/best-sell
 import { HotSellingSection } from '../components/hot-selling-section/hot-selling-section';
 import { BrandsGrid } from '../components/brands-grid/brands-grid';
 import { CategoryProductsSection } from '../components/category-products-section/category-products-section';
+import { PaymentLogosRail } from '../components/payment-logos-rail/payment-logos-rail';
 
 @Component({
   selector: 'app-home',
   imports: [
     HeroCarousel,
+    PaymentLogosRail,
     CategoriesGrid,
     FlashSaleSection,
     ProductsSection,
@@ -42,6 +45,7 @@ export class Home implements OnInit, OnDestroy {
   private sub?: Subscription;
 
   readonly banners = signal<HomepageBannerDto[]>([]);
+  readonly paymentLogos = signal<PaymentShowcaseLogoDto[]>([]);
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly brands = signal<BrandDto[]>([]);
 
@@ -61,15 +65,17 @@ export class Home implements OnInit, OnDestroy {
   readonly loadingHotSelling = signal(true);
 
   ngOnInit(): void {
-    // Max 4 parallel calls (was 9–11). Product rails + category sections = 1 round-trip.
+    // Max 5 parallel calls. Product rails + category sections = 1 round-trip.
     this.sub = forkJoin({
       banners: this.homeService.getHomepageBanners(false),
+      paymentLogos: this.homeService.getPaymentShowcaseLogos(false),
       categories: this.homeService.getCategories(false),
       brands: this.homeService.getBrands(false),
       sections: this.homeService.getHomepageSections(8)
     }).subscribe({
-      next: ({ banners, categories, brands, sections }) => {
+      next: ({ banners, paymentLogos, categories, brands, sections }) => {
         this.banners.set(Array.isArray(banners) ? banners : []);
+        this.paymentLogos.set(Array.isArray(paymentLogos) ? paymentLogos : []);
 
         const cats = categories || [];
         const featured = cats.filter(c => c.isFeaturedOnHomepage);

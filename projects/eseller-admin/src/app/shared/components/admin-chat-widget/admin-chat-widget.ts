@@ -464,7 +464,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         text = `Diamond tier ($2000 / 5,000 products) for ${shop.name} is under review. Please submit transaction ID.`;
         break;
       case 'request_payment':
-        text = `Please upload your bank transfer / EasyPaisa / JazzCash confirmation slip here.`;
+        text = `Please upload your bank transfer / ACH / wire confirmation slip here.`;
         break;
       case 'bronze_info':
         text = `Bronze (Free) supports up to 200 catalog products. Upgrade anytime to expand inventory.`;

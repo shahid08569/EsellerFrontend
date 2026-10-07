@@ -893,7 +893,7 @@
                   type="text"
                   [ngModel]="profilePhone()"
                   (ngModelChange)="profilePhone.set($event)"
-                  placeholder="0300-1234567"
+                  placeholder="(555) 123-4567"
                   class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300 focus:outline-none focus:border-primary"
                 />
               </div>
@@ -1176,7 +1176,7 @@
               type="text"
               [ngModel]="addrPhone()"
               (ngModelChange)="addrPhone.set($event); addrPhoneError.set(null)"
-              placeholder="e.g. 0300-1234567"
+              placeholder="e.g. (555) 123-4567"
               class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300 transition-all"
               [class.border-red-400]="addrPhoneError()"
             />
@@ -1192,7 +1192,7 @@
               type="text"
               [ngModel]="addrLine1()"
               (ngModelChange)="addrLine1.set($event); addrLine1Error.set(null)"
-              placeholder="House #, Street name, Sector/Block"
+              placeholder="123 Main St, Apt 4B"
               class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300 transition-all"
               [class.border-red-400]="addrLine1Error()"
             />
@@ -1208,7 +1208,7 @@
               type="text"
               [ngModel]="addrLine2()"
               (ngModelChange)="addrLine2.set($event)"
-              placeholder="Apartment, suite, or nearby landmark"
+              placeholder="Apartment, suite, unit, or landmark"
               class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300 transition-all"
             />
           </div>
@@ -1259,7 +1259,7 @@
                 type="text"
                 [ngModel]="addrCity()"
                 (ngModelChange)="addrCity.set($event); addrCityError.set(null)"
-                placeholder="e.g. Lahore"
+                placeholder="e.g. New York"
                 class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300"
                 [class.border-red-400]="addrCityError()"
               />
@@ -1274,7 +1274,7 @@
                 type="text"
                 [ngModel]="addrPostalCode()"
                 (ngModelChange)="addrPostalCode.set($event)"
-                placeholder="e.g. 54000"
+                placeholder="e.g. 10001"
                 class="w-full px-3.5 py-2.5 text-xs rounded-xl border border-gray-300"
               />
             </div>

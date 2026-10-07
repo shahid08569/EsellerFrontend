@@ -184,7 +184,7 @@
           <input
             type="tel"
             [(ngModel)]="form.phone"
-            placeholder="+92 300 1234567"
+            placeholder="+1 (555) 123-4567"
             class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
           />
         </div>
@@ -206,7 +206,7 @@
           <input
             type="text"
             [(ngModel)]="form.city"
-            placeholder="Skardu"
+            placeholder="New York"
             class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
           />
         </div>
@@ -217,7 +217,7 @@
           <input
             type="text"
             [(ngModel)]="form.country"
-            placeholder="Pakistan"
+            placeholder="United States"
             class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2.5 text-sm text-gray-800 focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all outline-none"
           />
         </div>
@@ -267,7 +267,7 @@
     [isOpen]="showConfirmUpdateModal()"
     title="Save Store Settings?"
     message="Are you sure you want to update your store profile details and location? These changes will be published live across the marketplace immediately."
-    [itemHighlight]="form.name + ' • ' + (form.city || 'Skardu') + ', ' + (form.country || 'Pakistan')"
+    [itemHighlight]="form.name + ' • ' + (form.city || 'New York') + ', ' + (form.country || 'United States')"
     confirmText="Yes, Save Settings"
     cancelText="Keep Editing"
     type="info"

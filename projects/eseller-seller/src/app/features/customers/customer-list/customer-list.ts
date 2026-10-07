@@ -57,7 +57,7 @@ export class CustomerList implements OnInit {
               name: o.customerName || 'Verified Buyer',
               email: o.customerEmail || 'No email provided',
               phone: o.customerPhone || 'N/A',
-              city: o.city || 'Pakistan',
+              city: o.city || 'N/A',
               totalOrders: 1,
               totalSpent: amount,
               lastOrderDate: o.createdAt,

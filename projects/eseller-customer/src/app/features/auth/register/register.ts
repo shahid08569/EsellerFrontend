@@ -21,7 +21,7 @@ export class Register implements OnInit {
   readonly name = signal<string>('');
   readonly email = signal<string>('');
   readonly phone = signal<string>('');
-  readonly selectedDialCode = signal<string>('+92');
+  readonly selectedDialCode = signal<string>('+1');
   readonly password = signal<string>('');
   readonly confirmPassword = signal<string>('');
   readonly agreeToTerms = signal<boolean>(true);
@@ -69,11 +69,11 @@ export class Register implements OnInit {
   });
 
   readonly countryCodes = [
+    { label: '🇺🇸 USA (+1)', code: '+1', placeholder: '(555) 123-4567' },
     { label: '🇵🇰 Pakistan (+92)', code: '+92', placeholder: '300 1234567' },
     { label: '🇦🇪 UAE (+971)', code: '+971', placeholder: '50 123 4567' },
     { label: '🇸🇦 Saudi Arabia (+966)', code: '+966', placeholder: '50 123 4567' },
-    { label: '🇬🇧 UK (+44)', code: '+44', placeholder: '7911 123456' },
-    { label: '🇺🇸 USA (+1)', code: '+1', placeholder: '(555) 000-0000' }
+    { label: '🇬🇧 UK (+44)', code: '+44', placeholder: '7911 123456' }
   ];
 
   readonly currentPlaceholder = computed(() => {
