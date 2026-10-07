@@ -26,9 +26,9 @@
         }
       </button>
 
-      <!-- Logo (center): orange mark up, simple (not bold) tagline under -->
+      <!-- Logo (center): white mark up, simple tagline — same size -->
       <a routerLink="/" (click)="closeMobileMenu()" class="inline-flex flex-col items-center justify-center gap-0.5" aria-label="EsellerGlobal home">
-        <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-16 w-auto max-w-[92px] object-contain" (error)="onNavLogoError($event)" />
+        <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-16 w-auto max-w-[92px] object-contain brightness-0 invert" (error)="onNavLogoError($event)" />
         <span class="text-[6px] font-normal uppercase tracking-[0.08em] text-white/90 leading-none whitespace-nowrap">{{ brandingTagline() }}</span>
       </a>
 
@@ -113,10 +113,10 @@
         </div>
       </div>
 
-      <!-- CENTER: orange logo up (bigger), simple tagline down -->
+      <!-- CENTER: white logo up (same size), simple tagline down -->
       <div class="flex justify-center">
         <a routerLink="/" class="inline-flex flex-col items-center justify-center gap-0.5" aria-label="EsellerGlobal home">
-          <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-[4.75rem] md:h-20 w-auto max-w-[120px] object-contain" (error)="onNavLogoError($event)" />
+          <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-[4.75rem] md:h-20 w-auto max-w-[120px] object-contain brightness-0 invert" (error)="onNavLogoError($event)" />
           <span class="text-[7px] md:text-[8px] font-normal uppercase tracking-[0.1em] text-white/90 leading-none">{{ brandingTagline() }}</span>
         </a>
       </div>

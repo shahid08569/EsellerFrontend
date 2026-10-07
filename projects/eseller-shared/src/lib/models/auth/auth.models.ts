@@ -50,6 +50,21 @@ export interface RegisterCustomerCommand {
   deviceType: string;
 }
 
+export interface RegisterSuperAdminCommand {
+  name: string;
+  email: string;
+  password: string;
+  latitude: number;
+  longitude: number;
+  deviceType: string;
+}
+
+export interface RegisterSuperAdminResponse {
+  accountId: string;
+  email: string;
+  message: string;
+}
+
 export interface RegisterCustomerResponse {
   accountId: string;
   name: string;
