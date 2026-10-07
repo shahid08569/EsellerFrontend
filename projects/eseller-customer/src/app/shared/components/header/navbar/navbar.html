@@ -26,10 +26,10 @@
         }
       </button>
 
-      <!-- Logo (center): mark on top, tagline under — larger logo, smaller text -->
+      <!-- Logo (center): rose mark on top, smaller tagline under -->
       <a routerLink="/" (click)="closeMobileMenu()" class="inline-flex flex-col items-center justify-center gap-0.5" aria-label="EsellerGlobal home">
-        <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-10 w-auto max-w-[56px] object-contain" (error)="onNavLogoError($event)" />
-        <span class="text-[7px] font-semibold uppercase tracking-[0.08em] text-white/95 leading-none whitespace-nowrap">{{ brandingTagline() }}</span>
+        <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-12 w-auto max-w-[68px] object-contain" (error)="onNavLogoError($event)" />
+        <span class="text-[6px] font-semibold uppercase tracking-[0.06em] text-white/90 leading-none whitespace-nowrap">{{ brandingTagline() }}</span>
       </a>
 
       <!-- Right icons -->
@@ -113,11 +113,11 @@
         </div>
       </div>
 
-      <!-- CENTER: Logo up, tagline down — larger mark, smaller text -->
+      <!-- CENTER: rose logo up (bigger), tagline down (smaller) -->
       <div class="flex justify-center">
-        <a routerLink="/" class="inline-flex flex-col items-center justify-center gap-1" aria-label="EsellerGlobal home">
-          <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-12 md:h-14 w-auto max-w-[72px] object-contain" (error)="onNavLogoError($event)" />
-          <span class="text-[8px] md:text-[9px] font-semibold uppercase tracking-[0.12em] text-white/95 leading-none">{{ brandingTagline() }}</span>
+        <a routerLink="/" class="inline-flex flex-col items-center justify-center gap-0.5" aria-label="EsellerGlobal home">
+          <img [src]="navLogoSrc()" alt="EsellerGlobal" class="h-14 md:h-16 w-auto max-w-[88px] object-contain" (error)="onNavLogoError($event)" />
+          <span class="text-[7px] font-semibold uppercase tracking-[0.08em] text-white/90 leading-none">{{ brandingTagline() }}</span>
         </a>
       </div>
 

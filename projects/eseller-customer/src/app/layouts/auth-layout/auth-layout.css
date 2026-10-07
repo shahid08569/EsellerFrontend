@@ -15,7 +15,7 @@
 /* Active State for Sign In & Customer */
 .auth-nav-pill.active-tab {
   background-color: #ffffff !important;
-  color: #EA580C !important; /* Brand Primary */
+  color: #E11D48 !important; /* Brand Primary */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
