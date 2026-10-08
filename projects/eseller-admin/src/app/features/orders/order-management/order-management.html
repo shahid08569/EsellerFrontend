@@ -70,56 +70,68 @@
         type="button" 
         (click)="onFilterTabChange('all')"
         [class]="activeTab() === 'all' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         All Orders
       </button>
       <button 
         type="button" 
         (click)="onFilterTabChange('pending')"
         [class]="activeTab() === 'pending' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         Pending
+        @if (tabCounts().pending > 0) {
+          <span [class]="tabBadgeClass('pending')">{{ tabCounts().pending > 99 ? '99+' : tabCounts().pending }}</span>
+        }
       </button>
       <button 
         type="button" 
         (click)="onFilterTabChange('confirmed')"
         [class]="activeTab() === 'confirmed' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         Confirmed
+        @if (tabCounts().confirmed > 0) {
+          <span [class]="tabBadgeClass('confirmed')">{{ tabCounts().confirmed > 99 ? '99+' : tabCounts().confirmed }}</span>
+        }
       </button>
       <button 
         type="button" 
         (click)="onFilterTabChange('processing')"
         [class]="activeTab() === 'processing' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         Processing
+        @if (tabCounts().processing > 0) {
+          <span [class]="tabBadgeClass('processing')">{{ tabCounts().processing > 99 ? '99+' : tabCounts().processing }}</span>
+        }
       </button>
       <button 
         type="button" 
         (click)="onFilterTabChange('shipped')"
         [class]="activeTab() === 'shipped' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         Shipped
+        @if (tabCounts().shipped > 0) {
+          <span [class]="tabBadgeClass('shipped')">{{ tabCounts().shipped > 99 ? '99+' : tabCounts().shipped }}</span>
+        }
       </button>
       <button 
         type="button" 
         (click)="onFilterTabChange('delivered')"
         [class]="activeTab() === 'delivered' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         Delivered
       </button>
       <button 
         type="button" 
         (click)="onFilterTabChange('cancelled')"
         [class]="activeTab() === 'cancelled' 
-          ? 'px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
-          : 'px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs' 
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gray-100 text-gray-700 hover:bg-gray-200 font-bold text-xs'">
         Cancelled / Refunded
       </button>
     </div>

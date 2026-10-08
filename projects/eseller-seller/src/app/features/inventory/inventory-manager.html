@@ -20,36 +20,43 @@
       <button 
         type="button" 
         (click)="setTab('all')"
-        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
         [class.bg-white]="activeTab() === 'all'"
         [class.text-primary]="activeTab() === 'all'"
         [class.shadow-2xs]="activeTab() === 'all'"
         [class.text-gray-500]="activeTab() !== 'all'">
-        All Stock ({{ countAll() }})
+        All Stock
+        @if (countAll() > 0) {
+          <span class="es-tab-badge-muted">{{ countAll() > 99 ? '99+' : countAll() }}</span>
+        }
       </button>
 
       <button 
         type="button" 
         (click)="setTab('low')"
-        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
         [class.bg-white]="activeTab() === 'low'"
         [class.text-amber-700]="activeTab() === 'low'"
         [class.shadow-2xs]="activeTab() === 'low'"
         [class.text-gray-500]="activeTab() !== 'low'">
-        <span>⚠️ Low Stock</span>
-        <span class="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px]">{{ countLow() }}</span>
+        <span>Low Stock</span>
+        @if (countLow() > 0) {
+          <span class="es-tab-badge">{{ countLow() > 99 ? '99+' : countLow() }}</span>
+        }
       </button>
 
       <button 
         type="button" 
         (click)="setTab('out')"
-        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
         [class.bg-white]="activeTab() === 'out'"
         [class.text-rose-700]="activeTab() === 'out'"
         [class.shadow-2xs]="activeTab() === 'out'"
         [class.text-gray-500]="activeTab() !== 'out'">
-        <span>✕ Out of Stock</span>
-        <span class="px-1.5 py-0.2 rounded-full bg-rose-100 text-rose-800 text-[10px]">{{ countOut() }}</span>
+        <span>Out of Stock</span>
+        @if (countOut() > 0) {
+          <span class="es-tab-badge">{{ countOut() > 99 ? '99+' : countOut() }}</span>
+        }
       </button>
     </div>
 

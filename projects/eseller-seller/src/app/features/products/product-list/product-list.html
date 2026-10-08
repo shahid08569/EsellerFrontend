@@ -39,19 +39,27 @@
       type="button"
       (click)="onOriginTabChange('own')"
       [class]="originTab() === 'own'
-        ? 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-extrabold shadow-sm'
-        : 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50'">
+        ? 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-emerald-600 text-white text-xs font-extrabold shadow-sm'
+        : 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50'">
       My Own Products
-      <span class="ml-1.5 opacity-80">({{ ownCount() }})</span>
+      @if (pendingOwnCount() > 0) {
+        <span [class]="originTab() === 'own' ? 'es-tab-badge-on-active' : 'es-tab-badge'">{{ pendingOwnCount() > 99 ? '99+' : pendingOwnCount() }}</span>
+      } @else if (ownCount() > 0) {
+        <span [class]="originTab() === 'own' ? 'es-tab-badge-on-active' : 'es-tab-badge-muted'">{{ ownCount() > 99 ? '99+' : ownCount() }}</span>
+      }
     </button>
     <button
       type="button"
       (click)="onOriginTabChange('warehouse')"
       [class]="originTab() === 'warehouse'
-        ? 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-extrabold shadow-sm'
-        : 'flex-1 sm:flex-none px-4 py-2.5 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50'">
+        ? 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-900 text-white text-xs font-extrabold shadow-sm'
+        : 'flex-1 sm:flex-none inline-flex items-center justify-center gap-1.5 px-4 py-2.5 rounded-xl text-slate-600 text-xs font-bold hover:bg-slate-50'">
       From Warehouse
-      <span class="ml-1.5 opacity-80">({{ warehouseCount() }})</span>
+      @if (pendingWarehouseCount() > 0) {
+        <span [class]="originTab() === 'warehouse' ? 'es-tab-badge-on-active' : 'es-tab-badge'">{{ pendingWarehouseCount() > 99 ? '99+' : pendingWarehouseCount() }}</span>
+      } @else if (warehouseCount() > 0) {
+        <span [class]="originTab() === 'warehouse' ? 'es-tab-badge-on-active' : 'es-tab-badge-muted'">{{ warehouseCount() > 99 ? '99+' : warehouseCount() }}</span>
+      }
     </button>
   </div>
 

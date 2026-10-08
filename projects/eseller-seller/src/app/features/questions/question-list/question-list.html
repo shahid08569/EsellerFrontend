@@ -16,36 +16,40 @@
       <button 
         type="button" 
         (click)="activeTab.set('all')"
-        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
         [class.bg-white]="activeTab() === 'all'"
         [class.text-primary]="activeTab() === 'all'"
         [class.shadow-2xs]="activeTab() === 'all'"
         [class.text-gray-500]="activeTab() !== 'all'">
-        All ({{ countAll() }})
+        All
+        @if (countAll() > 0) {
+          <span class="es-tab-badge-muted">{{ countAll() > 99 ? '99+' : countAll() }}</span>
+        }
       </button>
 
       <button 
         type="button" 
         (click)="activeTab.set('unanswered')"
-        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
         [class.bg-white]="activeTab() === 'unanswered'"
         [class.text-amber-700]="activeTab() === 'unanswered'"
         [class.shadow-2xs]="activeTab() === 'unanswered'"
         [class.text-gray-500]="activeTab() !== 'unanswered'">
-        <span>❓ Needs Answer</span>
-        <span class="px-1.5 py-0.2 rounded-full bg-amber-100 text-amber-800 text-[10px]">{{ countUnanswered() }}</span>
+        <span>Needs Answer</span>
+        @if (countUnanswered() > 0) {
+          <span class="es-tab-badge">{{ countUnanswered() > 99 ? '99+' : countUnanswered() }}</span>
+        }
       </button>
 
       <button 
         type="button" 
         (click)="activeTab.set('answered')"
-        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1"
+        class="px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer inline-flex items-center gap-1.5"
         [class.bg-white]="activeTab() === 'answered'"
         [class.text-emerald-700]="activeTab() === 'answered'"
         [class.shadow-2xs]="activeTab() === 'answered'"
         [class.text-gray-500]="activeTab() !== 'answered'">
-        <span>✓ Answered</span>
-        <span class="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[10px]">{{ countAnswered() }}</span>
+        <span>Answered</span>
       </button>
     </div>
 

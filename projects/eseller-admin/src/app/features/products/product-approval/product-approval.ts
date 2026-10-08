@@ -61,7 +61,15 @@ export class ProductApproval implements OnInit {
   readonly liveTab = signal<LiveProductTab>('warehouse');
   readonly pendingGlobalCount = signal<number>(0);
   readonly pendingOwnCount = signal<number>(0);
+  /** Live catalog tab totals (warehouse listing clones vs seller-own) */
+  readonly liveWarehouseCount = signal<number>(0);
+  readonly liveOwnCount = signal<number>(0);
   readonly searchTerm = signal<string>('');
+
+  /** Pending NEW count for the current request kind (listing vs own-req). */
+  readonly currentPendingCount = computed(() =>
+    this.statusFilter() === 'own-req' ? this.pendingOwnCount() : this.pendingGlobalCount()
+  );
   
   readonly products = signal<AdminProductDto[]>([]);
   readonly pendingProducts = signal<AdminProductDto[]>([]);
@@ -489,23 +497,31 @@ export class ProductApproval implements OnInit {
       error: () => {}
     });
 
-    // 2. Load pending counters (split: warehouse listing vs seller-own)
-    forkJoin({
-      global: this.adminService.getPendingProducts(1, 1, 'global').pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
-      own: this.adminService.getPendingProducts(1, 1, 'own').pipe(catchError(() => of({ items: [], totalCount: 0 } as any)))
-    }).subscribe({
-      next: ({ global, own }) => {
-        this.pendingGlobalCount.set(global?.totalCount || 0);
-        this.pendingOwnCount.set(own?.totalCount || 0);
-        this.pendingProducts.set([]);
-      },
-      error: () => {}
-    });
+    this.refreshNavCounts();
 
     // 3. Load categories & brands for master product creation form
     this.loadCatalogLookups();
 
     this.fetchProducts();
+  }
+
+  /** Pending NEW + live catalog totals for filter-tab badges. */
+  private refreshNavCounts(): void {
+    forkJoin({
+      globalPending: this.adminService.getPendingProducts(1, 1, 'global').pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
+      ownPending: this.adminService.getPendingProducts(1, 1, 'own').pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
+      liveWh: this.adminService.getApprovedSellerProducts(1, 1, 'global').pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
+      liveOwn: this.adminService.getApprovedSellerProducts(1, 1, 'own').pipe(catchError(() => of({ items: [], totalCount: 0 } as any)))
+    }).subscribe({
+      next: ({ globalPending, ownPending, liveWh, liveOwn }) => {
+        this.pendingGlobalCount.set(globalPending?.totalCount || 0);
+        this.pendingOwnCount.set(ownPending?.totalCount || 0);
+        this.liveWarehouseCount.set(liveWh?.totalCount || 0);
+        this.liveOwnCount.set(liveOwn?.totalCount || 0);
+        this.pendingProducts.set([]);
+      },
+      error: () => {}
+    });
   }
 
   private loadCatalogLookups(): void {

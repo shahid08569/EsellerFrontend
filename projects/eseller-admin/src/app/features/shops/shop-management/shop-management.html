@@ -90,16 +90,8 @@
         [class.hover:bg-gray-200]="viewMode() !== 'applications'">
         <span>Merchant Requests</span>
         @if (countPending() > 0) {
-          <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
-            {{ countPending() }} pending
-          </span>
-        } @else {
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
-                [class.bg-white/25]="viewMode() === 'applications'"
-                [class.bg-gray-200]="viewMode() !== 'applications'"
-                [class.text-white]="viewMode() === 'applications'"
-                [class.text-gray-700]="viewMode() !== 'applications'">
-            {{ allShopkeepers().length }}
+          <span [class]="viewMode() === 'applications' ? 'es-tab-badge-on-active' : 'es-tab-badge'">
+            {{ countPending() > 99 ? '99+' : countPending() }}
           </span>
         }
       </button>
@@ -117,16 +109,8 @@
         [class.hover:bg-gray-200]="viewMode() !== 'tiers'">
         <span>Tier Upgrade Requests</span>
         @if (countPendingTiers() > 0) {
-          <span class="px-2 py-0.5 rounded-full bg-amber-500 text-white text-[10px] font-extrabold animate-pulse">
-            {{ countPendingTiers() }} pending
-          </span>
-        } @else {
-          <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
-                [class.bg-white/25]="viewMode() === 'tiers'"
-                [class.bg-gray-200]="viewMode() !== 'tiers'"
-                [class.text-white]="viewMode() === 'tiers'"
-                [class.text-gray-700]="viewMode() !== 'tiers'">
-            {{ countLatestTiers() }}
+          <span [class]="viewMode() === 'tiers' ? 'es-tab-badge-on-active' : 'es-tab-badge'">
+            {{ countPendingTiers() > 99 ? '99+' : countPendingTiers() }}
           </span>
         }
       </button>
@@ -401,12 +385,8 @@
         [class.hover:bg-gray-200]="activeTab() !== 'pending'">
         Pending
         @if (countPending() > 0) {
-          <span class="px-1.5 py-0.2 rounded-full text-[10px] font-extrabold"
-                [class.bg-white]="activeTab() === 'pending'"
-                [class.text-orange-700]="activeTab() === 'pending'"
-                [class.bg-amber-500]="activeTab() !== 'pending'"
-                [class.text-white]="activeTab() !== 'pending'">
-            {{ countPending() }}
+          <span [class]="activeTab() === 'pending' ? 'es-tab-badge-on-active' : 'es-tab-badge'">
+            {{ countPending() > 99 ? '99+' : countPending() }}
           </span>
         }
       </button>
@@ -421,7 +401,7 @@
         [class.bg-gray-100]="activeTab() !== 'approved'"
         [class.text-gray-700]="activeTab() !== 'approved'"
         [class.hover:bg-gray-200]="activeTab() !== 'approved'">
-        Approved ({{ countApproved() }})
+        Approved
       </button>
 
       <button 

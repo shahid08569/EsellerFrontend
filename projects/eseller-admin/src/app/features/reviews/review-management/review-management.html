@@ -42,12 +42,8 @@
       [class.text-gray-700]="statusFilter() !== 'pending'">
       Awaiting decision
       @if (pendingCount() > 0) {
-        <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
-              [class.bg-amber-400]="statusFilter() === 'pending'"
-              [class.text-amber-950]="statusFilter() === 'pending'"
-              [class.bg-amber-500]="statusFilter() !== 'pending'"
-              [class.text-white]="statusFilter() !== 'pending'">
-          {{ pendingCount() }}
+        <span [class]="statusFilter() === 'pending' ? 'es-tab-badge-on-active' : 'es-tab-badge'">
+          {{ pendingCount() > 99 ? '99+' : pendingCount() }}
         </span>
       }
     </button>
@@ -62,13 +58,6 @@
       [class.bg-gray-100]="statusFilter() !== 'approved'"
       [class.text-gray-700]="statusFilter() !== 'approved'">
       Kept / Live
-      <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold"
-            [class.bg-white/25]="statusFilter() === 'approved'"
-            [class.text-white]="statusFilter() === 'approved'"
-            [class.bg-gray-200]="statusFilter() !== 'approved'"
-            [class.text-gray-700]="statusFilter() !== 'approved'">
-        {{ approvedCount() }}
-      </span>
     </button>
 
     <button

@@ -217,6 +217,36 @@ export class OrderManagement implements OnInit {
     });
   }
 
+  /** Counts for status filter pills (shop-scoped, before search/tab). */
+  readonly tabCounts = computed(() => {
+    let list = [...this.orders()];
+    const shopId = this.selectedShopId();
+    if (shopId && shopId !== 'all') {
+      const selectedShop = this.shops().find(s => s.id === shopId);
+      const selectedShopName = selectedShop?.name.toLowerCase();
+      list = list.filter(o => {
+        if ((o as any).shopId && (o as any).shopId === shopId) return true;
+        if (selectedShopName && o.shopName && o.shopName.toLowerCase().includes(selectedShopName)) return true;
+        if (o.items && o.items.some(i => i.shopId === shopId || (selectedShopName && i.shopName?.toLowerCase().includes(selectedShopName)))) return true;
+        return false;
+      });
+    }
+    const n = (pred: (s: number) => boolean) => list.filter(o => pred(this.getStatusNumber(o.status))).length;
+    return {
+      all: list.length,
+      pending: n(s => s === 1),
+      confirmed: n(s => s === 2),
+      processing: n(s => [3, 4].includes(s)),
+      shipped: n(s => [5, 6].includes(s)),
+      delivered: n(s => s === 7),
+      cancelled: n(s => [8, 9, 10, 11, 12].includes(s))
+    };
+  });
+
+  tabBadgeClass(tab: OrderTab): string {
+    return this.activeTab() === tab ? 'es-tab-badge-on-active' : 'es-tab-badge';
+  }
+
   readonly filteredOrders = computed(() => {
     let list = [...this.orders()];
     const tab = this.activeTab();

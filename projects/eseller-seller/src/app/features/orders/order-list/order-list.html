@@ -30,13 +30,73 @@
     </button>
   </div>
 
+  <!-- Status filter tabs -->
+  <div class="bg-white rounded-2xl border border-slate-200/80 p-3 shadow-sm">
+    <div class="flex flex-wrap items-center gap-1.5">
+      <button type="button" (click)="onFilterTabChange('all')"
+        [class]="activeTab() === 'all'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        All Orders
+      </button>
+      <button type="button" (click)="onFilterTabChange('pending')"
+        [class]="activeTab() === 'pending'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        Pending
+        @if (tabCounts().pending > 0) {
+          <span [class]="tabBadgeClass('pending')">{{ tabCounts().pending > 99 ? '99+' : tabCounts().pending }}</span>
+        }
+      </button>
+      <button type="button" (click)="onFilterTabChange('confirmed')"
+        [class]="activeTab() === 'confirmed'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        Confirmed
+        @if (tabCounts().confirmed > 0) {
+          <span [class]="tabBadgeClass('confirmed')">{{ tabCounts().confirmed > 99 ? '99+' : tabCounts().confirmed }}</span>
+        }
+      </button>
+      <button type="button" (click)="onFilterTabChange('processing')"
+        [class]="activeTab() === 'processing'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        Processing
+        @if (tabCounts().processing > 0) {
+          <span [class]="tabBadgeClass('processing')">{{ tabCounts().processing > 99 ? '99+' : tabCounts().processing }}</span>
+        }
+      </button>
+      <button type="button" (click)="onFilterTabChange('shipped')"
+        [class]="activeTab() === 'shipped'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        Shipped
+        @if (tabCounts().shipped > 0) {
+          <span [class]="tabBadgeClass('shipped')">{{ tabCounts().shipped > 99 ? '99+' : tabCounts().shipped }}</span>
+        }
+      </button>
+      <button type="button" (click)="onFilterTabChange('delivered')"
+        [class]="activeTab() === 'delivered'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        Delivered
+      </button>
+      <button type="button" (click)="onFilterTabChange('cancelled')"
+        [class]="activeTab() === 'cancelled'
+          ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
+          : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
+        Cancelled / Refunded
+      </button>
+    </div>
+  </div>
+
   <!-- Orders Table -->
   <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
     @if (loading()) {
       <div class="p-2">
         <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
       </div>
-    } @else if (orders().length === 0) {
+    } @else if (filteredOrders().length === 0) {
       <div class="p-12 text-center space-y-3">
         <div class="w-14 h-14 rounded-full bg-slate-100 text-slate-400 flex items-center justify-center text-lg font-black mx-auto">
           0
@@ -61,7 +121,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (order of orders(); track order.id) {
+            @for (order of paginatedOrders(); track order.id) {
               <tr>
                 <td>
                   <p class="cell-mono">#{{ order.orderNumber || truncateId(order.orderRequestId || order.id) }}</p>

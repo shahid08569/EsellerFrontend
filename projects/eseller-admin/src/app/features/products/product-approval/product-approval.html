@@ -101,14 +101,11 @@
         <div class="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
           <button type="button" (click)="onRequestTabChange('pending')"
             [class]="requestTab() === 'pending'
-              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs flex items-center gap-1.5'
-              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 flex items-center gap-1.5'">
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs inline-flex items-center gap-1.5'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 inline-flex items-center gap-1.5'">
             Pending request
-            @if (statusFilter() === 'listing' && pendingGlobalCount() > 0) {
-              <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-amber-400 text-slate-950">{{ pendingGlobalCount() }}</span>
-            }
-            @if (statusFilter() === 'own-req' && pendingOwnCount() > 0) {
-              <span class="px-1.5 py-0.5 rounded-full text-[9px] font-black bg-rose-500 text-white">{{ pendingOwnCount() }}</span>
+            @if (currentPendingCount() > 0) {
+              <span class="es-tab-badge">{{ currentPendingCount() > 99 ? '99+' : currentPendingCount() }}</span>
             }
           </button>
           <button type="button" (click)="onRequestTabChange('approved')"
@@ -122,15 +119,21 @@
         <div class="inline-flex flex-wrap items-center gap-1 p-1 rounded-xl bg-slate-100 border border-slate-200">
           <button type="button" (click)="onLiveTabChange('warehouse')"
             [class]="liveTab() === 'warehouse'
-              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
-              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs inline-flex items-center gap-1.5'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 inline-flex items-center gap-1.5'">
             Warehouse product
+            @if (liveWarehouseCount() > 0) {
+              <span class="es-tab-badge-muted">{{ liveWarehouseCount() > 99 ? '99+' : liveWarehouseCount() }}</span>
+            }
           </button>
           <button type="button" (click)="onLiveTabChange('own')"
             [class]="liveTab() === 'own'
-              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs'
-              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900'">
+              ? 'px-3 py-1.5 rounded-lg bg-white text-slate-900 text-[11px] font-extrabold shadow-xs inline-flex items-center gap-1.5'
+              : 'px-3 py-1.5 rounded-lg text-slate-600 text-[11px] font-bold hover:text-slate-900 inline-flex items-center gap-1.5'">
             Seller own product
+            @if (liveOwnCount() > 0) {
+              <span class="es-tab-badge-muted">{{ liveOwnCount() > 99 ? '99+' : liveOwnCount() }}</span>
+            }
           </button>
         </div>
       }

@@ -31,6 +31,8 @@ interface Order {
   items: OrderItem[];
 }
 
+type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+
 const MERCHANT_COMMISSION_RATE = 0.20;
 
 @Component({
@@ -45,13 +47,76 @@ export class OrderList implements OnInit {
 
   readonly loading = signal<boolean>(true);
   readonly orders = signal<Order[]>([]);
+  readonly activeTab = signal<OrderTab>('all');
   readonly currentPage = signal<number>(1);
-  readonly totalCount = signal<number>(0);
   readonly pageSize = signal<number>(10);
   readonly pageSizeOptions = [10, 25, 50];
   readonly detailOrder = signal<Order | null>(null);
 
+  private statusKey(status: string): string {
+    return (status || '').toLowerCase().replace(/[\s_-]/g, '');
+  }
+
+  private matchesTab(order: Order, tab: OrderTab): boolean {
+    const s = this.statusKey(order.status);
+    switch (tab) {
+      case 'pending':
+        return s === 'pending' || s === '1';
+      case 'confirmed':
+        return s === 'confirmed' || s === '2';
+      case 'processing':
+        return s === 'processing' || s === 'ontheway' || s === 'packed' || s === '3' || s === '4';
+      case 'shipped':
+        return s === 'shipped' || s === 'outfordelivery' || s === '5' || s === '6';
+      case 'delivered':
+        return s === 'delivered' || s === '7';
+      case 'cancelled':
+        return ['cancelled', 'returned', 'returnrequested', 'refundpending', 'refunded', '8', '9', '10', '11', '12'].includes(s);
+      default:
+        return true;
+    }
+  }
+
+  readonly tabCounts = computed(() => {
+    const list = this.orders();
+    const n = (tab: OrderTab) => list.filter(o => this.matchesTab(o, tab)).length;
+    return {
+      all: list.length,
+      pending: n('pending'),
+      confirmed: n('confirmed'),
+      processing: n('processing'),
+      shipped: n('shipped'),
+      delivered: n('delivered'),
+      cancelled: n('cancelled')
+    };
+  });
+
+  readonly filteredOrders = computed(() => {
+    const tab = this.activeTab();
+    let list = this.orders().filter(o => this.matchesTab(o, tab));
+    list = [...list].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+    return list;
+  });
+
+  readonly totalCount = computed(() => this.filteredOrders().length);
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.totalCount() / this.pageSize())));
+
+  readonly paginatedOrders = computed(() => {
+    const list = this.filteredOrders();
+    const page = Math.min(this.currentPage(), this.totalPages());
+    const size = this.pageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  tabBadgeClass(tab: OrderTab): string {
+    return this.activeTab() === tab ? 'es-tab-badge-on-active' : 'es-tab-badge';
+  }
+
+  onFilterTabChange(tab: OrderTab): void {
+    this.activeTab.set(tab);
+    this.currentPage.set(1);
+  }
 
   ngOnInit(): void {
     this.loadOrders();
@@ -59,7 +124,7 @@ export class OrderList implements OnInit {
 
   loadOrders(): void {
     this.loading.set(true);
-    this.sellerSvc.getSellerOrders(this.currentPage(), this.pageSize()).subscribe({
+    this.sellerSvc.getSellerOrders(1, 200).subscribe({
       next: (res: any) => {
         const raw: any[] = Array.isArray(res) ? res : (res?.items ?? []);
         const items: Order[] = raw.map((o) => {
@@ -89,7 +154,6 @@ export class OrderList implements OnInit {
           };
         });
         this.orders.set(items);
-        this.totalCount.set(Array.isArray(res) ? items.length : (res?.totalCount ?? items.length));
         this.loading.set(false);
       },
       error: (err) => {
@@ -117,14 +181,12 @@ export class OrderList implements OnInit {
   setPage(page: number): void {
     if (page >= 1 && page <= this.totalPages() && page !== this.currentPage()) {
       this.currentPage.set(page);
-      this.loadOrders();
     }
   }
 
   setPageSize(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
-    this.loadOrders();
   }
 
   truncateId(id: string): string {
@@ -144,7 +206,7 @@ export class OrderList implements OnInit {
   }
 
   formatStatus(status: string): string {
-    const s = (status || '').toLowerCase().replace(/[\s_-]/g, '');
+    const s = this.statusKey(status);
     if (s === 'ontheway' || s === 'packed') return 'On the Way';
     if (s === 'outfordelivery') return 'Out for Delivery';
     if (s === 'returnrequested') return 'Return Requested';
@@ -154,7 +216,7 @@ export class OrderList implements OnInit {
   }
 
   deliveryLabel(status: string): string {
-    const s = (status || '').toLowerCase().replace(/[\s_-]/g, '');
+    const s = this.statusKey(status);
     if (s === 'delivered') return 'Delivered';
     if (s === 'shipped' || s === 'outfordelivery' || s === 'ontheway' || s === 'packed') return 'In transit';
     if (s === 'cancelled' || s === 'refunded') return 'Cancelled';
@@ -167,7 +229,7 @@ export class OrderList implements OnInit {
   }
 
   payoutHint(order: Order): string {
-    const s = (order.status || '').toLowerCase().replace(/[\s_-]/g, '');
+    const s = this.statusKey(order.status);
     if (s === 'delivered') {
       return 'Order delivered. Your 20% share moves from Pending to Available; Management can still adjust amounts.';
     }

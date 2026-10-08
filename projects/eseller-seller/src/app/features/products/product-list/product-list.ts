@@ -49,6 +49,13 @@ export class ProductList implements OnInit {
   readonly warehouseCount = computed(() =>
     this.products().filter(p => !!p.sourceProductId).length
   );
+  /** NEW own products awaiting Management approval */
+  readonly pendingOwnCount = computed(() =>
+    this.products().filter(p => !p.sourceProductId && !p.isApproved && !p.rejectionReason).length
+  );
+  readonly pendingWarehouseCount = computed(() =>
+    this.products().filter(p => !!p.sourceProductId && !p.isApproved && !p.rejectionReason).length
+  );
 
   // Pagination State
   readonly currentPage = signal<number>(1);

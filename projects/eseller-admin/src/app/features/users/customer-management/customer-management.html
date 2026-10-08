@@ -105,14 +105,19 @@
         <button 
           type="button" 
           (click)="onFilterStatus('PENDING')"
-          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
+          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer border"
           [class.bg-amber-500]="statusFilter() === 'PENDING'"
           [class.text-white]="statusFilter() === 'PENDING'"
           [class.border-amber-500]="statusFilter() === 'PENDING'"
           [class.bg-white]="statusFilter() !== 'PENDING'"
           [class.text-amber-700]="statusFilter() !== 'PENDING'"
           [class.border-amber-200]="statusFilter() !== 'PENDING'">
-          Pending ({{ pendingCustomersCount() }})
+          Pending
+          @if (pendingCustomersCount() > 0) {
+            <span [class]="statusFilter() === 'PENDING' ? 'es-tab-badge-on-active' : 'es-tab-badge'" class="ml-1">
+              {{ pendingCustomersCount() > 99 ? '99+' : pendingCustomersCount() }}
+            </span>
+          }
         </button>
 
         <button 
