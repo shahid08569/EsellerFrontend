@@ -14,7 +14,7 @@ import {
   AdminShopDto
 } from '../../../core/models/admin.models';
 
-type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'ontheway' | 'delivered' | 'cancelled';
 type PlaceOrderMode = 'modal' | 'page';
 
 @Component({
@@ -123,13 +123,13 @@ export class OrderManagement implements OnInit {
     (event.target as HTMLElement).style.display = 'none';
   }
 
-  // Aligned with backend OrderStatus enum
+  // Aligned with backend OrderStatus enum (4=Packed/OnTheWay, 5=On the Way/Shipped)
   readonly statusOptions = [
     { value: 1, label: 'Pending' },
     { value: 2, label: 'Confirmed' },
     { value: 3, label: 'Processing' },
-    { value: 4, label: 'On the Way' },
-    { value: 5, label: 'Shipped' },
+    { value: 4, label: 'Packed' },
+    { value: 5, label: 'On the Way' },
     { value: 6, label: 'Out For Delivery' },
     { value: 7, label: 'Delivered' },
     { value: 8, label: 'Cancelled' },
@@ -145,14 +145,14 @@ export class OrderManagement implements OnInit {
    */
   getNextStatusOptions(currentStatus: number | string): { value: number; label: string }[] {
     const current = this.getStatusNumber(currentStatus);
-    // Values: 1 Pending, 2 Confirmed, 3 Processing, 4 OnTheWay, 5 Shipped,
+    // Values: 1 Pending, 2 Confirmed, 3 Processing, 4 Packed, 5 On the Way,
     // 6 OutForDelivery, 7 Delivered, 8 Cancelled, 9 ReturnRequested,
     // 10 Returned, 11 RefundPending, 12 Refunded
     const nextByStatus: Record<number, number[]> = {
       1: [2, 8],
       2: [3, 4, 5, 7, 8],
       3: [4, 5, 7, 8],
-      4: [5, 7, 8],
+      4: [5, 6, 7, 8],
       5: [6, 7, 8],
       6: [7, 8],
       7: [9, 10],          // Delivered → return flow only (not Cancel / not Pending)
@@ -236,8 +236,8 @@ export class OrderManagement implements OnInit {
       all: list.length,
       pending: n(s => s === 1),
       confirmed: n(s => s === 2),
-      processing: n(s => [3, 4].includes(s)),
-      shipped: n(s => [5, 6].includes(s)),
+      processing: n(s => s === 3),
+      ontheway: n(s => [4, 5, 6].includes(s)),
       delivered: n(s => s === 7),
       cancelled: n(s => [8, 9, 10, 11, 12].includes(s))
     };
@@ -260,9 +260,9 @@ export class OrderManagement implements OnInit {
     } else if (tab === 'confirmed') {
       list = list.filter(o => this.getStatusNumber(o.status) === 2);
     } else if (tab === 'processing') {
-      list = list.filter(o => [3, 4].includes(this.getStatusNumber(o.status)));
-    } else if (tab === 'shipped') {
-      list = list.filter(o => [5, 6].includes(this.getStatusNumber(o.status)));
+      list = list.filter(o => this.getStatusNumber(o.status) === 3);
+    } else if (tab === 'ontheway') {
+      list = list.filter(o => [4, 5, 6].includes(this.getStatusNumber(o.status)));
     } else if (tab === 'delivered') {
       list = list.filter(o => this.getStatusNumber(o.status) === 7);
     } else if (tab === 'cancelled') {
@@ -497,20 +497,21 @@ export class OrderManagement implements OnInit {
 
   getStatusNumber(status: number | string): number {
     if (typeof status === 'number') return status;
-    const s = String(status).toLowerCase();
+    const s = String(status).toLowerCase().replace(/[\s_-]/g, '');
     if (s.includes('pending') && !s.includes('refund')) return 1;
     if (s.includes('confirm')) return 2;
-    if (s.includes('process')) return 3;
-    if (s.includes('ontheway') || s.includes('on the way') || s.includes('on-the-way') || s.includes('pack')) return 4;
-    if (s.includes('ship')) return 5;
-    if (s.includes('delivery') || s.includes('transit') || s.includes('pickup')) return 6;
+    if (s === 'processing' || s === '3') return 3;
+    if (s === 'packed' || s === 'pack' || s === '4') return 4;
+    // Backend enum OnTheWay(4) and Shipped(5) both surface as "On the Way" in UI
+    if (s === 'ontheway' || s === 'shipped' || s === '5') return s === 'ontheway' ? 4 : 5;
+    if (s.includes('outfordelivery') || s.includes('delivery') || s.includes('transit') || s.includes('pickup')) return 6;
     if (s.includes('deliver')) return 7;
     if (s.includes('cancel')) return 8;
-    if (s.includes('returnreq') || s.includes('return req')) return 9;
+    if (s.includes('returnreq')) return 9;
     if (s.includes('returned') || s.includes('return')) return 10;
-    if (s.includes('refundpen') || s.includes('refund pen')) return 11;
+    if (s.includes('refundpen')) return 11;
     if (s.includes('refund')) return 12;
-    const n = parseInt(status, 10);
+    const n = parseInt(String(status), 10);
     return isNaN(n) ? 1 : n;
   }
 
@@ -559,10 +560,16 @@ export class OrderManagement implements OnInit {
       error: (err) => {
         this.actionInProgress.set(null);
         if (selectEl) selectEl.value = '';
-        this.toast.show(
-          (typeof err?.error === 'string' ? err.error : '') || 'Failed to update order status',
-          'error'
-        );
+        const body = err?.error;
+        const msg =
+          (typeof body === 'string' && body) ||
+          body?.error ||
+          body?.detail ||
+          body?.title ||
+          body?.message ||
+          (Array.isArray(body?.errors) ? body.errors[0] : '') ||
+          'Failed to update order status';
+        this.toast.show(String(msg), 'error');
       }
     });
   }

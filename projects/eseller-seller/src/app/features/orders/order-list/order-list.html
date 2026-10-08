@@ -66,13 +66,13 @@
           <span [class]="tabBadgeClass('processing')">{{ tabCounts().processing > 99 ? '99+' : tabCounts().processing }}</span>
         }
       </button>
-      <button type="button" (click)="onFilterTabChange('shipped')"
-        [class]="activeTab() === 'shipped'
+      <button type="button" (click)="onFilterTabChange('ontheway')"
+        [class]="activeTab() === 'ontheway'
           ? 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-600 text-white font-bold text-xs shadow-xs'
           : 'inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 text-slate-700 hover:bg-slate-200 font-bold text-xs'">
-        Shipped
-        @if (tabCounts().shipped > 0) {
-          <span [class]="tabBadgeClass('shipped')">{{ tabCounts().shipped > 99 ? '99+' : tabCounts().shipped }}</span>
+        On the Way
+        @if (tabCounts().ontheway > 0) {
+          <span [class]="tabBadgeClass('ontheway')">{{ tabCounts().ontheway > 99 ? '99+' : tabCounts().ontheway }}</span>
         }
       </button>
       <button type="button" (click)="onFilterTabChange('delivered')"

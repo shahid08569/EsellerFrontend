@@ -31,7 +31,7 @@ interface Order {
   items: OrderItem[];
 }
 
-type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
+type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'ontheway' | 'delivered' | 'cancelled';
 
 const MERCHANT_COMMISSION_RATE = 0.20;
 
@@ -65,9 +65,9 @@ export class OrderList implements OnInit {
       case 'confirmed':
         return s === 'confirmed' || s === '2';
       case 'processing':
-        return s === 'processing' || s === 'ontheway' || s === 'packed' || s === '3' || s === '4';
-      case 'shipped':
-        return s === 'shipped' || s === 'outfordelivery' || s === '5' || s === '6';
+        return s === 'processing' || s === '3';
+      case 'ontheway':
+        return s === 'ontheway' || s === 'packed' || s === 'shipped' || s === 'outfordelivery' || s === '4' || s === '5' || s === '6';
       case 'delivered':
         return s === 'delivered' || s === '7';
       case 'cancelled':
@@ -85,7 +85,7 @@ export class OrderList implements OnInit {
       pending: n('pending'),
       confirmed: n('confirmed'),
       processing: n('processing'),
-      shipped: n('shipped'),
+      ontheway: n('ontheway'),
       delivered: n('delivered'),
       cancelled: n('cancelled')
     };
@@ -207,7 +207,8 @@ export class OrderList implements OnInit {
 
   formatStatus(status: string): string {
     const s = this.statusKey(status);
-    if (s === 'ontheway' || s === 'packed') return 'On the Way';
+    if (s === 'packed') return 'Packed';
+    if (s === 'ontheway' || s === 'shipped') return 'On the Way';
     if (s === 'outfordelivery') return 'Out for Delivery';
     if (s === 'returnrequested') return 'Return Requested';
     if (s === 'refundpending') return 'Refund Pending';
