@@ -172,7 +172,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           this.chatUnread.bump(shopId, 1);
           this.toast.show(`New chat from ${shopName}`, 'info');
         }
-        this.shouldScrollToBottom = true;
+        this.queueScrollToLatest();
       });
     }).catch(() => {});
 
@@ -195,7 +195,6 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   ngAfterViewChecked(): void {
     if (this.shouldScrollToBottom) {
       this.scrollToBottom();
-      this.shouldScrollToBottom = false;
     }
   }
 
@@ -301,7 +300,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     }).catch(() => {});
     this.chatUnread.markConversationRead(shop.id);
     this.fetchLiveMessages(shop.id);
-    this.shouldScrollToBottom = true;
+    this.queueScrollToLatest();
   }
 
   loadCustomerConvos(): void {
@@ -347,7 +346,6 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen.set(nextState);
     if (nextState) {
       this.currentView.set('directory');
-      this.shouldScrollToBottom = true;
       this.chatUnread.refresh();
       if (!this.shops().length) this.loadShops();
       this.loadCustomerConvos();
@@ -410,7 +408,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           ...map,
           [shopId]: formatted
         }));
-        this.shouldScrollToBottom = true;
+        this.queueScrollToLatest();
       },
       error: () => {}
     });
@@ -478,7 +476,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     }));
     this.messageText.set('');
     this.pendingAttachment.set(null);
-    this.shouldScrollToBottom = true;
+    this.queueScrollToLatest();
 
     this.adminService.sendChatMessage(shop.id, text, attachment ? {
       attachmentUrl: attachment.url,
@@ -601,11 +599,26 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     return r.includes('user') || r.includes('customer') || r === '1';
   }
 
+  private queueScrollToLatest(): void {
+    this.shouldScrollToBottom = true;
+    this.scrollToBottom();
+    setTimeout(() => this.scrollToBottom(), 0);
+    setTimeout(() => this.scrollToBottom(), 50);
+    setTimeout(() => this.scrollToBottom(), 150);
+    setTimeout(() => {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }, 350);
+  }
+
   private scrollToBottom(): void {
     try {
-      if (this.messagesContainer) {
-        this.messagesContainer.nativeElement.scrollTop = this.messagesContainer.nativeElement.scrollHeight;
-      }
+      const el = this.messagesContainer?.nativeElement;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
     } catch { /* ignore */ }
   }
 }

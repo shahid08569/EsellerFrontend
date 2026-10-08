@@ -104,7 +104,6 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
   ngAfterViewChecked(): void {
     if (this.shouldScrollToBottom) {
-      this.shouldScrollToBottom = false;
       this.scrollToBottom();
     }
   }
@@ -117,11 +116,27 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     return msg.isRead ? 'read' : 'sent';
   }
 
+  private queueScrollToLatest(): void {
+    this.shouldScrollToBottom = true;
+    this.scrollToBottom();
+    setTimeout(() => this.scrollToBottom(), 0);
+    setTimeout(() => this.scrollToBottom(), 50);
+    setTimeout(() => this.scrollToBottom(), 150);
+    setTimeout(() => {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }, 350);
+  }
+
   private scrollToBottom(): void {
-    const el = this.messagesContainer?.nativeElement;
-    if (el) {
+    try {
+      const el = this.messagesContainer?.nativeElement;
+      if (!el) return;
       el.scrollTop = el.scrollHeight;
-    }
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+    } catch { /* ignore */ }
   }
 
   private isMyRole(role: string | undefined): boolean {
@@ -197,7 +212,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
             }
           ];
         });
-        this.shouldScrollToBottom = true;
+        this.queueScrollToLatest();
 
         if (!isMe) {
           this.chatService.markConversationAsRead(roomId).subscribe({ error: () => {} });
@@ -286,7 +301,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         const list = page?.items ?? [];
         const mapped = list.map(m => this.mapApiMessage(m));
         this.messages.set(mapped);
-        this.shouldScrollToBottom = true;
+        this.queueScrollToLatest();
 
         const last = mapped[mapped.length - 1];
         if (last) {
@@ -359,7 +374,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     this.messages.update(m => [...m, optimisticMsg]);
     this.messageText.set('');
     this.pendingAttachment.set(null);
-    this.shouldScrollToBottom = true;
+    this.queueScrollToLatest();
 
     this.chatService.sendMessage(roomId, text, attachment ? {
       attachmentUrl: attachment.url,

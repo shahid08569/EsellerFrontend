@@ -121,12 +121,31 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
 
   ngAfterViewChecked(): void {
     if (this.shouldScrollToBottom) {
-      this.shouldScrollToBottom = false;
-      const el = this.messagesContainer?.nativeElement;
-      if (el) {
-        el.scrollTop = el.scrollHeight;
-      }
+      this.scrollToBottom();
     }
+  }
+
+  private queueScrollToLatest(): void {
+    this.shouldScrollToBottom = true;
+    this.scrollToBottom();
+    setTimeout(() => this.scrollToBottom(), 0);
+    setTimeout(() => this.scrollToBottom(), 50);
+    setTimeout(() => this.scrollToBottom(), 150);
+    setTimeout(() => {
+      this.scrollToBottom();
+      this.shouldScrollToBottom = false;
+    }, 350);
+  }
+
+  private scrollToBottom(): void {
+    try {
+      const el = this.messagesContainer?.nativeElement;
+      if (!el) return;
+      el.scrollTop = el.scrollHeight;
+      requestAnimationFrame(() => {
+        el.scrollTop = el.scrollHeight;
+      });
+    } catch { /* ignore */ }
   }
 
   private initSignalR(): void {
@@ -183,7 +202,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
           }
         ];
       });
-      this.shouldScrollToBottom = true;
+      this.queueScrollToLatest();
       // Thread is open — mark read so badges don't stick on already-seen messages
       if (!isFromAdmin && activeOrderId) {
         this.chatUnread.markConversationRead(activeOrderId);
@@ -337,7 +356,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               attachmentContentType: m.attachmentContentType || null
             };
           }));
-          this.shouldScrollToBottom = true;
+          this.queueScrollToLatest();
         },
         error: () => {
           this.messages.set([]);
@@ -397,7 +416,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     }]);
     this.newMessage.set('');
     this.pendingAttachment.set(null);
-    this.shouldScrollToBottom = true;
+    this.queueScrollToLatest();
 
     this.adminService.sendMessage(targetId, text, attachment ? {
       attachmentUrl: attachment.url,

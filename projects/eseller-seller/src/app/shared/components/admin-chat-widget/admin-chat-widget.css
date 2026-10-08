@@ -1,5 +1,14 @@
-.whatsapp-bg {
-  background-color: #e5ddd5;
-  background-image: radial-gradient(#d4cbbe 1px, transparent 1px);
-  background-size: 16px 16px;
+.chat-bg {
+  background-color: #FFF7ED;
+  background-image: radial-gradient(#fed7aa 0.75px, transparent 0.75px), radial-gradient(#fed7aa 0.75px, #FFF7ED 0.75px);
+  background-size: 30px 30px;
+  background-position: 0 0, 15px 15px;
+}
+
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
