@@ -29,6 +29,7 @@
     <!-- DESKTOP SIDEBAR FILTER (Hidden on < lg) -->
     <aside class="hidden lg:block w-72 flex-shrink-0 sticky top-24">
       <app-product-filter-sidebar
+        [categories]="categories()"
         [brands]="availableBrands()"
         [selectedCategoryId]="selectedCategoryId()"
         [selectedBrandId]="selectedBrandId()"
@@ -37,6 +38,7 @@
         [minRating]="minRating()"
         [isFeatured]="isFeatured()"
         [isMobileDrawer]="false"
+        (categoryChange)="onCategoryChange($event)"
         (brandChange)="onBrandChange($event)"
         (priceChange)="onPriceChange($event)"
         (ratingChange)="onRatingChange($event)"
@@ -143,6 +145,7 @@
     <!-- Slide-over panel -->
     <div class="fixed inset-y-0 left-0 max-w-xs w-full bg-white z-50 shadow-2xl flex flex-col overflow-y-auto animate-in slide-in-from-left duration-300">
       <app-product-filter-sidebar
+        [categories]="categories()"
         [brands]="availableBrands()"
         [selectedCategoryId]="selectedCategoryId()"
         [selectedBrandId]="selectedBrandId()"
@@ -151,6 +154,7 @@
         [minRating]="minRating()"
         [isFeatured]="isFeatured()"
         [isMobileDrawer]="true"
+        (categoryChange)="onCategoryChange($event)"
         (brandChange)="onBrandChange($event)"
         (priceChange)="onPriceChange($event)"
         (ratingChange)="onRatingChange($event)"

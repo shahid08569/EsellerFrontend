@@ -29,6 +29,7 @@
     <!-- DESKTOP FILTER SIDEBAR -->
     <aside class="hidden lg:block w-72 flex-shrink-0 sticky top-24">
       <app-product-filter-sidebar
+        [categories]="allCategories()"
         [brands]="categoryBrands()"
         [selectedCategoryId]="category()?.id ?? null"
         [selectedBrandId]="selectedBrandId()"
@@ -37,6 +38,7 @@
         [minRating]="minRating()"
         [isFeatured]="isFeatured()"
         [isMobileDrawer]="false"
+        (categoryChange)="onCategoryChange($event)"
         (brandChange)="onBrandChange($event)"
         (priceChange)="onPriceChange($event)"
         (ratingChange)="onRatingChange($event)"
@@ -116,6 +118,7 @@
         (click)="$event.stopPropagation()"
       >
         <app-product-filter-sidebar
+          [categories]="allCategories()"
           [brands]="categoryBrands()"
           [selectedCategoryId]="category()?.id ?? null"
           [selectedBrandId]="selectedBrandId()"
@@ -124,6 +127,7 @@
           [minRating]="minRating()"
           [isFeatured]="isFeatured()"
           [isMobileDrawer]="true"
+          (categoryChange)="onCategoryChange($event)"
           (brandChange)="onBrandChange($event)"
           (priceChange)="onPriceChange($event)"
           (ratingChange)="onRatingChange($event)"

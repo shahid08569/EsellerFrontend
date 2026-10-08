@@ -307,6 +307,7 @@ export function filterBrandsForCategory(
   categorySlug: string | null | undefined,
   products?: { brandName?: string | null }[]
 ): BrandDto[] {
+  if (!allBrands || allBrands.length === 0) return [];
   if (!categorySlug) return allBrands;
 
   const slug = categorySlug.toLowerCase();
@@ -318,25 +319,16 @@ export function filterBrandsForCategory(
       .filter(Boolean)
   );
 
-  if (allowed && allowed.length > 0) {
-    return allBrands.filter((b) => {
-      const bSlug = b.slug.toLowerCase();
-      const bName = b.name.toLowerCase();
-      return (
-        allowed.includes(bSlug) ||
-        allowed.includes(bName) ||
-        productBrands.has(bName) ||
-        productBrands.has(bSlug)
-      );
-    });
-  }
+  const matched = allBrands.filter((b) => {
+    const bSlug = b.slug.toLowerCase();
+    const bName = b.name.toLowerCase();
+    const matchesProduct = productBrands.has(bName) || productBrands.has(bSlug);
+    const matchesAllowed = allowed && (allowed.includes(bSlug) || allowed.includes(bName));
+    return matchesProduct || matchesAllowed;
+  });
 
-  if (productBrands.size > 0) {
-    return allBrands.filter((b) => {
-      const bSlug = b.slug.toLowerCase();
-      const bName = b.name.toLowerCase();
-      return productBrands.has(bName) || productBrands.has(bSlug);
-    });
+  if (matched.length > 0) {
+    return matched;
   }
 
   return allBrands;
