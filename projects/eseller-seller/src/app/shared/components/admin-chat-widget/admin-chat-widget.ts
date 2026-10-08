@@ -91,7 +91,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
       },
       error: () => {
-        this.toast.show('Could not connect to Management chat.', 'error');
+        this.toast.show('Could not connect to Support Team chat.', 'error');
       }
     });
 
@@ -143,7 +143,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             {
               id: incoming.messageId || `m-${Date.now()}`,
               sender: 'admin' as const,
-              senderName: 'Management',
+              senderName: 'Support Team',
               message: incoming.message,
               timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -164,7 +164,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           });
         } else {
           this.unreadCount.update(c => c + 1);
-          this.toast.show('New message from Management', 'info');
+          this.toast.show('New message from Support Team', 'info');
         }
         this.shouldScrollToBottom = true;
       });
@@ -322,7 +322,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             sender: isSeller ? 'seller' : 'admin',
             senderName: isSeller
               ? (this.shop()?.name || 'Merchant')
-              : 'Management',
+              : 'Support Team',
             message: m.message || m.content || '',
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',

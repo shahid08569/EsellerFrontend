@@ -4,7 +4,7 @@
   <div class="flex items-center justify-between shrink-0">
     <div>
       <h1 class="text-2xl font-black text-gray-900 tracking-tight">Live Support</h1>
-      <p class="text-xs text-gray-500 mt-0.5">Chat live with Platform Management. Use this channel for shop help, upgrades, and payouts.</p>
+      <p class="text-xs text-gray-500 mt-0.5">Chat with our Support Team for shop help, upgrades, and payouts.</p>
     </div>
   </div>
 
@@ -32,7 +32,7 @@
             <es-skeleton-layout variant="chat" [count]="5" />
           </div>
         } @else if (filteredConversations().length === 0) {
-          <div class="p-8 text-center text-xs text-gray-400">No Management support channel yet. Retry or refresh.</div>
+          <div class="p-8 text-center text-xs text-gray-400">No support channel yet. Retry or refresh.</div>
         } @else {
           @for (c of filteredConversations(); track c.roomId) {
             <div
@@ -40,20 +40,28 @@
               class="p-3.5 hover:bg-white transition-colors cursor-pointer"
               [class.bg-white]="selectedRoomId() === c.roomId"
               [class.border-l-4]="selectedRoomId() === c.roomId"
-              [class.border-primary]="selectedRoomId() === c.roomId">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-1.5 min-w-0">
-                  <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                  <span class="font-bold text-xs text-gray-900 truncate">{{ c.title }}</span>
+              [class.border-teal-600]="selectedRoomId() === c.roomId">
+              <div class="flex items-center justify-between gap-2">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center shrink-0">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0115 0v5.25A2.25 2.25 0 0117.25 19.5h-1.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75h1.5V12a6 6 0 10-12 0v1.5h1.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-1.5A2.25 2.25 0 014.5 17.25V12z" />
+                    </svg>
+                  </span>
+                  <div class="min-w-0">
+                    <div class="flex items-center gap-1.5">
+                      <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span class="font-bold text-xs text-gray-900 truncate">Support Team</span>
+                    </div>
+                    <p class="text-[11px] text-gray-500 mt-0.5 truncate">
+                      {{ c.lastMessage || 'Chat with Support Team' }}
+                    </p>
+                  </div>
                 </div>
-                <span class="text-[10px] text-gray-400">{{ c.lastMessageTime | date:'shortTime' }}</span>
+                <span class="text-[10px] text-gray-400 shrink-0">{{ c.lastMessageTime | date:'shortTime' }}</span>
               </div>
-              <p class="text-[11px] text-gray-500 mt-0.5 truncate">
-                {{ c.lastMessage || 'Chat with Management' }}
-              </p>
-              <div class="flex items-center justify-between mt-1 text-[11px]">
-                <span class="text-violet-700 font-semibold text-[11px]">Management</span>
-                <span class="px-1.5 py-0.5 rounded-md uppercase font-bold text-[9px] bg-violet-50 text-violet-700">
+              <div class="flex items-center justify-end mt-1.5">
+                <span class="px-1.5 py-0.5 rounded-md uppercase font-bold text-[9px] bg-teal-50 text-teal-700">
                   Support
                 </span>
               </div>
@@ -70,17 +78,19 @@
       @if (selectedConversation()) {
         <div class="p-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-slate-50/30">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-emerald-100 text-emerald-700">
-              ★
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-teal-700 text-white">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0115 0v5.25A2.25 2.25 0 0117.25 19.5h-1.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75h1.5V12a6 6 0 10-12 0v1.5h1.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-1.5A2.25 2.25 0 014.5 17.25V12z" />
+              </svg>
             </div>
             <div>
-              <h2 class="font-bold text-sm text-gray-900">{{ selectedConversation()?.title }}</h2>
-              <p class="text-[11px] text-gray-400">Direct channel with Platform Admin</p>
+              <h2 class="font-bold text-sm text-gray-900">Support Team</h2>
+              <p class="text-[11px] text-gray-400">Typically reply soon</p>
             </div>
           </div>
 
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border bg-emerald-50 text-emerald-700 border-emerald-200">
-            Management Support
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border bg-teal-50 text-teal-700 border-teal-200">
+            Support Team
           </span>
         </div>
 
@@ -89,7 +99,7 @@
             @for (msg of messages(); track msg.id || (msg.createdAt + msg.message)) {
               <div class="flex flex-col" [class.items-end]="msg.isMe" [class.items-start]="!msg.isMe">
                 <span class="text-[10px] text-gray-400 px-1 mb-0.5">
-                  {{ msg.isMe ? 'You (Shop)' : 'Management' }} • {{ msg.createdAt | date:'shortTime' }}
+                  {{ msg.isMe ? 'You (Shop)' : 'Support Team' }} • {{ msg.createdAt | date:'shortTime' }}
                 </span>
                 <div
                   class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed space-y-1.5"
@@ -134,7 +144,7 @@
 
             @if (messages().length === 0) {
               <div class="text-center py-12 text-xs text-gray-400">
-                No messages yet. Send a message to start chatting with Management.
+                No messages yet. Send a message to start chatting with Support Team.
               </div>
             }
           </div>
@@ -161,7 +171,7 @@
               [ngModel]="messageText()"
               (ngModelChange)="messageText.set($event)"
               name="messageText"
-              placeholder="Type your message to Management..."
+              placeholder="Type your message to Support Team..."
               class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
             <button
               type="submit"
@@ -173,13 +183,13 @@
         </div>
       } @else {
         <div class="flex-1 flex flex-col items-center justify-center p-8 text-center text-gray-400">
-          <div class="w-14 h-14 rounded-2xl bg-slate-900 text-white flex items-center justify-center mb-3 shadow-lg">
-            <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M20.25 8.511c.884.284 1.5 1.128 1.5 2.097v4.286c0 1.136-.847 2.1-1.98 2.193-.34.027-.68.052-1.02.072v3.091l-3-3c-1.354 0-2.694-.055-4.02-.163a2.115 2.115 0 01-.825-.242m9.345-8.334a2.126 2.126 0 00-.476-.095 48.64 48.64 0 00-8.048 0c-1.131.094-1.976 1.057-1.976 2.192v4.286c0 .837.46 1.58 1.155 1.951m9.345-8.334V6.637c0-1.621-1.152-3.026-2.76-3.235A48.455 48.455 0 0011.25 3c-2.115 0-4.198.137-6.24.405-1.608.209-2.76 1.614-2.76 3.235v6.226c0 1.621 1.152 3.026 2.76 3.235.577.075 1.157.14 1.74.194V21l4.155-4.155" />
+          <div class="w-14 h-14 rounded-full bg-teal-700 text-white flex items-center justify-center mb-3 shadow-lg">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0115 0v5.25A2.25 2.25 0 0117.25 19.5h-1.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75h1.5V12a6 6 0 10-12 0v1.5h1.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-1.5A2.25 2.25 0 014.5 17.25V12z" />
             </svg>
           </div>
           <p class="font-bold text-gray-700 text-sm">Select Support Chat</p>
-          <p class="text-xs text-gray-400 mt-1 max-w-xs">Open the Management support thread from the left inbox.</p>
+          <p class="text-xs text-gray-400 mt-1 max-w-xs">Open the Support Team thread from the left inbox.</p>
         </div>
       }
 

@@ -233,7 +233,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
         const supportConvo: ChatConversation = {
           roomId,
-          title: session.shopName ? `${session.shopName} · Management` : 'Management Support',
+          title: 'Support Team',
           lastMessage: 'Loading…',
           lastMessageTime: undefined
         };
@@ -249,7 +249,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.show('Failed to open Management support chat', 'error');
+        this.toast.show('Failed to open Support Team chat', 'error');
       }
     });
   }
@@ -293,7 +293,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
           const preview = last.message || (last.attachmentFileName ? `📎 ${last.attachmentFileName}` : '');
           this.updateConversationPreview(roomId, preview, last.createdAt);
         } else {
-          this.updateConversationPreview(roomId, 'Chat with Management', undefined);
+          this.updateConversationPreview(roomId, 'Chat with Support Team', undefined);
         }
       },
       error: () => {
