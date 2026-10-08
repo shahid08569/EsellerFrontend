@@ -111,6 +111,11 @@ export const routes: Routes = [
             m => m.WithdrawalList
           )
       },
+      {
+        path: 'referrals',
+        loadComponent: () =>
+          import('./features/referrals/referral-center').then(m => m.ReferralCenter)
+      },
 
       // SECTION 7: SETTINGS
       {

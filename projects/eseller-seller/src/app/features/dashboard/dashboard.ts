@@ -62,6 +62,13 @@ export class Dashboard implements OnInit, OnDestroy {
   readonly isTierModalOpen = signal<boolean>(false);
   readonly pendingTierUpgrade = signal<{ tier: string; price: number } | null>(null);
 
+  readonly activeProductsCount = computed(() => {
+    const live = this.myProducts().length;
+    const sellerTotal = this.mySellerProducts().filter(p => !p.rejectionReason).length;
+    const shopCount = Number(this.shop()?.totalProducts ?? 0);
+    return Math.max(live, sellerTotal, shopCount);
+  });
+
   // Category-wise Breakdown Computed
   readonly categoryStats = computed<CategoryStat[]>(() => {
     const products = this.myProducts();
@@ -137,8 +144,9 @@ export class Dashboard implements OnInit, OnDestroy {
             next: (res) => {
               const items = res.items || [];
               this.mySellerProducts.set(items);
-              // Live store inventory = admin-approved only
-              this.myProducts.set(items.filter(p => p.isApproved));
+              // Live store inventory = products that are approved or listed without rejection
+              const active = items.filter(p => p.isApproved || !p.rejectionReason);
+              this.myProducts.set(active.length > 0 ? active : items);
               this.syncWarehouseButtonState();
             },
             error: () => {}

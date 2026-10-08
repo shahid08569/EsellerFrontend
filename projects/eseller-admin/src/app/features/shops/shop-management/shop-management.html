@@ -951,6 +951,18 @@
                 <span class="text-slate-400 block text-[11px]">Registration Date</span>
                 <span class="font-bold text-white">{{ applicant.createdAt | date:'mediumDate' }}</span>
               </div>
+              @if (applicant.referralCode) {
+                <div>
+                  <span class="text-slate-400 block text-[11px]">Referral Code</span>
+                  <span class="font-bold text-orange-400 font-mono">{{ applicant.referralCode }} ({{ applicant.referralsCount || 0 }} invited)</span>
+                </div>
+              }
+              @if (applicant.referredByCode) {
+                <div>
+                  <span class="text-slate-400 block text-[11px]">Referred By</span>
+                  <span class="font-bold text-emerald-400 font-mono">{{ applicant.referredByName || applicant.referredByCode }}</span>
+                </div>
+              }
             </div>
 
             <!-- Identity Document Verification -->
@@ -1085,6 +1097,21 @@
           <span class="text-gray-400 block font-medium">Store Established Date</span>
           <span class="font-bold text-gray-900">{{ store.createdAt | date:'mediumDate' }}</span>
         </div>
+
+        @if (selectedApplicant()?.referralCode) {
+          <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <span class="text-gray-400 block font-medium">Referral Code</span>
+            <span class="font-bold text-orange-600 font-mono">{{ selectedApplicant()?.referralCode }}</span>
+            <span class="text-[11px] text-gray-500 block mt-0.5">Invited: {{ selectedApplicant()?.referralsCount || 0 }} stores</span>
+          </div>
+        }
+
+        @if (selectedApplicant()?.referredByCode) {
+          <div class="p-3 bg-gray-50 rounded-xl border border-gray-100">
+            <span class="text-gray-400 block font-medium">Referred By</span>
+            <span class="font-bold text-emerald-600 font-mono">{{ selectedApplicant()?.referredByName || selectedApplicant()?.referredByCode }}</span>
+          </div>
+        }
 
         @if (store.phone) {
           <div class="col-span-2 p-3 bg-gray-50 rounded-xl border border-gray-100">

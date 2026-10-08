@@ -2,11 +2,13 @@
   <!-- HEADER -->
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Affiliate Marketing Program</h1>
-      <p class="text-xs text-gray-500 mt-1">Track promotional referral links, partner conversions, and affiliate commission earnings.</p>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Affiliates & Store Referrals</h1>
+      <p class="text-xs text-gray-500 mt-1">Monitor merchant referral links, invitation conversions, and newly onboarded stores.</p>
     </div>
-    <div class="text-xs font-bold text-gray-600 bg-white border border-gray-100 px-3.5 py-2 rounded-xl shadow-2xs">
-      Active Affiliates: <span class="text-orange-600 font-extrabold">{{ affiliates().length }}</span>
+    <div class="flex items-center gap-2">
+      <div class="text-xs font-bold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-xl shadow-2xs">
+        Active Affiliates: <span class="text-orange-600 font-extrabold">{{ affiliates().length }}</span>
+      </div>
     </div>
   </div>
 
@@ -14,47 +16,63 @@
   <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
     @if (isLoading()) {
       <div class="p-2">
-        <es-skeleton-layout variant="table" [count]="7" [columns]="5" />
+        <es-skeleton-layout variant="table" [count]="7" [columns]="6" />
       </div>
     } @else if (affiliates().length === 0) {
       <div class="p-12 text-center text-gray-400">
-        <p class="text-sm font-bold text-gray-600">No active affiliates registered</p>
-        <p class="text-xs mt-1">Users who apply to the affiliate referral network will be listed here.</p>
+        <div class="w-12 h-12 mx-auto rounded-2xl bg-orange-50 text-orange-600 flex items-center justify-center text-xl mb-3">
+          🤝
+        </div>
+        <p class="text-sm font-bold text-gray-800">No active affiliates registered</p>
+        <p class="text-xs text-gray-400 mt-1">Sellers who generate referral invitation links will appear here automatically.</p>
       </div>
     } @else {
       <div class="overflow-x-auto">
         <table class="w-full text-left text-sm">
           <thead>
             <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
-              <th class="py-3.5 px-4 font-extrabold">Affiliate</th>
+              <th class="py-3.5 px-4 font-extrabold">Affiliate Store</th>
               <th class="py-3.5 px-4 font-extrabold">Referral Code</th>
-              <th class="py-3.5 px-4 font-extrabold">Conversions</th>
-              <th class="py-3.5 px-4 font-extrabold">Total Earned</th>
+              <th class="py-3.5 px-4 font-extrabold text-center">Link Clicks</th>
+              <th class="py-3.5 px-4 font-extrabold text-center">Registered Stores</th>
+              <th class="py-3.5 px-4 font-extrabold text-center">Active Stores</th>
               <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
             </tr>
           </thead>
-          <tbody class="divide-y divide-gray-50">
+          <tbody class="divide-y divide-gray-100">
             @for (a of affiliates(); track a.id) {
               <tr class="hover:bg-orange-50/20 transition-colors">
                 <td class="py-3.5 px-4">
-                  <div class="font-bold text-gray-900">{{ a.name || a.email }}</div>
-                  <div class="text-xs text-gray-400">{{ a.email }}</div>
+                  <div class="font-extrabold text-gray-900">{{ a.shopName || 'Storefront' }}</div>
+                  <div class="text-xs text-gray-500 font-medium">{{ a.shopOwner }} &bull; {{ a.shopEmail }}</div>
                 </td>
-                <td class="py-3.5 px-4 font-mono font-bold text-orange-600 text-xs">
-                  {{ a.referralCode || 'REF-' + a.id.slice(0, 6) }}
+                <td class="py-3.5 px-4">
+                  <span class="px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 font-mono font-black text-xs">
+                    {{ a.code }}
+                  </span>
                 </td>
-                <td class="py-3.5 px-4 font-bold text-gray-800 text-xs">
-                  {{ a.totalConversions || 0 }} sales
+                <td class="py-3.5 px-4 text-center font-bold text-gray-700 text-xs">
+                  {{ a.clicksCount || 0 }}
                 </td>
-                <td class="py-3.5 px-4 font-bold text-gray-900 text-xs">
-                  $ {{ (a.totalEarnings || a.totalEarned || 0) | number:'1.2-2' }}
+                <td class="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-xs">
+                  {{ a.conversionsCount || 0 }} stores
+                </td>
+                <td class="py-3.5 px-4 text-center text-xs">
+                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px]"
+                        [class.bg-emerald-100]="(a.activeStoresCount || 0) > 0"
+                        [class.text-emerald-800]="(a.activeStoresCount || 0) > 0"
+                        [class.bg-gray-100]="(a.activeStoresCount || 0) === 0"
+                        [class.text-gray-600]="(a.activeStoresCount || 0) === 0">
+                    {{ a.activeStoresCount || 0 }} active
+                  </span>
                 </td>
                 <td class="py-3.5 px-4 text-right">
                   <button 
                     type="button" 
                     (click)="openDetails(a)"
-                    class="px-3 py-1.5 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors">
-                    View Details
+                    class="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors inline-flex items-center gap-1.5">
+                    <span>View Referrals</span>
+                    <span>↗</span>
                   </button>
                 </td>
               </tr>
@@ -68,87 +86,159 @@
 
 <!-- DETAILS MODAL -->
 @if (detailsModalOpen() && selectedAffiliate()) {
-  <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
-    <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeDetails()"></div>
-    <div class="relative bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl space-y-5 border border-gray-100 max-h-[90vh] overflow-y-auto">
-      <div class="flex items-center justify-between pb-3 border-b border-gray-100">
-        <div>
-          <h3 class="text-base font-black text-gray-900">Affiliate Profile Details</h3>
-          <p class="text-xs text-gray-500 mt-0.5">{{ selectedAffiliate().name || selectedAffiliate().email }}</p>
-        </div>
-        <button type="button" (click)="closeDetails()" class="text-gray-400 hover:text-gray-600 cursor-pointer text-lg font-bold">✕</button>
-      </div>
-
-      <div class="grid grid-cols-2 gap-4">
-        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Referral Code</span>
-          <span class="text-sm font-mono font-black text-orange-600 mt-1 block">
-            {{ selectedAffiliate().referralCode || 'N/A' }}
-          </span>
-        </div>
-        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Commission Rate</span>
-          <span class="text-sm font-black text-gray-800 mt-1 block">
-            {{ selectedAffiliate().commissionRate ? selectedAffiliate().commissionRate + '%' : 'Default (5%)' }}
-          </span>
-        </div>
-        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Link Clicks</span>
-          <span class="text-sm font-black text-gray-800 mt-1 block">
-            {{ selectedAffiliate().totalClicks || 0 }} clicks
-          </span>
-        </div>
-        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Conversions</span>
-          <span class="text-sm font-black text-emerald-600 mt-1 block">
-            {{ selectedAffiliate().totalConversions || 0 }} sales
-          </span>
-        </div>
-        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Total Lifetime Earned</span>
-          <span class="text-sm font-black text-gray-900 mt-1 block">
-            $ {{ (selectedAffiliate().totalEarnings || selectedAffiliate().totalEarned || 0) | number:'1.2-2' }}
-          </span>
-        </div>
-        <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
-          <span class="block text-[11px] font-bold text-gray-400 uppercase tracking-wider">Pending Balance</span>
-          <span class="text-sm font-black text-amber-600 mt-1 block">
-            $ {{ (selectedAffiliate().unpaidBalance || 0) | number:'1.2-2' }}
-          </span>
-        </div>
-      </div>
-
-      <div class="space-y-2 pt-2 border-t border-gray-100 text-xs">
-        <div class="flex justify-between py-1">
-          <span class="text-gray-400">Account Email:</span>
-          <span class="font-bold text-gray-800">{{ selectedAffiliate().email }}</span>
-        </div>
-        <div class="flex justify-between py-1">
-          <span class="text-gray-400">Account Status:</span>
-          <span class="px-2.5 py-0.5 rounded-full text-[11px] font-bold"
-                [class.bg-emerald-100]="selectedAffiliate().isActive !== false"
-                [class.text-emerald-800]="selectedAffiliate().isActive !== false"
-                [class.bg-rose-100]="selectedAffiliate().isActive === false"
-                [class.text-rose-800]="selectedAffiliate().isActive === false">
-            {{ selectedAffiliate().isActive !== false ? 'Active' : 'Disabled' }}
-          </span>
-        </div>
-        @if (selectedAffiliate().createdAt) {
-          <div class="flex justify-between py-1">
-            <span class="text-gray-400">Joined Program:</span>
-            <span class="font-bold text-gray-800">{{ selectedAffiliate().createdAt | date:'mediumDate' }}</span>
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="relative bg-white rounded-3xl max-w-4xl w-full max-h-[92vh] shadow-2xl border border-gray-100 flex flex-col overflow-hidden">
+      
+      <!-- Modal Header -->
+      <div class="shrink-0 flex items-center justify-between p-5 border-b border-gray-100 bg-slate-50">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-2xl bg-orange-600 text-white flex items-center justify-center text-lg font-black shadow-md shadow-orange-600/20">
+            🤝
           </div>
-        }
-      </div>
-
-      <div class="pt-3 border-t border-gray-100 flex justify-end">
+          <div>
+            <h3 class="text-base font-black text-gray-900">
+              Affiliate Details: {{ selectedAffiliate()!.shopName }}
+            </h3>
+            <p class="text-xs text-gray-500 mt-0.5">
+              Owner: <strong class="text-gray-800">{{ selectedAffiliate()!.shopOwner }}</strong> &bull; {{ selectedAffiliate()!.shopEmail }}
+            </p>
+          </div>
+        </div>
         <button 
           type="button" 
           (click)="closeDetails()" 
-          class="px-4 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs cursor-pointer transition-colors">
-          Close
+          class="w-8 h-8 rounded-full bg-white hover:bg-gray-200 text-gray-500 border border-gray-200 flex items-center justify-center text-sm font-bold cursor-pointer transition-colors">
+          ✕
         </button>
       </div>
+
+      <!-- Modal Body (Scrollable) -->
+      <div class="flex-1 min-h-0 overflow-y-auto p-5 space-y-6">
+        
+        <!-- Metrics Row -->
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div class="p-3.5 bg-orange-50/60 rounded-2xl border border-orange-100">
+            <span class="block text-[10px] font-bold text-orange-600 uppercase tracking-wider">Referral Code</span>
+            <span class="text-base font-mono font-black text-orange-700 mt-1 block">
+              {{ selectedAffiliate()!.code }}
+            </span>
+          </div>
+          <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
+            <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Link Clicks</span>
+            <span class="text-base font-black text-gray-800 mt-1 block">
+              {{ selectedAffiliate()!.clicksCount }} clicks
+            </span>
+          </div>
+          <div class="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-100">
+            <span class="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Referred Stores</span>
+            <span class="text-base font-black text-emerald-700 mt-1 block">
+              {{ selectedAffiliate()!.conversionsCount }} joined
+            </span>
+          </div>
+          <div class="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100">
+            <span class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider">Active Stores</span>
+            <span class="text-base font-black text-blue-700 mt-1 block">
+              {{ selectedAffiliate()!.activeStoresCount }} with products
+            </span>
+          </div>
+        </div>
+
+        <!-- Referred Stores Section -->
+        <div class="space-y-3">
+          <div class="flex items-center justify-between">
+            <h4 class="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
+              <span>🏪</span>
+              <span>Referred Stores Onboarded ({{ affiliateDetails()?.referredShops?.length || 0 }})</span>
+            </h4>
+            <span class="text-[11px] text-gray-400">Stores registered through this merchant's invite link</span>
+          </div>
+
+          @if (isLoadingDetails()) {
+            <div class="p-4 border border-gray-100 rounded-2xl">
+              <es-skeleton-layout variant="table" [count]="3" [columns]="5" />
+            </div>
+          } @else if (!affiliateDetails()?.referredShops?.length) {
+            <div class="p-8 text-center text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
+              <p class="text-xs font-bold text-gray-600">No stores have registered through this link yet</p>
+              <p class="text-[11px] mt-0.5">When other shopkeepers sign up with code {{ selectedAffiliate()!.code }}, their store profiles will be listed here.</p>
+            </div>
+          } @else {
+            <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
+              <div class="overflow-x-auto">
+                <table class="w-full text-left text-xs">
+                  <thead class="bg-gray-50 border-b border-gray-200 text-gray-600 font-extrabold uppercase tracking-wider text-[10px]">
+                    <tr>
+                      <th class="py-2.5 px-3">Store Name</th>
+                      <th class="py-2.5 px-3">Owner Contact</th>
+                      <th class="py-2.5 px-3 text-center">Status</th>
+                      <th class="py-2.5 px-3 text-center">Products Listed</th>
+                      <th class="py-2.5 px-3 text-center">Activity Status</th>
+                      <th class="py-2.5 px-3 text-right">Joined Date</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100 bg-white">
+                    @for (store of affiliateDetails()!.referredShops; track store.id) {
+                      <tr class="hover:bg-orange-50/20 transition-colors">
+                        <td class="py-3 px-3">
+                          <span class="font-extrabold text-gray-900 block text-xs">{{ store.shopName }}</span>
+                          <span class="text-[10px] text-gray-400 font-mono">{{ store.id }}</span>
+                        </td>
+                        <td class="py-3 px-3">
+                          <span class="font-bold text-gray-800 block">{{ store.ownerName }}</span>
+                          <span class="text-[10px] text-gray-500 block">{{ store.email }}</span>
+                          @if (store.phoneNumber) {
+                            <span class="text-[10px] text-gray-400 font-mono block">{{ store.phoneNumber }}</span>
+                          }
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                          <span class="inline-flex px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide"
+                                [class.bg-emerald-100]="store.isApproved"
+                                [class.text-emerald-800]="store.isApproved"
+                                [class.bg-amber-100]="!store.isApproved"
+                                [class.text-amber-800]="!store.isApproved">
+                            {{ store.isApproved ? 'Approved' : 'Pending' }}
+                          </span>
+                        </td>
+                        <td class="py-3 px-3 text-center font-bold text-gray-700">
+                          📦 {{ store.productsCount }} items
+                        </td>
+                        <td class="py-3 px-3 text-center">
+                          @if (store.hasListedProducts) {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
+                              <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
+                              Active ({{ store.productsCount }} items)
+                            </span>
+                          } @else {
+                            <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold text-[10px]">
+                              <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+                              No Products Yet
+                            </span>
+                          }
+                        </td>
+                        <td class="py-3 px-3 text-right font-medium text-gray-500 whitespace-nowrap text-[11px]">
+                          {{ store.registeredAt | date:'mediumDate' }}
+                        </td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="shrink-0 p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end">
+        <button 
+          type="button" 
+          (click)="closeDetails()" 
+          class="px-5 py-2 rounded-xl bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold text-xs cursor-pointer transition-colors">
+          Close Window
+        </button>
+      </div>
+
     </div>
   </div>
 }

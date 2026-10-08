@@ -489,4 +489,33 @@ export class SellerService {
   }): Observable<{ message: string; id: string }> {
     return this.api.post<{ message: string; id: string }>('/Shops/tier-upgrade', data);
   }
+
+  /** GET /seller/referral/my */
+  getMyReferrals(): Observable<SellerReferralDto> {
+    return this.api.get<SellerReferralDto>('/seller/referral/my');
+  }
 }
+
+export interface ReferredStoreDto {
+  shopId: string;
+  shopName: string;
+  shopSlug: string;
+  sellerName: string;
+  email: string;
+  phone: string;
+  status: string;
+  isApproved: boolean;
+  totalProducts: number;
+  hasListedProducts: boolean;
+  registeredAt: string;
+}
+
+export interface SellerReferralDto {
+  referralCode: string;
+  totalClicks: number;
+  totalReferredStores: number;
+  activeReferredStores: number;
+  totalEarned: number;
+  referredStores: ReferredStoreDto[];
+}
+

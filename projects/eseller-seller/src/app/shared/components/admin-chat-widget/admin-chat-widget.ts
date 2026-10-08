@@ -143,7 +143,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             {
               id: incoming.messageId || `m-${Date.now()}`,
               sender: 'admin' as const,
-              senderName: 'Customer Support',
+              senderName: 'Customer Service',
               message: incoming.message,
               timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -164,7 +164,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           });
         } else {
           this.unreadCount.update(c => c + 1);
-          this.toast.show('New message from Customer Support', 'info');
+          this.toast.show('New message from Customer Service', 'info');
         }
         this.queueScrollToLatest();
       });
@@ -321,7 +321,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             sender: isSeller ? 'seller' : 'admin',
             senderName: isSeller
               ? (this.shop()?.name || 'Merchant')
-              : 'Customer Support',
+              : 'Customer Service',
             message: m.message || m.content || '',
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',
@@ -404,7 +404,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       error: (err) => {
         this.isSending.set(false);
         this.messages.update(list => list.filter(m => m.id !== tempId));
-        this.toast.show(err?.error?.error || 'Failed to send message to Support Team.', 'error');
+        this.toast.show(err?.error?.error || 'Failed to send message to Customer Service.', 'error');
       }
     });
   }

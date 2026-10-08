@@ -1,8 +1,8 @@
 import { Component, OnInit, inject, signal, computed, HostListener, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink } from '@angular/router';
-import { AuthService, AuthStore, ToastService } from 'eseller-shared';
+import { Router, RouterLink, ActivatedRoute } from '@angular/router';
+import { AuthService, AuthStore, ToastService, ApiService } from 'eseller-shared';
 import {
   COUNTRIES_DATA,
   CountryStateData,
@@ -29,8 +29,12 @@ export class SellerRegister implements OnInit {
   private readonly authService = inject(AuthService);
   readonly authStore = inject(AuthStore);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
+  private readonly api = inject(ApiService);
   private readonly toastService = inject(ToastService);
   private readonly elementRef = inject(ElementRef);
+
+  readonly referralCode = signal<string>('');
 
   // Available Countries
   readonly allCountries = COUNTRIES_DATA;
@@ -194,6 +198,15 @@ export class SellerRegister implements OnInit {
   }
 
   ngOnInit(): void {
+    this.route.queryParamMap.subscribe(params => {
+      const ref = params.get('ref') || params.get('referral');
+      if (ref) {
+        const clean = ref.trim().toUpperCase();
+        this.referralCode.set(clean);
+        this.api.get(`/affiliate/track/${encodeURIComponent(clean)}`).subscribe({ error: () => {} });
+      }
+    });
+
     if (this.authStore.isAuthenticated()) {
       const user = this.authStore.currentAccount();
       if (user && !this.name()) {
@@ -506,7 +519,8 @@ export class SellerRegister implements OnInit {
       cnicFrontUrl: frontUrl,
       cnicBackUrl: backUrl,
       // Single-sided docs (e.g. passport) also keep a generic DocumentUrl
-      documentUrl: frontUrl
+      documentUrl: frontUrl,
+      referralCode: this.referralCode().trim() || null
     };
 
     this.authService.registerSeller(payload).subscribe({

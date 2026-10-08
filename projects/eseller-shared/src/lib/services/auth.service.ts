@@ -98,6 +98,7 @@ export class AuthService {
     cnicFrontUrl?: string | null;
     cnicBackUrl?: string | null;
     documentUrl?: string | null;
+    referralCode?: string | null;
   }): Observable<RegisterSellerResponse> {
     return this.withLocation((loc) =>
       this.api.post<RegisterSellerResponse>('/Auth/register/seller', {
@@ -118,7 +119,8 @@ export class AuthService {
         documentUrl: payload.documentUrl || null,
         latitude: loc.latitude,
         longitude: loc.longitude,
-        deviceType: loc.deviceType
+        deviceType: loc.deviceType,
+        referralCode: payload.referralCode || null
       } satisfies RegisterSellerCommand)
     );
   }

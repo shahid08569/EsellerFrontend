@@ -79,6 +79,7 @@ export interface RegisterSellerCommand {
   latitude: number;
   longitude: number;
   deviceType: string;
+  referralCode?: string | null;
 }
 
 export interface RegisterSellerResponse {

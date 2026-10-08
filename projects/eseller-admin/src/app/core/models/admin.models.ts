@@ -42,6 +42,10 @@ export interface AdminShopkeeperDto {
   documentUrl?: string | null;
   cnicFrontUrl?: string | null;
   cnicBackUrl?: string | null;
+  referralCode?: string | null;
+  referralsCount?: number;
+  referredByCode?: string | null;
+  referredByName?: string | null;
 }
 
 export interface ShopCategoryDto {
@@ -392,4 +396,44 @@ export interface AdminWithdrawalPaymentMethodDto {
   name: string;
   details: string;
   isActive: boolean;
+}
+
+export interface AdminAffiliateDto {
+  id: string;
+  code: string;
+  shopId: string;
+  shopName: string;
+  shopOwner: string;
+  shopEmail: string;
+  clicksCount: number;
+  conversionsCount: number;
+  activeStoresCount: number;
+  createdAt: string;
+}
+
+export interface AdminReferredStoreDto {
+  id: string;
+  shopName: string;
+  ownerName: string;
+  email: string;
+  phoneNumber?: string | null;
+  isApproved: boolean;
+  productsCount: number;
+  registeredAt: string;
+  hasListedProducts: boolean;
+}
+
+export interface AdminAffiliateDetailDto {
+  affiliate: {
+    id: string;
+    code: string;
+    shopId: string;
+    shopName: string;
+    shopOwner: string;
+    shopEmail: string;
+    clicksCount: number;
+    conversionsCount: number;
+    createdAt: string;
+  };
+  referredShops: AdminReferredStoreDto[];
 }

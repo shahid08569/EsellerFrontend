@@ -28,7 +28,9 @@ import {
   AdminReviewDto,
   UserLocationLogDto,
   AdminSellerWalletDto,
-  AdminWithdrawalPaymentMethodDto
+  AdminWithdrawalPaymentMethodDto,
+  AdminAffiliateDto,
+  AdminAffiliateDetailDto
 } from '../models/admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -886,7 +888,7 @@ export class AdminService {
   // ═══════════════════════════════════════════════════════════
   // 10. FINANCE (Commissions & Withdrawals)
   // ═══════════════════════════════════════════════════════════
-  getAffiliates(): Observable<any[]> {
+  getAffiliates(): Observable<AdminAffiliateDto[]> {
     return this.api.get<any>('/admin/affiliates').pipe(
       map(res => {
         if (res && Array.isArray(res.items)) return res.items;
@@ -894,6 +896,12 @@ export class AdminService {
         return [];
       }),
       catchError(() => of([]))
+    );
+  }
+
+  getAffiliateDetails(affiliateId: string): Observable<AdminAffiliateDetailDto> {
+    return this.api.get<AdminAffiliateDetailDto>(`/admin/affiliates/${affiliateId}/details`).pipe(
+      catchError(err => throwError(() => err))
     );
   }
 
