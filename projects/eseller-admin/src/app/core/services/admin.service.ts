@@ -234,10 +234,27 @@ export class AdminService {
     if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
       return trimmed;
     }
+
+    const apiHost = (environment.apiUrl || '').replace(/\/api\/v1\/?$/, '');
+
     if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      // Fix absolute URLs that omitted /uploads/
-      return trimmed.replace(/^(https?:\/\/[^/]+)\/(?!uploads\/)/i, '$1/uploads/');
+      // External CDNs (Unsplash, etc.) — use as-is. Only rewrite our API host
+      // when the path omitted /uploads/ (e.g. https://api…/categories/x.jpg).
+      if (!apiHost || !trimmed.toLowerCase().startsWith(apiHost.toLowerCase())) {
+        return trimmed;
+      }
+      try {
+        const u = new URL(trimmed);
+        if (!u.pathname.startsWith('/uploads/')) {
+          u.pathname = `/uploads${u.pathname.startsWith('/') ? u.pathname : `/${u.pathname}`}`;
+          return u.toString();
+        }
+      } catch {
+        /* keep original */
+      }
+      return trimmed;
     }
+
     // Fake / local placeholder URLs from failed uploads — do not resolve
     if (trimmed.startsWith('local-front:') || trimmed.startsWith('local-back:') || trimmed.startsWith('local-')) {
       return '';
@@ -246,8 +263,7 @@ export class AdminService {
     if (!cleanPath.startsWith('/uploads/')) {
       cleanPath = `/uploads${cleanPath}`;
     }
-    const host = (environment.apiUrl || '').replace(/\/api\/v1\/?$/, '');
-    return `${host}${cleanPath}`;
+    return `${apiHost}${cleanPath}`;
   }
 
   // ═══════════════════════════════════════════════════════════

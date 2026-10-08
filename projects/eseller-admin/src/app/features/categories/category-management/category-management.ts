@@ -63,7 +63,15 @@ export class CategoryManagement implements OnInit {
   }
 
   onImgError(event: Event): void {
-    (event.target as HTMLElement).style.display = 'none';
+    const img = event.target as HTMLImageElement;
+    img.style.display = 'none';
+    const parent = img.parentElement;
+    if (parent && !parent.querySelector('.img-fallback')) {
+      const span = document.createElement('span');
+      span.className = 'img-fallback text-orange-600 text-xs font-black';
+      span.textContent = ((img.alt || 'C').trim()[0] || 'C').toUpperCase();
+      parent.appendChild(span);
+    }
   }
 
   loadCategories(): void {
