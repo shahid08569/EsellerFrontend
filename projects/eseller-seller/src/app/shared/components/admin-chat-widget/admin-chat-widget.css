@@ -1,6 +1,6 @@
 .chat-bg {
-  background-color: #FFF7ED;
-  background-image: radial-gradient(#fed7aa 0.75px, transparent 0.75px), radial-gradient(#fed7aa 0.75px, #FFF7ED 0.75px);
+  background-color: #f8fafc;
+  background-image: radial-gradient(#cbd5e1 0.75px, transparent 0.75px), radial-gradient(#cbd5e1 0.75px, #f8fafc 0.75px);
   background-size: 30px 30px;
   background-position: 0 0, 15px 15px;
 }
