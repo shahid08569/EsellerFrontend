@@ -60,12 +60,15 @@ export interface ProductListDto {
   brandId?: string | null;
   brandName: string | null;
   avgRating: number | null;
+  /** Approved reviewer count from API */
+  reviewCount?: number | null;
   isFeatured: boolean;
   isApproved: boolean;
   status: string;
   rejectionReason: string | null;
   createdAt: string; // ISO 8601
   badges: ProductBadgeDto | null;
+  /** @deprecated use reviewCount */
   reviewsCount?: number | null;
   viewCount?: number | null;
   sourceProductId?: string | null;

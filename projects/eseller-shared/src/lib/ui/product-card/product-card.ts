@@ -72,6 +72,13 @@ export class ProductCard implements OnInit, OnDestroy {
    */
   readonly preferredBadge = input<PreferredBadge>(null);
 
+  /**
+   * Rating UI style:
+   * - `stars` — visual stars (half-star capable) for category pages
+   * - `compact` — e.g. "4.5 star" for All Products / home sections
+   */
+  readonly ratingDisplay = input<'stars' | 'compact'>('compact');
+
   // ============================================================
   // OUTPUTS
   // ============================================================
@@ -85,6 +92,25 @@ export class ProductCard implements OnInit, OnDestroy {
   readonly productLink = computed(() => `/products/${this.product().slug}`);
   readonly fullName = computed(() => this.product().name);
   readonly hasRating = computed(() => (this.product().avgRating ?? 0) > 0);
+  readonly reviewCount = computed(() => {
+    const p = this.product();
+    return Math.max(0, Number(p.reviewCount ?? p.reviewsCount ?? 0) || 0);
+  });
+  readonly ratingValue = computed(() => {
+    const raw = Number(this.product().avgRating ?? 0);
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    return Math.min(5, Math.round(raw * 2) / 2);
+  });
+  readonly formattedRating = computed(() => this.ratingValue().toFixed(1));
+  /** Full / half / empty slots for star display */
+  readonly starSlots = computed(() => {
+    const rating = this.ratingValue();
+    return [1, 2, 3, 4, 5].map((i) => {
+      if (rating >= i) return 'full' as const;
+      if (rating >= i - 0.5) return 'half' as const;
+      return 'empty' as const;
+    });
+  });
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {

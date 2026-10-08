@@ -38,6 +38,25 @@ export class CategoryProductCard {
   readonly isInCompare = computed(() => this.compareService.isInCompare(this.product().id));
   readonly isInCart = computed(() => this.cartService.isInCart(this.product().id));
 
+  readonly hasRating = computed(() => (this.product().avgRating ?? 0) > 0);
+  readonly reviewCount = computed(() => {
+    const p = this.product();
+    return Math.max(0, Number(p.reviewCount ?? p.reviewsCount ?? 0) || 0);
+  });
+  readonly ratingValue = computed(() => {
+    const raw = Number(this.product().avgRating ?? 0);
+    if (!Number.isFinite(raw) || raw <= 0) return 0;
+    return Math.min(5, Math.round(raw * 2) / 2);
+  });
+  readonly starSlots = computed(() => {
+    const rating = this.ratingValue();
+    return [1, 2, 3, 4, 5].map((i) => {
+      if (rating >= i) return 'full' as const;
+      if (rating >= i - 0.5) return 'half' as const;
+      return 'empty' as const;
+    });
+  });
+
   /** One-line description for category cards */
   readonly shortDesc = computed(() => {
     const raw = String(this.product().description || '').replace(/\s+/g, ' ').trim();

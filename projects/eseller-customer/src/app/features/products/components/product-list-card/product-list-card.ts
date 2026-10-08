@@ -33,6 +33,10 @@ export class ProductListCard {
   readonly productLink = computed(() => `/products/${this.product().slug}`);
   readonly fullName = computed(() => this.product().name);
   readonly hasRating = computed(() => (this.product().avgRating ?? 0) > 0);
+  readonly reviewCount = computed(() => {
+    const p = this.product();
+    return Math.max(0, Number(p.reviewCount ?? p.reviewsCount ?? 0) || 0);
+  });
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {
