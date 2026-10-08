@@ -30,6 +30,7 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly showLogoutModal = signal<boolean>(false);
   readonly dismissWarning = signal<boolean>(false);
   readonly isTierModalOpen = signal<boolean>(false);
+  readonly packagesMenuOpen = signal<boolean>(false);
   /** NEW / pending counts for nav badges only */
   readonly pendingProductsCount = signal<number>(0);
   readonly pendingOrdersCount = signal<number>(0);
@@ -197,11 +198,21 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   openTierModal() {
+    this.packagesMenuOpen.set(false);
     this.isTierModalOpen.set(true);
   }
 
   closeTierModal() {
     this.isTierModalOpen.set(false);
+  }
+
+  togglePackagesMenu(): void {
+    this.packagesMenuOpen.update(v => !v);
+  }
+
+  openShopUpgrade(): void {
+    this.openTierModal();
+    this.closeSidebarOnMobile();
   }
 
   onTierRequested(data: { tier: string; price: number; note: string; receiptUrl?: string; categoryId?: string }) {

@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { ToastService, SignalRService, SignalRIncomingMessage, ChatService, SkeletonLayout } from 'eseller-shared';
@@ -20,7 +20,7 @@ export interface AdminDisplayMessage {
 @Component({
   selector: 'app-admin-chat',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, NgTemplateOutlet, SkeletonLayout],
   templateUrl: './admin-chat.html'
 })
 export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
@@ -42,6 +42,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly sendingMessage = signal<boolean>(false);
   readonly uploadingFile = signal<boolean>(false);
   readonly searchTerm = signal<string>('');
+  /** Inbox filter: All | Seller Support | Customers */
+  readonly filterTab = signal<'all' | 'support' | 'customers'>('all');
   readonly pendingAttachment = signal<{
     url: string;
     fileName: string;
@@ -49,9 +51,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     sizeBytes: number;
   } | null>(null);
 
-  readonly filteredConversations = computed(() => {
-    const term = this.searchTerm().trim().toLowerCase();
-    // Depend on shared map so Live Chat list badges update when FAB/sidebar poll bumps
+  readonly enrichedConversations = computed(() => {
     void this.chatUnread.byConversationId();
     const activeId = String(
       this.activeConversation()?.orderRequestId || this.activeConversation()?.id || ''
@@ -65,6 +65,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       const unreadCount = Math.max(Number(c.unreadCount || 0), shared);
       return { ...c, unreadCount };
     });
+
+    const term = this.searchTerm().trim().toLowerCase();
     if (term) {
       list = list.filter(c => {
         const name = (c.customerName || c.participantName || c.shopName || '').toLowerCase();
@@ -74,7 +76,6 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       });
     }
 
-    // WhatsApp-style ordering: unread threads first, then most-recently active.
     return [...list].sort((a, b) => {
       const aUnread = (a.unreadCount || 0) > 0 ? 1 : 0;
       const bUnread = (b.unreadCount || 0) > 0 ? 1 : 0;
@@ -84,6 +85,30 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       return bTime - aTime;
     });
   });
+
+  readonly filteredConversations = computed(() => {
+    const tab = this.filterTab();
+    const list = this.enrichedConversations();
+    if (tab === 'support') return list.filter(c => this.isSellerSupport(c));
+    if (tab === 'customers') return list.filter(c => !this.isSellerSupport(c));
+    return list;
+  });
+
+  readonly supportConversations = computed(() =>
+    this.filteredConversations().filter(c => this.isSellerSupport(c))
+  );
+
+  readonly customerConversations = computed(() =>
+    this.filteredConversations().filter(c => !this.isSellerSupport(c))
+  );
+
+  readonly supportTabCount = computed(() =>
+    this.enrichedConversations().filter(c => this.isSellerSupport(c)).length
+  );
+
+  readonly customerTabCount = computed(() =>
+    this.enrichedConversations().filter(c => !this.isSellerSupport(c)).length
+  );
 
   private unsubscribeSignalR?: () => void;
 
@@ -458,5 +483,54 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     const raw = c?.contextProductImageUrl || c?.ContextProductImageUrl || null;
     if (!raw) return null;
     return this.adminService.formatImageUrl(raw) || null;
+  }
+
+  isSellerSupport(convo: any): boolean {
+    const pt = String(convo?.participantType || convo?.ParticipantType || '').toLowerCase();
+    if (pt === 'seller' || pt === '2' || pt === 'shopkeeper') return true;
+    if (pt === 'customer' || pt === '1' || pt === 'user') return false;
+    const s = String(convo?.orderStatus || '');
+    return s.includes('Merchant') || s.includes('Partner') || s.includes('Verification')
+      || s.includes('Active Partner') || s.includes('Seller');
+  }
+
+  displayName(convo: any): string {
+    return convo?.customerName || convo?.participantName || convo?.shopName || 'Conversation';
+  }
+
+  initials(convo: any): string {
+    const name = this.displayName(convo).trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) {
+      return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    }
+    return (name.charAt(0) || '?').toUpperCase();
+  }
+
+  relativeTime(iso: string | Date | null | undefined): string {
+    if (!iso) return '';
+    const t = new Date(iso).getTime();
+    if (!Number.isFinite(t)) return '';
+    const diffMs = Date.now() - t;
+    const mins = Math.floor(diffMs / 60000);
+    if (mins < 1) return 'now';
+    if (mins < 60) return `${mins}m`;
+    const hours = Math.floor(mins / 60);
+    if (hours < 24) return `${hours}h`;
+    const days = Math.floor(hours / 24);
+    if (days < 30) return `${days}d`;
+    const months = Math.floor(days / 30);
+    return `${months}mo`;
+  }
+
+  setFilterTab(tab: 'all' | 'support' | 'customers'): void {
+    this.filterTab.set(tab);
+  }
+
+  isActiveConvo(convo: any): boolean {
+    const a = this.activeConversation();
+    if (!a) return false;
+    return String(a.orderRequestId || a.id || '').toLowerCase()
+      === String(convo?.orderRequestId || convo?.id || '').toLowerCase();
   }
 }

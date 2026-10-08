@@ -35,7 +35,7 @@ a.bg-primary:hover {
   align-items: center;
   justify-content: space-between;
   gap: 0.5rem;
-  padding: 0.55rem 0.75rem 0.55rem 0.85rem;
+  padding: 0.55rem 0.75rem 0.55rem 0.75rem;
   border-radius: 0.75rem;
   font-size: 0.75rem;
   font-weight: 500;
@@ -45,6 +45,62 @@ a.bg-primary:hover {
   transition: color 160ms ease, background-color 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
   cursor: pointer;
   user-select: none;
+}
+
+.seller-nav-link-main {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.seller-nav-icon {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+  color: #64748b;
+  stroke-width: 2;
+}
+
+.seller-nav-link:hover .seller-nav-icon {
+  color: #fb923c;
+}
+
+.seller-nav-link.seller-nav-active .seller-nav-icon {
+  color: #fb923c;
+}
+
+.seller-nav-dropdown {
+  margin-top: 0.25rem;
+  margin-left: 0.35rem;
+  padding: 0.35rem;
+  border-radius: 0.75rem;
+  background: rgba(15, 23, 42, 0.9);
+  border: 1px solid #1e293b;
+}
+
+.seller-nav-dropdown button {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.45rem 0.65rem;
+  border-radius: 0.5rem;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 140ms ease, color 140ms ease;
+}
+
+.seller-nav-dropdown button:hover {
+  background: #1e293b;
+  color: #fff;
+}
+
+.seller-nav-link {
   text-decoration: none;
 }
 
