@@ -176,3 +176,14 @@
   }
 
 </div>
+
+<app-confirm-modal
+  [isOpen]="deleteConfirmOpen()"
+  title="Remove discount?"
+  message="This discount promotion will be removed."
+  confirmText="Delete"
+  cancelText="Cancel"
+  type="danger"
+  [isProcessing]="isDeleting()"
+  (confirmed)="confirmDeleteDiscount()"
+  (cancelled)="cancelDeleteDiscount()" />

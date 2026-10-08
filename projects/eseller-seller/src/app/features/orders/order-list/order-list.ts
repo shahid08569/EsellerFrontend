@@ -169,11 +169,11 @@ export class OrderList implements OnInit {
   payoutHint(order: Order): string {
     const s = (order.status || '').toLowerCase().replace(/[\s_-]/g, '');
     if (s === 'delivered') {
-      return 'Order delivered. Your 20% share moves from Pending to Available; Super Admin can still adjust amounts.';
+      return 'Order delivered. Your 20% share moves from Pending to Available; Management can still adjust amounts.';
     }
     if (!this.isPaid(order)) {
-      return 'Your 20% merchant share stays Pending until Super Admin marks payment Paid and delivers the order.';
+      return 'Your 20% merchant share stays Pending until Management marks payment Paid and delivers the order.';
     }
-    return 'Payment marked Paid. 20% stays Pending until delivery; Super Admin can adjust earnings anytime.';
+    return 'Payment marked Paid. 20% stays Pending until delivery; Management can adjust earnings anytime.';
   }
 }

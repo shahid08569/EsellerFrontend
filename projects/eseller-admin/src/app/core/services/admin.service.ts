@@ -285,7 +285,7 @@ export class AdminService {
     pageNumber: number = 1,
     pageSize: number = 200
   ): Observable<PagedResult<AdminProductDto>> {
-    // Master warehouse catalog for Super Admin product management
+    // Master warehouse catalog for Management product management
     let url = `/Products/catalog?pageNumber=${pageNumber}&pageSize=${pageSize}`;
     if (search && search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
     void shopId;
@@ -628,7 +628,7 @@ export class AdminService {
     );
   }
 
-  /** Super Admin places an order against any seller / live warehouse variant */
+  /** Management places an order against any seller / live warehouse variant */
   placeAdminOrder(data: {
     productVariantId: string;
     quantity: number;
@@ -1388,7 +1388,7 @@ export class AdminService {
         { key: 'CommissionRate', value: '5', isActive: true, description: 'Default commission percentage' },
         { key: 'AffiliateCookieDurationDays', value: '30', isActive: true, description: 'Referral cookie window in days' },
         { key: 'DefaultWithdrawalThreshold', value: '2000', isActive: true, description: 'Minimum withdrawal threshold in USD' },
-        { key: 'AutoApproveProducts', value: 'false', isActive: false, description: 'Require SuperAdmin review before products go live' },
+        { key: 'AutoApproveProducts', value: 'false', isActive: false, description: 'Require Management review before products go live' },
         { key: 'MaintenanceMode', value: 'false', isActive: false, description: 'Put platform in maintenance mode' },
         { key: 'PlatformContactEmail', value: 'support@eseller.com', isActive: true, description: 'Platform support email' }
       ]))

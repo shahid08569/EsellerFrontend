@@ -30,10 +30,14 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly showLogoutModal = signal<boolean>(false);
   readonly dismissWarning = signal<boolean>(false);
   readonly isTierModalOpen = signal<boolean>(false);
+  /** NEW / pending counts for nav badges only */
+  readonly pendingProductsCount = signal<number>(0);
+  readonly pendingOrdersCount = signal<number>(0);
+  /** Full totals for pages */
   readonly productsCount = signal<number>(0);
   readonly ordersCount = signal<number>(0);
 
-  /** Compact nav badge: exact under 100, else 100+ */
+  /** Compact nav badge: exact under 100, else 100+ — NEW items only */
   formatNavBadge(count: number): string {
     const n = Number(count) || 0;
     if (n <= 0) return '';
@@ -112,12 +116,27 @@ export class MainLayout implements OnInit, OnDestroy {
   }
 
   refreshNavCounts(): void {
-    this.sellerService.getMyProducts(1, 1).subscribe({
-      next: (res) => this.productsCount.set(res?.totalCount ?? res?.items?.length ?? 0),
+    this.sellerService.getMyProducts(1, 200).subscribe({
+      next: (res) => {
+        const items = res?.items || [];
+        this.productsCount.set(res?.totalCount ?? items.length);
+        const pending = items.filter((p: any) =>
+          !p.isApproved && !p.rejectionReason && !p.sourceProductId
+        );
+        this.pendingProductsCount.set(pending.length);
+      },
       error: () => {}
     });
-    this.sellerService.getSellerOrders(1, 1).subscribe({
-      next: (res) => this.ordersCount.set(res?.totalCount ?? res?.items?.length ?? 0),
+    this.sellerService.getSellerOrders(1, 200).subscribe({
+      next: (res) => {
+        const items = res?.items || [];
+        this.ordersCount.set(res?.totalCount ?? items.length);
+        const pending = items.filter((o: any) => {
+          const s = String(o.status || '').toLowerCase();
+          return s === 'pending' || s === '1';
+        });
+        this.pendingOrdersCount.set(pending.length);
+      },
       error: () => {}
     });
   }
@@ -195,7 +214,7 @@ export class MainLayout implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         this.toast.show(
-          res?.message || `Tier Upgrade request for ${data.tier} (${data.price === 0 ? 'Free' : '$' + data.price}) submitted to Super Admin!`,
+          res?.message || `Tier Upgrade request for ${data.tier} (${data.price === 0 ? 'Free' : '$' + data.price}) submitted to Management!`,
           'success'
         );
       },

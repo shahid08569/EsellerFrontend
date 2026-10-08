@@ -9,7 +9,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeService, BrandDto, EmptyState, SkeletonLayout, resolveMediaUrl } from 'eseller-shared';
-import { brandLogoFallback } from '../home/components/catalog-media';
+import { brandLogoFallback, brandInitialsAvatar, resolveBrandLogoUrl } from '../home/components/catalog-media';
 
 @Component({
   selector: 'app-brands',
@@ -49,11 +49,20 @@ export class Brands implements OnInit {
     });
   }
 
-  getLogoUrl(brand: BrandDto): string | null {
+  getLogoUrl(brand: BrandDto): string {
     const resolved = resolveMediaUrl(brand.logoUrl);
-    if (!resolved || resolved.includes('/uploads/')) {
-      return brandLogoFallback(brand.slug, brand.name) || resolved;
+    if (resolved && !resolved.includes('picsum.photos')) {
+      if (resolved.includes('/uploads/')) {
+        return brandLogoFallback(brand.slug, brand.name) || resolved;
+      }
+      return resolved;
     }
-    return resolved;
+    return resolveBrandLogoUrl(resolved, brand.slug, brand.name);
+  }
+
+  onLogoError(event: Event, brand: BrandDto): void {
+    const img = event.target as HTMLImageElement | null;
+    if (!img) return;
+    img.src = brandLogoFallback(brand.slug, brand.name) || brandInitialsAvatar(brand.name);
   }
 }

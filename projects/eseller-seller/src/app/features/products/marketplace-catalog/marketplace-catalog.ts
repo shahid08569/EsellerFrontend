@@ -235,7 +235,7 @@ export class MarketplaceCatalog implements OnInit {
             next.add(product.id);
             return next;
           });
-          this.toast.show('This product is already awaiting Super Admin approval.', 'warning');
+          this.toast.show('This product is already awaiting Management approval.', 'warning');
           return;
         }
         this.toast.show(err?.error?.error || 'Failed to submit listing request.', 'error');

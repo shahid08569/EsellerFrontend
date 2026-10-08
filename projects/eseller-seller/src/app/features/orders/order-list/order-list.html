@@ -15,7 +15,7 @@
         Total orders = {{ totalCount() }}
       </p>
       <p class="text-xs text-slate-500 mt-1">
-        View-only. Order status &amp; payment status are approved by Super Admin.
+        View-only. Order status &amp; payment status are approved by Management.
       </p>
     </div>
 
@@ -124,7 +124,7 @@
     }
   </div>
 
-  <!-- Order Details popup (seller view-only — Super Admin controls statuses) -->
+  <!-- Order Details popup (seller view-only — Management controls statuses) -->
   @if (detailOrder(); as order) {
     <div class="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4">
       <div class="fixed inset-0 bg-slate-950/65 backdrop-blur-sm" (click)="closeDetail()"></div>
@@ -226,7 +226,7 @@
 
             <div class="rounded-xl bg-amber-50 border border-amber-100 px-3.5 py-2.5 text-[11px] text-amber-900 leading-relaxed">
               <span class="font-extrabold">Secure notice:</span> {{ payoutHint(order) }}
-              You cannot change order or payment status — only Super Admin can approve these.
+              You cannot change order or payment status — only Management can approve these.
             </div>
           </div>
 
@@ -256,7 +256,7 @@
             <div class="pt-3 border-t border-slate-200">
               <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Wallet credit on delivery</p>
               <p class="text-xl font-black text-primary">$ {{ (order.merchantProfit ?? getCommission(order.totalAmount)) | number:'1.2-2' }}</p>
-              <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Credited after Super Admin marks order Delivered.</p>
+              <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Credited after Management marks order Delivered.</p>
             </div>
           </aside>
         </div>

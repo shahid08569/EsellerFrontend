@@ -3,7 +3,7 @@ import { ChatService } from 'eseller-shared';
 import { AdminService } from './admin.service';
 
 /**
- * Shared WhatsApp-style unread state for Super Admin:
+ * Shared WhatsApp-style unread state for Management:
  * - total badge (sidebar Live Chat + floating FAB)
  * - per-conversation counts (inbox list + widget directory)
  */

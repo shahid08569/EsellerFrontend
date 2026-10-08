@@ -1,4 +1,5 @@
-import { Component, signal, inject, computed, OnInit, OnDestroy } from '@angular/core';
+import { Component, signal, inject, computed, OnInit, OnDestroy, PLATFORM_ID, HostListener } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -19,6 +20,10 @@ import { environment } from '../../../../../environments/environment';
 
 const DEFAULT_NAV_LOGO = '/brand/eseller-global-nav.png?v=orange3';
 const DEFAULT_TAGLINE = 'Shop Without Borders';
+/** Max items shown in mega menus; rest via View All. */
+const MEGA_MENU_MAX_ITEMS = 24;
+/** Items per column inside mega menus. */
+const MEGA_MENU_PER_COL = 8;
 
 @Component({
   imports: [RouterLink],
@@ -30,6 +35,7 @@ export class Navbar implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly homeService = inject(HomeService);
   private readonly authService = inject(AuthService);
+  private readonly platformId = inject(PLATFORM_ID);
   readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
   readonly compareService = inject(CompareService);
@@ -43,6 +49,8 @@ export class Navbar implements OnInit, OnDestroy {
   readonly canShop = () => this.authAction.canShop();
 
   readonly mobileMenuOpen = signal(false);
+  /** After scroll: hide logo/search chrome; keep nav strip only. */
+  readonly headerCollapsed = signal(false);
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly isCategoriesDropdownOpen = signal<boolean>(false);
   readonly brands = signal<BrandDto[]>([]);
@@ -73,29 +81,40 @@ export class Navbar implements OnInit, OnDestroy {
     return url === '/products' || (url.startsWith('/products') && !this.isCategoriesActive());
   });
 
-  // Group categories into columns with max 10 per column
-  readonly categoryColumns = computed(() => {
-    const list = this.categories();
-    const chunkSize = 10;
-    const cols: CategoryTreeDto[][] = [];
-    for (let i = 0; i < list.length; i += chunkSize) {
-      cols.push(list.slice(i, i + chunkSize));
-    }
-    return cols;
-  });
+  readonly categoryPreview = computed(() => this.categories().slice(0, MEGA_MENU_MAX_ITEMS));
+  readonly brandPreview = computed(() => this.brands().slice(0, MEGA_MENU_MAX_ITEMS));
+  readonly categoriesHaveMore = computed(() => this.categories().length > MEGA_MENU_MAX_ITEMS);
+  readonly brandsHaveMore = computed(() => this.brands().length > MEGA_MENU_MAX_ITEMS);
 
-  // Group brands into columns with max 10 per column
-  readonly brandColumns = computed(() => {
-    const list = this.brands();
-    const chunkSize = 10;
-    const cols: BrandDto[][] = [];
+  readonly categoryColumns = computed(() => this.chunkColumns(this.categoryPreview(), MEGA_MENU_PER_COL));
+  readonly brandColumns = computed(() => this.chunkColumns(this.brandPreview(), MEGA_MENU_PER_COL));
+
+  private chunkColumns<T>(list: T[], chunkSize: number): T[][] {
+    const cols: T[][] = [];
     for (let i = 0; i < list.length; i += chunkSize) {
       cols.push(list.slice(i, i + chunkSize));
     }
     return cols;
-  });
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    const collapsed = y > 48;
+    if (this.headerCollapsed() !== collapsed) {
+      this.headerCollapsed.set(collapsed);
+      if (collapsed) {
+        this.closeCategoriesDropdown();
+        this.closeBrandsDropdown();
+        this.closeUserMenu();
+      }
+    }
+  }
 
   ngOnInit(): void {
+    this.onWindowScroll();
+
     this.homeService.getCategories().subscribe({
       next: (cats) => this.categories.set(cats)
     });

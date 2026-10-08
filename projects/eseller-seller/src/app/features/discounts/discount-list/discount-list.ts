@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { SellerService, DiscountDto, ShopDto } from '../../../core/services/seller.service';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-discount-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout, ConfirmModal],
   templateUrl: './discount-list.html'
 })
 export class DiscountList implements OnInit {
@@ -16,6 +17,9 @@ export class DiscountList implements OnInit {
   private readonly toast = inject(ToastService);
 
   readonly isLoading = signal<boolean>(true);
+  readonly deleteConfirmOpen = signal(false);
+  readonly discountToDelete = signal<DiscountDto | null>(null);
+  readonly isDeleting = signal(false);
   readonly shop = signal<ShopDto | null>(null);
   readonly discounts = signal<DiscountDto[]>([]);
   readonly products = signal<any[]>([]);
@@ -152,14 +156,30 @@ export class DiscountList implements OnInit {
   }
 
   deleteDiscount(d: DiscountDto): void {
-    if (!confirm(`Are you sure you want to remove this discount?`)) return;
+    this.discountToDelete.set(d);
+    this.deleteConfirmOpen.set(true);
+  }
 
+  cancelDeleteDiscount(): void {
+    if (this.isDeleting()) return;
+    this.deleteConfirmOpen.set(false);
+    this.discountToDelete.set(null);
+  }
+
+  confirmDeleteDiscount(): void {
+    const d = this.discountToDelete();
+    if (!d) return;
+    this.isDeleting.set(true);
     this.sellerSvc.deleteDiscount(d.id).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.deleteConfirmOpen.set(false);
+        this.discountToDelete.set(null);
         this.discounts.update(list => list.filter(item => item.id !== d.id));
         this.toast.show('Discount removed successfully.', 'success');
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.toast.show(err?.error?.error || 'Failed to delete discount.', 'error');
       }
     });

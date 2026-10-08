@@ -663,7 +663,7 @@ export class ProductForm implements OnInit {
     }
     this.queuedImages.set([]);
     this.savedProduct.set({ id: newProductId, name: this.name(), isEdit: false });
-    this.toast.show('Product submitted for Super Admin approval.', 'success');
+    this.toast.show('Product submitted for Management approval.', 'success');
   }
 
   closeSuccessModal() {

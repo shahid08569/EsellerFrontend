@@ -5,13 +5,14 @@ import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminBlogPostDto, AdminCmsDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 type ContentTab = 'blog' | 'cms';
 
 @Component({
   selector: 'app-content-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout, ConfirmModal],
   templateUrl: './content-manager.html'
 })
 export class ContentManager implements OnInit {
@@ -20,6 +21,9 @@ export class ContentManager implements OnInit {
 
   readonly isLoading = signal<boolean>(true);
   readonly activeTab = signal<ContentTab>('blog');
+  readonly deleteConfirmOpen = signal(false);
+  readonly postToDelete = signal<AdminBlogPostDto | null>(null);
+  readonly isDeletingPost = signal(false);
 
   readonly blogPosts = signal<AdminBlogPostDto[]>([]);
   readonly cmsPages = signal<AdminCmsDto[]>([]);
@@ -184,13 +188,32 @@ export class ContentManager implements OnInit {
   }
 
   deleteBlogPost(post: AdminBlogPostDto): void {
-    if (!confirm(`Delete blog post "${post.title}"?`)) return;
+    this.postToDelete.set(post);
+    this.deleteConfirmOpen.set(true);
+  }
+
+  cancelDeletePost(): void {
+    if (this.isDeletingPost()) return;
+    this.deleteConfirmOpen.set(false);
+    this.postToDelete.set(null);
+  }
+
+  confirmDeletePost(): void {
+    const post = this.postToDelete();
+    if (!post) return;
+    this.isDeletingPost.set(true);
     this.adminService.deleteBlogPost(post.id).subscribe({
       next: () => {
+        this.isDeletingPost.set(false);
+        this.deleteConfirmOpen.set(false);
+        this.postToDelete.set(null);
         this.toast.show('Post deleted', 'info');
         this.loadData();
       },
-      error: (err) => this.toast.show(err?.error?.error || 'Failed to delete post', 'error')
+      error: (err) => {
+        this.isDeletingPost.set(false);
+        this.toast.show(err?.error?.error || 'Failed to delete post', 'error');
+      }
     });
   }
 

@@ -330,7 +330,7 @@ export class SellerService {
     return this.api.put('/SellerWallet/bank-details', payload);
   }
 
-  /** GET /SellerWallet/payment-methods — active Super Admin payout channels */
+  /** GET /SellerWallet/payment-methods — active Management payout channels */
   getWithdrawalPaymentMethods(): Observable<Array<{
     id: string;
     name: string;

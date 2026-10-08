@@ -12,7 +12,11 @@ import {
 import { isPlatformBrowser } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { BrandDto, resolveMediaUrl } from 'eseller-shared';
-import { brandLogoFallback as resolveBrandFallback } from '../catalog-media';
+import {
+  brandLogoFallback as resolveBrandFallback,
+  brandInitialsAvatar,
+  resolveBrandLogoUrl
+} from '../catalog-media';
 
 @Component({
   selector: 'app-brands-grid',
@@ -236,16 +240,19 @@ export class BrandsGrid implements OnDestroy {
     }
   }
 
-  getLogoUrl(brand: BrandDto): string | null {
+  getLogoUrl(brand: BrandDto): string {
     const resolved = resolveMediaUrl(brand.logoUrl);
-    // Prefer CDN fallback over broken / missing local uploads for known brands
-    if (!resolved || resolved.includes('/uploads/')) {
-      return resolveBrandFallback(brand.slug, brand.name) || resolved;
+    if (resolved && !resolved.includes('picsum.photos')) {
+      // Prefer known CDN logos over placeholder /uploads placeholders when available
+      if (resolved.includes('/uploads/')) {
+        return resolveBrandFallback(brand.slug, brand.name) || resolved;
+      }
+      return resolved;
     }
-    return resolved;
+    return resolveBrandLogoUrl(resolved, brand.slug, brand.name);
   }
 
-  brandLogoFallback(slug?: string | null, name?: string | null): string | null {
-    return resolveBrandFallback(slug, name);
+  brandLogoFallback(slug?: string | null, name?: string | null): string {
+    return resolveBrandFallback(slug, name) || brandInitialsAvatar(name);
   }
 }

@@ -10,6 +10,7 @@ import {
   AdminSellerWalletDto,
   AdminWithdrawalPaymentMethodDto
 } from '../../../core/models/admin.models';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 type FinanceTab = 'commissions' | 'withdrawals' | 'seller-earnings' | 'payout-methods';
 
@@ -24,7 +25,7 @@ interface SellerWalletRow extends AdminSellerWalletDto {
 @Component({
   selector: 'app-finance-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout, ConfirmModal],
   templateUrl: './finance-manager.html'
 })
 export class FinanceManager implements OnInit {
@@ -38,7 +39,10 @@ export class FinanceManager implements OnInit {
   readonly withdrawals = signal<AdminWithdrawalDto[]>([]);
   readonly actionInProgress = signal<string | null>(null);
 
-  /** SuperAdmin-configurable seller minimum withdrawal (USD) */
+  readonly deleteConfirmOpen = signal(false);
+  readonly methodToDelete = signal<AdminWithdrawalPaymentMethodDto | null>(null);
+
+  /** Management-configurable seller minimum withdrawal (USD) */
   readonly minWithdrawal = signal<number>(1000);
   readonly minWithdrawalDraft = signal<number>(1000);
   readonly isSavingMin = signal<boolean>(false);
@@ -328,14 +332,26 @@ export class FinanceManager implements OnInit {
   }
 
   deletePayoutMethod(method: AdminWithdrawalPaymentMethodDto): void {
-    if (!confirm(`Delete payout method "${method.name}"? Sellers will no longer see it.`)) {
-      return;
-    }
+    this.methodToDelete.set(method);
+    this.deleteConfirmOpen.set(true);
+  }
+
+  cancelDeletePayoutMethod(): void {
+    if (this.deletingMethodId()) return;
+    this.deleteConfirmOpen.set(false);
+    this.methodToDelete.set(null);
+  }
+
+  confirmDeletePayoutMethod(): void {
+    const method = this.methodToDelete();
+    if (!method) return;
 
     this.deletingMethodId.set(method.id);
     this.adminService.deleteWithdrawalPaymentMethod(method.id).subscribe({
       next: () => {
         this.deletingMethodId.set(null);
+        this.deleteConfirmOpen.set(false);
+        this.methodToDelete.set(null);
         this.toast.show('Payout method deleted.', 'info');
         this.loadPayoutMethods();
       },

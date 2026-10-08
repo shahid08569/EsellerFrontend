@@ -138,7 +138,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     const roleLower = String(incoming.senderRole || '').toLowerCase();
     const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
     const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller');
-    const senderDisplayName = isFromAdmin ? 'Super Admin' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
+    const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
     const incomingId = String(incoming.messageId || '').toLowerCase();
 
     // If message belongs to active thread, append (dedupe by id / temp optimistic)
@@ -309,7 +309,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             const roleLower = String(m.senderRole || '').toLowerCase();
             const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
             const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
-            const senderDisplayName = isFromAdmin ? 'Super Admin' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+            const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
             return {
               id: m.id,
               senderName: senderDisplayName,
@@ -371,7 +371,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     const preview = text || (attachment ? `📎 ${attachment.fileName}` : '');
     this.messages.update(prev => [...prev, {
       id: tempId,
-      senderName: 'Super Admin',
+      senderName: 'Management',
       content: text,
       createdAt: new Date().toISOString(),
       isFromAdmin: true,
@@ -398,7 +398,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
           );
           return [...withoutDupes, {
             id: realId,
-            senderName: 'Super Admin',
+            senderName: 'Management',
             content: text,
             createdAt: new Date().toISOString(),
             isFromAdmin: true,

@@ -28,19 +28,34 @@ export class AdminLayout implements OnInit {
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
+
+  /** NEW / unread-style counts only — used for nav badges */
   readonly pendingShopsCount = signal<number>(0);
-  readonly totalShopsCount = signal<number>(0);
+  readonly pendingTierCount = signal<number>(0);
   readonly pendingProductsCount = signal<number>(0);
   readonly pendingGlobalCount = signal<number>(0);
   readonly pendingOwnCount = signal<number>(0);
-  readonly warehouseProductsCount = signal<number>(0);
-  readonly liveProductsCount = signal<number>(0);
-  readonly rejectedProductsCount = signal<number>(0);
-  readonly ordersCount = signal<number>(0);
+  readonly pendingOrdersCount = signal<number>(0);
+  readonly pendingReviewsCount = signal<number>(0);
+  readonly pendingCustomersCount = signal<number>(0);
+  readonly pendingSellersCount = signal<number>(0);
+  readonly pendingWithdrawalsCount = signal<number>(0);
+
+  /** Full totals for pages / reference (not shown as nav badges) */
+  readonly totalShopsCount = signal<number>(0);
+
+  readonly usersNewCount = computed(
+    () => this.pendingCustomersCount() + this.pendingSellersCount() + this.pendingShopsCount()
+  );
+  readonly shopsNewCount = computed(
+    () => this.pendingShopsCount() + this.pendingTierCount()
+  );
+  readonly financeNewCount = computed(() => this.pendingWithdrawalsCount());
+
   /** Tracks full URL (incl. query) so sidebar active styles update on tab/view changes */
   readonly currentUrl = signal<string>('');
 
-  /** Compact nav badge: exact under 100, else 100+ */
+  /** Compact nav badge: exact under 100, else 100+ — NEW items only */
   formatNavBadge(count: number): string {
     const n = Number(count) || 0;
     if (n <= 0) return '';
@@ -177,19 +192,31 @@ export class AdminLayout implements OnInit {
     }
   }
 
+  /** Load NEW-item badge counts only (pending / unread). Totals belong on pages. */
   refreshBadges(): void {
+    this.adminService.getPlatformDashboard().subscribe({
+      next: (d) => {
+        if (!d) return;
+        this.pendingShopsCount.set(d.pendingShops || 0);
+        this.pendingProductsCount.set(d.pendingProducts || 0);
+        this.pendingOrdersCount.set(d.pendingOrders || d.newOrders || 0);
+        this.pendingWithdrawalsCount.set(d.pendingWithdrawals || 0);
+        this.totalShopsCount.set(d.totalShops || d.activeShops || 0);
+      },
+      error: () => {}
+    });
+
     this.adminService.getShopkeepers().subscribe({
       next: (list) => {
-        const pending = (list || []).filter(s => s.status?.toLowerCase() === 'pending');
+        const pending = (list || []).filter(s => String(s.status || '').toLowerCase() === 'pending');
         this.pendingShopsCount.set(pending.length);
+        this.pendingSellersCount.set(pending.length);
       },
       error: () => {}
     });
 
     this.adminService.getShops(1, 1).subscribe({
-      next: (res) => {
-        this.totalShopsCount.set(res?.totalCount || 0);
-      },
+      next: (res) => this.totalShopsCount.set(res?.totalCount || 0),
       error: () => {}
     });
 
@@ -208,20 +235,33 @@ export class AdminLayout implements OnInit {
       error: () => {}
     });
 
-    this.adminService.getProducts(undefined, undefined, 1, 1).subscribe({
-      next: (res) => this.warehouseProductsCount.set(res?.totalCount || 0),
+    this.adminService.getOrders(1, 1, 'pending').subscribe({
+      next: (res) => this.pendingOrdersCount.set(res?.totalCount || 0),
       error: () => {}
     });
-    this.adminService.getApprovedSellerProducts(1, 1).subscribe({
-      next: (res) => this.liveProductsCount.set(res?.totalCount || 0),
+
+    this.adminService.getReviews('pending', 1, 1).subscribe({
+      next: (res) => this.pendingReviewsCount.set(res?.totalCount || 0),
       error: () => {}
     });
-    this.adminService.getRejectedProducts(1, 1).subscribe({
-      next: (res) => this.rejectedProductsCount.set(res?.totalCount || 0),
+
+    this.adminService.getTierUpgradeRequests().subscribe({
+      next: (list) => {
+        const pending = (list || []).filter((r: any) => {
+          const s = String(r?.status || r?.Status || '').toLowerCase();
+          return s === 'pending' || s === '1' || s === '';
+        });
+        this.pendingTierCount.set(pending.length);
+      },
       error: () => {}
     });
-    this.adminService.getOrders(1, 1).subscribe({
-      next: (res) => this.ordersCount.set(res?.totalCount || 0),
+
+    this.adminService.getCustomers(1, 200).subscribe({
+      next: (res) => {
+        const items = res?.items || (Array.isArray(res) ? res : []);
+        const pending = items.filter((c: any) => String(c.status || '').toLowerCase() === 'pending');
+        this.pendingCustomersCount.set(pending.length);
+      },
       error: () => {}
     });
   }

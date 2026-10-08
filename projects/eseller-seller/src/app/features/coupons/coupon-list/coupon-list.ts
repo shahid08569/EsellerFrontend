@@ -4,11 +4,12 @@ import { FormsModule } from '@angular/forms';
 import { SellerService, CouponDto, ShopDto } from '../../../core/services/seller.service';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-coupon-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout, ConfirmModal],
   templateUrl: './coupon-list.html'
 })
 export class CouponList implements OnInit {
@@ -16,6 +17,9 @@ export class CouponList implements OnInit {
   private readonly toast = inject(ToastService);
 
   readonly isLoading = signal<boolean>(true);
+  readonly deleteConfirmOpen = signal(false);
+  readonly couponToDelete = signal<CouponDto | null>(null);
+  readonly isDeleting = signal(false);
   readonly shop = signal<ShopDto | null>(null);
   readonly coupons = signal<CouponDto[]>([]);
   readonly searchTerm = signal<string>('');
@@ -143,14 +147,30 @@ export class CouponList implements OnInit {
   }
 
   deleteCoupon(c: CouponDto): void {
-    if (!confirm(`Delete coupon "${c.code}"?`)) return;
+    this.couponToDelete.set(c);
+    this.deleteConfirmOpen.set(true);
+  }
 
+  cancelDeleteCoupon(): void {
+    if (this.isDeleting()) return;
+    this.deleteConfirmOpen.set(false);
+    this.couponToDelete.set(null);
+  }
+
+  confirmDeleteCoupon(): void {
+    const c = this.couponToDelete();
+    if (!c) return;
+    this.isDeleting.set(true);
     this.sellerSvc.deleteCoupon(c.id).subscribe({
       next: () => {
+        this.isDeleting.set(false);
+        this.deleteConfirmOpen.set(false);
         this.coupons.update(list => list.filter(item => item.id !== c.id));
+        this.couponToDelete.set(null);
         this.toast.show(`Coupon "${c.code}" removed successfully.`, 'success');
       },
       error: (err) => {
+        this.isDeleting.set(false);
         this.toast.show(err?.error?.error || 'Failed to delete coupon.', 'error');
       }
     });

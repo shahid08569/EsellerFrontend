@@ -109,8 +109,8 @@
                (click)="closeSidebarOnMobile()"
                class="seller-nav-link">
               <span>All Products (My Store)</span>
-              @if (productsCount() > 0) {
-                <span class="seller-nav-count">{{ formatNavBadge(productsCount()) }}</span>
+              @if (pendingProductsCount() > 0) {
+                <span class="seller-nav-count">{{ formatNavBadge(pendingProductsCount()) }}</span>
               }
             </a>
 
@@ -144,8 +144,8 @@
                (click)="closeSidebarOnMobile()"
                class="seller-nav-link">
               <span>Orders (20% Net)</span>
-              @if (ordersCount() > 0) {
-                <span class="seller-nav-count">{{ formatNavBadge(ordersCount()) }}</span>
+              @if (pendingOrdersCount() > 0) {
+                <span class="seller-nav-count">{{ formatNavBadge(pendingOrdersCount()) }}</span>
               }
             </a>
 
@@ -306,7 +306,7 @@
           <span>Product Warehouse</span>
         </a>
 
-        <!-- Notification Bell — Super Admin chat via sidebar "Admin Support" + floating widget -->
+        <!-- Notification Bell — Management chat via sidebar "Admin Support" + floating widget -->
         <app-notification-bell></app-notification-bell>
 
         <a routerLink="/settings" 
@@ -337,7 +337,7 @@
           <div class="min-w-0">
             <p class="text-xs font-black text-amber-900 uppercase tracking-wider">Verification pending</p>
             <p class="text-xs text-amber-800/90 mt-0.5 leading-relaxed">
-              Your store is waiting for Super Admin approval. You can browse the warehouse, but listing products stays locked until verification is complete.
+              Your store is waiting for Management approval. You can browse the warehouse, but listing products stays locked until verification is complete.
             </p>
           </div>
         </div>

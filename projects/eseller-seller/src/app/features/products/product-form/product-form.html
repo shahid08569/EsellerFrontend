@@ -15,7 +15,7 @@
         <p class="text-xs text-gray-500 mt-0.5">
           {{ isEditMode()
             ? 'Update product details, media, pricing, and variants.'
-            : 'One-step form — fill everything below and submit for Super Admin approval.' }}
+            : 'One-step form — fill everything below and submit for Management approval.' }}
         </p>
       </div>
     </div>
@@ -160,7 +160,7 @@
         </h3>
         <p class="text-sm text-gray-500 font-medium">
           "<span class="text-gray-900 font-bold">{{ savedProduct()?.name }}</span>"
-          {{ savedProduct()?.isEdit ? ' was updated.' : ' is waiting for Super Admin review.' }}
+          {{ savedProduct()?.isEdit ? ' was updated.' : ' is waiting for Management review.' }}
         </p>
       </div>
 

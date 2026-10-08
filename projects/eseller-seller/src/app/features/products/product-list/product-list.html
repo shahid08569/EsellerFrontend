@@ -19,7 +19,7 @@
         From warehouse = {{ warehouseCount() }}
       </p>
       <p class="text-xs text-slate-500 mt-1">
-        Own products need Super Admin approval. Warehouse listings come from the global catalog.
+        Own products need Management approval. Warehouse listings come from the global catalog.
       </p>
     </div>
 
@@ -116,7 +116,7 @@
         @if (originTab() === 'own') {
           <h3 class="text-sm font-bold text-slate-900">No own products yet</h3>
           <p class="text-xs text-slate-500 max-w-sm mx-auto">
-            Create a product in one step. Super Admin reviews and approves before it goes live.
+            Create a product in one step. Management reviews and approves before it goes live.
           </p>
           <div class="pt-2">
             <a routerLink="/products/new" class="inline-flex items-center gap-1.5 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-xs transition-colors cursor-pointer">
@@ -188,7 +188,7 @@
                       type="button"
                       (click)="chatWithAdmin(p)"
                       class="px-2.5 py-1.5 rounded-lg bg-violet-50 hover:bg-violet-100 border border-violet-200 text-[11px] font-bold text-violet-700 cursor-pointer"
-                      title="Chat with Super Admin about this product">
+                      title="Chat with Management about this product">
                       Ask Admin
                     </button>
                     <button type="button" (click)="promptDelete(p.id, p.name)" class="btn-quiet" title="Delete / remove product">

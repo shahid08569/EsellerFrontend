@@ -171,7 +171,7 @@
       }
     </div>
   } @else if (activeTab() === 'banners') {
-    <!-- HOMEPAGE BANNERS (SUPERADMIN 3D HERO SHOWCASE CONTROLS) -->
+    <!-- HOMEPAGE BANNERS (Management 3D HERO SHOWCASE CONTROLS) -->
     <div class="space-y-4">
       <div class="bg-amber-50 border border-amber-200/70 rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div class="flex items-center gap-3">
@@ -602,7 +602,7 @@
   </div>
 }
 
-<!-- MODAL: BANNER (SUPERADMIN FULL SHOWCASE CONTROL) -->
+<!-- MODAL: BANNER (Management FULL SHOWCASE CONTROL) -->
 @if (bannerModalOpen()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4">
     <div class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs" (click)="closeBannerModal(false)"></div>
@@ -839,7 +839,7 @@
           </div>
         </div>
 
-        <!-- Sort Order & Active Status (SuperAdmin Priority Decision) -->
+        <!-- Sort Order & Active Status (Management Priority Decision) -->
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 border-t border-gray-100 items-center">
           <div>
             <label class="block text-xs font-bold text-gray-700 mb-1">
@@ -933,3 +933,15 @@
     </div>
   </div>
 }
+
+<app-confirm-modal
+  [isOpen]="deleteConfirmOpen()"
+  [title]="deleteConfirmTitle()"
+  [message]="deleteConfirmMessage()"
+  [itemHighlight]="deleteConfirmHighlight()"
+  confirmText="Delete"
+  cancelText="Cancel"
+  type="danger"
+  [isProcessing]="deleteConfirmBusy()"
+  (confirmed)="runDeleteConfirm()"
+  (cancelled)="cancelDeleteConfirm()" />

@@ -61,7 +61,7 @@ export class OrderManagement implements OnInit {
   readonly orderHistory = signal<any[]>([]);
   readonly isLoadingHistory = signal<boolean>(false);
 
-  // Place order (Super Admin → any seller)
+  // Place order (Management → any seller)
   // modal = "+ Place Order" button; page = sidebar "Create Order" link
   readonly placeOrderMode = signal<PlaceOrderMode | null>(null);
   readonly placeOrderOpen = computed(() => this.placeOrderMode() !== null);
@@ -537,7 +537,7 @@ export class OrderManagement implements OnInit {
     });
   }
 
-  /** Super Admin: mark payment Paid once. Detail modal only. */
+  /** Management: mark payment Paid once. Detail modal only. */
   markPaid(order: AdminOrderDto): void {
     if (this.isPaymentPaid(order)) return;
     this.actionInProgress.set(order.id);
@@ -707,7 +707,7 @@ export class OrderManagement implements OnInit {
       customerPhone: this.placeCustomerPhone().trim() || undefined,
       shippingAddress: this.placeAddress().trim() || undefined,
       city: this.placeCity().trim() || undefined,
-      orderNotes: 'Placed by Super Admin'
+      orderNotes: 'Placed by Management'
     }).subscribe({
       next: (res) => {
         this.isPlacingOrder.set(false);

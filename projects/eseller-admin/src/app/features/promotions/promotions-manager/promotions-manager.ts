@@ -5,13 +5,14 @@ import { ToastService } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminCouponDto, AdminFlashSaleDto, AdminBannerDto, AdminPaymentLogoDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
+import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 type PromoTab = 'coupons' | 'flash-sales' | 'banners' | 'payment-logos';
 
 @Component({
   selector: 'app-promotions-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, ConfirmModal],
   templateUrl: './promotions-manager.html'
 })
 export class PromotionsManager implements OnInit {
@@ -20,6 +21,12 @@ export class PromotionsManager implements OnInit {
 
   readonly isLoading = signal<boolean>(true);
   readonly activeTab = signal<PromoTab>('coupons');
+  readonly deleteConfirmOpen = signal(false);
+  readonly deleteConfirmTitle = signal('Delete item?');
+  readonly deleteConfirmMessage = signal('This action cannot be undone.');
+  readonly deleteConfirmHighlight = signal('');
+  readonly deleteConfirmBusy = signal(false);
+  private deleteConfirmAction: (() => void) | null = null;
 
   readonly coupons = signal<AdminCouponDto[]>([]);
   readonly flashSales = signal<AdminFlashSaleDto[]>([]);
@@ -44,7 +51,7 @@ export class PromotionsManager implements OnInit {
   readonly selectedFlashProductIds = signal<string[]>([]);
   readonly flashCatalogLoading = signal(false);
 
-  // Modal State for Banner (SuperAdmin Full Control & Pinterest 3D Hero)
+  // Modal State for Banner (Management Full Control & Pinterest 3D Hero)
   readonly bannerModalOpen = signal<boolean>(false);
   readonly editingBannerId = signal<string | null>(null);
   readonly bTitle = signal<string>('');
@@ -234,15 +241,48 @@ export class PromotionsManager implements OnInit {
     });
   }
 
+  private askDelete(title: string, message: string, highlight: string, action: () => void): void {
+    this.deleteConfirmTitle.set(title);
+    this.deleteConfirmMessage.set(message);
+    this.deleteConfirmHighlight.set(highlight);
+    this.deleteConfirmAction = action;
+    this.deleteConfirmBusy.set(false);
+    this.deleteConfirmOpen.set(true);
+  }
+
+  cancelDeleteConfirm(): void {
+    if (this.deleteConfirmBusy()) return;
+    this.deleteConfirmOpen.set(false);
+    this.deleteConfirmAction = null;
+  }
+
+  runDeleteConfirm(): void {
+    const action = this.deleteConfirmAction;
+    if (!action) return;
+    this.deleteConfirmBusy.set(true);
+    action();
+  }
+
   deleteCoupon(coupon: AdminCouponDto): void {
-    if (!confirm(`Delete coupon "${coupon.code}"?`)) return;
-    this.adminService.deleteCoupon(coupon.id).subscribe({
-      next: () => {
-        this.toast.show(`Coupon deleted`, 'info');
-        this.loadData();
-      },
-      error: (err) => this.toast.show(err?.error?.error || 'Failed to delete coupon', 'error')
-    });
+    this.askDelete(
+      'Delete coupon?',
+      'This coupon will be removed permanently.',
+      coupon.code,
+      () => {
+        this.adminService.deleteCoupon(coupon.id).subscribe({
+          next: () => {
+            this.deleteConfirmBusy.set(false);
+            this.deleteConfirmOpen.set(false);
+            this.toast.show(`Coupon deleted`, 'info');
+            this.loadData();
+          },
+          error: (err) => {
+            this.deleteConfirmBusy.set(false);
+            this.toast.show(err?.error?.error || 'Failed to delete coupon', 'error');
+          }
+        });
+      }
+    );
   }
 
   // --- FLASH SALE ACTIONS ---
@@ -310,7 +350,7 @@ export class PromotionsManager implements OnInit {
     });
   }
 
-  // --- BANNER ACTIONS (SuperAdmin Order Priority & Showcase Customization) ---
+  // --- BANNER ACTIONS (Management Order Priority & Showcase Customization) ---
   formatBannerImageUrl(url?: string | null): string | null {
     if (!url) return null;
     if (url.startsWith('http://') || url.startsWith('https://') || url.startsWith('blob:')) return url;
@@ -746,13 +786,24 @@ export class PromotionsManager implements OnInit {
   }
 
   deletePaymentLogo(logo: AdminPaymentLogoDto): void {
-    if (!confirm(`Delete payment logo "${logo.name}"?`)) return;
-    this.adminService.deletePaymentLogo(logo.id).subscribe({
-      next: () => {
-        this.toast.show('Payment logo deleted', 'info');
-        this.loadData();
-      },
-      error: (err) => this.toast.show(err?.error?.error || 'Failed to delete logo', 'error')
-    });
+    this.askDelete(
+      'Delete payment logo?',
+      'This logo will no longer appear on checkout / payout UIs.',
+      logo.name,
+      () => {
+        this.adminService.deletePaymentLogo(logo.id).subscribe({
+          next: () => {
+            this.deleteConfirmBusy.set(false);
+            this.deleteConfirmOpen.set(false);
+            this.toast.show('Payment logo deleted', 'info');
+            this.loadData();
+          },
+          error: (err) => {
+            this.deleteConfirmBusy.set(false);
+            this.toast.show(err?.error?.error || 'Failed to delete logo', 'error');
+          }
+        });
+      }
+    );
   }
 }

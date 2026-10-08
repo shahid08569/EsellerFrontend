@@ -219,13 +219,13 @@ export class ProductList implements OnInit {
   chatWithAdmin(product: ProductListDto): void {
     this.chatService.getShopSupportSession(product.id).subscribe({
       next: (res) => {
-        this.toast.show(`Opened Super Admin chat for “${product.name}”`, 'success');
+        this.toast.show(`Opened Management chat for “${product.name}”`, 'success');
         this.router.navigate(['/chat'], {
           queryParams: { support: res.orderRequestId, productId: product.id }
         });
       },
       error: (err) => {
-        this.toast.show(err?.error?.error || 'Failed to open Super Admin chat', 'error');
+        this.toast.show(err?.error?.error || 'Failed to open Management chat', 'error');
       }
     });
   }

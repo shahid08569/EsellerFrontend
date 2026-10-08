@@ -43,7 +43,7 @@ export class ShopManagement implements OnInit, OnDestroy {
   private readonly signalR = inject(SignalRService);
   private unsubNotif: (() => void) | null = null;
 
-  /** Only SuperAdmin can create / edit / delete tier packages. */
+  /** Only Management can create / edit / delete tier packages. */
   readonly canManageTiers = computed(() => this.authStore.hasRole('SuperAdmin'));
 
   readonly isLoading = signal<boolean>(true);
@@ -425,7 +425,7 @@ export class ShopManagement implements OnInit, OnDestroy {
       error: () => {}
     });
 
-    // Load shop categories; seed is best-effort (SuperAdmin only — ignore 401 for Partner)
+    // Load shop categories; seed is best-effort (Management only — ignore 401 for Partner)
     this.adminService.getShopCategories().subscribe({
       next: (cats) => this.shopCategories.set(cats || []),
       error: () => {}
@@ -915,7 +915,7 @@ export class ShopManagement implements OnInit, OnDestroy {
   // --- Manage Tiers CRUD Modal ---
   openManageTiersModal(): void {
     if (!this.canManageTiers()) {
-      this.toast.show('Only Super Admin can manage tier packages.', 'error');
+      this.toast.show('Only Management can manage tier packages.', 'error');
       return;
     }
     this.manageTiersModalOpen.set(true);
@@ -927,7 +927,7 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   openCreateTierModal(): void {
     if (!this.canManageTiers()) {
-      this.toast.show('Only Super Admin can add tiers.', 'error');
+      this.toast.show('Only Management can add tiers.', 'error');
       return;
     }
     this.editingTier.set(null);
@@ -945,7 +945,7 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   openEditTierModal(tier: ShopCategoryDto): void {
     if (!this.canManageTiers()) {
-      this.toast.show('Only Super Admin can edit tiers.', 'error');
+      this.toast.show('Only Management can edit tiers.', 'error');
       return;
     }
     this.editingTier.set(tier);
@@ -968,7 +968,7 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   saveTier(): void {
     if (!this.canManageTiers()) {
-      this.toast.show('Only Super Admin can save tiers.', 'error');
+      this.toast.show('Only Management can save tiers.', 'error');
       return;
     }
     const name = this.tierFormName().trim();
@@ -1023,7 +1023,7 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   openDeleteTierModal(tier: ShopCategoryDto): void {
     if (!this.canManageTiers()) {
-      this.toast.show('Only Super Admin can delete tiers.', 'error');
+      this.toast.show('Only Management can delete tiers.', 'error');
       return;
     }
     this.tierToDelete.set(tier);

@@ -368,3 +368,15 @@
     </div>
   </div>
 }
+
+<app-confirm-modal
+  [isOpen]="deleteConfirmOpen()"
+  title="Delete blog post?"
+  message="This post will be permanently removed."
+  [itemHighlight]="postToDelete()?.title || ''"
+  confirmText="Delete"
+  cancelText="Cancel"
+  type="danger"
+  [isProcessing]="isDeletingPost()"
+  (confirmed)="confirmDeletePost()"
+  (cancelled)="cancelDeletePost()" />

@@ -151,7 +151,7 @@
                   ? 'max-w-md bg-orange-600 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5' 
                   : 'max-w-md bg-white border border-gray-200 text-gray-800 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5'">
                   <div class="font-bold text-[10px]" [class]="msg.isFromAdmin ? 'text-orange-200' : 'text-gray-400'">
-                    {{ msg.senderName || (msg.isFromAdmin ? 'Super Admin' : 'Customer') }}
+                    {{ msg.senderName || (msg.isFromAdmin ? 'Management' : 'Customer') }}
                   </div>
                   @if (msg.content) {
                     <div class="whitespace-pre-wrap leading-relaxed">{{ msg.content }}</div>
@@ -204,7 +204,7 @@
               [ngModel]="newMessage()"
               (ngModelChange)="newMessage.set($event)"
               (keyup.enter)="sendMessage()"
-              placeholder="Type your message as Super Admin..." 
+              placeholder="Type your message as Management..." 
               class="flex-1 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-xs outline-hidden focus:border-orange-500 focus:bg-white transition-all">
             <button 
               type="button" 

@@ -184,3 +184,15 @@
   }
 
 </div>
+
+<app-confirm-modal
+  [isOpen]="deleteConfirmOpen()"
+  title="Delete coupon?"
+  message="This coupon will be removed permanently."
+  [itemHighlight]="couponToDelete()?.code || ''"
+  confirmText="Delete"
+  cancelText="Cancel"
+  type="danger"
+  [isProcessing]="isDeleting()"
+  (confirmed)="confirmDeleteCoupon()"
+  (cancelled)="cancelDeleteCoupon()" />

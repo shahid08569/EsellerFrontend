@@ -15,7 +15,7 @@
             Store Tier &amp; Product Capacity Packages
           </h3>
           <p class="text-xs text-slate-500 mt-0.5">
-            Your current plan is pre-selected. Choose a recommended upgrade and submit to Super Admin.
+            Your current plan is pre-selected. Choose a recommended upgrade and submit to Management.
           </p>
         </div>
 
@@ -120,7 +120,7 @@
                 <img [src]="receiptPreviewUrl()" alt="Receipt Preview" class="w-12 h-12 rounded-lg object-cover border border-slate-200" />
                 <div class="flex-1 min-w-0">
                   <p class="text-xs font-bold text-slate-800 truncate">{{ receiptFile()?.name || 'Payment Receipt' }}</p>
-                  <p class="text-[10px] text-emerald-600 font-semibold">✓ Attached for Super Admin verification</p>
+                  <p class="text-[10px] text-emerald-600 font-semibold">✓ Attached for Management verification</p>
                 </div>
                 <button 
                   type="button" 
@@ -178,12 +178,12 @@
               Upgrade Request Submitted
             </h3>
             <p class="text-xs text-slate-600 max-w-sm mx-auto">
-              Your request for <strong>{{ getSelectedPlan()?.name }}</strong> and payment reference has been forwarded to Super Admin for verification.
+              Your request for <strong>{{ getSelectedPlan()?.name }}</strong> and payment reference has been forwarded to Management for verification.
             </p>
           </div>
 
           <div class="p-2.5 bg-slate-50 rounded-xl border border-slate-200 text-xs text-slate-700 max-w-sm mx-auto">
-            Status: <strong>Pending Super Admin Verification</strong>
+            Status: <strong>Pending Management Verification</strong>
           </div>
 
           <button 

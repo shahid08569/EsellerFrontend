@@ -64,7 +64,7 @@ export class BrandList implements OnInit {
       this.toast.show('Please provide a brand name', 'error');
       return;
     }
-    this.toast.show(`Request for brand "${name}" submitted to Super Admin!`, 'success');
+    this.toast.show(`Request for brand "${name}" submitted to Management!`, 'success');
     this.closeRequestModal();
   }
 }

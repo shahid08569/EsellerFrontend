@@ -18,8 +18,13 @@
   --color-primary-focus-ring: rgba(225, 29, 72, 0.15);
 }
 
+html {
+  overflow-x: clip;
+}
+
 body {
   background-color: #FFF5F6;
+  overflow-x: clip;
 }
 /* ============================================================
    Swiper custom overrides

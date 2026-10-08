@@ -282,3 +282,14 @@
     </div>
   }
 </div>
+
+<app-confirm-modal
+  [isOpen]="deleteConfirmOpen()"
+  title="Delete flash sale?"
+  message="This flash sale will be removed from the homepage."
+  confirmText="Delete"
+  cancelText="Cancel"
+  type="danger"
+  [isProcessing]="!!busyId()"
+  (confirmed)="confirmDeleteFlash()"
+  (cancelled)="cancelDeleteFlash()" />

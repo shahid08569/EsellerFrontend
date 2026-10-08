@@ -12,7 +12,20 @@
         <h1 class="text-base sm:text-lg font-black text-white tracking-tight drop-shadow-xs">
           Shops & Storefronts Management
         </h1>
-        <p class="text-orange-100 text-xs font-medium">
+        <p class="text-white/95 text-xs font-medium mt-1">
+          @if (viewMode() === 'stores') {
+            Total stores = {{ filteredActiveStores().length }}
+          } @else if (viewMode() === 'applications') {
+            Total applications = {{ filteredShopkeepers().length }}
+            <span class="text-white/50 mx-1">·</span>
+            Pending = {{ countPending() }}
+          } @else {
+            Total tier requests = {{ tierRequests().length }}
+            <span class="text-white/50 mx-1">·</span>
+            Pending = {{ countPendingTiers() }}
+          }
+        </p>
+        <p class="text-orange-100 text-xs font-medium mt-0.5">
           Oversee stores, set platform shop ratings (★), and process merchant verification applications.
         </p>
       </div>
@@ -214,7 +227,7 @@
                     </div>
                   </td>
 
-                  <!-- Super Admin shop rating (1–5) — set directly from list -->
+                  <!-- Management shop rating (1–5) — set directly from list -->
                   <td class="py-4 px-4">
                     <div class="space-y-1.5 min-w-[140px]">
                       <div class="flex items-center gap-0.5">
@@ -286,7 +299,7 @@
                         Details
                       </button>
 
-                      <!-- SuperAdmin Delete Shop -->
+                      <!-- Management Delete Shop -->
                       <button 
                         type="button" 
                         (click)="openDeleteShopModal(store)"
@@ -877,12 +890,12 @@
         </button>
       </div>
 
-      <!-- Super Admin: rate this shop (always visible at top) -->
+      <!-- Management: rate this shop (always visible at top) -->
       <div class="p-4 rounded-2xl border-2 border-amber-300 bg-gradient-to-r from-amber-50 via-orange-50 to-amber-50 space-y-3 shadow-xs">
         <div class="flex items-center justify-between gap-2">
           <div>
             <p class="text-xs font-black text-amber-900 uppercase tracking-wide">Platform Shop Rating</p>
-            <p class="text-[11px] text-amber-800/80 font-medium mt-0.5">Super Admin sets this — shown next to the shop name for all visitors.</p>
+            <p class="text-[11px] text-amber-800/80 font-medium mt-0.5">Management sets this — shown next to the shop name for all visitors.</p>
           </div>
           <span class="text-lg font-black text-amber-700 shrink-0">
             {{ store.rating ? (store.rating | number:'1.1-1') : '0.0' }}
@@ -1687,7 +1700,7 @@
   </div>
 }
 
-<!-- EDIT STORE PROFILE & MEDIA MODAL (SUPER ADMIN) -->
+<!-- EDIT STORE PROFILE & MEDIA MODAL (Management) -->
 @if (editStoreModalOpen() && editingShop()) {
   <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/75 backdrop-blur-xs animate-in fade-in duration-200">
     <div class="bg-white rounded-3xl max-w-xl w-full shadow-2xl border border-slate-100 overflow-hidden transform transition-all p-6 space-y-5 max-h-[90vh] overflow-y-auto">
@@ -1700,7 +1713,7 @@
           </div>
           <div>
             <h3 class="text-base font-black text-gray-900 tracking-tight">Edit Store Profile & Media</h3>
-            <p class="text-[11px] text-gray-400 font-medium">Update store brand media, name, contact and address info as Super Admin.</p>
+            <p class="text-[11px] text-gray-400 font-medium">Update store brand media, name, contact and address info as Management.</p>
           </div>
         </div>
         <button 

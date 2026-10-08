@@ -290,7 +290,7 @@ export class Dashboard implements OnInit, OnDestroy {
     this.addToStoreFromWarehouse(product);
   }
 
-  /** Seller requests Super Admin approval to list a warehouse product on their shop. */
+  /** Seller requests Management approval to list a warehouse product on their shop. */
   addToStoreFromWarehouse(product: ProductListDto): void {
     const shop = this.shop();
 
@@ -349,7 +349,7 @@ export class Dashboard implements OnInit, OnDestroy {
             next.add(product.id);
             return next;
           });
-          this.toast.show('This product is already awaiting Super Admin approval.', 'warning');
+          this.toast.show('This product is already awaiting Management approval.', 'warning');
           return;
         }
         this.toast.show(err?.error?.error || 'Failed to submit listing request.', 'error');
@@ -407,7 +407,7 @@ export class Dashboard implements OnInit, OnDestroy {
     }).subscribe({
       next: (res) => {
         this.toast.show(
-          res?.message || `Upgrade request for ${data.tier} ($${data.price}) submitted to Super Admin for verification!`,
+          res?.message || `Upgrade request for ${data.tier} ($${data.price}) submitted to Management for verification!`,
           'success'
         );
       },

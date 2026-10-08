@@ -24,7 +24,7 @@
       <div>
         <p class="text-xs font-bold text-indigo-300 uppercase tracking-widest">Available Balance For Withdraw</p>
         <p class="text-3xl font-black mt-2">$ {{ availableBalance() | number:'1.2-2' }}</p>
-        <p class="text-xs text-slate-400 mt-1">Credited when Super Admin marks orders Delivered.</p>
+        <p class="text-xs text-slate-400 mt-1">Credited when Management marks orders Delivered.</p>
       </div>
       <div class="text-left sm:text-right space-y-2">
         @if (hasSavedBank()) {
@@ -177,7 +177,7 @@
                 <input type="number" [min]="minimumWithdrawal()" [max]="availableBalance()"
                   [ngModel]="withdrawAmount()" (ngModelChange)="withdrawAmount.set(+$event || 0)"
                   class="w-full bg-white border border-indigo-200 rounded-xl px-3 py-2 text-sm font-bold focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden" />
-                <p class="text-[10px] text-indigo-700/80 mt-1">Minimum $ {{ minimumWithdrawal() | number:'1.0-0' }} (set by Super Admin).</p>
+                <p class="text-[10px] text-indigo-700/80 mt-1">Minimum $ {{ minimumWithdrawal() | number:'1.0-0' }} (set by Management).</p>
               </div>
             </div>
           </div>

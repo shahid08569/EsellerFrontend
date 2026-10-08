@@ -295,8 +295,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               [shopId]: [{
                 id: `init-${shopId}`,
                 sender: 'admin',
-                senderName: 'Super Admin',
-                message: `Hello ${shop?.name || 'Merchant'}! This is your direct support channel with Super Admin.`,
+                senderName: 'Management',
+                message: `Hello ${shop?.name || 'Merchant'}! This is your direct support channel with Management.`,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               }]
             }));
@@ -310,7 +310,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           return {
             id: m.id || `msg-${Math.random()}`,
             sender: isAdmin ? 'admin' : 'seller',
-            senderName: isAdmin ? 'Super Admin' : (this.selectedShop()?.name || 'Merchant'),
+            senderName: isAdmin ? 'Management' : (this.selectedShop()?.name || 'Merchant'),
             message: m.message || m.content || '',
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',
@@ -383,7 +383,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         {
           id: tempId,
           sender: 'admin',
-          senderName: 'Super Admin',
+          senderName: 'Management',
           message: preview,
           timestamp: stamp,
           attachmentUrl: attachment?.url || null,
@@ -416,7 +416,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               {
                 id: realId,
                 sender: 'admin',
-                senderName: 'Super Admin',
+                senderName: 'Management',
                 message: preview,
                 timestamp: stamp,
                 attachmentUrl: attachment?.url || null,
@@ -502,7 +502,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
   private isAdminRole(role: string): boolean {
     const r = role.toLowerCase();
-    // RoleType: SuperAdmin=3, Partner=4
+    // RoleType: Management=3, Partner=4
     return r.includes('superadmin') || r.includes('partner') || r === '3' || r === '4';
   }
 

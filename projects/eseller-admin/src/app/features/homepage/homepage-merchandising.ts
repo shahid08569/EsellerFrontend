@@ -5,6 +5,7 @@ import { ActivatedRoute, RouterLink } from '@angular/router';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import { TablePagination } from '../../shared/components/table-pagination/table-pagination';
+import { ConfirmModal } from '../../shared/components/confirm-modal/confirm-modal';
 
 type HomeTab = 'catalog' | 'featured' | 'hot' | 'flash';
 
@@ -22,7 +23,7 @@ interface HomeProduct {
 @Component({
   selector: 'app-homepage-merchandising',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, TablePagination, SkeletonLayout],
+  imports: [CommonModule, FormsModule, RouterLink, TablePagination, SkeletonLayout, ConfirmModal],
   templateUrl: './homepage-merchandising.html'
 })
 export class HomepageMerchandising implements OnInit {
@@ -36,6 +37,8 @@ export class HomepageMerchandising implements OnInit {
   readonly flashSales = signal<any[]>([]);
   readonly searchTerm = signal('');
   readonly busyId = signal<string | null>(null);
+  readonly deleteConfirmOpen = signal(false);
+  readonly flashToDelete = signal<any | null>(null);
 
   // Multi-select & bulk actions (catalog tab)
   readonly selectedIds = signal<Set<string>>(new Set());
@@ -367,13 +370,32 @@ export class HomepageMerchandising implements OnInit {
   }
 
   deleteFlashSale(id: string): void {
-    if (!confirm('Delete this flash sale?')) return;
-    this.adminService.deleteFlashSale(id).subscribe({
+    this.flashToDelete.set({ id });
+    this.deleteConfirmOpen.set(true);
+  }
+
+  cancelDeleteFlash(): void {
+    if (this.busyId()) return;
+    this.deleteConfirmOpen.set(false);
+    this.flashToDelete.set(null);
+  }
+
+  confirmDeleteFlash(): void {
+    const row = this.flashToDelete();
+    if (!row?.id) return;
+    this.busyId.set(row.id);
+    this.adminService.deleteFlashSale(row.id).subscribe({
       next: () => {
+        this.busyId.set(null);
+        this.deleteConfirmOpen.set(false);
+        this.flashToDelete.set(null);
         this.toast.show('Flash sale deleted.', 'info');
         this.loadTab('flash');
       },
-      error: (err) => this.toast.show(err?.error?.error || 'Delete failed.', 'error')
+      error: (err) => {
+        this.busyId.set(null);
+        this.toast.show(err?.error?.error || 'Delete failed.', 'error');
+      }
     });
   }
 }

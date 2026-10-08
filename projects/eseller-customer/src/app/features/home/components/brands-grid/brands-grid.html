@@ -53,24 +53,15 @@
               <div
                 class="w-16 h-16 md:w-20 md:h-20 rounded-full overflow-hidden bg-white shadow-xs border-2 border-gray-100 group-hover:border-primary group-hover:shadow-md transition-all duration-300 flex items-center justify-center p-3"
               >
-                @if (getLogoUrl(brand); as logoUrl) {
-                  <img
-                    [src]="logoUrl"
-                    [alt]="brand.name"
-                    (dragstart)="$event.preventDefault()"
-                    draggable="false"
-                    class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300 pointer-events-none select-none"
-                    loading="lazy"
-                    (error)="$any($event.target).src=brandLogoFallback(brand.slug, brand.name) || '/brand/eseller-mark.svg'"
-                  />
-                } @else {
-                  <img
-                    src="/brand/eseller-mark.svg"
-                    [alt]="brand.name"
-                    class="w-10 h-10 object-contain rounded-lg pointer-events-none select-none"
-                    loading="lazy"
-                  />
-                }
+                <img
+                  [src]="getLogoUrl(brand)"
+                  [alt]="brand.name"
+                  (dragstart)="$event.preventDefault()"
+                  draggable="false"
+                  class="max-w-full max-h-full object-contain group-hover:scale-110 transition-transform duration-300 pointer-events-none select-none"
+                  loading="lazy"
+                  (error)="$any($event.target).src=brandLogoFallback(brand.slug, brand.name)"
+                />
               </div>
 
               <!-- Brand Name -->

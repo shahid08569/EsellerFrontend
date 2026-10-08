@@ -91,7 +91,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
       },
       error: () => {
-        this.toast.show('Could not connect to Super Admin chat.', 'error');
+        this.toast.show('Could not connect to Management chat.', 'error');
       }
     });
 
@@ -143,7 +143,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             {
               id: incoming.messageId || `m-${Date.now()}`,
               sender: 'admin' as const,
-              senderName: 'Super Admin',
+              senderName: 'Management',
               message: incoming.message,
               timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -164,7 +164,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           });
         } else {
           this.unreadCount.update(c => c + 1);
-          this.toast.show('New message from Super Admin', 'info');
+          this.toast.show('New message from Management', 'info');
         }
         this.shouldScrollToBottom = true;
       });
@@ -322,7 +322,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             sender: isSeller ? 'seller' : 'admin',
             senderName: isSeller
               ? (this.shop()?.name || 'Merchant')
-              : 'Super Admin',
+              : 'Management',
             message: m.message || m.content || '',
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',
@@ -405,7 +405,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       error: (err) => {
         this.isSending.set(false);
         this.messages.update(list => list.filter(m => m.id !== tempId));
-        this.toast.show(err?.error?.error || 'Failed to send message to Super Admin.', 'error');
+        this.toast.show(err?.error?.error || 'Failed to send message to Management.', 'error');
       }
     });
   }

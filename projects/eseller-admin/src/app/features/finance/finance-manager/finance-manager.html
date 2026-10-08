@@ -29,7 +29,7 @@
     </div>
   </div>
 
-  <!-- Min withdrawal (SuperAdmin) -->
+  <!-- Min withdrawal (Management) -->
   <div class="bg-white border border-gray-100 rounded-2xl p-4 shadow-sm flex flex-col sm:flex-row sm:items-end justify-between gap-4">
     <div class="min-w-0">
       <p class="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">Seller payout rule</p>
@@ -247,7 +247,7 @@
         <div>
           <h2 class="text-sm font-black text-slate-900">Seller wallet & earnings</h2>
           <p class="text-xs text-slate-500">
-            Click Pending or Available to edit. Default 20% stays Pending until delivery; Super Admin can adjust anytime.
+            Click Pending or Available to edit. Default 20% stays Pending until delivery; Management can adjust anytime.
           </p>
         </div>
         <button
@@ -603,3 +603,15 @@
     </div>
   </div>
 }
+
+<app-confirm-modal
+  [isOpen]="deleteConfirmOpen()"
+  title="Delete payout method?"
+  message="Sellers will no longer see this payout option when requesting withdrawals."
+  [itemHighlight]="methodToDelete()?.name || ''"
+  confirmText="Delete"
+  cancelText="Cancel"
+  type="danger"
+  [isProcessing]="!!deletingMethodId()"
+  (confirmed)="confirmDeletePayoutMethod()"
+  (cancelled)="cancelDeletePayoutMethod()" />

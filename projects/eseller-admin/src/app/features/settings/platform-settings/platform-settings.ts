@@ -40,7 +40,7 @@ export class PlatformSettings implements OnInit {
   readonly maintenanceMode = signal<boolean>(false);
   readonly supportEmail = signal<string>('support@eseller.com');
 
-  // Branding (SuperAdmin can change nav + footer logos)
+  // Branding (Management can change nav + footer logos)
   readonly navLogoUrl = signal<string>(DEFAULT_NAV);
   readonly footerLogoUrl = signal<string>(DEFAULT_FOOTER);
   readonly brandingTagline = signal<string>(DEFAULT_TAGLINE);
