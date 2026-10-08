@@ -753,13 +753,14 @@
             </select>
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Qty</label>
+            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Qty*</label>
             <input type="number" min="1" [ngModel]="placeQty()" (ngModelChange)="placeQty.set(+$event || 1)"
               class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
           </div>
           <div>
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Buyer</label>
+            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Buyer*</label>
             <input type="text" [ngModel]="placeCustomerName()" (ngModelChange)="placeCustomerName.set($event)"
+            placeholder="Buyer name"
               class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
           </div>
           <div>
