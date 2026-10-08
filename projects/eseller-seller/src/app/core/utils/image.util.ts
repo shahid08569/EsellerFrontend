@@ -2,33 +2,32 @@ import { environment } from '../../../environments/environment';
 
 /**
  * Resolves any relative or partial image URL into a full URL served by the backend API.
- * Handles paths starting with `/uploads/`, `/shops/`, `/products/`, or relative paths,
- * as well as existing absolute HTTP/HTTPS or data URLs.
+ * Absolute / CDN / data URLs are returned as-is (never rewrite with /uploads/).
  */
 export function resolveImageUrl(url: string | null | undefined): string | null {
   if (!url || typeof url !== 'string') return null;
   const trimmed = url.trim();
   if (!trimmed) return null;
 
-  // Already an absolute URL or data/blob URI
+  // Already an absolute URL or data/blob URI — do not rewrite
   if (
     trimmed.startsWith('http://') ||
     trimmed.startsWith('https://') ||
     trimmed.startsWith('data:') ||
-    trimmed.startsWith('blob:')
+    trimmed.startsWith('blob:') ||
+    trimmed.startsWith('//')
   ) {
-    return trimmed;
+    return trimmed.startsWith('//') ? `https:${trimmed}` : trimmed;
   }
 
-  // Extract host from environment.apiUrl (e.g. 'https://localhost:7127')
-  const host = environment.apiUrl.replace(/\/api\/v1\/?$/, '');
+  const host = (environment.apiUrl || 'https://api.esellerglobal.com/api/v1')
+    .replace(/\/api\/v1\/?$/i, '')
+    .replace(/\/+$/, '');
   const path = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
 
-  // If already prefixed with /uploads/, return host + path
-  if (path.startsWith('/uploads/')) {
+  if (path.toLowerCase().startsWith('/uploads')) {
     return `${host}${path}`;
   }
 
-  // Otherwise prefix with /uploads (e.g. /shops/xxx -> /uploads/shops/xxx)
   return `${host}/uploads${path}`;
 }

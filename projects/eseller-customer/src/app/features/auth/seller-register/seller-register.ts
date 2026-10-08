@@ -97,8 +97,8 @@ export class SellerRegister implements OnInit {
     {
       id: 'cnic',
       name: 'Identity Card (CNIC / National ID)',
-      label: 'CNIC / National ID Card',
-      placeholder: 'XXX-XX-1234 or State ID Number',
+      label: 'Identity Card',
+      placeholder: '',
       hint: 'Upload clear Front & Back scans or photos of your official Government Identity Card.',
       requiresBackSide: true
     },
@@ -106,7 +106,7 @@ export class SellerRegister implements OnInit {
       id: 'passport',
       name: 'Passport',
       label: 'International Passport',
-      placeholder: 'AB1234567 or Passport Number',
+      placeholder: '',
       hint: 'Upload clear scan of the main photo and identity data page of your valid Passport.',
       requiresBackSide: false
     },
@@ -114,7 +114,7 @@ export class SellerRegister implements OnInit {
       id: 'license',
       name: 'Driving License',
       label: "Driver's License",
-      placeholder: 'DL-12345678 or License Number',
+      placeholder: '',
       hint: 'Upload clear Front & Back photos of your valid government-issued Driving License.',
       requiresBackSide: true
     },
@@ -122,7 +122,7 @@ export class SellerRegister implements OnInit {
       id: 'security-card',
       name: 'Security Card (SSN / National ID Proof)',
       label: 'Security Identification / SSN Card',
-      placeholder: 'SSN / Security Card ID Number',
+      placeholder: '',
       hint: 'Upload official Government Security Identification Card or National SSN document.',
       requiresBackSide: true
     }
@@ -438,10 +438,7 @@ export class SellerRegister implements OnInit {
       this.addressError.set('Warehouse / Store address is required.');
       hasError = true;
     }
-    if (!this.docNumber().trim()) {
-      this.docNumberError.set(`Please enter your ${this.currentDocConfig().label} number.`);
-      hasError = true;
-    }
+    // Document number is optional / removed from UI — KYC uses uploads only.
     if (!this.docFrontFileName()) {
       this.docFrontError.set(`Please upload the Front view of your ${this.currentDocConfig().label}.`);
       hasError = true;
@@ -505,7 +502,7 @@ export class SellerRegister implements OnInit {
       city: this.city().trim(),
       country: this.selectedCountry(),
       documentType: this.currentDocConfig().name,
-      documentNumber: this.docNumber().trim(),
+      documentNumber: null,
       cnicFrontUrl: frontUrl,
       cnicBackUrl: backUrl,
       // Single-sided docs (e.g. passport) also keep a generic DocumentUrl

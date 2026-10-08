@@ -392,44 +392,23 @@
             }
           </div>
 
-          <!-- Document Number & Expiry (if passport) -->
+          <!-- Identity uploads only (no CNIC / National ID number field) -->
           <div class="bg-white p-4 rounded-xl border border-slate-200 space-y-4 shadow-2xs">
-            
-            <div class="grid sm:grid-cols-2 gap-3">
-              <div [class.sm:col-span-2]="selectedDocType() !== 'passport'">
+
+            @if (selectedDocType() === 'passport') {
+              <div class="max-w-xs">
                 <label class="block text-[11px] font-bold text-slate-800 mb-1">
-                  {{ currentDocConfig().label }} Number <span class="text-rose-500">*</span>
+                  Passport Expiry Date
                 </label>
                 <input
-                  type="text"
-                  [ngModel]="docNumber()"
-                  (ngModelChange)="docNumber.set($event); docNumberError.set(null)"
-                  name="docNumber"
-                  [placeholder]="currentDocConfig().placeholder"
-                  class="w-full px-3 py-2 bg-slate-50 border rounded-xl text-xs text-slate-900 font-mono focus:bg-white focus:outline-none"
-                  [class.border-rose-300]="docNumberError()"
-                  [class.border-slate-200]="!docNumberError()"
+                  type="date"
+                  [ngModel]="passportExpiryDate()"
+                  (ngModelChange)="passportExpiryDate.set($event)"
+                  name="passportExpiryDate"
+                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
                 />
-                @if (docNumberError(); as err) {
-                  <p class="text-[10px] text-rose-600 mt-0.5">{{ err }}</p>
-                }
               </div>
-
-              @if (selectedDocType() === 'passport') {
-                <div>
-                  <label class="block text-[11px] font-bold text-slate-800 mb-1">
-                    Passport Expiry Date
-                  </label>
-                  <input
-                    type="date"
-                    [ngModel]="passportExpiryDate()"
-                    (ngModelChange)="passportExpiryDate.set($event)"
-                    name="passportExpiryDate"
-                    class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white focus:outline-none"
-                  />
-                </div>
-              }
-            </div>
+            }
 
             <!-- Dynamic Upload Zones: Front & Back -->
             <div class="grid" [class.sm:grid-cols-2]="currentDocConfig().requiresBackSide" [class.grid-cols-1]="!currentDocConfig().requiresBackSide" gap-3>
