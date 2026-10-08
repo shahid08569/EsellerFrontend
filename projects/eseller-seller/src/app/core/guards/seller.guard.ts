@@ -48,6 +48,20 @@ export const sellerGuard: CanActivateFn = () => {
   }
 
   if (typeof window !== 'undefined') {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const ref = urlParams.get('ref') || urlParams.get('referral');
+      const isRegisterPath = window.location.pathname.toLowerCase().includes('register');
+
+      if (ref || isRegisterPath) {
+        const query = ref ? `?ref=${encodeURIComponent(ref)}` : window.location.search;
+        window.location.replace(`${environment.customerUrl}/auth/seller-register${query}`);
+        return false;
+      }
+    } catch {
+      /* ignore URL parse error */
+    }
+
     window.location.replace(
       `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}`
     );

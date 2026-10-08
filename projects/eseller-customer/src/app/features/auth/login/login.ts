@@ -45,9 +45,47 @@ export class Login implements OnInit {
   readonly forgotSuccessMsg = signal<string | null>(null);
   readonly forgotErrorMsg = signal<string | null>(null);
 
+  readonly currentRef = signal<string>('');
+
   private returnUrl: string = '/dashboard';
 
   ngOnInit(): void {
+    // If arriving with a referral code (or returnUrl with ref), redirect directly to Merchant Registration!
+    const refParam = this.route.snapshot.queryParamMap.get('ref') || this.route.snapshot.queryParamMap.get('referral');
+    if (refParam) {
+      const cleanRef = refParam.trim().toUpperCase();
+      this.currentRef.set(cleanRef);
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem('eseller_referral_code', cleanRef);
+      }
+      this.router.navigate(['/auth/seller-register'], { queryParams: { ref: cleanRef } });
+      return;
+    }
+
+    const rawReturnUrl = this.route.snapshot.queryParamMap.get('returnUrl');
+    if (rawReturnUrl && (rawReturnUrl.includes('ref=') || rawReturnUrl.includes('referral='))) {
+      try {
+        const parsed = new URL(rawReturnUrl, typeof window !== 'undefined' ? window.location.origin : 'http://localhost');
+        const refInUrl = parsed.searchParams.get('ref') || parsed.searchParams.get('referral');
+        if (refInUrl) {
+          const cleanRef = refInUrl.trim().toUpperCase();
+          this.currentRef.set(cleanRef);
+          if (typeof window !== 'undefined' && window.localStorage) {
+            window.localStorage.setItem('eseller_referral_code', cleanRef);
+          }
+          this.router.navigate(['/auth/seller-register'], { queryParams: { ref: cleanRef } });
+          return;
+        }
+      } catch {}
+    }
+
+    if (typeof window !== 'undefined' && window.localStorage) {
+      const savedRef = window.localStorage.getItem('eseller_referral_code');
+      if (savedRef) {
+        this.currentRef.set(savedRef);
+      }
+    }
+
     const isLogout = this.route.snapshot.queryParamMap.get('logout') === 'true' ||
                      (typeof window !== 'undefined' && window.location.search.includes('logout=true'));
     if (isLogout) {

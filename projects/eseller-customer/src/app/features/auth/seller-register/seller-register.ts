@@ -197,13 +197,33 @@ export class SellerRegister implements OnInit {
     }
   }
 
+  readonly showManualReferralField = signal<boolean>(false);
+  readonly referralTracked = signal<boolean>(false);
+
   ngOnInit(): void {
     this.route.queryParamMap.subscribe(params => {
-      const ref = params.get('ref') || params.get('referral');
+      let ref = params.get('ref') || params.get('referral');
+      if (!ref && typeof window !== 'undefined' && window.localStorage) {
+        ref = window.localStorage.getItem('eseller_referral_code');
+      }
+
       if (ref) {
         const clean = ref.trim().toUpperCase();
         this.referralCode.set(clean);
-        this.api.get(`/affiliate/track/${encodeURIComponent(clean)}`).subscribe({ error: () => {} });
+        this.showManualReferralField.set(true);
+
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('eseller_referral_code', clean);
+        }
+
+        // Track click on landing
+        if (!this.referralTracked()) {
+          this.referralTracked.set(true);
+          this.api.get(`/affiliate/track/${encodeURIComponent(clean)}`).subscribe({
+            next: () => {},
+            error: () => {}
+          });
+        }
       }
     });
 
@@ -212,6 +232,18 @@ export class SellerRegister implements OnInit {
       if (user && !this.name()) {
         this.name.set(user.username || '');
         this.email.set(user.email || '');
+      }
+    }
+  }
+
+  onReferralCodeChange(val: string): void {
+    const clean = (val || '').trim().toUpperCase();
+    this.referralCode.set(clean);
+    if (typeof window !== 'undefined' && window.localStorage) {
+      if (clean) {
+        window.localStorage.setItem('eseller_referral_code', clean);
+      } else {
+        window.localStorage.removeItem('eseller_referral_code');
       }
     }
   }

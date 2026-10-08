@@ -1,8 +1,22 @@
 import { Routes } from '@angular/router';
 import { MainLayout } from './layouts/main-layout/main-layout';
 import { sellerGuard } from './core/guards/seller.guard';
+import { environment } from '../environments/environment';
+
+const forwardToMerchantRegister = () => {
+  if (typeof window !== 'undefined') {
+    const search = window.location.search || '';
+    window.location.replace(`${environment.customerUrl}/auth/seller-register${search}`);
+  }
+  return false;
+};
 
 export const routes: Routes = [
+  // PUBLIC FORWARDERS: Ensure invitation/referral links land on merchant register
+  { path: 'seller-register', canActivate: [forwardToMerchantRegister], children: [] },
+  { path: 'auth/seller-register', canActivate: [forwardToMerchantRegister], children: [] },
+  { path: 'register', canActivate: [forwardToMerchantRegister], children: [] },
+
   {
     path: '',
     component: MainLayout,

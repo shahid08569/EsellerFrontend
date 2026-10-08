@@ -567,6 +567,59 @@
             </div>
           </div>
 
+        <!-- 6. INVITATION / REFERRAL CODE (OPTIONAL) -->
+        @if (referralCode() || showManualReferralField()) {
+          <div class="space-y-2.5 pt-3 border-t border-slate-100">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-2 text-xs font-bold text-slate-900 uppercase tracking-wider">
+                <span class="w-5 h-5 rounded-full bg-orange-600 text-white flex items-center justify-center text-[10px]">★</span>
+                <span>Invitation Reference (Optional)</span>
+              </div>
+              @if (referralCode()) {
+                <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 text-[10px] font-bold">
+                  ✓ Referral Code Applied
+                </span>
+              }
+            </div>
+
+            <div class="bg-orange-50/60 border border-orange-200/80 rounded-2xl p-3 space-y-1.5">
+              <label class="block text-[11px] font-bold text-slate-800">
+                Partner / Inviter Referral Code
+              </label>
+              <div class="flex items-center gap-2">
+                <input
+                  type="text"
+                  [ngModel]="referralCode()"
+                  (ngModelChange)="onReferralCodeChange($event)"
+                  name="referralCode"
+                  placeholder="e.g. REF-ABC123"
+                  class="w-full sm:w-72 px-3 py-2 bg-white border border-orange-300 rounded-xl text-xs font-mono font-bold text-slate-900 uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-orange-500"
+                />
+                @if (referralCode()) {
+                  <button
+                    type="button"
+                    (click)="onReferralCodeChange('')"
+                    class="text-[11px] text-slate-400 hover:text-slate-700 font-semibold px-2 py-1 cursor-pointer">
+                    Clear
+                  </button>
+                }
+              </div>
+              <p class="text-[10px] text-slate-500 leading-relaxed">
+                Optional: If you were invited by an existing partner or merchant, their reference code connects your store to their network.
+              </p>
+            </div>
+          </div>
+        } @else {
+          <div class="pt-2 text-right">
+            <button
+              type="button"
+              (click)="showManualReferralField.set(true)"
+              class="text-[11px] text-orange-600 hover:text-orange-700 font-bold hover:underline cursor-pointer inline-flex items-center gap-1">
+              <span>Have an invitation or referral code?</span>
+            </button>
+          </div>
+        }
+
         <!-- Terms agreement -->
         <div class="pt-2">
           <label class="flex items-start gap-2.5 text-xs text-slate-600 cursor-pointer">

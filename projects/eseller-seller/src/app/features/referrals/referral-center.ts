@@ -4,6 +4,8 @@ import { FormsModule } from '@angular/forms';
 import { SellerService, SellerReferralDto, ReferredStoreDto } from '../../core/services/seller.service';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 
+import { environment } from '../../../environments/environment';
+
 @Component({
   selector: 'app-referral-center',
   standalone: true,
@@ -23,9 +25,8 @@ export class ReferralCenter implements OnInit {
   readonly inviteLink = computed(() => {
     const code = this.referralData()?.referralCode;
     if (!code) return '';
-    const origin = typeof window !== 'undefined' ? window.location.origin : '';
-    // Typically the customer portal URL where registration lives
-    return `${origin}/seller-register?ref=${code}`;
+    const base = (environment.customerUrl || 'https://www.esellerglobal.com').replace(/\/+$/, '');
+    return `${base}/auth/seller-register?ref=${encodeURIComponent(code)}`;
   });
 
   readonly filteredStores = computed(() => {

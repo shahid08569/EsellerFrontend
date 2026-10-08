@@ -36,6 +36,8 @@ export class MarketplaceCatalog implements OnInit {
   readonly selectedCategory = signal<string>('all');
   readonly selectedBrand = signal<string>('all');
   readonly sortBy = signal<string>('featured');
+  readonly minPrice = signal<number | null>(null);
+  readonly maxPrice = signal<number | null>(null);
 
   readonly currentPage = signal<number>(1);
   readonly pageSize = signal<number>(10);
@@ -54,6 +56,8 @@ export class MarketplaceCatalog implements OnInit {
     const search = this.searchTerm().trim().toLowerCase();
     const cat = this.selectedCategory();
     const brand = this.selectedBrand();
+    const minP = this.minPrice();
+    const maxP = this.maxPrice();
 
     if (search) {
       list = list.filter(p =>
@@ -71,8 +75,28 @@ export class MarketplaceCatalog implements OnInit {
       list = list.filter(p => (p.brandName || '').toLowerCase() === brand.toLowerCase());
     }
 
+    if (minP !== null && minP !== undefined && !isNaN(minP)) {
+      list = list.filter(p => {
+        const val = Number(p.basePrice ?? 0);
+        return val >= minP;
+      });
+    }
+
+    if (maxP !== null && maxP !== undefined && !isNaN(maxP)) {
+      list = list.filter(p => {
+        const val = Number(p.basePrice ?? 0);
+        return val <= maxP;
+      });
+    }
+
     return list;
   });
+
+  clearPriceFilter(): void {
+    this.minPrice.set(null);
+    this.maxPrice.set(null);
+    this.currentPage.set(1);
+  }
 
   readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredProducts().length / this.pageSize())));
 

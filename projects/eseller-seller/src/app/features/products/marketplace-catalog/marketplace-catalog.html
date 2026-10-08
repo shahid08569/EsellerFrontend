@@ -37,12 +37,12 @@
       />
     </div>
 
-    <!-- Category & Brand Filters -->
-    <div class="flex items-center gap-2 w-full sm:w-auto">
+    <!-- Category, Brand & Price Filters -->
+    <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
       <select 
         [ngModel]="selectedCategory()" 
         (ngModelChange)="selectedCategory.set($event); onFilterChange()"
-        class="w-full sm:w-48 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
+        class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
         <option value="all">All Categories</option>
         @for (cat of categories(); track cat.id) {
           <option [value]="cat.name">{{ cat.name }}</option>
@@ -52,12 +52,49 @@
       <select 
         [ngModel]="selectedBrand()" 
         (ngModelChange)="selectedBrand.set($event); onFilterChange()"
-        class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
+        class="w-full sm:w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
         <option value="all">All Brands</option>
         @for (brand of brands(); track brand.id) {
           <option [value]="brand.name">{{ brand.name }}</option>
         }
       </select>
+
+      <!-- Price Range Filter (Min & Max) -->
+      <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 w-full sm:w-auto">
+        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Price:</span>
+        <div class="relative w-20">
+          <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">$</span>
+          <input 
+            type="number"
+            min="0"
+            [ngModel]="minPrice()"
+            (ngModelChange)="minPrice.set($event !== null && $event !== '' ? +$event : null); onFilterChange()"
+            placeholder="Min"
+            class="w-full pl-4 pr-1 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 font-mono font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+          />
+        </div>
+        <span class="text-xs text-slate-400 font-bold">-</span>
+        <div class="relative w-20">
+          <span class="absolute left-1.5 top-1/2 -translate-y-1/2 text-[10px] text-slate-400 font-bold">$</span>
+          <input 
+            type="number"
+            min="0"
+            [ngModel]="maxPrice()"
+            (ngModelChange)="maxPrice.set($event !== null && $event !== '' ? +$event : null); onFilterChange()"
+            placeholder="Max"
+            class="w-full pl-4 pr-1 py-1 text-xs bg-white border border-slate-200 rounded-lg text-slate-900 font-mono font-semibold placeholder:text-slate-400 focus:outline-none focus:ring-1 focus:ring-slate-900"
+          />
+        </div>
+        @if (minPrice() !== null || maxPrice() !== null) {
+          <button 
+            type="button"
+            (click)="clearPriceFilter()"
+            class="text-[10px] text-rose-600 hover:text-rose-800 font-bold px-1.5 py-0.5 rounded hover:bg-rose-50 cursor-pointer"
+            title="Reset price filter">
+            ✕
+          </button>
+        }
+      </div>
     </div>
   </div>
 
