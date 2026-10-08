@@ -224,7 +224,7 @@ export class MarketplaceCatalog implements OnInit {
       },
       error: (err) => {
         this.requestingProductId.set(null);
-        const code = err?.error?.errorCode;
+        const code = err?.errorCode || err?.error?.errorCode;
         if (code === 'STORE_NOT_VERIFIED') {
           this.showPendingVerificationModal.set(true);
           return;
@@ -235,10 +235,23 @@ export class MarketplaceCatalog implements OnInit {
             next.add(product.id);
             return next;
           });
-          this.toast.show('This product is already awaiting Management approval.', 'warning');
+          this.toast.show('This product is already in your store or awaiting approval.', 'warning');
           return;
         }
-        this.toast.show(err?.error?.error || 'Failed to submit listing request.', 'error');
+        if (code === 'PRODUCT_LIMIT_REACHED') {
+          const limit = this.productLimit();
+          this.toast.show(
+            `Package capacity reached (${limit} products). Please upgrade your package to list more.`,
+            'warning'
+          );
+          return;
+        }
+        const msg =
+          (typeof err?.error === 'string' ? err.error : err?.error?.error) ||
+          err?.error?.message ||
+          err?.message ||
+          'Failed to submit listing request.';
+        this.toast.show(msg, 'error');
       }
     });
   }

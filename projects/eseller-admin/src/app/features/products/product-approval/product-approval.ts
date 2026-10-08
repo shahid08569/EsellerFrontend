@@ -213,6 +213,27 @@ export class ProductApproval implements OnInit {
     return list.every(p => selected.has(p.id));
   });
 
+  readonly isAllProductsSelected = computed(() => {
+    const all = this.products();
+    if (all.length === 0) return false;
+    const selected = this.selectedProductIds();
+    return all.length === selected.size && all.every(p => selected.has(p.id));
+  });
+
+  selectAllProducts(): void {
+    const all = this.products();
+    const set = new Set(all.map(p => p.id));
+    this.selectedProductIds.set(set);
+  }
+
+  toggleSelectAllFull(): void {
+    if (this.isAllProductsSelected()) {
+      this.clearSelection();
+    } else {
+      this.selectAllProducts();
+    }
+  }
+
   toggleSelectAll(): void {
     const set = new Set(this.selectedProductIds());
     const list = this.pagedProducts();
@@ -1099,6 +1120,14 @@ export class ProductApproval implements OnInit {
     this.openDeleteModal(product);
   }
 
+  private handleFetchError(err?: any): void {
+    this.isLoading.set(false);
+    const msg = (typeof err?.error === 'string' ? err.error : err?.error?.error) || err?.error?.message || err?.message;
+    if (msg && !msg.toLowerCase().includes('abort') && !msg.toLowerCase().includes('cancel') && !msg.toLowerCase().includes('timeout')) {
+      this.toast.show(msg, 'warning');
+    }
+  }
+
   fetchProducts(): void {
     this.isLoading.set(true);
 
@@ -1180,10 +1209,7 @@ export class ProductApproval implements OnInit {
             else this.pendingOwnCount.set(res?.totalCount ?? items.length);
             this.isLoading.set(false);
           },
-          error: (err) => {
-            this.isLoading.set(false);
-            this.toast.show(err?.error?.error || 'Failed to fetch pending products.', 'error');
-          }
+          error: (err) => this.handleFetchError(err)
         });
       } else {
         this.adminService.getApprovedSellerProducts(1, 500, kind).subscribe({
@@ -1193,10 +1219,7 @@ export class ProductApproval implements OnInit {
             this.totalCount.set(res?.totalCount ?? items.length);
             this.isLoading.set(false);
           },
-          error: (err) => {
-            this.isLoading.set(false);
-            this.toast.show(err?.error?.error || 'Failed to fetch approved products.', 'error');
-          }
+          error: (err) => this.handleFetchError(err)
         });
       }
     } else if (this.statusFilter() === 'live') {
@@ -1214,10 +1237,7 @@ export class ProductApproval implements OnInit {
           this.totalCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.toast.show(err?.error?.error || 'Failed to fetch live seller products.', 'error');
-        }
+        error: (err) => this.handleFetchError(err)
       });
     } else if (this.statusFilter() === 'all') {
       const scope = this.sourceFilter();
@@ -1230,10 +1250,7 @@ export class ProductApproval implements OnInit {
             this.totalCount.set(catalogRes?.totalCount ?? items.length);
             this.isLoading.set(false);
           },
-          error: (err) => {
-            this.isLoading.set(false);
-            this.toast.show(err?.error?.error || 'Failed to load master catalog products.', 'error');
-          }
+          error: (err) => this.handleFetchError(err)
         });
       } else if (scope === 'sellers') {
         forkJoin({
@@ -1250,10 +1267,7 @@ export class ProductApproval implements OnInit {
             this.totalCount.set(items.length);
             this.isLoading.set(false);
           },
-          error: () => {
-            this.isLoading.set(false);
-            this.toast.show('Failed to load seller products.', 'error');
-          }
+          error: (err) => this.handleFetchError(err)
         });
       } else {
         // Everything: warehouse + all seller listings
@@ -1272,10 +1286,7 @@ export class ProductApproval implements OnInit {
             this.totalCount.set(items.length);
             this.isLoading.set(false);
           },
-          error: () => {
-            this.isLoading.set(false);
-            this.toast.show('Failed to load products.', 'error');
-          }
+          error: (err) => this.handleFetchError(err)
         });
       }
     } else if (this.statusFilter() === 'rejected') {
@@ -1286,10 +1297,7 @@ export class ProductApproval implements OnInit {
           this.totalCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.toast.show(err?.error?.error || 'Failed to fetch rejected products.', 'error');
-        }
+        error: (err) => this.handleFetchError(err)
       });
     } else {
       this.adminService.getProducts(undefined, undefined, 1, 500).subscribe({
@@ -1300,10 +1308,7 @@ export class ProductApproval implements OnInit {
           this.totalCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
-        error: (err) => {
-          this.isLoading.set(false);
-          this.toast.show(err?.error?.error || 'Failed to fetch products.', 'error');
-        }
+        error: (err) => this.handleFetchError(err)
       });
     }
   }
