@@ -91,18 +91,20 @@ export class ProductCard implements OnInit, OnDestroy {
   // ============================================================
   readonly productLink = computed(() => `/products/${this.product().slug}`);
   readonly fullName = computed(() => this.product().name);
-  readonly hasRating = computed(() => (this.product().avgRating ?? 0) > 0);
   readonly reviewCount = computed(() => {
     const p = this.product();
     return Math.max(0, Number(p.reviewCount ?? p.reviewsCount ?? 0) || 0);
   });
+  /** Only trust AvgRating when there is at least one approved review. */
+  readonly hasRating = computed(() => this.reviewCount() > 0 && (this.product().avgRating ?? 0) > 0);
   readonly ratingValue = computed(() => {
+    if (this.reviewCount() <= 0) return 0;
     const raw = Number(this.product().avgRating ?? 0);
     if (!Number.isFinite(raw) || raw <= 0) return 0;
     return Math.min(5, Math.round(raw * 2) / 2);
   });
   readonly formattedRating = computed(() => this.ratingValue().toFixed(1));
-  /** Full / half / empty slots for star display */
+  /** Full / half / empty — all empty when reviewCount is 0 */
   readonly starSlots = computed(() => {
     const rating = this.ratingValue();
     return [1, 2, 3, 4, 5].map((i) => {
@@ -111,6 +113,10 @@ export class ProductCard implements OnInit, OnDestroy {
       return 'empty' as const;
     });
   });
+  /** Compact badge only when there are real reviews; otherwise empty stars. */
+  readonly useCompactBadge = computed(
+    () => this.ratingDisplay() === 'compact' && this.hasRating()
+  );
 
   readonly formattedPrice = computed(() =>
     this.product().basePrice.toLocaleString('en-US', {

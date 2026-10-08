@@ -38,12 +38,14 @@ export class CategoryProductCard {
   readonly isInCompare = computed(() => this.compareService.isInCompare(this.product().id));
   readonly isInCart = computed(() => this.cartService.isInCart(this.product().id));
 
-  readonly hasRating = computed(() => (this.product().avgRating ?? 0) > 0);
   readonly reviewCount = computed(() => {
     const p = this.product();
     return Math.max(0, Number(p.reviewCount ?? p.reviewsCount ?? 0) || 0);
   });
+  /** AvgRating only counts when there is at least one review. */
+  readonly hasRating = computed(() => this.reviewCount() > 0 && (this.product().avgRating ?? 0) > 0);
   readonly ratingValue = computed(() => {
+    if (this.reviewCount() <= 0) return 0;
     const raw = Number(this.product().avgRating ?? 0);
     if (!Number.isFinite(raw) || raw <= 0) return 0;
     return Math.min(5, Math.round(raw * 2) / 2);
