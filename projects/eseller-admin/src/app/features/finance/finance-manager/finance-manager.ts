@@ -293,13 +293,10 @@ export class FinanceManager implements OnInit {
         const earnErr = res?.earnings?.__error;
         const balErr = res?.balance?.__error;
         if (earnErr || balErr) {
-          this.toast.show(
-            earnErr?.error?.error || balErr?.error?.error || 'Failed to save one or more amounts.',
-            'error'
-          );
+          this.toast.show(this.extractApiError(earnErr || balErr, 'Failed to save amounts.'), 'error');
         } else {
           this.toast.show(
-            `Updated ${row.shopName || row.shopkeeperName}: Pending, Available & Wallet saved.`,
+            `Updated ${row.shopName || row.shopkeeperName}: amounts saved.`,
             'success'
           );
         }
@@ -307,9 +304,17 @@ export class FinanceManager implements OnInit {
       },
       error: (err) => {
         this.savingEarningsAccountId.set(null);
-        this.toast.show(err?.error?.error || 'Failed to update seller amounts.', 'error');
+        this.toast.show(this.extractApiError(err, 'Failed to update seller amounts.'), 'error');
       }
     });
+  }
+
+  private extractApiError(err: any, fallback: string): string {
+    if (!err) return fallback;
+    if (typeof err.error === 'string' && err.error.trim()) return err.error;
+    if (typeof err.error?.error === 'string' && err.error.error.trim()) return err.error.error;
+    if (typeof err.message === 'string' && err.message.trim()) return err.message;
+    return fallback;
   }
 
   viewSellerBank(accountId: string, name: string): void {
