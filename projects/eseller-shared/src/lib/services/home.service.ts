@@ -94,17 +94,29 @@ export class HomeService {
       this.branding$ = this.api.get<any>('/homepage/branding').pipe(
         map((res) => {
           const raw = res?.value ?? res?.data ?? res ?? {};
+          const navLogoUrl = String(raw.navLogoUrl ?? raw.NavLogoUrl ?? '/brand/eseller-global-nav.png?v=orange3');
           return {
-            navLogoUrl: String(raw.navLogoUrl ?? raw.NavLogoUrl ?? '/brand/eseller-global-nav.png?v=orange3'),
+            navLogoUrl,
             footerLogoUrl: String(raw.footerLogoUrl ?? raw.FooterLogoUrl ?? '/brand/eseller-global-logo.png?v=orange3'),
-            tagline: String(raw.tagline ?? raw.Tagline ?? 'Shop Without Borders')
+            tagline: String(raw.tagline ?? raw.Tagline ?? 'Shop Without Borders'),
+            siteTitle: String(raw.siteTitle ?? raw.SiteTitle ?? 'EsellerGlobal'),
+            metaDescription: String(
+              raw.metaDescription ??
+                raw.MetaDescription ??
+                'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.'
+            ),
+            faviconUrl: String(raw.faviconUrl ?? raw.FaviconUrl ?? navLogoUrl)
           } as PlatformBrandingDto;
         }),
         catchError(() =>
           of({
             navLogoUrl: '/brand/eseller-global-nav.png?v=orange3',
             footerLogoUrl: '/brand/eseller-global-logo.png?v=orange3',
-            tagline: 'Shop Without Borders'
+            tagline: 'Shop Without Borders',
+            siteTitle: 'EsellerGlobal',
+            metaDescription:
+              'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.',
+            faviconUrl: '/favicon.svg'
           } as PlatformBrandingDto)
         ),
         shareReplay(1)

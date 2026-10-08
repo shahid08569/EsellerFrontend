@@ -1,5 +1,6 @@
 import {
   ApplicationConfig,
+  inject,
   provideZonelessChangeDetection,
   provideAppInitializer
 } from '@angular/core';
@@ -23,6 +24,7 @@ import {
 } from 'eseller-shared';
 
 import { routes } from './app.routes';
+import { SeoBrandingService } from './core/services/seo-branding.service';
 
 export const appConfig: ApplicationConfig = {
   providers: [
@@ -55,6 +57,8 @@ export const appConfig: ApplicationConfig = {
       ])
     ),
 
-    provideAppInitializer(authBootstrapFactory())
+    provideAppInitializer(authBootstrapFactory()),
+    // SuperAdmin site title / meta description / nav-logo favicon
+    provideAppInitializer(() => inject(SeoBrandingService).bootstrap())
   ]
 };

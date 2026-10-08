@@ -7,9 +7,14 @@ import { AdminService } from '../../../core/services/admin.service';
 const KEY_NAV = 'Branding.NavLogoUrl';
 const KEY_FOOTER = 'Branding.FooterLogoUrl';
 const KEY_TAGLINE = 'Branding.Tagline';
+const KEY_SITE_TITLE = 'Branding.SiteTitle';
+const KEY_META_DESC = 'Branding.MetaDescription';
 const DEFAULT_NAV = '/brand/eseller-global-nav.png';
 const DEFAULT_FOOTER = '/brand/eseller-global-logo.png';
 const DEFAULT_TAGLINE = 'Shop Without Borders';
+const DEFAULT_SITE_TITLE = 'EsellerGlobal';
+const DEFAULT_META_DESC =
+  'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.';
 
 @Component({
   selector: 'app-platform-settings',
@@ -44,6 +49,8 @@ export class PlatformSettings implements OnInit {
   readonly navLogoUrl = signal<string>(DEFAULT_NAV);
   readonly footerLogoUrl = signal<string>(DEFAULT_FOOTER);
   readonly brandingTagline = signal<string>(DEFAULT_TAGLINE);
+  readonly siteTitle = signal<string>(DEFAULT_SITE_TITLE);
+  readonly metaDescription = signal<string>(DEFAULT_META_DESC);
 
   ngOnInit(): void {
     this.loadSettings();
@@ -76,6 +83,8 @@ export class PlatformSettings implements OnInit {
             if (s.key === KEY_NAV && s.value) this.navLogoUrl.set(s.value);
             if (s.key === KEY_FOOTER && s.value) this.footerLogoUrl.set(s.value);
             if (s.key === KEY_TAGLINE && s.value) this.brandingTagline.set(s.value);
+            if (s.key === KEY_SITE_TITLE && s.value) this.siteTitle.set(s.value);
+            if (s.key === KEY_META_DESC && s.value) this.metaDescription.set(s.value);
           });
         } finally {
           this.isLoading.set(false);
@@ -162,6 +171,39 @@ export class PlatformSettings implements OnInit {
     });
   }
 
+  saveSeoBranding(): void {
+    const title = (this.siteTitle() || DEFAULT_SITE_TITLE).trim() || DEFAULT_SITE_TITLE;
+    const desc = (this.metaDescription() || DEFAULT_META_DESC).trim() || DEFAULT_META_DESC;
+    if (desc.length < 50) {
+      this.toast.show('Meta description should be at least ~50 characters for Google.', 'error');
+      return;
+    }
+    if (desc.length > 320) {
+      this.toast.show('Keep meta description under 320 characters.', 'error');
+      return;
+    }
+    let pending = 2;
+    let failed = false;
+    const done = () => {
+      pending--;
+      if (pending > 0) return;
+      if (failed) this.toast.show('SEO save failed', 'error');
+      else {
+        this.siteTitle.set(title);
+        this.metaDescription.set(desc);
+        this.toast.show('Google title & description saved. Favicon uses Navbar logo.', 'success');
+      }
+    };
+    this.adminService.updateSetting(KEY_SITE_TITLE, { value: title, isActive: true }).subscribe({
+      next: () => done(),
+      error: () => { failed = true; done(); }
+    });
+    this.adminService.updateSetting(KEY_META_DESC, { value: desc, isActive: true }).subscribe({
+      next: () => done(),
+      error: () => { failed = true; done(); }
+    });
+  }
+
   resetNavLogo(): void {
     this.adminService.updateSetting(KEY_NAV, { value: DEFAULT_NAV, isActive: true }).subscribe({
       next: () => {
@@ -193,7 +235,9 @@ export class PlatformSettings implements OnInit {
       { key: 'RequireProductApproval', value: (!autoApprove).toString(), isActive: !autoApprove },
       { key: 'MaintenanceMode', value: this.maintenanceMode().toString(), isActive: this.maintenanceMode() },
       { key: 'PlatformContactEmail', value: this.supportEmail(), isActive: true },
-      { key: KEY_TAGLINE, value: (this.brandingTagline() || DEFAULT_TAGLINE).trim() || DEFAULT_TAGLINE, isActive: true }
+      { key: KEY_TAGLINE, value: (this.brandingTagline() || DEFAULT_TAGLINE).trim() || DEFAULT_TAGLINE, isActive: true },
+      { key: KEY_SITE_TITLE, value: (this.siteTitle() || DEFAULT_SITE_TITLE).trim() || DEFAULT_SITE_TITLE, isActive: true },
+      { key: KEY_META_DESC, value: (this.metaDescription() || DEFAULT_META_DESC).trim() || DEFAULT_META_DESC, isActive: true }
     ];
 
     let pending = updates.length;

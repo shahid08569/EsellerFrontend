@@ -148,6 +148,47 @@
             Save tagline
           </button>
         </div>
+
+        <!-- Google / SEO — title, description, favicon = nav logo -->
+        <div class="p-4 rounded-xl border border-amber-100 bg-amber-50/40 space-y-3">
+          <div>
+            <h4 class="text-xs font-black text-gray-900 uppercase tracking-wider">Google Search Preview (SEO)</h4>
+            <p class="text-[11px] text-gray-500 mt-1">
+              Site title + description show in Google. Browser tab / Google favicon uses your <strong>Navbar logo</strong> automatically — upload a square PNG there for best results.
+            </p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Site title (Google title)</label>
+            <input
+              type="text"
+              [ngModel]="siteTitle()"
+              (ngModelChange)="siteTitle.set($event)"
+              maxlength="70"
+              class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"
+              placeholder="EsellerGlobal" />
+            <p class="text-[10px] text-gray-400 mt-1">~50–60 characters recommended.</p>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-gray-700 mb-1">Meta description (Google snippet)</label>
+            <textarea
+              rows="3"
+              [ngModel]="metaDescription()"
+              (ngModelChange)="metaDescription.set($event)"
+              maxlength="320"
+              class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden resize-y"
+              placeholder="Shop Without Borders on EsellerGlobal…"></textarea>
+            <p class="text-[10px] text-gray-400 mt-1">{{ metaDescription().length }}/320 — aim for 120–160 characters.</p>
+          </div>
+          <div class="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              (click)="saveSeoBranding()"
+              class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer">
+              Save Google title &amp; description
+            </button>
+            <span class="text-[10px] text-gray-500">Also saved with “Save Configurations”.</span>
+          </div>
+        </div>
       </div>
 
       <!-- 4. PLATFORM CONTROLS -->

@@ -125,11 +125,17 @@ export interface BrandDto {
   createdAt: string;
 }
 // HOMEPAGE PAYMENT SHOWCASE LOGO
-/** Storefront nav / footer branding (Settings-backed). */
+/** Storefront nav / footer branding + SEO (Settings-backed). */
 export interface PlatformBrandingDto {
   navLogoUrl: string;
   footerLogoUrl: string;
   tagline: string;
+  /** Browser tab / Google result title */
+  siteTitle?: string;
+  /** Google search snippet description */
+  metaDescription?: string;
+  /** Favicon URL (defaults to nav logo when empty) */
+  faviconUrl?: string;
 }
 
 export interface PaymentShowcaseLogoDto {
