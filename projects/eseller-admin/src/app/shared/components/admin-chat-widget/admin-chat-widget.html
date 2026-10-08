@@ -21,9 +21,13 @@
           }
 
           <div class="relative shrink-0">
-            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-white text-base shadow-inner border border-white/20">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-white text-base shadow-inner border border-white/20 overflow-hidden">
               @if (currentView() === 'chat' && selectedShop()) {
-                {{ selectedShop()!.name.charAt(0).toUpperCase() }}
+                @if (formatImageUrl(selectedShop()!.logoUrl)) {
+                  <img [src]="formatImageUrl(selectedShop()!.logoUrl)" (error)="onImgError($event, selectedShop()!.name)" [alt]="selectedShop()!.name" class="w-full h-full object-cover" />
+                } @else {
+                  {{ selectedShop()!.name.charAt(0).toUpperCase() }}
+                }
               } @else {
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.898-.992l.966-2.22A8.17 8.17 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
@@ -123,11 +127,20 @@
                     (click)="selectShop(s)"
                     class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
                     <div class="flex items-center gap-3 min-w-0">
-                      <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
-                        {{ s.name.charAt(0).toUpperCase() }}
-                      </div>
+                      @if (formatImageUrl(s.logoUrl)) {
+                        <img
+                          [src]="formatImageUrl(s.logoUrl)"
+                          (error)="onImgError($event, s.name)"
+                          [alt]="s.name"
+                          class="w-10 h-10 rounded-full object-cover shrink-0 border border-orange-200" />
+                      } @else {
+                        <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
+                          {{ s.name.charAt(0).toUpperCase() }}
+                        </div>
+                      }
                       <div class="min-w-0">
                         <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ s.name }}</span>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ s.lastMessage || 'Direct support channel' }}</p>
                       </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -153,9 +166,17 @@
                     (click)="selectCustomerConvo(c)"
                     class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
                     <div class="flex items-center gap-3 min-w-0">
-                      <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-sm shrink-0 border border-rose-200">
-                        {{ customerInitials(c) }}
-                      </div>
+                      @if (formatImageUrl(c.logoUrl)) {
+                        <img
+                          [src]="formatImageUrl(c.logoUrl)"
+                          (error)="onImgError($event, customerDisplayName(c))"
+                          [alt]="customerDisplayName(c)"
+                          class="w-10 h-10 rounded-full object-cover shrink-0 border border-rose-200" />
+                      } @else {
+                        <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-sm shrink-0 border border-rose-200">
+                          {{ customerInitials(c) }}
+                        </div>
+                      }
                       <div class="min-w-0">
                         <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ customerDisplayName(c) }}</span>
                         <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ c.lastMessage || 'No messages yet' }}</p>

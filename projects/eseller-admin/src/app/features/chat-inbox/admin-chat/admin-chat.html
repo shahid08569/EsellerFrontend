@@ -110,12 +110,20 @@
         [class.bg-orange-50]="isActiveConvo(convo)"
         [class.border-l-4]="isActiveConvo(convo)"
         [class.border-l-orange-600]="isActiveConvo(convo)">
-        <div
-          class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
-          [class.bg-orange-600]="isSellerSupport(convo)"
-          [class.bg-rose-600]="!isSellerSupport(convo)">
-          {{ initials(convo) }}
-        </div>
+        @if (formatImageUrl(convo.logoUrl)) {
+          <img
+            [src]="formatImageUrl(convo.logoUrl)"
+            (error)="onImgError($event, displayName(convo))"
+            [alt]="displayName(convo)"
+            class="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200" />
+        } @else {
+          <div
+            class="w-10 h-10 rounded-full flex items-center justify-center text-white text-xs font-black shrink-0"
+            [class.bg-orange-600]="isSellerSupport(convo)"
+            [class.bg-rose-600]="!isSellerSupport(convo)">
+            {{ initials(convo) }}
+          </div>
+        }
         <div class="min-w-0 flex-1">
           <div class="flex items-center justify-between gap-2">
             <span class="truncate text-xs text-slate-900"
@@ -153,12 +161,20 @@
         <div class="p-4 border-b border-slate-100 flex flex-col gap-3 bg-white">
           <div class="flex items-center justify-between gap-3">
             <div class="flex items-center gap-3 min-w-0">
-              <div
-                class="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0"
-                [class.bg-orange-600]="isSellerSupport(activeConversation())"
-                [class.bg-rose-600]="!isSellerSupport(activeConversation())">
-                {{ initials(activeConversation()) }}
-              </div>
+              @if (formatImageUrl(activeConversation()?.logoUrl)) {
+                <img
+                  [src]="formatImageUrl(activeConversation()?.logoUrl)"
+                  (error)="onImgError($event, displayName(activeConversation()))"
+                  [alt]="displayName(activeConversation())"
+                  class="w-10 h-10 rounded-full object-cover shrink-0 border border-slate-200" />
+              } @else {
+                <div
+                  class="w-10 h-10 rounded-full text-white flex items-center justify-center font-bold text-xs shrink-0"
+                  [class.bg-orange-600]="isSellerSupport(activeConversation())"
+                  [class.bg-rose-600]="!isSellerSupport(activeConversation())">
+                  {{ initials(activeConversation()) }}
+                </div>
+              }
               <div class="min-w-0">
                 <div class="font-bold text-sm text-slate-900 truncate">
                   {{ displayName(activeConversation()) }}

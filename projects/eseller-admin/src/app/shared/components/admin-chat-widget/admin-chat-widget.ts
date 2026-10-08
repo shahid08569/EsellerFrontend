@@ -8,6 +8,9 @@ import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread
 export interface AdminChatShop {
   id: string;
   name: string;
+  logoUrl?: string | null;
+  lastMessage?: string | null;
+  lastMessageTime?: string | Date | null;
   city?: string;
   country?: string;
   phone?: string;
@@ -72,13 +75,17 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     if (term) {
       filtered = list.filter(s =>
         s.name.toLowerCase().includes(term) ||
-        (s.city && s.city.toLowerCase().includes(term))
+        (s.city && s.city.toLowerCase().includes(term)) ||
+        (s.lastMessage && s.lastMessage.toLowerCase().includes(term))
       );
     }
     return [...filtered].sort((a, b) => {
       const au = this.chatUnread.unreadFor(a.id) > 0 ? 1 : 0;
       const bu = this.chatUnread.unreadFor(b.id) > 0 ? 1 : 0;
       if (au !== bu) return bu - au;
+      const aTime = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+      const bTime = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+      if (aTime !== bTime) return bTime - aTime;
       return a.name.localeCompare(b.name);
     });
   });
@@ -160,6 +167,18 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           };
         });
 
+        const previewText = incoming.message || (incoming.attachmentUrl ? '📎 Attachment' : 'New message');
+        this.shops.update(currentList => currentList.map(s => {
+          if (s.id.toLowerCase() === shopId.toLowerCase()) {
+            return {
+              ...s,
+              lastMessage: previewText,
+              lastMessageTime: incoming.sentAt || new Date().toISOString()
+            };
+          }
+          return s;
+        }));
+
         const isActiveOpen =
           this.isOpen()
           && this.currentView() === 'chat'
@@ -207,6 +226,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           .map(k => ({
             id: k.shopId as string,
             name: k.storeName || k.name || 'Store',
+            logoUrl: (k as any).logoUrl || null,
             city: k.city,
             country: k.country,
             phone: k.phone,
@@ -221,13 +241,18 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.adminService.getShops(1, 100).subscribe({
           next: (res) => {
             const items = res?.items || [];
-            const existing = new Set(this.shops().map(s => s.id));
             const merged = [...this.shops()];
             for (const shop of items) {
-              if (!existing.has(shop.id)) {
+              const existingShop = merged.find(s => s.id === shop.id);
+              if (existingShop) {
+                if (!existingShop.logoUrl && shop.logoUrl) {
+                  existingShop.logoUrl = shop.logoUrl;
+                }
+              } else {
                 merged.push({
                   id: shop.id,
                   name: shop.name,
+                  logoUrl: shop.logoUrl || null,
                   city: shop.city ?? undefined,
                   country: shop.country ?? undefined,
                   phone: shop.phone ?? undefined,
@@ -238,8 +263,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               }
             }
             this.shops.set(merged);
+            this.syncShopConversations();
           },
-          error: () => {}
+          error: () => {
+            this.syncShopConversations();
+          }
         });
       },
       error: () => {
@@ -248,6 +276,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             this.shops.set((res?.items || []).map(shop => ({
               id: shop.id,
               name: shop.name,
+              logoUrl: shop.logoUrl || null,
               city: shop.city ?? undefined,
               country: shop.country ?? undefined,
               phone: shop.phone ?? undefined,
@@ -256,8 +285,12 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               tierLabel: 'Bronze (Free)'
             })));
             this.isLoadingShops.set(false);
+            this.syncShopConversations();
           },
-          error: () => this.isLoadingShops.set(false)
+          error: () => {
+            this.isLoadingShops.set(false);
+            this.syncShopConversations();
+          }
         });
       }
     });
@@ -303,16 +336,39 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.queueScrollToLatest();
   }
 
-  loadCustomerConvos(): void {
-    this.isLoadingCustomers.set(true);
-    this.adminService.getConversations().subscribe({
+  syncShopConversations(): void {
+    this.adminService.getConversations(1, 500).subscribe({
       next: (list) => {
-        const customers = (list || []).filter((c: any) => !this.isSellerSupportConvo(c));
+        const convos = list || [];
+        const customers = convos.filter((c: any) => !this.isSellerSupportConvo(c));
         this.customerConvos.set(customers);
         this.isLoadingCustomers.set(false);
+
+        // Update seller shops with lastMessage, lastMessageTime, and logoUrl
+        this.shops.update(currentList => currentList.map(shop => {
+          const matching = convos.find((c: any) =>
+            String(c.orderRequestId || c.id || '').toLowerCase() === shop.id.toLowerCase()
+          );
+          if (matching) {
+            return {
+              ...shop,
+              lastMessage: matching.lastMessage || shop.lastMessage || null,
+              lastMessageTime: matching.lastMessageAt || shop.lastMessageTime || null,
+              logoUrl: shop.logoUrl || matching.logoUrl || null
+            };
+          }
+          return shop;
+        }));
       },
-      error: () => this.isLoadingCustomers.set(false)
+      error: () => {
+        this.isLoadingCustomers.set(false);
+      }
     });
+  }
+
+  loadCustomerConvos(): void {
+    this.isLoadingCustomers.set(true);
+    this.syncShopConversations();
   }
 
   isSellerSupportConvo(convo: any): boolean {
@@ -478,6 +534,17 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
     this.queueScrollToLatest();
 
+    this.shops.update(currentList => currentList.map(s => {
+      if (s.id.toLowerCase() === shop.id.toLowerCase()) {
+        return {
+          ...s,
+          lastMessage: preview,
+          lastMessageTime: new Date().toISOString()
+        };
+      }
+      return s;
+    }));
+
     this.adminService.sendChatMessage(shop.id, text, attachment ? {
       attachmentUrl: attachment.url,
       attachmentFileName: attachment.fileName,
@@ -609,6 +676,15 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       this.scrollToBottom();
       this.shouldScrollToBottom = false;
     }, 350);
+  }
+
+  formatImageUrl(url?: string | null): string {
+    return this.adminService.formatImageUrl(url);
+  }
+
+  onImgError(event: Event, name?: string): void {
+    const img = event.target as HTMLImageElement;
+    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Shop')}&background=EA580C&color=fff&bold=true`;
   }
 
   private scrollToBottom(): void {

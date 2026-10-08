@@ -5,9 +5,9 @@ import { HomeService, PlatformBrandingDto, resolveMediaUrl } from 'eseller-share
 import { environment } from '../../../environments/environment';
 import { catchError, of, tap } from 'rxjs';
 
-const DEFAULT_TITLE = 'EsellerGlobal';
+const DEFAULT_TITLE = 'eSeller Global — Shop Without Borders | Multi-Vendor Marketplace';
 const DEFAULT_DESCRIPTION =
-  'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.';
+  'Shop Without Borders on eSeller Global — premier multi-vendor marketplace for electronics, fashion, lifestyle, and home products from verified merchants worldwide.';
 
 /**
  * Applies SuperAdmin branding (site title, meta description, favicon from nav logo)
@@ -96,6 +96,9 @@ export class SeoBrandingService {
   }
 
   private setFavicon(href: string): void {
+    if (!href || href.includes('/favicon.svg') || href.includes('eseller-mark.svg')) {
+      return;
+    }
     const head = this.doc.head;
     if (!head) return;
 

@@ -543,4 +543,13 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     return String(a.orderRequestId || a.id || '').toLowerCase()
       === String(convo?.orderRequestId || convo?.id || '').toLowerCase();
   }
+
+  formatImageUrl(url?: string | null): string {
+    return this.adminService.formatImageUrl(url);
+  }
+
+  onImgError(event: Event, name?: string): void {
+    const img = event.target as HTMLImageElement;
+    img.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'Shop')}&background=EA580C&color=fff&bold=true`;
+  }
 }
