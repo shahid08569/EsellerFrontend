@@ -1,18 +1,15 @@
+/*
+  display:contents lets sticky children participate in the page scroll
+  container (not a short component box). Critical for sticky nav.
+*/
 :host {
-  display: block;
-  position: relative;
-  z-index: 50;
+  display: contents;
 }
 
 .navbar-sticky-strip {
   background-color: var(--color-primary, #e11d48);
-}
-
-.navbar-sticky-strip.sticky {
   position: -webkit-sticky;
   position: sticky;
-}
-
-.navbar-sticky-strip.fixed {
-  position: fixed;
+  top: 0;
+  z-index: 60;
 }

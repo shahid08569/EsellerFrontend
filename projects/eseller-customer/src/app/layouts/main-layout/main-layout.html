@@ -1,13 +1,11 @@
 <!-- Announcement strip (scrolls away) -->
 <app-announcement-bar />
 
-<!-- Main navbar (inner nav strip is sticky) -->
+<!-- Navbar: sticky strip is a page-level sibling via :host display:contents -->
 <app-navbar />
 
-<!-- Main content — clip horizontal overflow here so sticky nav still works -->
 <main class="min-h-[70vh] overflow-x-clip">
   <router-outlet />
 </main>
 
-<!-- Footer -->
 <app-footer />

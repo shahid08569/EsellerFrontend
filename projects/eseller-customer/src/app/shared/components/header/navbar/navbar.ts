@@ -6,9 +6,9 @@ import {
   OnInit,
   OnDestroy,
   PLATFORM_ID,
-  HostListener,
   ElementRef,
-  viewChild
+  viewChild,
+  afterNextRender
 } from '@angular/core';
 import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
@@ -61,9 +61,8 @@ export class Navbar implements OnInit, OnDestroy {
   readonly canShop = () => this.authAction.canShop();
 
   readonly mobileMenuOpen = signal(false);
-  /** Desktop: pin nav strip to viewport after chrome scrolls away. */
-  readonly navPinned = signal(false);
-  readonly navStripHeight = signal(48);
+  /** True while desktop sticky nav is stuck to the top (shadow polish). */
+  readonly navStuck = signal(false);
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly isCategoriesDropdownOpen = signal<boolean>(false);
   readonly brands = signal<BrandDto[]>([]);
@@ -72,10 +71,9 @@ export class Navbar implements OnInit, OnDestroy {
   readonly navLogoSrc = signal<string>(DEFAULT_NAV_LOGO);
   readonly brandingTagline = signal<string>(DEFAULT_TAGLINE);
 
-  private readonly desktopChrome = viewChild<ElementRef<HTMLElement>>('desktopChrome');
-  private readonly desktopNav = viewChild<ElementRef<HTMLElement>>('desktopNav');
+  private readonly navSentinel = viewChild<ElementRef<HTMLElement>>('navSentinel');
   private routerSub: Subscription | null = null;
-  private pinningRaf = 0;
+  private stuckObserver: IntersectionObserver | null = null;
 
   readonly isCategoriesActive = computed(() => {
     const url = this.currentUrl();
@@ -113,25 +111,24 @@ export class Navbar implements OnInit, OnDestroy {
     return cols;
   }
 
-  @HostListener('window:scroll')
-  @HostListener('window:resize')
-  onViewportChange(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    if (this.pinningRaf) cancelAnimationFrame(this.pinningRaf);
-    this.pinningRaf = requestAnimationFrame(() => this.updateNavPin());
+  constructor() {
+    afterNextRender(() => this.setupStuckObserver());
   }
 
-  private updateNavPin(): void {
-    const chrome = this.desktopChrome()?.nativeElement;
-    const nav = this.desktopNav()?.nativeElement;
-    if (!chrome || !nav || window.innerWidth < 768) {
-      this.navPinned.set(false);
-      return;
-    }
-    const h = nav.offsetHeight || 48;
-    if (h > 0) this.navStripHeight.set(h);
-    // Pin when desktop chrome has scrolled fully above the viewport
-    this.navPinned.set(chrome.getBoundingClientRect().bottom <= 0);
+  private setupStuckObserver(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    const el = this.navSentinel()?.nativeElement;
+    if (!el || typeof IntersectionObserver === 'undefined') return;
+
+    this.stuckObserver?.disconnect();
+    this.stuckObserver = new IntersectionObserver(
+      ([entry]) => {
+        // Sentinel above nav: when it leaves the top, nav is stuck
+        this.navStuck.set(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+      },
+      { threshold: [0, 1] }
+    );
+    this.stuckObserver.observe(el);
   }
 
   ngOnInit(): void {
@@ -147,7 +144,6 @@ export class Navbar implements OnInit, OnDestroy {
       next: (b) => {
         const raw = (b.navLogoUrl || DEFAULT_NAV_LOGO).trim();
         let resolved = raw.startsWith('/brand/') ? raw : (resolveMediaUrl(raw) || DEFAULT_NAV_LOGO);
-        // Cache-bust local brand assets so orange logo updates show immediately
         if (resolved.startsWith('/brand/') && !resolved.includes('?')) {
           resolved = `${resolved}?v=orange3`;
         }
@@ -163,10 +159,7 @@ export class Navbar implements OnInit, OnDestroy {
         this.closeCategoriesDropdown();
         this.closeBrandsDropdown();
         this.closeMobileMenu();
-        queueMicrotask(() => this.updateNavPin());
       });
-
-    queueMicrotask(() => this.updateNavPin());
   }
 
   onNavLogoError(event: Event): void {
@@ -178,7 +171,8 @@ export class Navbar implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
-    if (this.pinningRaf) cancelAnimationFrame(this.pinningRaf);
+    this.stuckObserver?.disconnect();
+    this.stuckObserver = null;
   }
 
   openCategoriesDropdown(): void {

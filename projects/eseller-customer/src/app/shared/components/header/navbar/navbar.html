@@ -1,9 +1,14 @@
-<header class="bg-primary" style="color: white;">
+<!--
+  IMPORTANT: sticky nav must NOT sit inside a short <header> that also
+  contains the logo/search chrome — sticky is clipped to that header box
+  and scrolls away with it. Chrome + sticky nav are siblings under :host
+  with display:contents so sticky is relative to the page.
+-->
 
   <!-- ============================================================ -->
-  <!-- MOBILE sticky bar (smooth native sticky — no JS collapse) -->
+  <!-- MOBILE sticky bar (page-level — outside chrome wrapper) -->
   <!-- ============================================================ -->
-  <div class="md:hidden sticky top-0 z-50 bg-primary shadow-sm">
+  <div class="md:hidden sticky top-0 z-[60] bg-primary text-white shadow-sm">
     <div class="max-w-7xl mx-auto px-3 py-3 flex items-center justify-between gap-3">
 
       <!-- Hamburger -->
@@ -86,10 +91,12 @@
     </div>
   </div>
 
+<!-- Non-sticky chrome (logo / search scrolls away) -->
+<div class="bg-primary text-white">
   <!-- ============================================================ -->
-  <!-- DESKTOP chrome (scrolls away naturally) -->
+  <!-- DESKTOP chrome (scrolls away) -->
   <!-- ============================================================ -->
-  <div #desktopChrome class="hidden md:block">
+  <div class="hidden md:block">
     <div class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-3 items-center gap-4">
 
       <!-- LEFT: Search -->
@@ -327,21 +334,19 @@
     </div>
   </div>
 
-  <!-- Spacer so layout doesn't jump when nav becomes fixed -->
-  @if (navPinned()) {
-    <div class="hidden md:block" [style.height.px]="navStripHeight()" aria-hidden="true"></div>
-  }
+</div>
 
-  <!-- ============================================================ -->
-  <!-- DESKTOP NAV — pins to top after chrome scrolls away -->
-  <!-- ============================================================ -->
-  <nav
-    #desktopNav
-    class="navbar-sticky-strip hidden md:block top-0 z-50 bg-primary border-t border-white/20 shadow-md w-full"
-    [class.fixed]="navPinned()"
-    [class.inset-x-0]="navPinned()"
-    [class.sticky]="!navPinned()"
-  >
+<!-- Sentinel: when this leaves the viewport, nav is "stuck" (shadow polish) -->
+<div #navSentinel class="hidden md:block h-0 w-full pointer-events-none" aria-hidden="true"></div>
+
+<!-- ============================================================ -->
+<!-- DESKTOP NAV — true position:sticky (sibling of chrome, not inside it) -->
+<!-- ============================================================ -->
+<nav
+  class="navbar-sticky-strip hidden md:block sticky top-0 z-[60] bg-primary border-t border-white/20 w-full text-white transition-shadow duration-300 ease-out"
+  [class.shadow-lg]="navStuck()"
+  [class.shadow-sm]="!navStuck()"
+>
     <div class="max-w-7xl mx-auto px-4 flex items-center gap-8 py-2.5 text-sm font-medium text-white">
       <a routerLink="/" class="relative text-white hover:text-white/80 transition-colors whitespace-nowrap py-1">Home</a>
 
@@ -695,8 +700,6 @@
     </div>
 
   </div>
-
-</header>
 
 <!-- Logout confirmation popup -->
 @if (logoutModalOpen()) {
