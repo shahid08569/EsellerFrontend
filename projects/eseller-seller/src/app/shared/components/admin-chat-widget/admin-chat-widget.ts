@@ -405,7 +405,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       error: (err) => {
         this.isSending.set(false);
         this.messages.update(list => list.filter(m => m.id !== tempId));
-        this.toast.show(err?.error?.error || 'Failed to send message to Management.', 'error');
+        this.toast.show(err?.error?.error || 'Failed to send message to Support Team.', 'error');
       }
     });
   }
