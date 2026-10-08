@@ -80,16 +80,17 @@ export class MainLayout implements OnInit, OnDestroy {
 
   private previousIsMobile: boolean | null = null;
 
+  /** Always viewport-fixed so sidebar never scrolls away (same pattern as SuperAdmin). */
   readonly sidebarClass = computed(() => {
     const open = this.isSidebarOpen();
     const mobile = this.isMobile();
-    const base = 'bg-slate-950 text-white flex flex-col shrink-0 transition-all duration-300 ease-in-out shadow-2xl z-50 fixed inset-y-0 left-0 lg:static overflow-hidden';
+    const base =
+      'bg-slate-950 text-white flex flex-col shrink-0 transition-all duration-300 ease-in-out shadow-2xl z-50 fixed inset-y-0 left-0 overflow-hidden';
 
     if (mobile) {
       return `${base} w-72 max-w-[85vw] ${open ? 'translate-x-0' : '-translate-x-full'}`;
-    } else {
-      return `${base} ${open ? 'w-64 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full lg:translate-x-0 pointer-events-none'}`;
     }
+    return `${base} ${open ? 'w-64 opacity-100 translate-x-0' : 'w-0 opacity-0 -translate-x-full pointer-events-none border-0'}`;
   });
 
   ngOnInit() {
