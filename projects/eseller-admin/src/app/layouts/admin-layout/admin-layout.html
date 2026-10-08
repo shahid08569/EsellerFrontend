@@ -79,7 +79,7 @@
               <a [routerLink]="['/dashboard']" [queryParams]="{view: 'overview'}" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                 <span>Operations & Queues</span>
                 @if (pendingShopsCount() + pendingProductsCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                  <span class="admin-nav-count">
                     {{ formatNavBadge(pendingShopsCount() + pendingProductsCount()) }}
                   </span>
                 }
@@ -103,7 +103,7 @@
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               @if (shopsNewCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                <span class="admin-nav-count">
                   {{ formatNavBadge(shopsNewCount()) }}
                 </span>
               }
@@ -133,7 +133,7 @@
                 [class.bg-slate-800/80]="isShopNav('pending')">
                 <span>Pending Applications</span>
                 @if (pendingShopsCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                  <span class="admin-nav-count">
                     {{ formatNavBadge(pendingShopsCount()) }}
                   </span>
                 }
@@ -154,7 +154,7 @@
                 [class.bg-slate-800/80]="isShopNav('tiers')">
                 <span>Tier Upgrades</span>
                 @if (pendingTierCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                  <span class="admin-nav-count">
                     {{ formatNavBadge(pendingTierCount()) }}
                   </span>
                 }
@@ -186,7 +186,7 @@
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               @if (pendingProductsCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                <span class="admin-nav-count">
                   {{ formatNavBadge(pendingProductsCount()) }}
                 </span>
               }
@@ -224,7 +224,7 @@
                 [class.bg-slate-800/80]="isProductNav('listing')">
                 <span>Global listing request</span>
                 @if (pendingGlobalCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingGlobalCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingGlobalCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'own-req', kind: 'own', tab: 'pending'}"
@@ -235,7 +235,7 @@
                 [class.bg-slate-800/80]="isProductNav('own-req')">
                 <span>Seller product request</span>
                 @if (pendingOwnCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingOwnCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingOwnCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'live', liveTab: 'warehouse'}"
@@ -273,7 +273,7 @@
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               @if (pendingOrdersCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                <span class="admin-nav-count">
                   {{ formatNavBadge(pendingOrdersCount()) }}
                 </span>
               }
@@ -303,7 +303,7 @@
                 [class.bg-slate-800/80]="isOrderNav('list')">
                 <span>Orders list</span>
                 @if (pendingOrdersCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingOrdersCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingOrdersCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/orders']" [queryParams]="{action: 'create'}"
@@ -329,7 +329,7 @@
           </svg>
           <span class="truncate font-semibold flex-1" style="color: #ffffff !important;">Reviews</span>
           @if (pendingReviewsCount() > 0) {
-            <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+            <span class="admin-nav-count">
               {{ formatNavBadge(pendingReviewsCount()) }}
             </span>
           }
@@ -346,7 +346,7 @@
           </svg>
           <span class="truncate font-semibold flex-1" style="color: #ffffff !important;">Live Chat</span>
           @if (chatUnread.totalUnread() > 0) {
-            <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+            <span class="admin-nav-count">
               {{ formatNavBadge(chatUnread.totalUnread()) }}
             </span>
           }
@@ -468,7 +468,7 @@
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               @if (usersNewCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                <span class="admin-nav-count">
                   {{ formatNavBadge(usersNewCount()) }}
                 </span>
               }
@@ -493,19 +493,19 @@
               <a routerLink="/customers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                 <span>Customers (Shoppers)</span>
                 @if (pendingCustomersCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingCustomersCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingCustomersCount()) }}</span>
                 }
               </a>
               <a routerLink="/sellers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                 <span>Sellers (Merchants)</span>
                 @if (pendingSellersCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingSellersCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingSellersCount()) }}</span>
                 }
               </a>
               <a routerLink="/shops" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                 <span>Seller Registrations</span>
                 @if (pendingShopsCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingShopsCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingShopsCount()) }}</span>
                 }
               </a>
               <a routerLink="/partners" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
@@ -533,7 +533,7 @@
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
               @if (financeNewCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
+                <span class="admin-nav-count">
                   {{ formatNavBadge(financeNewCount()) }}
                 </span>
               }
@@ -715,7 +715,7 @@
           [class.hover:bg-slate-800]="!isShopNav('tiers')">
           <span>Tier Upgrades</span>
           @if (pendingTierCount() > 0) {
-            <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingTierCount()) }}</span>
+            <span class="admin-nav-count">{{ formatNavBadge(pendingTierCount()) }}</span>
           }
         </a>
         <div class="space-y-1">
@@ -724,7 +724,7 @@
             <span>📦 Products</span>
             <div class="flex items-center gap-1.5">
               @if (pendingProductsCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingProductsCount()) }}</span>
+                <span class="admin-nav-count">{{ formatNavBadge(pendingProductsCount()) }}</span>
               }
               @if (isDropdownOpen('products')) {
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -743,13 +743,13 @@
               <a [routerLink]="['/products']" [queryParams]="{status: 'listing', kind: 'global', tab: 'pending'}" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
                 <span>Global listing request</span>
                 @if (pendingGlobalCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingGlobalCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingGlobalCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'own-req', kind: 'own', tab: 'pending'}" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
                 <span>Seller product request</span>
                 @if (pendingOwnCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingOwnCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingOwnCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/products']" [queryParams]="{status: 'live', liveTab: 'warehouse'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Seller live products</a>
@@ -763,7 +763,7 @@
             <span>🛒 Orders</span>
             <div class="flex items-center gap-1.5">
               @if (pendingOrdersCount() > 0) {
-                <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingOrdersCount()) }}</span>
+                <span class="admin-nav-count">{{ formatNavBadge(pendingOrdersCount()) }}</span>
               }
               @if (isDropdownOpen('orders')) {
                 <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-200 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
@@ -781,7 +781,7 @@
               <a routerLink="/orders" (click)="toggleMobileMenu()" class="flex items-center justify-between px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">
                 <span>Orders list</span>
                 @if (pendingOrdersCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingOrdersCount()) }}</span>
+                  <span class="admin-nav-count">{{ formatNavBadge(pendingOrdersCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/orders']" [queryParams]="{action: 'create'}" (click)="toggleMobileMenu()" class="block px-3 py-1.5 rounded-lg font-medium text-slate-300 hover:bg-slate-800 transition-all">Create Order</a>

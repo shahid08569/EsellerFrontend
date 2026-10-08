@@ -12,16 +12,36 @@
 
 /* Sidebar Nav Link Contrast - Guarantee 100% Crisp Visibility */
 aside nav a,
-aside nav a span {
+aside nav a span:not(.admin-nav-count) {
   color: #f8fafc !important;
 }
 
 aside nav a:hover,
-aside nav a:hover span {
+aside nav a:hover span:not(.admin-nav-count) {
   color: #fdba74 !important;
 }
 
 aside nav a[class*="from-orange-600"],
-aside nav a[class*="from-orange-600"] span {
+aside nav a[class*="from-orange-600"] span:not(.admin-nav-count) {
   color: #ffffff !important;
+}
+
+/* Nav NEW-count badges — high contrast on dark sidebar */
+.admin-nav-count {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 1.35rem;
+  height: 1.35rem;
+  padding: 0 0.4rem;
+  border-radius: 9999px;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.02em;
+  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.45);
 }
