@@ -9,7 +9,12 @@ import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { HomeService, BrandDto, EmptyState, SkeletonLayout, resolveMediaUrl } from 'eseller-shared';
-import { brandLogoFallback, brandInitialsAvatar, resolveBrandLogoUrl } from '../home/components/catalog-media';
+import {
+  brandLogoFallback,
+  brandInitialsAvatar,
+  resolveBrandLogoUrl,
+  isCuratedBrand
+} from '../home/components/catalog-media';
 
 @Component({
   selector: 'app-brands',
@@ -42,7 +47,17 @@ export class Brands implements OnInit {
     this.loading.set(true);
     this.homeService.getBrands().subscribe({
       next: (b) => {
-        this.brands.set(b);
+        const curated = (b || []).filter((x) => isCuratedBrand(x.name, x.slug, x.logoUrl));
+        // Dedupe by display name (keep first)
+        const seen = new Set<string>();
+        this.brands.set(
+          curated.filter((x) => {
+            const key = x.name.trim().toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+        );
         this.loading.set(false);
       },
       error: () => this.loading.set(false)
@@ -51,12 +66,6 @@ export class Brands implements OnInit {
 
   getLogoUrl(brand: BrandDto): string {
     const resolved = resolveMediaUrl(brand.logoUrl);
-    if (resolved && !resolved.includes('picsum.photos')) {
-      if (resolved.includes('/uploads/')) {
-        return brandLogoFallback(brand.slug, brand.name) || resolved;
-      }
-      return resolved;
-    }
     return resolveBrandLogoUrl(resolved, brand.slug, brand.name);
   }
 

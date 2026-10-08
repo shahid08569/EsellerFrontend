@@ -22,6 +22,7 @@ import { HotSellingSection } from '../components/hot-selling-section/hot-selling
 import { BrandsGrid } from '../components/brands-grid/brands-grid';
 import { CategoryProductsSection } from '../components/category-products-section/category-products-section';
 import { PaymentLogosRail } from '../components/payment-logos-rail/payment-logos-rail';
+import { isCuratedBrand } from '../components/catalog-media';
 
 @Component({
   selector: 'app-home',
@@ -81,7 +82,16 @@ export class Home implements OnInit, OnDestroy {
         const featured = cats.filter(c => c.isFeaturedOnHomepage);
         this.categories.set(featured.length > 0 ? featured : cats);
 
-        this.brands.set(brands || []);
+        const curated = (brands || []).filter((b) => isCuratedBrand(b.name, b.slug, b.logoUrl));
+        const seen = new Set<string>();
+        this.brands.set(
+          curated.filter((b) => {
+            const key = b.name.trim().toLowerCase();
+            if (seen.has(key)) return false;
+            seen.add(key);
+            return true;
+          })
+        );
 
         const featuredProducts = sections.featured?.length
           ? sections.featured

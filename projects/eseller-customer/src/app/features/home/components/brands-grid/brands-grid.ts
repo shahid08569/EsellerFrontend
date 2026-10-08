@@ -241,15 +241,7 @@ export class BrandsGrid implements OnDestroy {
   }
 
   getLogoUrl(brand: BrandDto): string {
-    const resolved = resolveMediaUrl(brand.logoUrl);
-    if (resolved && !resolved.includes('picsum.photos')) {
-      // Prefer known CDN logos over placeholder /uploads placeholders when available
-      if (resolved.includes('/uploads/')) {
-        return resolveBrandFallback(brand.slug, brand.name) || resolved;
-      }
-      return resolved;
-    }
-    return resolveBrandLogoUrl(resolved, brand.slug, brand.name);
+    return resolveBrandLogoUrl(resolveMediaUrl(brand.logoUrl), brand.slug, brand.name);
   }
 
   brandLogoFallback(slug?: string | null, name?: string | null): string {

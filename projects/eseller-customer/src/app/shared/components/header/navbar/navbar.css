@@ -1,1 +1,10 @@
-/* Brand mark is orange PNG — no gray tint filters */
+/* Sticky nav uses native position:sticky — keep GPU-friendly, no layout thrash */
+:host {
+  display: block;
+}
+
+nav.sticky,
+.sticky {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+}

@@ -1,22 +1,10 @@
-<header class="bg-primary sticky top-0 z-50 shadow-sm" style="color: white;" [class.header-collapsed]="headerCollapsed()">
+<header class="bg-primary" style="color: white;">
 
   <!-- ============================================================ -->
-  <!-- MAIN ROW: Mobile / Desktop (hides on scroll; nav strip stays) -->
+  <!-- MOBILE sticky bar (smooth native sticky — no JS collapse) -->
   <!-- ============================================================ -->
-  <!-- Mobile chrome always visible; desktop chrome collapses on scroll -->
-  <div
-    class="header-chrome max-w-7xl mx-auto px-3 md:px-4 py-3 overflow-hidden transition-[max-height,opacity,padding] duration-300 ease-out md:transition-[max-height,opacity,padding]"
-    [class.md:py-4]="!headerCollapsed()"
-    [class.md:max-h-[220px]]="!headerCollapsed()"
-    [class.md:opacity-100]="!headerCollapsed()"
-    [class.md:max-h-0]="headerCollapsed()"
-    [class.md:opacity-0]="headerCollapsed()"
-    [class.md:py-0]="headerCollapsed()"
-    [attr.aria-hidden]="headerCollapsed() ? true : null"
-  >
-
-    <!-- ============ MOBILE LAYOUT (< md) ============ -->
-    <div class="flex md:hidden items-center justify-between gap-3">
+  <div class="md:hidden sticky top-0 z-50 bg-primary shadow-sm">
+    <div class="max-w-7xl mx-auto px-3 py-3 flex items-center justify-between gap-3">
 
       <!-- Hamburger -->
       <button
@@ -96,9 +84,13 @@
       </div>
 
     </div>
+  </div>
 
-    <!-- ============ DESKTOP LAYOUT (>= md) ============ -->
-    <div class="hidden md:grid grid-cols-3 items-center gap-4">
+  <!-- ============================================================ -->
+  <!-- DESKTOP chrome (scrolls away naturally) -->
+  <!-- ============================================================ -->
+  <div class="hidden md:block">
+    <div class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-3 items-center gap-4">
 
       <!-- LEFT: Search -->
       <div class="flex items-center">
@@ -308,22 +300,12 @@
       </div>
 
     </div>
-
   </div>
 
   <!-- ============================================================ -->
-  <!-- MOBILE SEARCH BAR (hides on scroll with chrome) -->
+  <!-- MOBILE SEARCH (scrolls away under sticky bar) -->
   <!-- ============================================================ -->
-  <div
-    class="md:hidden px-3 overflow-hidden transition-[max-height,opacity,padding] duration-300 ease-out"
-    [class.pb-3]="!headerCollapsed()"
-    [class.max-h-16]="!headerCollapsed()"
-    [class.opacity-100]="!headerCollapsed()"
-    [class.max-h-0]="headerCollapsed()"
-    [class.opacity-0]="headerCollapsed()"
-    [class.pb-0]="headerCollapsed()"
-    [attr.aria-hidden]="headerCollapsed()"
-  >
+  <div class="md:hidden px-3 pb-3">
     <div class="relative w-full">
       <input
         #mobileSearch
@@ -346,9 +328,9 @@
   </div>
 
   <!-- ============================================================ -->
-  <!-- DESKTOP NAV LINE (always sticky / visible) -->
+  <!-- DESKTOP NAV — sticky (smooth native, chrome scrolls away) -->
   <!-- ============================================================ -->
-  <nav class="hidden md:block border-t border-white/20">
+  <nav class="hidden md:block sticky top-0 z-50 bg-primary border-t border-white/20 shadow-sm backdrop-blur-sm">
     <div class="max-w-7xl mx-auto px-4 flex items-center gap-8 py-2.5 text-sm font-medium text-white">
       <a routerLink="/" class="relative text-white hover:text-white/80 transition-colors whitespace-nowrap py-1">Home</a>
 

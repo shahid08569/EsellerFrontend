@@ -1,5 +1,4 @@
-import { Component, signal, inject, computed, OnInit, OnDestroy, PLATFORM_ID, HostListener } from '@angular/core';
-import { isPlatformBrowser } from '@angular/common';
+import { Component, signal, inject, computed, OnInit, OnDestroy } from '@angular/core';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -17,6 +16,7 @@ import {
   resolveMediaUrl
 } from 'eseller-shared';
 import { environment } from '../../../../../environments/environment';
+import { isCuratedBrand } from '../../../../features/home/components/catalog-media';
 
 const DEFAULT_NAV_LOGO = '/brand/eseller-global-nav.png?v=orange3';
 const DEFAULT_TAGLINE = 'Shop Without Borders';
@@ -35,7 +35,6 @@ export class Navbar implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly homeService = inject(HomeService);
   private readonly authService = inject(AuthService);
-  private readonly platformId = inject(PLATFORM_ID);
   readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
   readonly compareService = inject(CompareService);
@@ -49,8 +48,6 @@ export class Navbar implements OnInit, OnDestroy {
   readonly canShop = () => this.authAction.canShop();
 
   readonly mobileMenuOpen = signal(false);
-  /** After scroll: hide logo/search chrome; keep nav strip only. */
-  readonly headerCollapsed = signal(false);
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly isCategoriesDropdownOpen = signal<boolean>(false);
   readonly brands = signal<BrandDto[]>([]);
@@ -97,30 +94,13 @@ export class Navbar implements OnInit, OnDestroy {
     return cols;
   }
 
-  @HostListener('window:scroll')
-  onWindowScroll(): void {
-    if (!isPlatformBrowser(this.platformId)) return;
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    const collapsed = y > 48;
-    if (this.headerCollapsed() !== collapsed) {
-      this.headerCollapsed.set(collapsed);
-      if (collapsed) {
-        this.closeCategoriesDropdown();
-        this.closeBrandsDropdown();
-        this.closeUserMenu();
-      }
-    }
-  }
-
   ngOnInit(): void {
-    this.onWindowScroll();
-
     this.homeService.getCategories().subscribe({
       next: (cats) => this.categories.set(cats)
     });
 
     this.homeService.getBrands().subscribe({
-      next: (bList) => this.brands.set(bList)
+      next: (bList) => this.brands.set((bList || []).filter((b) => isCuratedBrand(b.name, b.slug, b.logoUrl)))
     });
 
     this.homeService.getPlatformBranding().subscribe({
