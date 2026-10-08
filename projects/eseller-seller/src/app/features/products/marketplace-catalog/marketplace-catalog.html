@@ -8,7 +8,7 @@
           Product Warehouse (Master Catalog)
         </h2>
         <span class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-300 text-[10px] font-bold border border-slate-700">
-          Limit: {{ usedSlots() }} / {{ productLimit() }} Products
+          Total Products: {{ usedSlots() }}
         </span>
       </div>
       <p class="text-xs text-slate-400 max-w-xl">
@@ -19,7 +19,7 @@
 
     <div class="flex items-center gap-2 shrink-0">
       <a routerLink="/products" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-colors cursor-pointer">
-        View All My Products ({{ usedSlots() }} / {{ productLimit() }})
+        View All My Products ({{ usedSlots() }})
       </a>
     </div>
   </div>

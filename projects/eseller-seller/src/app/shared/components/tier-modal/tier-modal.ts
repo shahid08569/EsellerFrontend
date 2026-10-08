@@ -33,11 +33,11 @@ const FALLBACK_PLANS: TierPlan[] = [
     price: 0,
     badge: 'Bronze (Free)',
     color: 'border-slate-300',
-    tagline: 'Default plan for verified merchants — up to 200 products.',
+    tagline: 'Default plan for verified merchants.',
     productLimit: 200,
     isRecommended: false,
     features: [
-      'Up to 200 Products from Warehouse',
+      'Warehouse Master Catalog Access',
       'Flat 20% Commission on every sale',
       'Standard Storefront & Catalog Access'
     ]
@@ -48,11 +48,11 @@ const FALLBACK_PLANS: TierPlan[] = [
     price: 1000,
     badge: 'Gold',
     color: 'border-amber-400',
-    tagline: 'Growth tier for volume sellers — up to 1,000 products.',
+    tagline: 'Growth tier for volume sellers.',
     productLimit: 1000,
     isRecommended: true,
     features: [
-      'Up to 1,000 Products from Warehouse',
+      'Expanded Warehouse Catalog Access',
       'Flat 20% Commission on every sale',
       'Gold Verified Merchant Badge'
     ]
@@ -63,11 +63,11 @@ const FALLBACK_PLANS: TierPlan[] = [
     price: 2000,
     badge: 'Diamond',
     color: 'border-cyan-400',
-    tagline: 'Enterprise capacity — up to 5,000 products.',
+    tagline: 'Enterprise capacity for high-volume stores.',
     productLimit: 5000,
     isRecommended: false,
     features: [
-      'Up to 5,000 Products from Warehouse',
+      'Full Warehouse Catalog Access',
       'Flat 20% Commission on every sale',
       'Diamond Elite Badge & Top Search Placement'
     ]
@@ -146,7 +146,7 @@ export class TierModal implements OnChanges {
     const name = c.name || 'Tier';
     const tagline =
       (c.description || '').trim() ||
-      `${name} package — up to ${limit.toLocaleString()} products.`;
+      `${name} merchant package.`;
 
     return {
       id: c.id,
@@ -158,7 +158,7 @@ export class TierModal implements OnChanges {
       productLimit: limit,
       isRecommended: !!c.isRecommended,
       features: [
-        `Up to ${limit.toLocaleString()} Products from Warehouse`,
+        'Warehouse Master Catalog Access',
         'Flat 20% Commission on every sale',
         price === 0 ? 'Standard Storefront & Catalog Access' : `${name} Verified Merchant Badge`
       ]

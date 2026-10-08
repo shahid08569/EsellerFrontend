@@ -242,13 +242,13 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   sendQuickAction(actionType: 'gold' | 'diamond' | 'payment' | 'limit'): void {
     let msg = '';
     if (actionType === 'gold') {
-      msg = 'Hello Admin, I would like to request an upgrade to Gold ($1000 / 1,000 product limit) for my store. Please provide payment verification details.';
+      msg = 'Hello Admin, I would like to request an upgrade to Gold ($1000) for my store. Please provide payment verification details.';
     } else if (actionType === 'diamond') {
-      msg = 'Hello Admin, I would like to request an upgrade to Diamond ($2000 / 5,000 product limit) for my store.';
+      msg = 'Hello Admin, I would like to request an upgrade to Diamond ($2000) for my store.';
     } else if (actionType === 'payment') {
       msg = 'I have submitted payment for my Tier Upgrade via Bank Transfer / ACH or Wire. Please reply with the payment details you need, and I will share my real transfer reference for verification.';
     } else if (actionType === 'limit') {
-      msg = 'My store is reaching the 200 product limit on the Bronze plan. I would like to expand my catalog capacity.';
+      msg = 'My store would like to expand catalog capacity on the Bronze plan.';
     }
 
     this.sendMessageDirect(msg);
