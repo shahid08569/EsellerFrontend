@@ -249,15 +249,15 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
     this.isLoadingInbox.set(true);
-    // Customers chat only with Super Admin (platform support).
+    // Customers chat only with Customer Support (platform support).
     this.chatService.getSupportSession().subscribe({
       next: async (sess) => {
         const supportThread: ChatThread = {
           orderRequestId: sess.orderRequestId,
           threadType: 'Support',
           shopId: null,
-          shopName: 'Super Admin Support',
-          lastMessage: 'Direct chat with platform Super Admin',
+          shopName: 'Customer Support',
+          lastMessage: 'Direct chat with Customer Support',
           lastMessageTime: new Date().toISOString(),
           unreadCount: 0
         };
@@ -280,17 +280,17 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
     // Load latest finalized order so WhatsApp-style template can prefill
     this.attachLocalOrder(orderRef, shopId);
 
-    // Always route customer chat to Super Admin support
+    // Always route customer chat to Customer Support
     this.chatService.getSupportSession().subscribe({
       next: async (sess) => {
         if (!sess?.orderRequestId) return;
         await this.selectConversation(sess.orderRequestId, {
-          shopName: 'Super Admin Support',
+          shopName: 'Customer Support',
           threadType: 'Support',
           shopId: null
         });
       },
-      error: () => this.showFeedback('Please sign in to chat with Super Admin.', true)
+      error: () => this.showFeedback('Please sign in to chat with Customer Support.', true)
     });
   }
 
@@ -423,7 +423,7 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
       .join(', ');
 
     this.messageText.set(
-      `Hello Super Admin! Please confirm my order.
+      `Hello Support Team! Please confirm my order.
 
 🛒 Order #${displayRef}
 🏪 Shop: ${shop}

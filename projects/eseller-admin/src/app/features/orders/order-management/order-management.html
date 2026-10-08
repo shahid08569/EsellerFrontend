@@ -709,7 +709,7 @@
               <div class="min-w-0 space-y-0.5 px-0.5">
                 <p class="text-[10px] text-gray-400 font-semibold truncate">{{ p.brandName || 'Brand' }}</p>
                 <p class="text-[11px] font-bold text-gray-900 line-clamp-2 leading-snug">{{ p.name }}</p>
-                <p class="text-xs font-extrabold text-orange-600">Rs {{ p.basePrice | number:'1.0-0' }}</p>
+                <p class="text-xs font-extrabold text-orange-600">${{ p.basePrice | number:'1.0-0' }}</p>
               </div>
             </button>
           }
@@ -748,7 +748,7 @@
               class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 disabled:opacity-50">
               <option value="">{{ placeLoadingVariants() ? 'Loading…' : (placeProductId() ? 'Select variant…' : 'Pick product first') }}</option>
               @for (v of placeVariants(); track v.id) {
-                <option [value]="v.id">{{ v.sku }} — Rs {{ v.price }} (stock {{ v.stockQty }})</option>
+                <option [value]="v.id">{{ v.sku }} — ${{ v.price }} (stock {{ v.stockQty }})</option>
               }
             </select>
           </div>

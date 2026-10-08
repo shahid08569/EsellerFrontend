@@ -240,7 +240,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         const roomId = session.orderRequestId || session.conversationId;
         if (!roomId) {
           this.isLoading.set(false);
-          this.toast.show('Could not open support chat.', 'error');
+          this.toast.show('Could not open customer support chat.', 'error');
           return;
         }
 
@@ -248,7 +248,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
         const supportConvo: ChatConversation = {
           roomId,
-          title: 'Support Team',
+          title: 'Customer Support',
           lastMessage: 'Loading…',
           lastMessageTime: undefined
         };
@@ -264,7 +264,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.show('Failed to open Support Team chat', 'error');
+        this.toast.show('Failed to open Customer Support chat', 'error');
       }
     });
   }

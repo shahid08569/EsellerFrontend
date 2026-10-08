@@ -43,7 +43,7 @@
         } @else if (filteredThreads().length === 0) {
           <div class="p-8 text-center space-y-2">
             <p class="text-xs text-gray-500">No chats yet.</p>
-            <p class="text-[11px] text-gray-400">Tap <strong>Chat with Support</strong> to message Super Admin directly.</p>
+            <p class="text-[11px] text-gray-400">Tap <strong>Chat with Support</strong> to message Customer Support directly.</p>
             <a routerLink="/products" class="inline-block text-xs font-bold text-primary hover:underline mt-2">Browse products →</a>
           </div>
         } @else {
@@ -185,9 +185,9 @@
 
         <!-- Composer -->
         <div class="flex-shrink-0 p-2 sm:p-3 bg-white border-t border-gray-200 space-y-1.5">
-          @if (messageText().includes('Hello Super Admin! Please confirm my order')) {
+          @if (messageText().includes('Please confirm my order')) {
             <div class="flex items-center justify-between gap-2 px-1 text-[11px]">
-              <span class="text-text-muted truncate">Order template ready for Super Admin</span>
+              <span class="text-text-muted truncate">Order template ready for Customer Support</span>
               <button
                 type="button"
                 (click)="sendOrderConfirmationNow()"

@@ -721,9 +721,9 @@ export class ProductDetail implements OnInit, OnDestroy {
         : finalOrderRef;
 
       if (isApiCreated) {
-        this.toastService.show(`Order placed! Reference: ${displayRef}. Opening Super Admin chat...`, 'success');
+        this.toastService.show(`Order placed! Reference: ${displayRef}. Opening Customer Support chat...`, 'success');
       } else {
-        this.toastService.show(`Order ready. Opening Super Admin chat with your order template...`, 'success');
+        this.toastService.show(`Order ready. Opening Customer Support chat with your order template...`, 'success');
       }
 
       this.router.navigate(['/chat'], {
@@ -762,10 +762,10 @@ export class ProductDetail implements OnInit, OnDestroy {
   }
 
   /**
-   * Customers chat with Super Admin only (not the merchant).
+   * Customers chat with Customer Support only (not the merchant).
    */
   chatWithSeller(): void {
-    if (!this.authAction.requireLogin('chat with Super Admin')) return;
+    if (!this.authAction.requireLogin('chat with Customer Support')) return;
     this.router.navigate(['/chat'], {
       queryParams: { support: '1' }
     });

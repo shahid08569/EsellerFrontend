@@ -91,7 +91,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
       },
       error: () => {
-        this.toast.show('Could not connect to Support Team chat.', 'error');
+        this.toast.show('Could not connect to Customer Support chat.', 'error');
       }
     });
 
@@ -143,7 +143,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             {
               id: incoming.messageId || `m-${Date.now()}`,
               sender: 'admin' as const,
-              senderName: 'Support Team',
+              senderName: 'Customer Support',
               message: incoming.message,
               timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                 hour: '2-digit',
@@ -164,7 +164,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           });
         } else {
           this.unreadCount.update(c => c + 1);
-          this.toast.show('New message from Support Team', 'info');
+          this.toast.show('New message from Customer Support', 'info');
         }
         this.queueScrollToLatest();
       });
@@ -195,7 +195,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.joinedRoomId = id;
         onReady(id);
       },
-      error: () => this.toast.show('Could not open support chat.', 'error')
+      error: () => this.toast.show('Could not open Customer Support chat.', 'error')
     });
   }
 
@@ -321,7 +321,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             sender: isSeller ? 'seller' : 'admin',
             senderName: isSeller
               ? (this.shop()?.name || 'Merchant')
-              : 'Support Team',
+              : 'Customer Support',
             message: m.message || m.content || '',
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',

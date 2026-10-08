@@ -3,8 +3,8 @@
   <!-- Header -->
   <div class="flex items-center justify-between shrink-0">
     <div>
-      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Live Support</h1>
-      <p class="text-xs text-gray-500 mt-0.5">Chat with our Support Team for shop help, upgrades, and payouts.</p>
+      <h1 class="text-2xl font-black text-gray-900 tracking-tight">Customer Support</h1>
+      <p class="text-xs text-gray-500 mt-0.5">Chat with our Customer Support team for shop help, upgrades, and payouts.</p>
     </div>
   </div>
 
@@ -20,7 +20,7 @@
             type="text"
             [ngModel]="searchTerm()"
             (ngModelChange)="searchTerm.set($event)"
-            placeholder="Search support chat..."
+            placeholder="Search customer support chat..."
             class="w-full bg-gray-50 border border-gray-200 rounded-xl pl-8 pr-3 py-1.5 text-xs focus:ring-2 focus:ring-primary/20 focus:border-primary outline-hidden">
           <span class="absolute left-2.5 top-1.5 text-gray-400 text-xs">🔍</span>
         </div>
@@ -32,7 +32,7 @@
             <es-skeleton-layout variant="chat" [count]="5" />
           </div>
         } @else if (filteredConversations().length === 0) {
-          <div class="p-8 text-center text-xs text-gray-400">No support channel yet. Retry or refresh.</div>
+          <div class="p-8 text-center text-xs text-gray-400">No customer support channel yet. Retry or refresh.</div>
         } @else {
           @for (c of filteredConversations(); track c.roomId) {
             <div
@@ -51,10 +51,10 @@
                   <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
                       <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span class="font-bold text-xs text-gray-900 truncate">Support Team</span>
+                      <span class="font-bold text-xs text-gray-900 truncate">Customer Support</span>
                     </div>
                     <p class="text-[11px] text-gray-500 mt-0.5 truncate">
-                      {{ c.lastMessage || 'Chat with Support Team' }}
+                      {{ c.lastMessage || 'Chat with Customer Support' }}
                     </p>
                   </div>
                 </div>
@@ -62,7 +62,7 @@
               </div>
               <div class="flex items-center justify-end mt-1.5">
                 <span class="px-1.5 py-0.5 rounded-md uppercase font-bold text-[9px] bg-teal-50 text-teal-700">
-                  Support
+                  Customer Support
                 </span>
               </div>
             </div>
@@ -84,13 +84,13 @@
               </svg>
             </div>
             <div>
-              <h2 class="font-bold text-sm text-gray-900">Support Team</h2>
+              <h2 class="font-bold text-sm text-gray-900">Customer Support</h2>
               <p class="text-[11px] text-gray-400">Typically reply soon</p>
             </div>
           </div>
 
           <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border bg-teal-50 text-teal-700 border-teal-200">
-            Support Team
+            Customer Support
           </span>
         </div>
 
@@ -99,7 +99,7 @@
             @for (msg of messages(); track msg.id || (msg.createdAt + msg.message)) {
               <div class="flex flex-col" [class.items-end]="msg.isMe" [class.items-start]="!msg.isMe">
                 <span class="text-[10px] text-gray-400 px-1 mb-0.5">
-                  {{ msg.isMe ? 'You (Shop)' : 'Support Team' }} • {{ msg.createdAt | date:'shortTime' }}
+                  {{ msg.isMe ? 'You (Shop)' : 'Customer Support' }} • {{ msg.createdAt | date:'shortTime' }}
                 </span>
                 <div
                   class="max-w-[75%] px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed space-y-1.5"
