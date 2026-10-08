@@ -10,7 +10,7 @@
           System & Platform Settings
         </h1>
         <p class="text-orange-100 text-xs font-medium">
-          Configure global marketplace commissions, affiliate tracking, and operational rules.
+          Google title &amp; description, logos, commissions, and platform rules.
         </p>
       </div>
     </div>
@@ -30,6 +30,59 @@
     <es-skeleton-layout variant="page" />
   } @else {
     <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-6">
+      <!-- 0. GOOGLE SEO — title + description (SuperAdmin editable) -->
+      <div class="space-y-4">
+        <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
+          🔍 Google Search Listing (Title &amp; Description)
+        </h3>
+        <p class="text-[11px] text-gray-500 -mt-2">
+          Ye fields Google result mein dikhti hain. Save ke baad storefront pe apply hoti hain; Google cache refresh mein kuch din lag sakte hain.
+        </p>
+
+        <div class="p-4 rounded-xl border border-blue-100 bg-blue-50/50 space-y-3">
+          <p class="text-[10px] font-bold text-blue-800 uppercase tracking-wider">Live Google preview</p>
+          <div class="rounded-lg bg-white border border-gray-100 p-3 space-y-1 shadow-sm">
+            <div class="flex items-center gap-2 text-[11px] text-gray-600">
+              <span class="inline-flex w-5 h-5 rounded-full bg-orange-100 overflow-hidden items-center justify-center shrink-0">
+                <img [src]="previewUrl(navLogoUrl())" alt="" class="w-full h-full object-cover" />
+              </span>
+              <span>esellerglobal.com</span>
+            </div>
+            <p class="text-lg text-[#1a0dab] font-medium leading-snug truncate">{{ siteTitle() || 'EsellerGlobal' }}</p>
+            <p class="text-sm text-[#4d5156] leading-snug line-clamp-2">{{ metaDescription() || 'Add a description…' }}</p>
+          </div>
+        </div>
+
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Site title (Google title)</label>
+          <input
+            type="text"
+            [ngModel]="siteTitle()"
+            (ngModelChange)="siteTitle.set($event)"
+            maxlength="70"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"
+            placeholder="EsellerGlobal" />
+          <p class="text-[10px] text-gray-400 mt-1">~50–60 characters. Example: EsellerGlobal — Shop Without Borders</p>
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Site description (Google snippet)</label>
+          <textarea
+            rows="4"
+            [ngModel]="metaDescription()"
+            (ngModelChange)="metaDescription.set($event)"
+            maxlength="320"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-sm focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden resize-y"
+            placeholder="Write what Google should show under your title…"></textarea>
+          <p class="text-[10px] text-gray-400 mt-1">{{ metaDescription().length }}/320 — best 120–160 characters.</p>
+        </div>
+        <button
+          type="button"
+          (click)="saveSeoBranding()"
+          class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-sm font-bold cursor-pointer shadow-sm">
+          Save Google title &amp; description
+        </button>
+      </div>
+
       <!-- 1. COMMISSION & FEES -->
       <div class="space-y-4">
         <h3 class="text-sm font-bold text-gray-900 border-b border-gray-100 pb-2">
@@ -149,46 +202,9 @@
           </button>
         </div>
 
-        <!-- Google / SEO — title, description, favicon = nav logo -->
-        <div class="p-4 rounded-xl border border-amber-100 bg-amber-50/40 space-y-3">
-          <div>
-            <h4 class="text-xs font-black text-gray-900 uppercase tracking-wider">Google Search Preview (SEO)</h4>
-            <p class="text-[11px] text-gray-500 mt-1">
-              Site title + description show in Google. Browser tab / Google favicon uses your <strong>Navbar logo</strong> automatically — upload a square PNG there for best results.
-            </p>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Site title (Google title)</label>
-            <input
-              type="text"
-              [ngModel]="siteTitle()"
-              (ngModelChange)="siteTitle.set($event)"
-              maxlength="70"
-              class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden"
-              placeholder="EsellerGlobal" />
-            <p class="text-[10px] text-gray-400 mt-1">~50–60 characters recommended.</p>
-          </div>
-          <div>
-            <label class="block text-xs font-bold text-gray-700 mb-1">Meta description (Google snippet)</label>
-            <textarea
-              rows="3"
-              [ngModel]="metaDescription()"
-              (ngModelChange)="metaDescription.set($event)"
-              maxlength="320"
-              class="w-full bg-white border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden resize-y"
-              placeholder="Shop Without Borders on EsellerGlobal…"></textarea>
-            <p class="text-[10px] text-gray-400 mt-1">{{ metaDescription().length }}/320 — aim for 120–160 characters.</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              (click)="saveSeoBranding()"
-              class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold cursor-pointer">
-              Save Google title &amp; description
-            </button>
-            <span class="text-[10px] text-gray-500">Also saved with “Save Configurations”.</span>
-          </div>
-        </div>
+        <p class="text-[11px] text-amber-800 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+          Google favicon = <strong>Navbar logo</strong> above. Upload a square PNG there for best Google icon.
+        </p>
       </div>
 
       <!-- 4. PLATFORM CONTROLS -->
