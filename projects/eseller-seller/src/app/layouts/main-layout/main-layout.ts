@@ -30,6 +30,15 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly showLogoutModal = signal<boolean>(false);
   readonly dismissWarning = signal<boolean>(false);
   readonly isTierModalOpen = signal<boolean>(false);
+  readonly productsCount = signal<number>(0);
+  readonly ordersCount = signal<number>(0);
+
+  /** Compact nav badge: exact under 100, else 100+ */
+  formatNavBadge(count: number): string {
+    const n = Number(count) || 0;
+    if (n <= 0) return '';
+    return n > 100 ? '100+' : String(n);
+  }
 
   readonly showPendingBanner = computed(
     () => !!this.shop() && !this.shop()!.isApproved && !this.dismissWarning()
@@ -82,6 +91,7 @@ export class MainLayout implements OnInit, OnDestroy {
   ngOnInit() {
     this.checkScreenSize();
     this.loadShopInfo();
+    this.refreshNavCounts();
 
     // Check saved theme preference
     if (typeof localStorage !== 'undefined') {
@@ -98,6 +108,17 @@ export class MainLayout implements OnInit, OnDestroy {
       if (this.isMobile()) {
         this.isSidebarOpen.set(false);
       }
+    });
+  }
+
+  refreshNavCounts(): void {
+    this.sellerService.getMyProducts(1, 1).subscribe({
+      next: (res) => this.productsCount.set(res?.totalCount ?? res?.items?.length ?? 0),
+      error: () => {}
+    });
+    this.sellerService.getSellerOrders(1, 1).subscribe({
+      next: (res) => this.ordersCount.set(res?.totalCount ?? res?.items?.length ?? 0),
+      error: () => {}
     });
   }
 

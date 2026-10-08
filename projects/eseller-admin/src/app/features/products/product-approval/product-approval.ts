@@ -1158,7 +1158,7 @@ export class ProductApproval implements OnInit {
             let items = res?.items || [];
             items = applyFilters(items);
             this.products.set(items);
-            this.totalCount.set(items.length);
+            this.totalCount.set(res?.totalCount ?? items.length);
             this.pendingProducts.set(items);
             if (kind === 'global') this.pendingGlobalCount.set(res?.totalCount ?? items.length);
             else this.pendingOwnCount.set(res?.totalCount ?? items.length);
@@ -1174,7 +1174,7 @@ export class ProductApproval implements OnInit {
           next: (res) => {
             const items = applyFilters((res?.items || []).map(p => ({ ...p, isApproved: true })));
             this.products.set(items);
-            this.totalCount.set(items.length);
+            this.totalCount.set(res?.totalCount ?? items.length);
             this.isLoading.set(false);
           },
           error: (err) => {
@@ -1195,7 +1195,7 @@ export class ProductApproval implements OnInit {
           }
           items = applyFilters(items.map(p => ({ ...p, isApproved: true })));
           this.products.set(items);
-          this.totalCount.set(items.length);
+          this.totalCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -1211,7 +1211,7 @@ export class ProductApproval implements OnInit {
           next: (catalogRes) => {
             const items = applyFilters(catalogRes?.items || []);
             this.products.set(items);
-            this.totalCount.set(items.length);
+            this.totalCount.set(catalogRes?.totalCount ?? items.length);
             this.isLoading.set(false);
           },
           error: (err) => {
@@ -1267,7 +1267,7 @@ export class ProductApproval implements OnInit {
         next: (res) => {
           const items = applyFilters((res?.items || []).map(p => ({ ...p, status: 'Rejected' })));
           this.products.set(items);
-          this.totalCount.set(items.length);
+          this.totalCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -1281,7 +1281,7 @@ export class ProductApproval implements OnInit {
           let items = res?.items || [];
           items = applyFilters(items);
           this.products.set(items);
-          this.totalCount.set(items.length);
+          this.totalCount.set(res?.totalCount ?? items.length);
           this.isLoading.set(false);
         },
         error: (err) => {
@@ -1383,6 +1383,26 @@ export class ProductApproval implements OnInit {
         return 'Rejected Products';
       default:
         return 'Global Warehouse Products';
+    }
+  }
+
+  /** Full (non-abbreviated) count label for the open product view */
+  pageCountLabel(): string {
+    switch (this.statusFilter()) {
+      case 'listing':
+        return this.requestTab() === 'approved'
+          ? 'Approved global listings'
+          : 'Global listing requests';
+      case 'own-req':
+        return this.requestTab() === 'approved'
+          ? 'Approved seller products'
+          : 'Seller product requests';
+      case 'live':
+        return this.liveTab() === 'own' ? 'Seller own live products' : 'Seller listed products';
+      case 'rejected':
+        return 'Rejected products';
+      default:
+        return 'Total products';
     }
   }
 

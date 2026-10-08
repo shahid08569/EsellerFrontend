@@ -38,8 +38,10 @@
         </button>
       }
 
-      <div class="text-xs font-bold text-white bg-black/20 border border-white/20 px-3.5 py-1.5 rounded-xl shadow-xs">
-        Total Filtered: <span class="text-amber-200 font-extrabold">{{ totalFilteredCount() }}</span>
+      <div class="text-xs font-normal text-white bg-black/20 border border-white/20 px-3.5 py-1.5 rounded-xl shadow-xs">
+        Total orders = <span class="font-semibold text-amber-200">{{ orders().length }}</span>
+        <span class="text-white/50 mx-1">·</span>
+        Filtered = <span class="font-semibold text-amber-200">{{ totalFilteredCount() }}</span>
       </div>
       <button
         type="button"

@@ -13,7 +13,10 @@
         </span>
       </div>
       <h1 class="text-lg sm:text-xl font-black text-white tracking-tight break-words">{{ pageTitle() }}</h1>
-      <p class="text-orange-100 text-xs font-medium">
+      <p class="text-white/95 text-xs font-medium mt-1">
+        {{ pageCountLabel() }} = <span class="font-semibold">{{ totalCount() }}</span>
+      </p>
+      <p class="text-orange-100 text-xs font-medium mt-0.5">
         @if (statusFilter() === 'all') {
           Filter by Platform Warehouse, All Sellers, or a single shop. Create master products here; seller-owned products appear when Sellers / Everything is selected.
         } @else if (statusFilter() === 'listing' && isPendingRequestTab()) {

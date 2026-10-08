@@ -33,8 +33,19 @@ export class AdminLayout implements OnInit {
   readonly pendingProductsCount = signal<number>(0);
   readonly pendingGlobalCount = signal<number>(0);
   readonly pendingOwnCount = signal<number>(0);
+  readonly warehouseProductsCount = signal<number>(0);
+  readonly liveProductsCount = signal<number>(0);
+  readonly rejectedProductsCount = signal<number>(0);
+  readonly ordersCount = signal<number>(0);
   /** Tracks full URL (incl. query) so sidebar active styles update on tab/view changes */
   readonly currentUrl = signal<string>('');
+
+  /** Compact nav badge: exact under 100, else 100+ */
+  formatNavBadge(count: number): string {
+    const n = Number(count) || 0;
+    if (n <= 0) return '';
+    return n > 100 ? '100+' : String(n);
+  }
 
   // Active accordion dropdowns: multi-open supported so opening one doesn't auto-close another
   readonly openDropdowns = signal<Record<string, boolean>>({
@@ -194,6 +205,23 @@ export class AdminLayout implements OnInit {
         this.pendingOwnCount.set(res?.totalCount || 0);
         this.pendingProductsCount.set(this.pendingGlobalCount() + (res?.totalCount || 0));
       },
+      error: () => {}
+    });
+
+    this.adminService.getProducts(undefined, undefined, 1, 1).subscribe({
+      next: (res) => this.warehouseProductsCount.set(res?.totalCount || 0),
+      error: () => {}
+    });
+    this.adminService.getApprovedSellerProducts(1, 1).subscribe({
+      next: (res) => this.liveProductsCount.set(res?.totalCount || 0),
+      error: () => {}
+    });
+    this.adminService.getRejectedProducts(1, 1).subscribe({
+      next: (res) => this.rejectedProductsCount.set(res?.totalCount || 0),
+      error: () => {}
+    });
+    this.adminService.getOrders(1, 1).subscribe({
+      next: (res) => this.ordersCount.set(res?.totalCount || 0),
       error: () => {}
     });
   }

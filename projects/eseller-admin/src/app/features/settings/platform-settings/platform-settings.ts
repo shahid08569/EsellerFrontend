@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService, SkeletonLayout, resolveMediaUrl } from 'eseller-shared';
+import { AuthService, ToastService, SkeletonLayout, resolveMediaUrl } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 
 const KEY_NAV = 'Branding.NavLogoUrl';
@@ -19,12 +19,18 @@ const DEFAULT_TAGLINE = 'Shop Without Borders';
 })
 export class PlatformSettings implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly authService = inject(AuthService);
   private readonly toast = inject(ToastService);
 
   readonly isLoading = signal<boolean>(true);
   readonly isSaving = signal<boolean>(false);
   readonly isUploadingNav = signal<boolean>(false);
   readonly isUploadingFooter = signal<boolean>(false);
+
+  readonly currentPassword = signal<string>('');
+  readonly newPassword = signal<string>('');
+  readonly confirmPassword = signal<string>('');
+  readonly isChangingPassword = signal<boolean>(false);
 
   // Settings State Form
   readonly commissionRate = signal<number>(5);
@@ -214,6 +220,40 @@ export class PlatformSettings implements OnInit {
           }
         }
       });
+    });
+  }
+
+  changePassword(): void {
+    const cur = this.currentPassword().trim();
+    const next = this.newPassword().trim();
+    const conf = this.confirmPassword().trim();
+
+    if (!cur || !next || !conf) {
+      this.toast.show('Please fill in all password fields.', 'error');
+      return;
+    }
+    if (next !== conf) {
+      this.toast.show('New password and confirmation do not match.', 'error');
+      return;
+    }
+    if (next.length < 6) {
+      this.toast.show('Password must be at least 6 characters.', 'error');
+      return;
+    }
+
+    this.isChangingPassword.set(true);
+    this.authService.changePassword({ currentPassword: cur, newPassword: next }).subscribe({
+      next: (res) => {
+        this.isChangingPassword.set(false);
+        this.currentPassword.set('');
+        this.newPassword.set('');
+        this.confirmPassword.set('');
+        this.toast.show(res?.message || 'Password updated successfully.', 'success');
+      },
+      error: (err) => {
+        this.isChangingPassword.set(false);
+        this.toast.show(err?.error?.error || 'Failed to update password.', 'error');
+      }
     });
   }
 }

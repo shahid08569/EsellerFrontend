@@ -109,6 +109,9 @@
                (click)="closeSidebarOnMobile()"
                class="seller-nav-link">
               <span>All Products (My Store)</span>
+              @if (productsCount() > 0) {
+                <span class="seller-nav-count">{{ formatNavBadge(productsCount()) }}</span>
+              }
             </a>
 
             <a routerLink="/products/catalog"
@@ -141,6 +144,9 @@
                (click)="closeSidebarOnMobile()"
                class="seller-nav-link">
               <span>Orders (20% Net)</span>
+              @if (ordersCount() > 0) {
+                <span class="seller-nav-count">{{ formatNavBadge(ordersCount()) }}</span>
+              }
             </a>
 
             <a routerLink="/chat"
