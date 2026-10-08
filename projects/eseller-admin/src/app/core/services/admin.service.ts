@@ -231,27 +231,13 @@ export class AdminService {
   formatImageUrl(url: string | null | undefined): string {
     if (!url || typeof url !== 'string' || !url.trim()) return '';
     const trimmed = url.trim();
-    if (trimmed.startsWith('data:') || trimmed.startsWith('blob:')) {
-      return trimmed;
-    }
-
-    const apiHost = (environment.apiUrl || '').replace(/\/api\/v1\/?$/, '');
-
-    if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) {
-      // External CDNs (Unsplash, etc.) — use as-is. Only rewrite our API host
-      // when the path omitted /uploads/ (e.g. https://api…/categories/x.jpg).
-      if (!apiHost || !trimmed.toLowerCase().startsWith(apiHost.toLowerCase())) {
-        return trimmed;
-      }
-      try {
-        const u = new URL(trimmed);
-        if (!u.pathname.startsWith('/uploads/')) {
-          u.pathname = `/uploads${u.pathname.startsWith('/') ? u.pathname : `/${u.pathname}`}`;
-          return u.toString();
-        }
-      } catch {
-        /* keep original */
-      }
+    // Absolute / data / blob — never rewrite (old bug inserted /uploads/ into Unsplash etc.)
+    if (
+      trimmed.startsWith('http://') ||
+      trimmed.startsWith('https://') ||
+      trimmed.startsWith('data:') ||
+      trimmed.startsWith('blob:')
+    ) {
       return trimmed;
     }
 
@@ -259,11 +245,23 @@ export class AdminService {
     if (trimmed.startsWith('local-front:') || trimmed.startsWith('local-back:') || trimmed.startsWith('local-')) {
       return '';
     }
+
+    const apiHost = (environment.apiUrl || '').replace(/\/api\/v1\/?$/, '');
     let cleanPath = trimmed.startsWith('/') ? trimmed : `/${trimmed}`;
     if (!cleanPath.startsWith('/uploads/')) {
       cleanPath = `/uploads${cleanPath}`;
     }
     return `${apiHost}${cleanPath}`;
+  }
+
+  /** One-time: copy external category logos into API /uploads storage. */
+  mirrorCategoryImages(): Observable<{ mirrored: number; skipped: number; failed: number; message?: string }> {
+    return this.api.post<{ mirrored: number; skipped: number; failed: number; message?: string }>(
+      '/admin/categories/mirror-external-images',
+      {}
+    ).pipe(
+      catchError(() => of({ mirrored: 0, skipped: 0, failed: 0 }))
+    );
   }
 
   // ═══════════════════════════════════════════════════════════

@@ -62,6 +62,16 @@ export class CategoryManagement implements OnInit {
     return this.adminService.formatImageUrl(url);
   }
 
+  /** Prefer absolute URLs as-is; resolve relative paths against API host. */
+  categoryImageSrc(url?: string | null): string {
+    const raw = (url || '').trim();
+    if (!raw) return '';
+    if (raw.startsWith('http://') || raw.startsWith('https://') || raw.startsWith('data:') || raw.startsWith('blob:')) {
+      return raw;
+    }
+    return this.adminService.formatImageUrl(raw);
+  }
+
   onImgError(event: Event): void {
     const img = event.target as HTMLImageElement;
     img.style.display = 'none';
@@ -74,12 +84,36 @@ export class CategoryManagement implements OnInit {
     }
   }
 
+  onPreviewImgError(event: Event): void {
+    const img = event.target as HTMLImageElement;
+    // Keep broken-image chrome visible in edit modal so admin can re-upload / fix URL
+    img.classList.add('opacity-40');
+  }
+
+  private mirroredOnce = false;
+
   loadCategories(): void {
     this.isLoading.set(true);
     this.adminService.getCategories().subscribe({
       next: (data) => {
         this.categories.set(data || []);
         this.isLoading.set(false);
+        // One-time: pull external logos into our /uploads so table + edit always show them
+        if (!this.mirroredOnce) {
+          this.mirroredOnce = true;
+          const hasExternal = (data || []).some(c =>
+            !!c.imageUrl && /^https?:\/\//i.test(c.imageUrl) && !/esellerglobal\.com/i.test(c.imageUrl)
+          );
+          if (hasExternal) {
+            this.adminService.mirrorCategoryImages().subscribe({
+              next: (res) => {
+                if ((res?.mirrored || 0) > 0) {
+                  this.loadCategories();
+                }
+              }
+            });
+          }
+        }
       },
       error: (err) => {
         this.isLoading.set(false);
