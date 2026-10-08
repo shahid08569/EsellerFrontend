@@ -272,9 +272,9 @@
               <span class="truncate font-semibold" style="color: #ffffff !important;">Orders</span>
             </div>
             <div class="flex items-center gap-1.5 shrink-0">
-              @if (pendingpendingOrdersCount() > 0) {
+              @if (pendingOrdersCount() > 0) {
                 <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">
-                  {{ formatNavBadge(pendingpendingOrdersCount()) }}
+                  {{ formatNavBadge(pendingOrdersCount()) }}
                 </span>
               }
               @if (isDropdownOpen('orders')) {
@@ -302,8 +302,8 @@
                 [class.font-bold]="isOrderNav('list')"
                 [class.bg-slate-800/80]="isOrderNav('list')">
                 <span>Orders list</span>
-                @if (pendingpendingOrdersCount() > 0) {
-                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingpendingOrdersCount()) }}</span>
+                @if (pendingOrdersCount() > 0) {
+                  <span class="px-1.5 py-0.5 rounded-md text-[9px] font-normal bg-white text-slate-700">{{ formatNavBadge(pendingOrdersCount()) }}</span>
                 }
               </a>
               <a [routerLink]="['/orders']" [queryParams]="{action: 'create'}"
