@@ -21,37 +21,30 @@
     </a>
   </div>
 
-  <!-- Summary Cards -->
-  <div class="grid sm:grid-cols-4 gap-4">
-    <!-- Total Gross Sales -->
+  <!-- Summary Cards — same three wallet fields Management can Adjust -->
+  <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
       <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Gross Order Sales</span>
       <p class="text-2xl font-black text-slate-900 font-mono">$ {{ totalGrossSales() | number }}</p>
       <p class="text-[10px] text-slate-400">Total customer transaction volume</p>
     </div>
 
-    <!-- Total 20% Net Commission -->
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending</span>
+      <p class="text-2xl font-black text-amber-600 font-mono">$ {{ pendingEarnings() | number:'1.2-2' }}</p>
+      <p class="text-[10px] text-slate-400">In progress orders — clears on delivery</p>
+    </div>
+
+    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
+      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Available</span>
+      <p class="text-2xl font-black text-emerald-600 font-mono">$ {{ availableEarnings() | number:'1.2-2' }}</p>
+      <p class="text-[10px] text-slate-400">Delivered commission total</p>
+    </div>
+
     <div class="bg-emerald-950 text-white rounded-2xl border border-emerald-800 p-4 shadow-md space-y-1">
-      <div class="flex items-center justify-between">
-        <span class="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">Your Net 20% Earnings</span>
-        <span class="px-1.5 py-0.2 rounded-full bg-emerald-400 text-slate-950 text-[9px] font-black uppercase">20%</span>
-      </div>
-      <p class="text-2xl font-black text-white font-mono">$ {{ totalSellerEarnings() | number }}</p>
-      <p class="text-[10px] text-emerald-200/80">Flat commission earned across all orders</p>
-    </div>
-
-    <!-- Settled Earnings -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
-      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Delivered &amp; Settled</span>
-      <p class="text-2xl font-black text-emerald-600 font-mono">$ {{ settledEarnings() | number }}</p>
-      <p class="text-[10px] text-slate-400">Available for immediate withdrawal</p>
-    </div>
-
-    <!-- Pending Earnings -->
-    <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
-      <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending Orders Commission</span>
-      <p class="text-2xl font-black text-amber-600 font-mono">$ {{ pendingEarnings() | number }}</p>
-      <p class="text-[10px] text-slate-400">Will clear upon order delivery</p>
+      <span class="text-[11px] font-bold text-emerald-300 uppercase tracking-wider">Wallet Balance</span>
+      <p class="text-2xl font-black text-white font-mono">$ {{ withdrawableBalance() | number:'1.2-2' }}</p>
+      <p class="text-[10px] text-emerald-200/80">Withdrawable payout balance</p>
     </div>
   </div>
 

@@ -27,8 +27,9 @@ export class EarningsOverview implements OnInit {
   readonly shop = signal<ShopDto | null>(null);
   readonly transactions = signal<TransactionRecord[]>([]);
   readonly commissionRate = signal<number>(20);
-  readonly walletAvailable = signal<number>(0);
   readonly walletPending = signal<number>(0);
+  readonly walletAvailableEarnings = signal<number>(0);
+  readonly walletBalance = signal<number>(0);
   readonly walletLoaded = signal<boolean>(false);
 
   ngOnInit(): void {
@@ -51,15 +52,19 @@ export class EarningsOverview implements OnInit {
         }).subscribe({
           next: ({ wallet, orders }) => {
             if (wallet) {
-              this.walletAvailable.set(Number(wallet.availableToWithdraw) || 0);
               this.walletPending.set(Number(wallet.pendingEarnings) || 0);
+              this.walletAvailableEarnings.set(Number(wallet.availableEarnings) || 0);
+              this.walletBalance.set(
+                Number(wallet.availableToWithdraw ?? wallet.walletBalance) || 0
+              );
               if (wallet.merchantSharePercent != null) {
                 this.commissionRate.set(Number(wallet.merchantSharePercent) || 20);
               }
               this.walletLoaded.set(true);
             } else {
-              this.walletAvailable.set(0);
               this.walletPending.set(0);
+              this.walletAvailableEarnings.set(0);
+              this.walletBalance.set(0);
               this.walletLoaded.set(false);
             }
 
@@ -99,12 +104,6 @@ export class EarningsOverview implements OnInit {
       .reduce((sum, t) => sum + t.grossAmount, 0)
   );
 
-  readonly totalSellerEarnings = computed(() =>
-    this.transactions()
-      .filter(t => t.status !== 'Closed')
-      .reduce((sum, t) => sum + t.sellerCommission, 0)
-  );
-
   readonly pendingEarnings = computed(() => {
     if (this.walletLoaded()) {
       return this.walletPending();
@@ -114,13 +113,20 @@ export class EarningsOverview implements OnInit {
       .reduce((sum, t) => sum + t.sellerCommission, 0);
   });
 
-  readonly settledEarnings = computed(() => {
+  readonly availableEarnings = computed(() => {
     if (this.walletLoaded()) {
-      return this.walletAvailable();
+      return this.walletAvailableEarnings();
     }
     return this.transactions()
       .filter(t => t.status === 'Available')
       .reduce((sum, t) => sum + t.sellerCommission, 0);
+  });
+
+  readonly withdrawableBalance = computed(() => {
+    if (this.walletLoaded()) {
+      return this.walletBalance();
+    }
+    return this.availableEarnings();
   });
 
   formatDate(dateStr: string): string {
