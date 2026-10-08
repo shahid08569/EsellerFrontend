@@ -42,8 +42,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly sendingMessage = signal<boolean>(false);
   readonly uploadingFile = signal<boolean>(false);
   readonly searchTerm = signal<string>('');
-  /** Inbox filter: All | Seller Support | Customers */
-  readonly filterTab = signal<'all' | 'support' | 'customers'>('all');
+  /** Inbox filter: Support | Customers only */
+  readonly filterTab = signal<'support' | 'customers'>('support');
   readonly pendingAttachment = signal<{
     url: string;
     fileName: string;
@@ -89,18 +89,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly filteredConversations = computed(() => {
     const tab = this.filterTab();
     const list = this.enrichedConversations();
-    if (tab === 'support') return list.filter(c => this.isSellerSupport(c));
     if (tab === 'customers') return list.filter(c => !this.isSellerSupport(c));
-    return list;
+    return list.filter(c => this.isSellerSupport(c));
   });
-
-  readonly supportConversations = computed(() =>
-    this.filteredConversations().filter(c => this.isSellerSupport(c))
-  );
-
-  readonly customerConversations = computed(() =>
-    this.filteredConversations().filter(c => !this.isSellerSupport(c))
-  );
 
   readonly supportTabCount = computed(() =>
     this.enrichedConversations().filter(c => this.isSellerSupport(c)).length
@@ -523,7 +514,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     return `${months}mo`;
   }
 
-  setFilterTab(tab: 'all' | 'support' | 'customers'): void {
+  setFilterTab(tab: 'support' | 'customers'): void {
     this.filterTab.set(tab);
   }
 

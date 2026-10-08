@@ -1,36 +1,36 @@
-<!-- FLOATING WHATSAPP LAUNCHER (Sticky Bottom-Right) -->
+<!-- FLOATING CHAT LAUNCHER (Sticky Bottom-Right) -->
 <div class="fixed bottom-6 right-6 z-[120] flex flex-col items-end pointer-events-auto">
 
   <!-- CHAT WINDOW -->
   @if (isOpen()) {
-    <div class="mb-3 w-[360px] sm:w-[410px] h-[580px] max-h-[85vh] bg-[#EFEAE2] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-gray-200 transition-all duration-300 animate-in slide-in-from-bottom-5">
-      
-      <!-- WHATSAPP HEADER -->
-      <div class="bg-[#075E54] text-white px-4 py-3 flex items-center justify-between shadow-md shrink-0">
-        <div class="flex items-center gap-3">
+    <div class="mb-3 w-[360px] sm:w-[410px] h-[580px] max-h-[85vh] bg-[#FFF7ED] rounded-3xl shadow-2xl flex flex-col overflow-hidden border border-orange-200/80 transition-all duration-300 animate-in slide-in-from-bottom-5">
+
+      <!-- HEADER — brand rose-orange -->
+      <div class="bg-gradient-to-r from-orange-700 via-orange-600 to-rose-600 text-white px-4 py-3 flex items-center justify-between shadow-md shrink-0">
+        <div class="flex items-center gap-3 min-w-0">
           @if (currentView() === 'chat') {
-            <button 
-              type="button" 
-              (click)="backToDirectory()" 
-              title="Back to Sellers List"
-              class="text-white/80 hover:text-white p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
+            <button
+              type="button"
+              (click)="backToDirectory()"
+              title="Back"
+              class="text-white/80 hover:text-white p-1 -ml-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer shrink-0">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7" />
               </svg>
             </button>
           }
 
-          <div class="relative">
-            <div class="w-10 h-10 rounded-full bg-[#128C7E] flex items-center justify-center font-black text-white text-base shadow-inner border border-white/20">
+          <div class="relative shrink-0">
+            <div class="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center font-black text-white text-base shadow-inner border border-white/20">
               @if (currentView() === 'chat' && selectedShop()) {
                 {{ selectedShop()!.name.charAt(0).toUpperCase() }}
               } @else {
-                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.898-.992l.966-2.22A8.17 8.17 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
                 </svg>
               }
             </div>
-            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-[#25D366] border-2 border-[#075E54] rounded-full"></span>
+            <span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-emerald-400 border-2 border-orange-700 rounded-full"></span>
           </div>
 
           <div class="min-w-0">
@@ -38,171 +38,185 @@
               @if (currentView() === 'chat' && selectedShop()) {
                 {{ selectedShop()!.name }}
               } @else {
-                Seller Support & Upgrades Hub
+                Conversations
               }
             </h4>
-            <p class="text-[11px] text-emerald-200 flex items-center gap-1 font-medium">
+            <p class="text-[11px] text-orange-100 flex items-center gap-1 font-medium truncate">
               @if (currentView() === 'chat') {
-                <span>Active Merchant • {{ selectedShop()?.city || 'Online' }}</span>
+                <span>{{ directoryTab() === 'customers' ? 'Customer chat' : 'Seller support' }}</span>
               } @else {
-                <span>Select any seller to chat</span>
+                <span>Support &amp; Customers</span>
               }
             </p>
           </div>
         </div>
 
-        <div class="flex items-center gap-1">
-          <button 
-            type="button"
-            (click)="closeChat()" 
-            class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer">
-            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
-        </div>
+        <button
+          type="button"
+          (click)="closeChat()"
+          class="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/10 transition-colors cursor-pointer shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
 
-      <!-- VIEW 1: SELLER DIRECTORY (SELECT ANY SHOP) -->
+      <!-- VIEW 1: DIRECTORY — Support | Customers -->
       @if (currentView() === 'directory') {
         <div class="flex-1 flex flex-col bg-white overflow-hidden">
-          
-          <!-- Search Sellers Input -->
-          <div class="p-3 bg-gray-50 border-b border-gray-100">
+
+          <!-- Tabs like chat UI -->
+          <div class="flex border-b border-slate-100 shrink-0">
+            <button
+              type="button"
+              (click)="setDirectoryTab('support')"
+              class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+              [class.border-orange-600]="directoryTab() === 'support'"
+              [class.text-orange-700]="directoryTab() === 'support'"
+              [class.border-transparent]="directoryTab() !== 'support'"
+              [class.text-slate-400]="directoryTab() !== 'support'">
+              Support
+              @if (supportUnreadTotal() > 0) {
+                <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ supportUnreadTotal() > 99 ? '99+' : supportUnreadTotal() }}</span>
+              }
+            </button>
+            <button
+              type="button"
+              (click)="setDirectoryTab('customers')"
+              class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+              [class.border-orange-600]="directoryTab() === 'customers'"
+              [class.text-orange-700]="directoryTab() === 'customers'"
+              [class.border-transparent]="directoryTab() !== 'customers'"
+              [class.text-slate-400]="directoryTab() !== 'customers'">
+              Customers
+              @if (customerUnreadTotal() > 0) {
+                <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ customerUnreadTotal() > 99 ? '99+' : customerUnreadTotal() }}</span>
+              }
+            </button>
+          </div>
+
+          <div class="p-3 bg-orange-50/40 border-b border-orange-100/80">
             <div class="relative">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 [ngModel]="sellerSearchTerm()"
                 (ngModelChange)="sellerSearchTerm.set($event)"
-                placeholder="Search store or city to chat..." 
-                class="w-full bg-white border border-gray-200 rounded-xl pl-9 pr-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-hidden">
+                [placeholder]="directoryTab() === 'customers' ? 'Search customer…' : 'Search shop…'"
+                class="w-full bg-white border border-orange-100 rounded-xl pl-9 pr-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
               </svg>
             </div>
           </div>
 
-          <!-- Stores List -->
-          <div class="flex-1 overflow-y-auto divide-y divide-gray-100">
-            @if (isLoadingShops()) {
-              <es-skeleton-layout variant="list" [count]="6" />
-            } @else if (filteredShops().length === 0) {
-              <div class="p-8 text-center text-xs text-gray-400">
-                <p class="font-bold text-gray-600">No stores found</p>
-                <p class="mt-1">Registered merchants will appear here for live chat.</p>
-              </div>
-            } @else {
-              @for (s of filteredShops(); track s.id) {
-                <div 
-                  (click)="selectShop(s)"
-                  class="p-3.5 flex items-center justify-between hover:bg-emerald-50/50 cursor-pointer transition-colors group">
-                  <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-full bg-emerald-100 text-emerald-800 font-bold flex items-center justify-center text-sm shrink-0 border border-emerald-200">
-                      {{ s.name.charAt(0).toUpperCase() }}
-                    </div>
-                    <div class="min-w-0">
-                      <div class="flex items-center gap-1.5 flex-wrap">
-                        <span class="font-bold text-xs text-gray-900 truncate group-hover:text-emerald-800">{{ s.name }}</span>
-                        <span class="px-1.5 py-0.5 rounded text-[9px] font-extrabold" [ngClass]="statusClass(s)">
-                          {{ statusLabel(s) }}
-                        </span>
+          <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
+            @if (directoryTab() === 'support') {
+              @if (isLoadingShops()) {
+                <es-skeleton-layout variant="list" [count]="6" />
+              } @else if (filteredShops().length === 0) {
+                <div class="p-8 text-center text-xs text-gray-400">
+                  <p class="font-bold text-gray-600">No shops found</p>
+                </div>
+              } @else {
+                @for (s of filteredShops(); track s.id) {
+                  <div
+                    (click)="selectShop(s)"
+                    class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
+                        {{ s.name.charAt(0).toUpperCase() }}
                       </div>
-                      <p class="text-[11px] text-gray-400 truncate mt-0.5">
-                        {{ s.tierLabel }} • {{ s.city || 'Store' }} • {{ s.totalProducts || 0 }} products
-                      </p>
+                      <div class="min-w-0">
+                        <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ s.name }}</span>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-2 shrink-0">
+                      @if (shopUnread(s.id) > 0) {
+                        <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs">
+                          {{ shopUnread(s.id) > 99 ? '99+' : shopUnread(s.id) }}
+                        </span>
+                      }
                     </div>
                   </div>
-
-                  <div class="flex items-center gap-2 shrink-0">
-                    @if (shopUnread(s.id) > 0) {
-                      <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-emerald-500 text-white text-[10px] font-black shadow-xs">
-                        {{ shopUnread(s.id) > 99 ? '99+' : shopUnread(s.id) }}
-                      </span>
-                    } @else {
-                      <div class="flex items-center gap-1 text-emerald-600 font-bold text-xs opacity-0 group-hover:opacity-100 transition-opacity">
-                        <span>Chat</span>
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-                        </svg>
+                }
+              }
+            } @else {
+              @if (isLoadingCustomers()) {
+                <es-skeleton-layout variant="list" [count]="6" />
+              } @else if (filteredCustomerConvos().length === 0) {
+                <div class="p-8 text-center text-xs text-gray-400">
+                  <p class="font-bold text-gray-600">No customer chats</p>
+                </div>
+              } @else {
+                @for (c of filteredCustomerConvos(); track (c.orderRequestId || c.id)) {
+                  <div
+                    (click)="selectCustomerConvo(c)"
+                    class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                    <div class="flex items-center gap-3 min-w-0">
+                      <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-sm shrink-0 border border-rose-200">
+                        {{ customerInitials(c) }}
                       </div>
+                      <div class="min-w-0">
+                        <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ customerDisplayName(c) }}</span>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ c.lastMessage || 'No messages yet' }}</p>
+                      </div>
+                    </div>
+                    @if ((c.unreadCount || 0) > 0) {
+                      <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs shrink-0">
+                        {{ c.unreadCount > 99 ? '99+' : c.unreadCount }}
+                      </span>
                     }
                   </div>
-                </div>
+                }
               }
             }
-          </div>
-
-          <!-- Bottom Notice -->
-          <div class="p-3 bg-gray-50 border-t border-gray-100 text-[11px] text-gray-500 text-center font-medium">
-            Management can chat with any registered seller in real-time.
           </div>
         </div>
       }
 
       <!-- VIEW 2: ACTIVE CONVERSATION -->
       @if (currentView() === 'chat') {
-        <!-- QUICK ACTION SHORTCUTS -->
-        <div class="bg-[#f0f2f5] px-3 py-2 border-b border-gray-200 flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
-          <button 
-            type="button" 
-            (click)="sendQuickAction('approve_gold')"
-            class="px-2.5 py-1 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-extrabold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
-            Gold $1000
-          </button>
-          <button 
-            type="button" 
-            (click)="sendQuickAction('approve_diamond')"
-            class="px-2.5 py-1 rounded-full bg-cyan-600 hover:bg-cyan-700 text-white text-[10px] font-extrabold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
-            Diamond $2000
-          </button>
-          <button 
-            type="button" 
-            (click)="sendQuickAction('request_payment')"
-            class="px-2.5 py-1 rounded-full bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 text-[10px] font-bold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
-            💳 Request Payment
-          </button>
-          <button 
-            type="button" 
-            (click)="sendQuickAction('bronze_info')"
-            class="px-2.5 py-1 rounded-full bg-white hover:bg-gray-100 text-gray-800 border border-gray-300 text-[10px] font-bold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
-            📦 Bronze 200 Limit
-          </button>
-        </div>
+        @if (directoryTab() === 'support') {
+          <div class="bg-orange-50 px-3 py-2 border-b border-orange-100 flex items-center gap-1.5 overflow-x-auto shrink-0 scrollbar-none">
+            <button type="button" (click)="sendQuickAction('approve_gold')"
+              class="px-2.5 py-1 rounded-full bg-amber-500 hover:bg-amber-600 text-slate-950 text-[10px] font-extrabold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
+              Gold $1000
+            </button>
+            <button type="button" (click)="sendQuickAction('approve_diamond')"
+              class="px-2.5 py-1 rounded-full bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-extrabold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
+              Diamond $2000
+            </button>
+            <button type="button" (click)="sendQuickAction('request_payment')"
+              class="px-2.5 py-1 rounded-full bg-white hover:bg-orange-50 text-gray-800 border border-orange-200 text-[10px] font-bold whitespace-nowrap shadow-xs cursor-pointer transition-colors">
+              💳 Request Payment
+            </button>
+          </div>
+        }
 
-        <!-- MESSAGES CONTAINER WITH WHATSAPP DOODLE PATTERN -->
-        <div 
-          #messagesContainer
-          class="flex-1 p-3.5 space-y-3 overflow-y-auto whatsapp-bg text-xs">
-          
-          <!-- System Encryption Notice -->
+        <div #messagesContainer class="flex-1 p-3.5 space-y-3 overflow-y-auto chat-bg text-xs">
           <div class="text-center my-2">
-            <span class="inline-block bg-[#FFF9C4] text-amber-900 border border-amber-200 text-[10px] px-3 py-1 rounded-lg font-semibold shadow-2xs max-w-[90%]">
-              🔒 Messages with {{ selectedShop()?.name }} are end-to-end secured on Eseller Authority Hub.
+            <span class="inline-block bg-orange-50 text-orange-900 border border-orange-200 text-[10px] px-3 py-1 rounded-lg font-semibold shadow-2xs max-w-[90%]">
+              🔒 Chat with {{ selectedShop()?.name }} — Eseller Authority
             </span>
           </div>
 
-          <!-- Messages list -->
           @for (msg of getCurrentMessages(); track msg.id) {
-            <div 
+            <div
               class="flex flex-col"
               [class.items-end]="msg.sender === 'admin'"
               [class.items-start]="msg.sender !== 'admin'">
-              
-              <div 
-                [class]="msg.sender === 'admin' 
-                  ? 'bg-[#DCF8C6] text-slate-900 rounded-2xl rounded-tr-xs shadow-xs max-w-[85%] p-2.5 border border-emerald-200/60' 
-                  : 'bg-white text-slate-900 rounded-2xl rounded-tl-xs shadow-xs max-w-[85%] p-2.5 border border-gray-200'">
-                
-                <p class="font-extrabold text-[10px] mb-0.5" 
-                   [class.text-[#075E54]]="msg.sender === 'admin'"
-                   [class.text-amber-800]="msg.sender !== 'admin'">
+              <div
+                [class]="msg.sender === 'admin'
+                  ? 'bg-orange-600 text-white rounded-2xl rounded-tr-xs shadow-xs max-w-[85%] p-2.5'
+                  : 'bg-white text-slate-900 rounded-2xl rounded-tl-xs shadow-xs max-w-[85%] p-2.5 border border-orange-100'">
+                <p class="font-extrabold text-[10px] mb-0.5"
+                   [class.text-orange-100]="msg.sender === 'admin'"
+                   [class.text-orange-800]="msg.sender !== 'admin'">
                   {{ msg.senderName }}
                 </p>
-
                 @if (msg.message) {
                   <p class="text-[12px] leading-relaxed whitespace-pre-wrap font-normal">{{ msg.message }}</p>
                 }
-
                 @if (msg.attachmentUrl) {
                   <div class="mt-1.5">
                     @if (isImageAttachment(msg)) {
@@ -212,58 +226,59 @@
                       </a>
                     } @else {
                       <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener"
-                         class="inline-flex items-center gap-1 font-bold text-[#075E54] underline underline-offset-2">
+                         class="inline-flex items-center gap-1 font-bold underline underline-offset-2"
+                         [class.text-orange-100]="msg.sender === 'admin'"
+                         [class.text-orange-700]="msg.sender !== 'admin'">
                         📎 {{ msg.attachmentFileName || 'Download file' }}
                       </a>
                     }
                   </div>
                 }
-
-                <div class="flex items-center justify-end gap-1 mt-1 text-[9px] text-gray-400">
+                <div class="flex items-center justify-end gap-1 mt-1 text-[9px]"
+                     [class.text-orange-100]="msg.sender === 'admin'"
+                     [class.text-gray-400]="msg.sender !== 'admin'">
                   <span>{{ msg.timestamp }}</span>
                   @if (msg.sender === 'admin') {
-                    <span class="text-slate-500 font-bold">✓</span>
+                    <span class="font-bold">✓</span>
                   }
                 </div>
               </div>
-
             </div>
           }
         </div>
 
-        <!-- WHATSAPP MESSAGE INPUT BAR -->
-        <div class="bg-[#F0F2F5] px-3 py-2 border-t border-gray-200 shrink-0 space-y-1.5">
+        <div class="bg-orange-50/80 px-3 py-2 border-t border-orange-100 shrink-0 space-y-1.5">
           @if (pendingAttachment(); as att) {
-            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border border-emerald-200 text-[11px]">
+            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border border-orange-200 text-[11px]">
               <span class="truncate font-semibold text-slate-800">📎 {{ att.fileName }}</span>
-              <button type="button" (click)="clearPendingAttachment()" class="text-emerald-700 font-bold cursor-pointer shrink-0">Remove</button>
+              <button type="button" (click)="clearPendingAttachment()" class="text-orange-700 font-bold cursor-pointer shrink-0">Remove</button>
             </div>
           }
           <div class="flex items-center gap-2">
-            <label class="w-9 h-9 rounded-full bg-white border border-gray-300 flex items-center justify-center cursor-pointer hover:bg-gray-50 shrink-0"
+            <label class="w-9 h-9 rounded-full bg-white border border-orange-200 flex items-center justify-center cursor-pointer hover:bg-orange-50 shrink-0"
                    [class.opacity-50]="uploadingFile()" title="Attach file">
               <input type="file" class="hidden" (change)="onFileSelected($event)"
                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt"
                      [disabled]="uploadingFile() || isSending()" />
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
               </svg>
             </label>
 
-            <input 
-              type="text" 
+            <input
+              type="text"
               [ngModel]="messageText()"
               (ngModelChange)="messageText.set($event)"
               (keyup.enter)="sendMessage()"
-              placeholder="Type a message to seller..." 
-              class="flex-1 bg-white border border-gray-300 rounded-full px-4 py-2 text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#075E54] focus:border-[#075E54] shadow-inner">
-            
-            <button 
-              type="button" 
-              (click)="sendMessage()" 
+              placeholder="Aa"
+              class="flex-1 bg-white border border-orange-200 rounded-full px-4 py-2 text-xs text-gray-900 focus:outline-none focus:ring-1 focus:ring-orange-500 focus:border-orange-500 shadow-inner">
+
+            <button
+              type="button"
+              (click)="sendMessage()"
               [disabled]="(!messageText().trim() && !pendingAttachment()) || isSending() || uploadingFile()"
-              class="w-9 h-9 rounded-full bg-[#128C7E] hover:bg-[#075E54] text-white flex items-center justify-center shadow-md transition-all cursor-pointer disabled:opacity-40 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 translate-x-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              class="w-9 h-9 rounded-full bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center shadow-md transition-all cursor-pointer disabled:opacity-40 shrink-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 -rotate-45 translate-x-px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
               </svg>
             </button>
@@ -274,19 +289,15 @@
     </div>
   }
 
-  <!-- FLOATING ESELLER SUPPORT LAUNCHER -->
-  <button 
-    type="button" 
+  <!-- FLOATING LAUNCHER — brand rose-orange -->
+  <button
+    type="button"
     (click)="toggleChat()"
-    title="Open Seller Support Hub"
+    title="Open Conversations"
     class="w-14 h-14 rounded-full bg-orange-600 hover:bg-orange-500 text-white flex items-center justify-center shadow-2xl hover:shadow-orange-500/40 hover:scale-105 active:scale-95 transition-all duration-200 cursor-pointer relative group border-2 border-white">
-    
-    <!-- Eseller chat bubble icon -->
     <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" xmlns="http://www.w3.org/2000/svg">
       <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 9.75a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H8.25m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0H12m4.125 0a.375.375 0 11-.75 0 .375.375 0 01.75 0zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 01-2.555-.337A5.972 5.972 0 015.41 20.97a.75.75 0 01-.898-.992l.966-2.22A8.17 8.17 0 013 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25z" />
     </svg>
-
-    <!-- UNREAD BADGE (shared with sidebar Live Chat) -->
     @if (chatUnread.totalUnread() > 0) {
       <span class="absolute -top-1 -right-1 bg-red-600 text-white font-extrabold text-[10px] min-w-[20px] h-5 px-1 rounded-full flex items-center justify-center shadow-md animate-bounce border-2 border-white">
         {{ chatUnread.totalUnread() > 99 ? '99+' : chatUnread.totalUnread() }}

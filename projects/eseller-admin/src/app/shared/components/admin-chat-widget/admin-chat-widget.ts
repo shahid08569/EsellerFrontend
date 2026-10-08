@@ -59,8 +59,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly selectedShop = signal<AdminChatShop | null>(null);
   readonly sellerSearchTerm = signal<string>('');
   readonly currentView = signal<'directory' | 'chat'>('directory');
+  readonly directoryTab = signal<'support' | 'customers'>('support');
   readonly messagesMap = signal<Record<string, AdminToSellerMessage[]>>({});
   readonly isLoadingShops = signal<boolean>(false);
+  readonly isLoadingCustomers = signal<boolean>(false);
+  readonly customerConvos = signal<any[]>([]);
 
   readonly filteredShops = computed(() => {
     const list = this.shops();
@@ -72,7 +75,6 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         (s.city && s.city.toLowerCase().includes(term))
       );
     }
-    // Unread merchants first (WhatsApp-style)
     return [...filtered].sort((a, b) => {
       const au = this.chatUnread.unreadFor(a.id) > 0 ? 1 : 0;
       const bu = this.chatUnread.unreadFor(b.id) > 0 ? 1 : 0;
@@ -80,6 +82,29 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       return a.name.localeCompare(b.name);
     });
   });
+
+  readonly filteredCustomerConvos = computed(() => {
+    const term = this.sellerSearchTerm().trim().toLowerCase();
+    let list = this.customerConvos();
+    if (term) {
+      list = list.filter(c => this.customerDisplayName(c).toLowerCase().includes(term)
+        || String(c.lastMessage || '').toLowerCase().includes(term));
+    }
+    return [...list].sort((a, b) => {
+      const au = (a.unreadCount || 0) > 0 ? 1 : 0;
+      const bu = (b.unreadCount || 0) > 0 ? 1 : 0;
+      if (au !== bu) return bu - au;
+      return new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime();
+    });
+  });
+
+  readonly supportUnreadTotal = computed(() =>
+    this.shops().reduce((sum, s) => sum + this.chatUnread.unreadFor(s.id), 0)
+  );
+
+  readonly customerUnreadTotal = computed(() =>
+    this.customerConvos().reduce((sum, c) => sum + Number(c.unreadCount || 0), 0)
+  );
 
   private shouldScrollToBottom = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
@@ -89,6 +114,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   ngOnInit(): void {
     this.chatUnread.start();
     this.loadShops();
+    this.loadCustomerConvos();
 
     this.signalR.startChatConnection().then(() => {
       this.unsubscribeSignalR = this.signalR.onReceiveMessage((incoming) => {
@@ -238,7 +264,32 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
+  setDirectoryTab(tab: 'support' | 'customers'): void {
+    this.directoryTab.set(tab);
+    this.sellerSearchTerm.set('');
+    if (tab === 'customers' && !this.customerConvos().length) {
+      this.loadCustomerConvos();
+    }
+  }
+
   selectShop(shop: AdminChatShop): void {
+    this.directoryTab.set('support');
+    this.openThread(shop);
+  }
+
+  selectCustomerConvo(convo: any): void {
+    const id = String(convo?.orderRequestId || convo?.id || '');
+    if (!id) return;
+    this.directoryTab.set('customers');
+    this.openThread({
+      id,
+      name: this.customerDisplayName(convo),
+      merchantStatus: 'Approved',
+      tierLabel: 'Customer'
+    });
+  }
+
+  private openThread(shop: AdminChatShop): void {
     if (this.joinedRoomId && this.joinedRoomId !== shop.id) {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
     }
@@ -253,20 +304,53 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.shouldScrollToBottom = true;
   }
 
+  loadCustomerConvos(): void {
+    this.isLoadingCustomers.set(true);
+    this.adminService.getConversations().subscribe({
+      next: (list) => {
+        const customers = (list || []).filter((c: any) => !this.isSellerSupportConvo(c));
+        this.customerConvos.set(customers);
+        this.isLoadingCustomers.set(false);
+      },
+      error: () => this.isLoadingCustomers.set(false)
+    });
+  }
+
+  isSellerSupportConvo(convo: any): boolean {
+    const pt = String(convo?.participantType || convo?.ParticipantType || '').toLowerCase();
+    if (pt === 'seller' || pt === '2' || pt === 'shopkeeper') return true;
+    if (pt === 'customer' || pt === '1' || pt === 'user') return false;
+    const s = String(convo?.orderStatus || '');
+    return s.includes('Merchant') || s.includes('Partner') || s.includes('Verification')
+      || s.includes('Active Partner') || s.includes('Seller');
+  }
+
+  customerDisplayName(convo: any): string {
+    return convo?.customerName || convo?.participantName || convo?.shopName || 'Customer';
+  }
+
+  customerInitials(convo: any): string {
+    const name = this.customerDisplayName(convo).trim();
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (parts.length >= 2) return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    return (name.charAt(0) || '?').toUpperCase();
+  }
+
   backToDirectory(): void {
     this.currentView.set('directory');
     this.chatUnread.refresh();
+    if (this.directoryTab() === 'customers') this.loadCustomerConvos();
   }
 
   toggleChat(): void {
     const nextState = !this.isOpen();
     this.isOpen.set(nextState);
     if (nextState) {
-      // Do NOT zero the badge on open — only clear when a thread is opened/read
       this.currentView.set('directory');
       this.shouldScrollToBottom = true;
       this.chatUnread.refresh();
       if (!this.shops().length) this.loadShops();
+      this.loadCustomerConvos();
     }
   }
 
