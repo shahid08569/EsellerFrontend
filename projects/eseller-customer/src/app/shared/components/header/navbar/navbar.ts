@@ -1,4 +1,16 @@
-import { Component, signal, inject, computed, OnInit, OnDestroy } from '@angular/core';
+import {
+  Component,
+  signal,
+  inject,
+  computed,
+  OnInit,
+  OnDestroy,
+  PLATFORM_ID,
+  HostListener,
+  ElementRef,
+  viewChild
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { Router, RouterLink, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs/operators';
 import { Subscription } from 'rxjs';
@@ -35,6 +47,7 @@ export class Navbar implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly homeService = inject(HomeService);
   private readonly authService = inject(AuthService);
+  private readonly platformId = inject(PLATFORM_ID);
   readonly cartService = inject(CartService);
   readonly wishlistService = inject(WishlistService);
   readonly compareService = inject(CompareService);
@@ -48,6 +61,9 @@ export class Navbar implements OnInit, OnDestroy {
   readonly canShop = () => this.authAction.canShop();
 
   readonly mobileMenuOpen = signal(false);
+  /** Desktop: pin nav strip to viewport after chrome scrolls away. */
+  readonly navPinned = signal(false);
+  readonly navStripHeight = signal(48);
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly isCategoriesDropdownOpen = signal<boolean>(false);
   readonly brands = signal<BrandDto[]>([]);
@@ -56,7 +72,10 @@ export class Navbar implements OnInit, OnDestroy {
   readonly navLogoSrc = signal<string>(DEFAULT_NAV_LOGO);
   readonly brandingTagline = signal<string>(DEFAULT_TAGLINE);
 
+  private readonly desktopChrome = viewChild<ElementRef<HTMLElement>>('desktopChrome');
+  private readonly desktopNav = viewChild<ElementRef<HTMLElement>>('desktopNav');
   private routerSub: Subscription | null = null;
+  private pinningRaf = 0;
 
   readonly isCategoriesActive = computed(() => {
     const url = this.currentUrl();
@@ -94,6 +113,27 @@ export class Navbar implements OnInit, OnDestroy {
     return cols;
   }
 
+  @HostListener('window:scroll')
+  @HostListener('window:resize')
+  onViewportChange(): void {
+    if (!isPlatformBrowser(this.platformId)) return;
+    if (this.pinningRaf) cancelAnimationFrame(this.pinningRaf);
+    this.pinningRaf = requestAnimationFrame(() => this.updateNavPin());
+  }
+
+  private updateNavPin(): void {
+    const chrome = this.desktopChrome()?.nativeElement;
+    const nav = this.desktopNav()?.nativeElement;
+    if (!chrome || !nav || window.innerWidth < 768) {
+      this.navPinned.set(false);
+      return;
+    }
+    const h = nav.offsetHeight || 48;
+    if (h > 0) this.navStripHeight.set(h);
+    // Pin when desktop chrome has scrolled fully above the viewport
+    this.navPinned.set(chrome.getBoundingClientRect().bottom <= 0);
+  }
+
   ngOnInit(): void {
     this.homeService.getCategories().subscribe({
       next: (cats) => this.categories.set(cats)
@@ -123,7 +163,10 @@ export class Navbar implements OnInit, OnDestroy {
         this.closeCategoriesDropdown();
         this.closeBrandsDropdown();
         this.closeMobileMenu();
+        queueMicrotask(() => this.updateNavPin());
       });
+
+    queueMicrotask(() => this.updateNavPin());
   }
 
   onNavLogoError(event: Event): void {
@@ -135,6 +178,7 @@ export class Navbar implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.routerSub?.unsubscribe();
+    if (this.pinningRaf) cancelAnimationFrame(this.pinningRaf);
   }
 
   openCategoriesDropdown(): void {

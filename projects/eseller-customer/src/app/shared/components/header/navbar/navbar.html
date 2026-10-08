@@ -89,7 +89,7 @@
   <!-- ============================================================ -->
   <!-- DESKTOP chrome (scrolls away naturally) -->
   <!-- ============================================================ -->
-  <div class="hidden md:block">
+  <div #desktopChrome class="hidden md:block">
     <div class="max-w-7xl mx-auto px-4 py-4 grid grid-cols-3 items-center gap-4">
 
       <!-- LEFT: Search -->
@@ -327,10 +327,21 @@
     </div>
   </div>
 
+  <!-- Spacer so layout doesn't jump when nav becomes fixed -->
+  @if (navPinned()) {
+    <div class="hidden md:block" [style.height.px]="navStripHeight()" aria-hidden="true"></div>
+  }
+
   <!-- ============================================================ -->
-  <!-- DESKTOP NAV — sticky (smooth native, chrome scrolls away) -->
+  <!-- DESKTOP NAV — pins to top after chrome scrolls away -->
   <!-- ============================================================ -->
-  <nav class="hidden md:block sticky top-0 z-50 bg-primary border-t border-white/20 shadow-sm backdrop-blur-sm">
+  <nav
+    #desktopNav
+    class="navbar-sticky-strip hidden md:block top-0 z-50 bg-primary border-t border-white/20 shadow-md w-full"
+    [class.fixed]="navPinned()"
+    [class.inset-x-0]="navPinned()"
+    [class.sticky]="!navPinned()"
+  >
     <div class="max-w-7xl mx-auto px-4 flex items-center gap-8 py-2.5 text-sm font-medium text-white">
       <a routerLink="/" class="relative text-white hover:text-white/80 transition-colors whitespace-nowrap py-1">Home</a>
 

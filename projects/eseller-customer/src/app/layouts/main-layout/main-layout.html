@@ -1,11 +1,11 @@
-<!-- Announcement strip -->
+<!-- Announcement strip (scrolls away) -->
 <app-announcement-bar />
 
-<!-- Main navbar -->
+<!-- Main navbar (inner nav strip is sticky) -->
 <app-navbar />
 
-<!-- Main content -->
-<main class="min-h-[70vh]">
+<!-- Main content — clip horizontal overflow here so sticky nav still works -->
+<main class="min-h-[70vh] overflow-x-clip">
   <router-outlet />
 </main>
 

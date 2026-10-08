@@ -18,13 +18,14 @@
   --color-primary-focus-ring: rgba(225, 29, 72, 0.15);
 }
 
-html {
-  overflow-x: clip;
+/* Do NOT set overflow-x on html/body — it breaks position:sticky for the nav. */
+html,
+body {
+  max-width: 100%;
 }
 
 body {
   background-color: #FFF5F6;
-  overflow-x: clip;
 }
 /* ============================================================
    Swiper custom overrides
