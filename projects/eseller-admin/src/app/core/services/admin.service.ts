@@ -944,16 +944,18 @@ export class AdminService {
     return this.api.get<any>('/admin/seller-wallets').pipe(
       map(res => {
         const list = Array.isArray(res?.items) ? res.items : Array.isArray(res) ? res : [];
-        return list.map((w: any) => ({
-          accountId: String(w.accountId ?? w.AccountId ?? ''),
-          shopkeeperName: w.shopkeeperName ?? w.ShopkeeperName ?? 'Shopkeeper',
-          shopName: w.shopName ?? w.ShopName ?? null,
-          walletBalance: Number(w.walletBalance ?? w.WalletBalance ?? 0),
-          pendingEarnings: Number(w.pendingEarnings ?? w.PendingEarnings ?? 0),
-          availableEarnings: Number(w.availableEarnings ?? w.AvailableEarnings ?? 0)
-        })) as AdminSellerWalletDto[];
-      }),
-      catchError(() => of([]))
+        return list
+          .map((w: any) => ({
+            accountId: String(w.accountId ?? w.AccountId ?? ''),
+            shopkeeperName: w.shopkeeperName ?? w.ShopkeeperName ?? 'Shopkeeper',
+            shopName: w.shopName ?? w.ShopName ?? null,
+            walletBalance: Number(w.walletBalance ?? w.WalletBalance ?? 0),
+            pendingEarnings: Number(w.pendingEarnings ?? w.PendingEarnings ?? 0),
+            availableEarnings: Number(w.availableEarnings ?? w.AvailableEarnings ?? 0)
+          }))
+          .filter((w: AdminSellerWalletDto) => !!w.accountId) as AdminSellerWalletDto[];
+      })
+      // Do not swallow errors — finance UI must show failure instead of a fake empty table.
     );
   }
 

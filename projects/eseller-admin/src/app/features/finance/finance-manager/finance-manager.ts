@@ -142,7 +142,16 @@ export class FinanceManager implements OnInit {
         );
         this.isLoadingWallets.set(false);
       },
-      error: () => this.isLoadingWallets.set(false)
+      error: (err) => {
+        this.isLoadingWallets.set(false);
+        this.sellerWallets.set([]);
+        const msg =
+          (typeof err?.error === 'string' && err.error) ||
+          err?.error?.error ||
+          err?.message ||
+          'Could not load seller wallets.';
+        this.toast.show(String(msg), 'error');
+      }
     });
   }
 
