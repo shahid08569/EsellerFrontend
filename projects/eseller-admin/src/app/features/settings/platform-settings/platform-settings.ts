@@ -12,9 +12,10 @@ const KEY_META_DESC = 'Branding.MetaDescription';
 const DEFAULT_NAV = '/brand/eseller-global-nav.png';
 const DEFAULT_FOOTER = '/brand/eseller-global-logo.png';
 const DEFAULT_TAGLINE = 'Shop Without Borders';
-const DEFAULT_SITE_TITLE = 'EsellerGlobal';
+const DEFAULT_SITE_TITLE =
+  'eSeller Global — Shop Without Borders | Multi-Vendor Marketplace';
 const DEFAULT_META_DESC =
-  'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.';
+  'Shop Without Borders on eSeller Global — premier multi-vendor marketplace for electronics, fashion, lifestyle, and home products from verified merchants worldwide.';
 
 @Component({
   selector: 'app-platform-settings',

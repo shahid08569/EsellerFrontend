@@ -29,12 +29,12 @@ export class SeoBrandingService {
           tap((b) => this.apply(b)),
           catchError(() => {
             this.apply({
-              navLogoUrl: '/brand/eseller-mark.svg',
-              footerLogoUrl: '/brand/eseller-mark.svg',
+              navLogoUrl: '/brand/eseller-global-nav.png',
+              footerLogoUrl: '/brand/eseller-global-logo.png',
               tagline: 'Shop Without Borders',
               siteTitle: DEFAULT_TITLE,
               metaDescription: DEFAULT_DESCRIPTION,
-              faviconUrl: '/favicon.svg'
+              faviconUrl: '/favicon.ico'
             });
             return of(null);
           })
@@ -47,7 +47,7 @@ export class SeoBrandingService {
     const siteTitle = (b.siteTitle || DEFAULT_TITLE).trim() || DEFAULT_TITLE;
     const description =
       (b.metaDescription || DEFAULT_DESCRIPTION).trim() || DEFAULT_DESCRIPTION;
-    const faviconRaw = (b.faviconUrl || b.navLogoUrl || '/favicon.svg').trim();
+    const faviconRaw = (b.faviconUrl || b.navLogoUrl || '/favicon.ico').trim();
     const faviconAbs = this.toAbsoluteUrl(faviconRaw);
     const logoAbs = this.toAbsoluteUrl(b.navLogoUrl || faviconRaw);
     const pageUrl = environment.customerUrl || (typeof window !== 'undefined' ? window.location.origin : '');
@@ -72,7 +72,7 @@ export class SeoBrandingService {
 
   private toAbsoluteUrl(raw: string): string {
     const resolved = resolveMediaUrl(raw) || raw;
-    if (!resolved) return `${environment.customerUrl}/favicon.svg`;
+    if (!resolved) return `${environment.customerUrl}/favicon.ico`;
     if (resolved.startsWith('http://') || resolved.startsWith('https://') || resolved.startsWith('data:')) {
       return resolved;
     }
@@ -96,7 +96,7 @@ export class SeoBrandingService {
   }
 
   private setFavicon(href: string): void {
-    if (!href || href.includes('/favicon.svg') || href.includes('eseller-mark.svg')) {
+    if (!href || href.includes('eseller-mark.svg')) {
       return;
     }
     const head = this.doc.head;
@@ -111,9 +111,12 @@ export class SeoBrandingService {
       head.querySelectorAll(sel).forEach((el) => el.parentElement?.removeChild(el));
     }
 
+    const isIco = href.endsWith('.ico') || href.includes('.ico?');
+    const isSvg = href.endsWith('.svg') || href.includes('.svg?');
+
     const icon = this.doc.createElement('link');
     icon.setAttribute('rel', 'icon');
-    icon.setAttribute('type', href.endsWith('.svg') ? 'image/svg+xml' : 'image/png');
+    icon.setAttribute('type', isIco ? 'image/x-icon' : (isSvg ? 'image/svg+xml' : 'image/png'));
     icon.setAttribute('href', `${href}${href.includes('?') ? '&' : '?'}v=${Date.now()}`);
     head.appendChild(icon);
 
