@@ -31,6 +31,8 @@ export class MainLayout implements OnInit, OnDestroy {
   readonly dismissWarning = signal<boolean>(false);
   readonly isTierModalOpen = signal<boolean>(false);
   readonly packagesMenuOpen = signal<boolean>(false);
+  /** Public customer storefront URL */
+  readonly storeUrl = environment.customerUrl;
   /** NEW / pending counts for nav badges only */
   readonly pendingProductsCount = signal<number>(0);
   readonly pendingOrdersCount = signal<number>(0);
@@ -246,18 +248,19 @@ export class MainLayout implements OnInit, OnDestroy {
 
   confirmLogout() {
     this.showLogoutModal.set(false);
-    const loginUrl = `${environment.customerUrl}/auth/login?logout=true`;
+    // After logout land on main storefront (not login page)
+    const storeUrl = this.storeUrl || '/';
     this.authService.logout().subscribe({
       next: () => {
         this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = loginUrl;
+          window.location.href = storeUrl;
         }
       },
       error: () => {
         this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = loginUrl;
+          window.location.href = storeUrl;
         }
       }
     });

@@ -1,5 +1,14 @@
 /* Auth Layout Scoped Navigation & Tab Styles */
 
+.auth-nav-bar {
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.auth-nav-bar::-webkit-scrollbar {
+  display: none;
+}
+
 .auth-nav-pill {
   color: #4b5563;
   transition: all 0.2s ease-in-out;
