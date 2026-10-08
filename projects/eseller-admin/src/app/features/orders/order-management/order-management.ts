@@ -740,7 +740,7 @@ export class OrderManagement implements OnInit {
     this.adminService.placeAdminOrder({
       productVariantId: variantId,
       quantity: qty,
-      customerName: this.placeCustomerName().trim() || 'Platform Admin',
+      customerName: this.placeCustomerName().trim() || undefined,
       customerPhone: this.placeCustomerPhone().trim() || undefined,
       shippingAddress: this.placeAddress().trim() || undefined,
       city: this.placeCity().trim() || undefined,
