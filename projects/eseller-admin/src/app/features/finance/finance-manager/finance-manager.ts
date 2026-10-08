@@ -2,6 +2,8 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import {
@@ -20,6 +22,7 @@ interface SellerWalletRow extends AdminSellerWalletDto {
   availableDraft: number;
   editingPending: boolean;
   editingAvailable: boolean;
+  editingBalance: boolean;
 }
 
 @Component({
@@ -70,6 +73,8 @@ export class FinanceManager implements OnInit {
   } | null>(null);
   readonly savingWalletAccountId = signal<string | null>(null);
   readonly savingEarningsAccountId = signal<string | null>(null);
+  /** Shop / merchant search on Seller Earnings tab */
+  readonly sellerWalletSearch = signal<string>('');
 
   readonly payoutMethods = signal<AdminWithdrawalPaymentMethodDto[]>([]);
   readonly isLoadingPayoutMethods = signal<boolean>(false);
@@ -131,7 +136,8 @@ export class FinanceManager implements OnInit {
             pendingDraft: r.pendingEarnings,
             availableDraft: r.availableEarnings,
             editingPending: false,
-            editingAvailable: false
+            editingAvailable: false,
+            editingBalance: false
           }))
         );
         this.isLoadingWallets.set(false);
@@ -139,6 +145,16 @@ export class FinanceManager implements OnInit {
       error: () => this.isLoadingWallets.set(false)
     });
   }
+
+  readonly filteredSellerWallets = computed(() => {
+    const term = this.sellerWalletSearch().trim().toLowerCase();
+    const list = this.sellerWallets();
+    if (!term) return list;
+    return list.filter(r =>
+      (r.shopName || '').toLowerCase().includes(term) ||
+      (r.shopkeeperName || '').toLowerCase().includes(term)
+    );
+  });
 
   updateWalletBalanceDraft(accountId: string, value: number): void {
     this.sellerWallets.update(list =>
@@ -168,6 +184,35 @@ export class FinanceManager implements OnInit {
     );
   }
 
+  startEditBalance(accountId: string): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId
+          ? { ...row, editingBalance: true, balanceDraft: row.walletBalance }
+          : row
+      )
+    );
+  }
+
+  /** Open all three amount fields for quick adjust. */
+  startEditAllAmounts(accountId: string): void {
+    this.sellerWallets.update(list =>
+      list.map(row =>
+        row.accountId === accountId
+          ? {
+              ...row,
+              editingPending: true,
+              editingAvailable: true,
+              editingBalance: true,
+              pendingDraft: row.pendingEarnings,
+              availableDraft: row.availableEarnings,
+              balanceDraft: row.walletBalance
+            }
+          : row
+      )
+    );
+  }
+
   updatePendingDraft(accountId: string, value: number): void {
     this.sellerWallets.update(list =>
       list.map(row =>
@@ -184,6 +229,10 @@ export class FinanceManager implements OnInit {
     );
   }
 
+  isRowEditing(row: SellerWalletRow): boolean {
+    return row.editingPending || row.editingAvailable || row.editingBalance;
+  }
+
   cancelEarningsEdit(accountId: string): void {
     this.sellerWallets.update(list =>
       list.map(row =>
@@ -192,32 +241,73 @@ export class FinanceManager implements OnInit {
               ...row,
               editingPending: false,
               editingAvailable: false,
+              editingBalance: false,
               pendingDraft: row.pendingEarnings,
-              availableDraft: row.availableEarnings
+              availableDraft: row.availableEarnings,
+              balanceDraft: row.walletBalance
             }
           : row
       )
     );
   }
 
+  /** Persist Pending + Available + Wallet balance — seller sees exact DB values. */
   saveSellerEarnings(row: SellerWalletRow): void {
     const pending = Number(row.editingPending ? row.pendingDraft : row.pendingEarnings);
     const available = Number(row.editingAvailable ? row.availableDraft : row.availableEarnings);
-    if (!Number.isFinite(pending) || pending < 0 || !Number.isFinite(available) || available < 0) {
-      this.toast.show('Enter valid Pending / Available amounts (0 or greater).', 'error');
+    const balance = Number(row.editingBalance ? row.balanceDraft : row.walletBalance);
+
+    if (!Number.isFinite(pending) || pending < 0
+      || !Number.isFinite(available) || available < 0
+      || !Number.isFinite(balance) || balance < 0) {
+      this.toast.show('Enter valid amounts (0 or greater) for Pending, Available, and Wallet.', 'error');
+      return;
+    }
+
+    const pendingChanged = Math.abs(pending - Number(row.pendingEarnings)) > 0.0001;
+    const availableChanged = Math.abs(available - Number(row.availableEarnings)) > 0.0001;
+    const balanceChanged = Math.abs(balance - Number(row.walletBalance)) > 0.0001;
+
+    if (!pendingChanged && !availableChanged && !balanceChanged) {
+      this.cancelEarningsEdit(row.accountId);
       return;
     }
 
     this.savingEarningsAccountId.set(row.accountId);
-    this.adminService.updateSellerEarnings(row.accountId, pending, available).subscribe({
-      next: () => {
+
+    const earnings$ = (pendingChanged || availableChanged)
+      ? this.adminService.updateSellerEarnings(row.accountId, pending, available).pipe(
+          catchError(err => of({ __error: err }))
+        )
+      : of(null);
+
+    const balance$ = balanceChanged
+      ? this.adminService.updateSellerWalletBalance(row.accountId, balance).pipe(
+          catchError(err => of({ __error: err }))
+        )
+      : of(null);
+
+    forkJoin({ earnings: earnings$, balance: balance$ }).subscribe({
+      next: (res: any) => {
         this.savingEarningsAccountId.set(null);
-        this.toast.show(`Earnings updated for ${row.shopkeeperName}.`, 'success');
+        const earnErr = res?.earnings?.__error;
+        const balErr = res?.balance?.__error;
+        if (earnErr || balErr) {
+          this.toast.show(
+            earnErr?.error?.error || balErr?.error?.error || 'Failed to save one or more amounts.',
+            'error'
+          );
+        } else {
+          this.toast.show(
+            `Updated ${row.shopName || row.shopkeeperName}: Pending, Available & Wallet saved.`,
+            'success'
+          );
+        }
         this.loadSellerWallets();
       },
       error: (err) => {
         this.savingEarningsAccountId.set(null);
-        this.toast.show(err?.error?.error || 'Failed to update seller earnings.', 'error');
+        this.toast.show(err?.error?.error || 'Failed to update seller amounts.', 'error');
       }
     });
   }
@@ -245,6 +335,11 @@ export class FinanceManager implements OnInit {
   }
 
   saveSellerWalletBalance(row: SellerWalletRow): void {
+    // Prefer unified save when any field is in edit mode
+    if (this.isRowEditing(row)) {
+      this.saveSellerEarnings(row);
+      return;
+    }
     const balance = Number(row.balanceDraft);
     if (!Number.isFinite(balance) || balance < 0) {
       this.toast.show('Enter a valid wallet balance (0 or greater).', 'error');
