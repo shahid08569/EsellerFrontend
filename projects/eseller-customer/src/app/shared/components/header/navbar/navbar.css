@@ -13,3 +13,13 @@
   top: 0;
   z-index: 60;
 }
+
+/* Chrome (account dropdown) must outrank sticky nav while menu is open */
+.navbar-chrome-elevated {
+  position: relative;
+  z-index: 80;
+}
+
+.navbar-user-menu {
+  z-index: 90;
+}

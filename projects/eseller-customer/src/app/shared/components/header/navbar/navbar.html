@@ -91,8 +91,8 @@
     </div>
   </div>
 
-<!-- Non-sticky chrome (logo / search scrolls away) -->
-<div class="bg-primary text-white">
+<!-- Non-sticky chrome (logo / search scrolls away). Elevate when account menu is open so dropdown sits above sticky nav (z-60). -->
+<div class="bg-primary text-white" [class.navbar-chrome-elevated]="isUserMenuOpen()">
   <!-- ============================================================ -->
   <!-- DESKTOP chrome (scrolls away) -->
   <!-- ============================================================ -->
@@ -162,7 +162,7 @@
             </a>
           }
 
-          <div class="relative" (mouseleave)="closeUserMenu()">
+          <div class="relative z-10" (mouseleave)="closeUserMenu()">
             <button
               type="button"
               (click)="toggleUserMenu()"
@@ -177,9 +177,9 @@
               </svg>
             </button>
 
-            <!-- User Dropdown Menu -->
+            <!-- User Dropdown Menu — must stack above sticky nav strip -->
             @if (isUserMenuOpen()) {
-              <div class="absolute right-0 top-full pt-2 z-50 w-56 animate-in fade-in zoom-in-95 duration-150">
+              <div class="navbar-user-menu absolute right-0 top-full pt-2 w-56 animate-in fade-in zoom-in-95 duration-150">
                 <div class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-2 text-text-primary">
                   <div class="px-3 py-2 border-b border-gray-100">
                     <p class="text-xs font-bold text-text-primary truncate">{{ authStore.currentAccount()?.username }}</p>
