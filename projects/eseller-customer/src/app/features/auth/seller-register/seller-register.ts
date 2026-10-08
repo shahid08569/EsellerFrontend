@@ -113,7 +113,7 @@ export class SellerRegister implements OnInit {
     {
       id: 'license',
       name: 'Driving License',
-      label: "Driver's License",
+      label: 'Driving License',
       placeholder: '',
       hint: 'Upload clear Front & Back photos of your valid government-issued Driving License.',
       requiresBackSide: true
