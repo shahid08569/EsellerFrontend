@@ -178,7 +178,7 @@ export class OrderManagement implements OnInit {
 
   // Dedicated catalog pagination & responsive view
   readonly placePageSizeOptions = [5, 10, 15, 25, 50];
-  readonly placePageSize = signal<number>(10);
+  readonly placePageSize = signal<number>(typeof window !== 'undefined' && window.innerWidth < 1024 ? 5 : 10);
   readonly placeCurrentPage = signal<number>(1);
   readonly placeMobileTab = signal<'catalog' | 'review'>('catalog');
 
@@ -738,6 +738,11 @@ export class OrderManagement implements OnInit {
     this.orderStep.set('select');
     this.placeMobileTab.set('catalog');
     this.placeCurrentPage.set(1);
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      this.placePageSize.set(5);
+    } else {
+      this.placePageSize.set(10);
+    }
     this.orderPlacementType.set('multiple');
     this.multiOrderItems.set([]);
     this.placeShopId.set('');

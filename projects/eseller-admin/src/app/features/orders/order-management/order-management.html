@@ -726,15 +726,52 @@
           </button>
         </div>
       </div>
-      <div class="mt-2 flex items-center justify-between text-[11px] font-semibold text-gray-500">
-        <span>Available Products: <strong class="text-gray-900">{{ filteredPlaceProducts().length }}</strong></span>
-        <span>
-          @if (orderPlacementType() === 'multiple') {
-            <span>Items Selected: <strong class="text-orange-600">{{ multiOrderItems().length }}</strong> ({{ multiTotalItemsCount() }} pcs)</span>
-          } @else if (placeSelectedProduct(); as sel) {
-            <span>Selected: <strong class="text-orange-600">{{ sel.name }}</strong> ({{ sel.shopName }})</span>
-          }
-        </span>
+      <!-- Top Pagination & Stats Bar (Prominent at top of catalog) -->
+      <div class="mt-2.5 pt-2 border-t border-gray-200/80 flex flex-wrap items-center justify-between gap-2.5 text-xs">
+        <div class="flex flex-wrap items-center gap-2">
+          <span class="text-xs font-bold text-gray-600">
+            Available: <strong class="text-gray-900 font-black">{{ filteredPlaceProducts().length }}</strong>
+          </span>
+          <span class="text-gray-300">|</span>
+          <div class="flex items-center gap-1">
+            <span class="text-[11px] font-semibold text-gray-500">Show:</span>
+            <div class="inline-flex items-center bg-gray-200/80 rounded-lg p-0.5 border border-gray-200">
+              @for (sz of placePageSizeOptions; track sz) {
+                <button
+                  type="button"
+                  (click)="setPlacePageSize(sz)"
+                  [class]="placePageSize() === sz
+                    ? 'px-2 py-0.5 rounded-md font-black bg-orange-600 text-white shadow-2xs cursor-pointer text-xs'
+                    : 'px-2 py-0.5 rounded-md font-bold text-gray-600 hover:text-gray-900 hover:bg-gray-300/60 cursor-pointer text-xs'">
+                  {{ sz }}
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Top Pagination Buttons -->
+        <div class="flex items-center gap-1.5 ml-auto">
+          <button
+            type="button"
+            (click)="prevPlacePage()"
+            [disabled]="placeCurrentPage() === 1"
+            class="px-2.5 py-1 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 font-bold text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs text-xs">
+            ‹ Prev
+          </button>
+
+          <span class="px-2.5 py-1 font-extrabold text-orange-600 bg-orange-50 border border-orange-200 rounded-lg text-xs whitespace-nowrap">
+            Page {{ placeCurrentPage() }} / {{ totalPlacePages() }}
+          </span>
+
+          <button
+            type="button"
+            (click)="nextPlacePage()"
+            [disabled]="placeCurrentPage() >= totalPlacePages()"
+            class="px-2.5 py-1 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 font-bold text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs text-xs">
+            Next ›
+          </button>
+        </div>
       </div>
     </div>
 
