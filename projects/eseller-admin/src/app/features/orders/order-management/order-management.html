@@ -762,12 +762,12 @@
                       {{ p.shopName || 'Shop' }}
                     </span>
                     @if (orderPlacementType() === 'multiple' && isProductInMultiOrder(p.id) > 0) {
-                      <span class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-emerald-600 text-white text-[11px] font-black shadow-md flex items-center gap-1">
-                        ✓ {{ isProductInMultiOrder(p.id) }} in order
+                      <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold shadow-xs">
+                        ✓ Added
                       </span>
                     }
                     @if (orderPlacementType() === 'single' && isPlaceProductSelected(p.id)) {
-                      <span class="absolute top-2 right-2 px-2.5 py-1 rounded-full bg-orange-600 text-white text-[11px] font-black shadow-md">
+                      <span class="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-bold shadow-xs">
                         ✓ Selected
                       </span>
                     }
@@ -779,34 +779,28 @@
                         <span class="truncate max-w-[130px] text-gray-500">• {{ p.categoryName }}</span>
                       }
                     </div>
-                    <h4 class="text-sm font-extrabold text-gray-900 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors">
+                    <h4 class="text-sm font-bold text-gray-900 line-clamp-2 leading-snug group-hover:text-orange-600 transition-colors">
                       {{ p.name }}
                     </h4>
-                    <div class="pt-1 flex items-baseline gap-1">
-                      <span class="text-base font-black text-orange-600">${{ p.basePrice | number:'1.2-2' }}</span>
+                    <div class="pt-0.5 flex items-baseline gap-1">
+                      <span class="text-sm font-extrabold text-orange-600">${{ p.basePrice | number:'1.2-2' }}</span>
                     </div>
                   </div>
                 </div>
 
-                <!-- Full-Width End-to-End Action Button -->
-                <div class="pt-2.5 border-t border-gray-100 mt-2">
+                <!-- Sleek Action Button -->
+                <div class="pt-2 border-t border-gray-100 mt-2">
                   @if (orderPlacementType() === 'multiple') {
                     <button
                       type="button"
                       (click)="$event.stopPropagation(); toggleOrAddMultiProduct(p)"
                       [class]="isProductInMultiOrder(p.id) > 0
-                        ? 'w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-xs transition-all flex items-center justify-center gap-1.5'
-                        : 'w-full py-2.5 px-3 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-black cursor-pointer shadow-xs transition-all flex items-center justify-center gap-1.5'">
+                        ? 'w-full py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1'
+                        : 'w-full py-1.5 px-3 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1'">
                       @if (isProductInMultiOrder(p.id) > 0) {
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>{{ isProductInMultiOrder(p.id) }} in Order · + Add More</span>
+                        <span>✓ Added</span>
                       } @else {
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 4v16m8-8H4" />
-                        </svg>
-                        <span>+ Add to Order</span>
+                        <span>Add</span>
                       }
                     </button>
                   } @else {
@@ -814,15 +808,12 @@
                       type="button"
                       (click)="$event.stopPropagation(); selectPlaceProduct(p)"
                       [class]="isPlaceProductSelected(p.id)
-                        ? 'w-full py-2.5 px-3 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-black cursor-pointer shadow-xs transition-all flex items-center justify-center gap-1.5'
-                        : 'w-full py-2.5 px-3 rounded-xl bg-gray-100 hover:bg-orange-600 hover:text-white text-gray-800 text-xs font-black cursor-pointer shadow-2xs transition-all flex items-center justify-center gap-1.5'">
+                        ? 'w-full py-1.5 px-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1'
+                        : 'w-full py-1.5 px-3 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-700 text-xs font-semibold cursor-pointer transition-all flex items-center justify-center gap-1'">
                       @if (isPlaceProductSelected(p.id)) {
-                        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7" />
-                        </svg>
-                        <span>✓ Selected Product</span>
+                        <span>✓ Selected</span>
                       } @else {
-                        <span>Select Product</span>
+                        <span>Select</span>
                       }
                     </button>
                   }
