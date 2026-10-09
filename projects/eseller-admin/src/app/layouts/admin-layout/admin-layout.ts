@@ -1,5 +1,5 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
 import { AuthStore, AuthService, ToastService } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
@@ -12,7 +12,7 @@ import { environment } from '../../../environments/environment';
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
-  imports: [CommonModule, RouterOutlet, RouterLink, RouterLinkActive, AdminChatWidget, NotificationBell],
+  imports: [CommonModule, NgTemplateOutlet, RouterOutlet, RouterLink, RouterLinkActive, AdminChatWidget, NotificationBell],
   templateUrl: './admin-layout.html'
 })
 export class AdminLayout implements OnInit {
@@ -268,6 +268,10 @@ export class AdminLayout implements OnInit {
 
   toggleMobileMenu(): void {
     this.mobileMenuOpen.update(v => !v);
+  }
+
+  closeMobileMenu(): void {
+    this.mobileMenuOpen.set(false);
   }
 
   readonly logoutModalOpen = signal<boolean>(false);
