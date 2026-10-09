@@ -141,7 +141,7 @@ export class OrderManagement implements OnInit {
   readonly placeVariants = signal<{ id: string; sku: string; price: number; stockQty: number }[]>([]);
   readonly placeVariantId = signal<string>('');
   readonly placeQty = signal<number>(1);
-  readonly placeCustomerName = signal<string>('Buyer');
+  readonly placeCustomerName = signal<string>('');
   readonly placeCustomerPhone = signal<string>('');
   readonly placeAddress = signal<string>('');
   readonly placeCity = signal<string>('');
@@ -702,12 +702,21 @@ export class OrderManagement implements OnInit {
     this.placeVariants.set([]);
     this.placeVariantId.set('');
     this.placeQty.set(1);
-    this.placeCustomerName.set('Buyer');
+    this.placeCustomerName.set('');
     this.placeCustomerPhone.set('');
     this.placeAddress.set('');
     this.placeCity.set('');
     this.placeOrderNotes.set('Placed by Management');
     this.loadPlaceOrderCatalog();
+  }
+
+  clearPlaceSingleSelection(): void {
+    this.placeSelectedProduct.set(null);
+    this.placeProductId.set('');
+    this.placeShopId.set('');
+    this.placeVariantId.set('');
+    this.placeVariants.set([]);
+    this.placeQty.set(1);
   }
 
   proceedToDelivery(): void {
@@ -781,6 +790,11 @@ export class OrderManagement implements OnInit {
   }
 
   selectPlaceProduct(product: AdminProductDto): void {
+    if (this.placeProductId() === product.id) {
+      this.clearPlaceSingleSelection();
+      return;
+    }
+
     this.placeSelectedProduct.set(product);
     this.placeProductId.set(product.id);
     this.placeShopId.set(product.shopId || '');
