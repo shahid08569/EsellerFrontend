@@ -87,6 +87,7 @@ export class OrderManagement implements OnInit {
 
   // Mode: Single product vs Multiple products
   readonly orderPlacementType = signal<'single' | 'multiple'>('multiple');
+  readonly orderStep = signal<'select' | 'delivery'>('select');
   readonly multiOrderItems = signal<PlaceOrderMultiItem[]>([]);
   readonly placeOrderNotes = signal<string>('Placed by Management');
 
@@ -96,6 +97,22 @@ export class OrderManagement implements OnInit {
 
   readonly multiGrandTotalAmount = computed(() => {
     return this.multiOrderItems().reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  });
+
+  readonly multiOrderShopsSummary = computed(() => {
+    const map = new Map<string, { shopId: string; shopName: string; count: number; total: number; items: PlaceOrderMultiItem[] }>();
+    for (const item of this.multiOrderItems()) {
+      const existing = map.get(item.shopId) || { shopId: item.shopId, shopName: item.shopName, count: 0, total: 0, items: [] };
+      existing.count += item.quantity;
+      existing.total += item.price * item.quantity;
+      existing.items.push(item);
+      map.set(item.shopId, existing);
+    }
+    return Array.from(map.values());
+  });
+
+  readonly multiOrderShopsCount = computed(() => {
+    return this.multiOrderShopsSummary().length;
   });
 
   readonly singleProductTotalAmount = computed(() => {
@@ -669,6 +686,7 @@ export class OrderManagement implements OnInit {
 
   openPlaceOrder(mode: PlaceOrderMode = 'modal'): void {
     this.placeOrderMode.set(mode);
+    this.orderStep.set('select');
     this.orderPlacementType.set('multiple');
     this.multiOrderItems.set([]);
     this.placeShopId.set('');
@@ -692,8 +710,42 @@ export class OrderManagement implements OnInit {
     this.loadPlaceOrderCatalog();
   }
 
+  proceedToDelivery(): void {
+    if (this.orderPlacementType() === 'single') {
+      if (!this.placeProductId()) {
+        this.toast.show('Please select a product from the catalog.', 'warning');
+        return;
+      }
+      if (!this.placeShopId()) {
+        this.toast.show('Selected product has no seller shop.', 'warning');
+        return;
+      }
+      if (!this.placeVariantId()) {
+        this.toast.show('Please select a product variant.', 'warning');
+        return;
+      }
+    } else {
+      const items = this.multiOrderItems();
+      if (items.length === 0) {
+        this.toast.show('Please add at least one product to the order.', 'warning');
+        return;
+      }
+      const invalid = items.find(i => !i.variantId);
+      if (invalid) {
+        this.toast.show(`Please select a valid variant for "${invalid.productName}".`, 'warning');
+        return;
+      }
+    }
+    this.orderStep.set('delivery');
+  }
+
+  backToSelect(): void {
+    this.orderStep.set('select');
+  }
+
   setOrderPlacementType(type: 'single' | 'multiple'): void {
     this.orderPlacementType.set(type);
+    this.orderStep.set('select');
   }
 
   loadPlaceOrderCatalog(): void {
@@ -896,6 +948,7 @@ export class OrderManagement implements OnInit {
     if (this.isPlacingOrder()) return;
     const wasPage = this.placeOrderMode() === 'page';
     this.placeOrderMode.set(null);
+    this.orderStep.set('select');
     if (wasPage) {
       void this.router.navigate(['/orders'], { queryParams: {} });
     }
@@ -932,6 +985,7 @@ export class OrderManagement implements OnInit {
           this.isPlacingOrder.set(false);
           const wasPage = this.placeOrderMode() === 'page';
           this.placeOrderMode.set(null);
+          this.orderStep.set('select');
           this.toast.show(res?.message || 'Order placed successfully.', 'success');
           this.loadOrders();
           if (wasPage) {
@@ -975,6 +1029,7 @@ export class OrderManagement implements OnInit {
           this.isPlacingOrder.set(false);
           const wasPage = this.placeOrderMode() === 'page';
           this.placeOrderMode.set(null);
+          this.orderStep.set('select');
           this.multiOrderItems.set([]);
           this.toast.show(res?.message || 'Order placed successfully with multiple products!', 'success');
           this.loadOrders();
