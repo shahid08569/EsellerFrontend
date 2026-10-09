@@ -176,6 +176,52 @@ export class OrderManagement implements OnInit {
     return list;
   });
 
+  // Dedicated catalog pagination & responsive view
+  readonly placePageSizeOptions = [5, 10, 15, 25, 50];
+  readonly placePageSize = signal<number>(10);
+  readonly placeCurrentPage = signal<number>(1);
+  readonly placeMobileTab = signal<'catalog' | 'review'>('catalog');
+
+  readonly totalPlacePages = computed(() => {
+    const total = this.filteredPlaceProducts().length;
+    const size = this.placePageSize();
+    return Math.max(1, Math.ceil(total / size));
+  });
+
+  readonly pagedPlaceProducts = computed(() => {
+    const list = this.filteredPlaceProducts();
+    const size = this.placePageSize();
+    const totalPages = this.totalPlacePages();
+    const page = Math.min(Math.max(1, this.placeCurrentPage()), totalPages);
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  setPlacePageSize(size: number): void {
+    this.placePageSize.set(size);
+    this.placeCurrentPage.set(1);
+  }
+
+  goToPlacePage(page: number): void {
+    if (page >= 1 && page <= this.totalPlacePages()) {
+      this.placeCurrentPage.set(page);
+    }
+  }
+
+  nextPlacePage(): void {
+    if (this.placeCurrentPage() < this.totalPlacePages()) {
+      this.placeCurrentPage.update(p => p + 1);
+    }
+  }
+
+  prevPlacePage(): void {
+    if (this.placeCurrentPage() > 1) {
+      this.placeCurrentPage.update(p => p - 1);
+    }
+  }
+
+  readonly Math = Math;
+
   formatImageUrl(url?: string | null): string {
     return this.adminService.formatImageUrl(url);
   }
@@ -234,6 +280,9 @@ export class OrderManagement implements OnInit {
   }
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      this.placePageSize.set(5);
+    }
     this.loadShops();
     this.loadOrders();
     this.route.queryParams.subscribe(params => {
@@ -687,6 +736,8 @@ export class OrderManagement implements OnInit {
   openPlaceOrder(mode: PlaceOrderMode = 'modal'): void {
     this.placeOrderMode.set(mode);
     this.orderStep.set('select');
+    this.placeMobileTab.set('catalog');
+    this.placeCurrentPage.set(1);
     this.orderPlacementType.set('multiple');
     this.multiOrderItems.set([]);
     this.placeShopId.set('');
@@ -782,6 +833,7 @@ export class OrderManagement implements OnInit {
     this.placeFilterShopId.set('all');
     this.placeFilterCategoryId.set('all');
     this.placeFilterBrandId.set('all');
+    this.placeCurrentPage.set(1);
   }
 
   getPlaceProductImage(product: AdminProductDto): string {

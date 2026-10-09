@@ -1,6 +1,6 @@
 <!-- FULL-PAGE Place Order (sidebar "Create Order") -->
 @if (isPlaceOrderPage()) {
-  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col h-[calc(100vh-7rem)] min-h-[560px] overflow-hidden">
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm flex flex-col min-h-[calc(100vh-6rem)] lg:h-[calc(100vh-7rem)] overflow-hidden">
     <ng-container *ngTemplateOutlet="placeOrderForm"></ng-container>
   </div>
 }
@@ -585,7 +585,7 @@
     class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-md p-2 sm:p-4 md:p-6"
     (click)="closePlaceOrder()">
     <div
-      class="bg-white rounded-2xl shadow-2xl w-full max-w-[97vw] 2xl:max-w-7xl h-[min(94vh,940px)] flex flex-col overflow-hidden border border-gray-200"
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-[97vw] 2xl:max-w-7xl min-h-[85vh] lg:h-[min(94vh,940px)] flex flex-col overflow-hidden border border-gray-200"
       (click)="$event.stopPropagation()">
       <ng-container *ngTemplateOutlet="placeOrderForm"></ng-container>
     </div>
@@ -654,16 +654,36 @@
         [attr.aria-label]="isPlaceOrderPage() ? 'Back to orders' : 'Close'">
         &times;
       </button>
+
+      <!-- Mobile View Switcher (Catalog vs Review) -->
+      <div class="lg:hidden w-full flex items-center gap-2 pt-2 border-t border-gray-100">
+        <button
+          type="button"
+          (click)="placeMobileTab.set('catalog')"
+          [class]="placeMobileTab() === 'catalog'
+            ? 'flex-1 py-2 px-3 rounded-xl text-xs font-black bg-orange-600 text-white shadow-xs text-center cursor-pointer transition-all'
+            : 'flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 text-center cursor-pointer transition-all'">
+          🛍️ Products Catalog ({{ filteredPlaceProducts().length }})
+        </button>
+        <button
+          type="button"
+          (click)="placeMobileTab.set('review')"
+          [class]="placeMobileTab() === 'review'
+            ? 'flex-1 py-2 px-3 rounded-xl text-xs font-black bg-orange-600 text-white shadow-xs text-center cursor-pointer transition-all'
+            : 'flex-1 py-2 px-3 rounded-xl text-xs font-bold bg-gray-100 text-gray-700 hover:bg-gray-200 text-center cursor-pointer transition-all'">
+          🛒 Order Review ({{ orderPlacementType() === 'multiple' ? multiOrderItems().length : (placeSelectedProduct() ? 1 : 0) }})
+        </button>
+      </div>
     </div>
 
     <!-- Filters Bar -->
-    <div class="shrink-0 px-4 sm:px-6 py-2.5 border-b border-gray-200 bg-slate-50/90">
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-        <div class="lg:col-span-2 relative">
+    <div class="shrink-0 px-3 sm:px-6 py-2.5 border-b border-gray-200 bg-slate-50/90" [class.hidden]="placeMobileTab() === 'review'">
+      <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-5 gap-2">
+        <div class="col-span-2 relative">
           <input
             type="text"
             [ngModel]="placeFilterSearch()"
-            (ngModelChange)="placeFilterSearch.set($event)"
+            (ngModelChange)="placeFilterSearch.set($event); placeCurrentPage.set(1)"
             placeholder="Search products by title, SKU, shop name…"
             class="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15" />
           <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -672,8 +692,8 @@
         </div>
         <select
           [ngModel]="placeFilterShopId()"
-          (ngModelChange)="placeFilterShopId.set($event)"
-          class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
+          (ngModelChange)="placeFilterShopId.set($event); placeCurrentPage.set(1)"
+          class="col-span-1 w-full px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
           <option value="all">All Shops</option>
           @for (s of shops(); track s.id) {
             <option [value]="s.id">{{ s.name }}</option>
@@ -681,18 +701,18 @@
         </select>
         <select
           [ngModel]="placeFilterCategoryId()"
-          (ngModelChange)="placeFilterCategoryId.set($event)"
-          class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
+          (ngModelChange)="placeFilterCategoryId.set($event); placeCurrentPage.set(1)"
+          class="col-span-1 w-full px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
           <option value="all">All Categories</option>
           @for (cat of placeCategories(); track cat.id) {
             <option [value]="cat.id">{{ cat.name }}</option>
           }
         </select>
-        <div class="flex items-center gap-2">
+        <div class="col-span-2 lg:col-span-1 flex items-center gap-2">
           <select
             [ngModel]="placeFilterBrandId()"
-            (ngModelChange)="placeFilterBrandId.set($event)"
-            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
+            (ngModelChange)="placeFilterBrandId.set($event); placeCurrentPage.set(1)"
+            class="flex-1 px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
             <option value="all">All Brands</option>
             @for (b of placeBrands(); track b.id) {
               <option [value]="b.id">{{ b.name }}</option>
@@ -710,7 +730,7 @@
         <span>Available Products: <strong class="text-gray-900">{{ filteredPlaceProducts().length }}</strong></span>
         <span>
           @if (orderPlacementType() === 'multiple') {
-            <span>Items Selected: <strong class="text-orange-600">{{ multiOrderItems().length }}</strong> ({{ multiTotalItemsCount() }} qty)</span>
+            <span>Items Selected: <strong class="text-orange-600">{{ multiOrderItems().length }}</strong> ({{ multiTotalItemsCount() }} pcs)</span>
           } @else if (placeSelectedProduct(); as sel) {
             <span>Selected: <strong class="text-orange-600">{{ sel.name }}</strong> ({{ sel.shopName }})</span>
           }
@@ -721,7 +741,9 @@
     <!-- Main Workspace (Catalog Browser on Left, Order Summary Workspace on Right) -->
     <div class="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
       <!-- Left: Catalog Grid -->
-      <div class="flex-1 min-w-0 overflow-y-auto p-4 sm:p-5">
+      <div 
+        class="flex-1 min-w-0 overflow-y-auto p-3 sm:p-5 flex flex-col justify-between lg:!flex"
+        [class.hidden]="placeMobileTab() === 'review'">
         @if (placeLoadingProducts()) {
           <es-skeleton-layout variant="product-grid" [count]="8" />
         } @else if (filteredPlaceProducts().length === 0) {
@@ -740,7 +762,7 @@
           </div>
         } @else {
           <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-            @for (p of filteredPlaceProducts(); track p.id) {
+            @for (p of pagedPlaceProducts(); track p.id) {
               <div
                 (click)="orderPlacementType() === 'multiple' ? toggleOrAddMultiProduct(p) : selectPlaceProduct(p)"
                 [class]="orderPlacementType() === 'multiple'
@@ -821,16 +843,106 @@
               </div>
             }
           </div>
+
+          <!-- Professional Catalog Pagination Bar -->
+          <div class="mt-5 pt-4 border-t border-gray-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
+            <!-- Item range & page size selector -->
+            <div class="flex flex-wrap items-center justify-center sm:justify-start gap-2 text-gray-500 font-medium">
+              <span>
+                Showing <strong class="text-gray-900">{{ (placeCurrentPage() - 1) * placePageSize() + 1 }}</strong>
+                – <strong class="text-gray-900">{{ Math.min(placeCurrentPage() * placePageSize(), filteredPlaceProducts().length) }}</strong>
+                of <strong class="text-gray-900">{{ filteredPlaceProducts().length }}</strong> products
+              </span>
+              <span class="text-gray-300 hidden sm:inline">|</span>
+              <div class="flex items-center gap-1.5">
+                <span class="text-gray-500 font-semibold">Per page:</span>
+                <div class="inline-flex items-center bg-gray-100 rounded-lg p-0.5 border border-gray-200">
+                  @for (sz of placePageSizeOptions; track sz) {
+                    <button
+                      type="button"
+                      (click)="setPlacePageSize(sz)"
+                      [class]="placePageSize() === sz
+                        ? 'px-2 py-0.5 rounded-md font-black bg-orange-600 text-white shadow-2xs cursor-pointer'
+                        : 'px-2 py-0.5 rounded-md font-semibold text-gray-600 hover:text-gray-900 hover:bg-gray-200/60 cursor-pointer'">
+                      {{ sz }}
+                    </button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <!-- Pagination buttons -->
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                (click)="prevPlacePage()"
+                [disabled]="placeCurrentPage() === 1"
+                class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 font-bold text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs">
+                ‹ Prev
+              </button>
+
+              <span class="px-3 py-1 font-extrabold text-orange-600 bg-orange-50 border border-orange-200 rounded-lg text-xs">
+                {{ placeCurrentPage() }} / {{ totalPlacePages() }}
+              </span>
+
+              <button
+                type="button"
+                (click)="nextPlacePage()"
+                [disabled]="placeCurrentPage() >= totalPlacePages()"
+                class="px-3 py-1.5 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 font-bold text-gray-700 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors shadow-2xs">
+                Next ›
+              </button>
+            </div>
+          </div>
+
+          <!-- Sticky Mobile Bottom Bar: Quick Summary & Jump to Review -->
+          @if (orderPlacementType() === 'multiple' && multiOrderItems().length > 0) {
+            <div class="lg:hidden sticky bottom-1 inset-x-0 z-20 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 mt-4 border border-slate-700">
+              <div class="min-w-0">
+                <p class="text-xs font-black text-white truncate">{{ multiOrderItems().length }} items ({{ multiTotalItemsCount() }} pcs)</p>
+                <p class="text-xs text-orange-400 font-extrabold">${{ multiGrandTotalAmount() | number:'1.2-2' }}</p>
+              </div>
+              <button
+                type="button"
+                (click)="placeMobileTab.set('review')"
+                class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer">
+                <span>Review Order ({{ multiOrderItems().length }})</span>
+                <span>→</span>
+              </button>
+            </div>
+          } @else if (orderPlacementType() === 'single' && placeSelectedProduct()) {
+            <div class="lg:hidden sticky bottom-1 inset-x-0 z-20 bg-slate-900/95 backdrop-blur-md text-white p-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 mt-4 border border-slate-700">
+              <div class="min-w-0">
+                <p class="text-xs font-black text-white truncate">{{ placeSelectedProduct()!.name }}</p>
+                <p class="text-xs text-orange-400 font-extrabold">${{ singleProductTotalAmount() | number:'1.2-2' }}</p>
+              </div>
+              <button
+                type="button"
+                (click)="placeMobileTab.set('review')"
+                class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-500 text-white font-extrabold text-xs flex items-center gap-1.5 shrink-0 shadow-md cursor-pointer">
+                <span>Configure Order</span>
+                <span>→</span>
+              </button>
+            </div>
+          }
         }
       </div>
 
       <!-- Right: Order Workspace & Summary Panel (2-Step Dedicated Views) -->
-      <div class="w-full lg:w-[460px] xl:w-[500px] shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-slate-50/70 flex flex-col h-full overflow-hidden">
+      <div 
+        class="w-full lg:w-[460px] xl:w-[500px] shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-slate-50/70 flex flex-col h-full overflow-hidden lg:!flex"
+        [class.hidden]="placeMobileTab() !== 'review'">
         
         <!-- STEP 1: SELECTED PRODUCTS WORKSPACE -->
         @if (orderStep() === 'select') {
           <!-- Panel Header -->
           <div class="shrink-0 px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
+            <button
+              type="button"
+              (click)="placeMobileTab.set('catalog')"
+              class="lg:hidden flex items-center gap-1 px-2.5 py-1 rounded-xl bg-orange-50 text-orange-600 border border-orange-200 text-xs font-bold hover:bg-orange-100 cursor-pointer">
+              ‹ Catalog
+            </button>
             @if (orderPlacementType() === 'multiple') {
               <div class="flex items-center gap-2">
                 <span class="text-xs font-black text-gray-900 uppercase tracking-wide">Selected Products</span>
@@ -1108,9 +1220,17 @@
               </svg>
               <span>Back to Edit Items</span>
             </button>
-            <span class="text-[10px] font-extrabold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
-              Step 2 of 2
-            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="placeMobileTab.set('catalog')"
+                class="lg:hidden text-[11px] font-bold text-gray-600 hover:text-gray-900 bg-gray-100 px-2 py-1 rounded-lg cursor-pointer">
+                ‹ Catalog
+              </button>
+              <span class="text-[10px] font-extrabold text-orange-600 bg-orange-50 border border-orange-200 px-2 py-0.5 rounded-full">
+                Step 2 of 2
+              </span>
+            </div>
           </div>
 
           <!-- Form Body -->

@@ -52,7 +52,7 @@
       </div>
 
       <!-- NAVIGATION LINKS -->
-      <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin" (click)="isMobile && closeMobileMenu()">
+      <nav class="flex-1 px-3 py-4 space-y-1.5 overflow-y-auto scrollbar-thin">
 
         <!-- 1. DASHBOARD DROPDOWN -->
         <div>
@@ -638,37 +638,6 @@
   </div>
 </ng-template>
 
-  <!-- MOBILE HEADER -->
-  <header class="lg:hidden h-16 bg-[#0a0f1d] border-b border-slate-800 flex items-center justify-between px-4 sticky top-0 z-40">
-    <div class="flex items-center gap-2.5 min-w-0">
-      <div class="w-8 h-8 rounded-lg bg-orange-600 text-white flex items-center justify-center font-black text-sm shrink-0">
-        E
-      </div>
-      <span class="font-extrabold text-sm truncate" style="color: #ffffff !important;">Management Console</span>
-    </div>
-
-    <div class="flex items-center gap-2 shrink-0">
-      <a
-        [href]="customerUrl"
-        rel="noopener noreferrer"
-        title="Back to Store"
-        class="p-2 text-orange-300 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl transition-colors">
-        <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
-        </svg>
-      </a>
-    <button 
-      type="button" 
-      (click)="toggleMobileMenu()" 
-      title="Toggle Navigation Menu"
-      class="p-2 text-slate-200 hover:text-white bg-slate-800/80 hover:bg-slate-800 border border-slate-700/80 rounded-xl transition-colors cursor-pointer">
-      <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
-      </svg>
-    </button>
-    </div>
-  </header>
-
   <!-- MOBILE DRAWER (Identical Professional Sidebar) -->
   <div class="lg:hidden fixed inset-0 z-50 transition-opacity duration-300"
        [class.opacity-100]="mobileMenuOpen()"
@@ -686,35 +655,53 @@
   <!-- MAIN VIEWPORT CONTAINER -->
   <main [class.lg:pl-64]="!desktopSidebarCollapsed()" [class.lg:pl-0]="desktopSidebarCollapsed()" class="transition-all duration-300 flex-1 flex flex-col min-w-0">
     
-    <!-- TOP HEADER — sticky to viewport while content scrolls -->
-    <header class="h-16 bg-white/95 backdrop-blur-md border-b border-slate-200/80 flex items-center justify-between px-4 sm:px-6 sticky top-0 z-40 shadow-sm">
-      <div class="flex items-center gap-3">
+    <!-- TOP UNIFIED HEADER — sticky to viewport while content scrolls -->
+    <header class="h-16 bg-[#0a0f1d] lg:bg-white/95 lg:backdrop-blur-md border-b border-slate-800 lg:border-slate-200/80 flex items-center justify-between px-3 sm:px-6 sticky top-0 z-40 shadow-sm">
+      <div class="flex items-center gap-2.5 sm:gap-3 min-w-0">
+        <!-- Mobile Sidebar Hamburger Button -->
+        <button 
+          type="button" 
+          (click)="toggleMobileMenu()" 
+          title="Toggle Navigation Menu"
+          class="lg:hidden flex items-center justify-center p-2 text-slate-200 hover:text-white bg-slate-800/90 rounded-xl border border-slate-700/80 transition-all cursor-pointer shadow-2xs shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
+          </svg>
+        </button>
+
         <!-- Desktop Sidebar Toggle Button -->
         <button 
           type="button" 
           (click)="toggleDesktopSidebar()" 
           title="Toggle Navigation Menu"
-          class="hidden lg:flex items-center justify-center p-2.5 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition-all cursor-pointer shadow-2xs">
+          class="hidden lg:flex items-center justify-center p-2.5 text-slate-700 hover:text-slate-900 bg-slate-100 hover:bg-slate-200 rounded-xl border border-slate-200 transition-all cursor-pointer shadow-2xs shrink-0">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 transition-transform duration-200" [class.rotate-180]="desktopSidebarCollapsed()" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
             <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25h16.5" />
           </svg>
         </button>
 
-        <div class="w-2.5 h-2.5 rounded-full bg-orange-500 animate-pulse"></div>
-        <h1 class="text-sm font-black text-slate-900 tracking-tight">Management Platform Console</h1>
+        <!-- Brand / Title -->
+        <div class="flex items-center gap-2 min-w-0">
+          <div class="w-7 h-7 rounded-lg bg-orange-600 text-white flex items-center justify-center font-black text-xs shrink-0 shadow-sm shadow-orange-600/30">
+            EG
+          </div>
+          <span class="text-xs sm:text-sm font-black text-white lg:text-slate-900 tracking-tight truncate">
+            <span class="hidden sm:inline">Management Platform </span>Console
+          </span>
+        </div>
       </div>
 
-      <div class="flex items-center gap-2 sm:gap-3">
+      <div class="flex items-center gap-1.5 sm:gap-3 shrink-0">
         <!-- Back to Store (customer website) -->
         <a
           [href]="customerUrl"
           rel="noopener noreferrer"
           title="Back to Store — open customer website"
-          class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs border border-orange-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          class="inline-flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs border border-orange-500">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
           </svg>
-          <span>Store</span>
+          <span class="text-[11px] sm:text-xs">Store</span>
         </a>
 
         <!-- Live status badge -->
@@ -728,7 +715,7 @@
           type="button" 
           (click)="refreshBadges()" 
           title="Refresh counters"
-          class="p-2 text-slate-500 hover:text-orange-600 hover:bg-orange-50 rounded-xl border border-slate-200 transition-colors cursor-pointer">
+          class="p-1.5 sm:p-2 text-slate-300 lg:text-slate-500 hover:text-orange-400 lg:hover:text-orange-600 bg-slate-800/80 lg:bg-transparent rounded-xl border border-slate-700/80 lg:border-slate-200 transition-colors cursor-pointer">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0013.803-3.7M4.031 9.865a8.25 8.25 0 0113.803-3.7l3.181 3.182m0-4.991v4.99" />
           </svg>
@@ -742,8 +729,8 @@
           type="button" 
           (click)="openLogoutModal()" 
           title="Sign Out of Admin Console"
-          class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-rose-200 bg-rose-50 text-rose-700 hover:bg-rose-100 font-bold text-xs transition-colors cursor-pointer shadow-2xs">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+          class="inline-flex items-center gap-1.5 p-1.5 sm:px-3 sm:py-1.5 rounded-xl border border-rose-300/40 lg:border-rose-200 bg-rose-500/10 lg:bg-rose-50 text-rose-300 lg:text-rose-700 hover:bg-rose-500/20 lg:hover:bg-rose-100 font-bold text-xs transition-colors cursor-pointer shadow-2xs">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-rose-400 lg:text-rose-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
             <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15m3 0l3-3m0 0l-3-3m3 3H9" />
           </svg>
           <span class="hidden sm:inline">Sign Out</span>
