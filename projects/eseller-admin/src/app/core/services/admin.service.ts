@@ -646,8 +646,8 @@ export class AdminService {
 
   /** Management places an order against any seller / live warehouse variant */
   placeAdminOrder(data: {
-    productVariantId: string;
-    quantity: number;
+    productVariantId?: string;
+    quantity?: number;
     customerName?: string;
     customerPhone?: string;
     shippingAddress?: string;
@@ -655,6 +655,7 @@ export class AdminService {
     state?: string;
     country?: string;
     orderNotes?: string;
+    items?: Array<{ productVariantId: string; quantity: number }>;
   }): Observable<{ orderId: string; message: string }> {
     return this.api.post<{ orderId: string; message: string }>('/admin/orders/place', data);
   }

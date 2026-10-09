@@ -582,10 +582,10 @@
 <!-- Place Order Modal (+ Place Order button) -->
 @if (placeOrderMode() === 'modal') {
   <div
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/70 backdrop-blur-sm p-3 sm:p-6"
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/75 backdrop-blur-md p-2 sm:p-4 md:p-6"
     (click)="closePlaceOrder()">
     <div
-      class="bg-white rounded-2xl shadow-2xl w-full max-w-5xl h-[min(90vh,860px)] flex flex-col overflow-hidden border border-gray-100"
+      class="bg-white rounded-2xl shadow-2xl w-full max-w-[97vw] 2xl:max-w-7xl h-[min(94vh,940px)] flex flex-col overflow-hidden border border-gray-200"
       (click)="$event.stopPropagation()">
       <ng-container *ngTemplateOutlet="placeOrderForm"></ng-container>
     </div>
@@ -594,42 +594,87 @@
 
 <!-- Shared Place Order UI (page + modal) -->
 <ng-template #placeOrderForm>
-  <div class="flex flex-col flex-1 min-h-0 h-full">
-    <!-- Header -->
-    <div class="shrink-0 px-4 sm:px-5 py-3.5 border-b border-gray-100 flex items-start sm:items-center justify-between gap-3">
-      <div class="min-w-0">
-        <h3 class="text-base font-black text-gray-900">
-          {{ isPlaceOrderPage() ? 'Create Order' : 'Place Custom Order' }}
-        </h3>
-        <p class="text-[11px] text-gray-500 mt-0.5">
-          Pick any approved product from any shop, then place the order for that seller.
-        </p>
+  <div class="flex flex-col flex-1 min-h-0 h-full bg-white">
+    <!-- Top Header -->
+    <div class="shrink-0 px-4 sm:px-6 py-3.5 border-b border-gray-200 flex flex-wrap items-center justify-between gap-3 bg-white">
+      <div class="flex items-center gap-3 min-w-0">
+        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-black shrink-0">
+          <svg class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        </div>
+        <div class="min-w-0">
+          <h3 class="text-base font-black text-gray-900 tracking-tight flex items-center gap-2">
+            <span>{{ isPlaceOrderPage() ? 'Create Platform Order' : 'Place Custom Order' }}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-50 text-orange-700 border border-orange-200">
+              SuperAdmin
+            </span>
+          </h3>
+          <p class="text-[11px] text-gray-500 truncate">
+            Browse catalog, select products, customize quantities, and place orders directly to seller shops.
+          </p>
+        </div>
       </div>
+
+      <!-- Mode Selector Switch: Single vs Multiple -->
+      <div class="inline-flex items-center p-1 bg-gray-100 rounded-xl border border-gray-200 shadow-inner">
+        <button
+          type="button"
+          (click)="setOrderPlacementType('single')"
+          [class]="orderPlacementType() === 'single'
+            ? 'px-3.5 py-1.5 rounded-lg text-xs font-black bg-white text-orange-600 shadow-xs cursor-pointer flex items-center gap-1.5 transition-all'
+            : 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 cursor-pointer flex items-center gap-1.5 transition-all'">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+          </svg>
+          <span>Create Order in Single</span>
+        </button>
+        <button
+          type="button"
+          (click)="setOrderPlacementType('multiple')"
+          [class]="orderPlacementType() === 'multiple'
+            ? 'px-3.5 py-1.5 rounded-lg text-xs font-black bg-white text-orange-600 shadow-xs cursor-pointer flex items-center gap-1.5 transition-all'
+            : 'px-3.5 py-1.5 rounded-lg text-xs font-bold text-gray-600 hover:text-gray-900 cursor-pointer flex items-center gap-1.5 transition-all'">
+          <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+          </svg>
+          <span>Create Order in Multiple</span>
+          @if (multiOrderItems().length > 0) {
+            <span class="px-1.5 py-0.5 rounded-full bg-orange-600 text-white text-[10px] font-black leading-none">
+              {{ multiOrderItems().length }}
+            </span>
+          }
+        </button>
+      </div>
+
       <button
         type="button"
         (click)="closePlaceOrder()"
-        class="shrink-0 w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-lg font-bold cursor-pointer flex items-center justify-center"
+        class="shrink-0 w-8 h-8 rounded-lg text-gray-400 hover:text-gray-700 hover:bg-gray-100 text-lg font-bold cursor-pointer flex items-center justify-center transition-colors"
         [attr.aria-label]="isPlaceOrderPage() ? 'Back to orders' : 'Close'">
         &times;
       </button>
     </div>
 
-    <!-- Compact filters (top bar — no side panel) -->
-    <div class="shrink-0 px-4 sm:px-5 py-3 border-b border-gray-100 bg-slate-50/80">
+    <!-- Filters Bar -->
+    <div class="shrink-0 px-4 sm:px-6 py-2.5 border-b border-gray-200 bg-slate-50/90">
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2.5">
-        <div class="lg:col-span-2">
+        <div class="lg:col-span-2 relative">
           <input
             type="text"
             [ngModel]="placeFilterSearch()"
             (ngModelChange)="placeFilterSearch.set($event)"
-            placeholder="Search product, shop, brand…"
-            class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15" />
+            placeholder="Search products by title, SKU, shop name…"
+            class="w-full pl-8 pr-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15" />
+          <svg class="w-3.5 h-3.5 text-gray-400 absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
         </div>
         <select
           [ngModel]="placeFilterShopId()"
           (ngModelChange)="placeFilterShopId.set($event)"
           class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
-          <option value="all">All shops</option>
+          <option value="all">All Shops</option>
           @for (s of shops(); track s.id) {
             <option [value]="s.id">{{ s.name }}</option>
           }
@@ -638,7 +683,7 @@
           [ngModel]="placeFilterCategoryId()"
           (ngModelChange)="placeFilterCategoryId.set($event)"
           class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
-          <option value="all">All categories</option>
+          <option value="all">All Categories</option>
           @for (cat of placeCategories(); track cat.id) {
             <option [value]="cat.id">{{ cat.name }}</option>
           }
@@ -648,7 +693,7 @@
             [ngModel]="placeFilterBrandId()"
             (ngModelChange)="placeFilterBrandId.set($event)"
             class="w-full px-3 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
-            <option value="all">All brands</option>
+            <option value="all">All Brands</option>
             @for (b of placeBrands(); track b.id) {
               <option [value]="b.id">{{ b.name }}</option>
             }
@@ -656,149 +701,386 @@
           <button
             type="button"
             (click)="clearPlaceFilters()"
-            class="shrink-0 px-2.5 py-2 rounded-xl text-[10px] font-bold text-orange-600 hover:bg-orange-50 cursor-pointer whitespace-nowrap">
+            class="shrink-0 px-2.5 py-2 rounded-xl text-[10px] font-extrabold text-orange-600 hover:bg-orange-50 cursor-pointer whitespace-nowrap">
             Clear
           </button>
         </div>
       </div>
-      <div class="mt-2 flex items-center justify-between gap-2">
-        <span class="text-[11px] font-bold text-gray-500">
-          {{ filteredPlaceProducts().length }} product{{ filteredPlaceProducts().length === 1 ? '' : 's' }}
+      <div class="mt-2 flex items-center justify-between text-[11px] font-semibold text-gray-500">
+        <span>Available Products: <strong class="text-gray-900">{{ filteredPlaceProducts().length }}</strong></span>
+        <span>
+          @if (orderPlacementType() === 'multiple') {
+            <span>Items Selected: <strong class="text-orange-600">{{ multiOrderItems().length }}</strong> ({{ multiTotalItemsCount() }} qty)</span>
+          } @else if (placeSelectedProduct(); as sel) {
+            <span>Selected: <strong class="text-orange-600">{{ sel.name }}</strong> ({{ sel.shopName }})</span>
+          }
         </span>
-        @if (placeSelectedProduct(); as sel) {
-          <span class="text-[11px] font-semibold text-gray-600 truncate">
-            Selected shop: <span class="text-orange-700">{{ sel.shopName || '—' }}</span>
-          </span>
-        }
       </div>
     </div>
 
-    <!-- Scrollable products -->
-    <div class="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5">
-      @if (placeLoadingProducts()) {
-        <es-skeleton-layout variant="product-grid" [count]="8" />
-      } @else if (filteredPlaceProducts().length === 0) {
-        <div class="py-16 text-center text-gray-400">
-          <p class="text-sm font-bold text-gray-600">No products match your filters</p>
-          <p class="text-xs mt-1">Try another shop, category, or clear filters.</p>
-          <button type="button" (click)="clearPlaceFilters()"
-            class="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white text-xs font-bold cursor-pointer hover:bg-orange-700">
-            Clear filters
-          </button>
-        </div>
-      } @else {
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-5 gap-3">
-          @for (p of filteredPlaceProducts(); track p.id) {
+    <!-- Main Workspace (Catalog Browser on Left, Order Summary Workspace on Right) -->
+    <div class="flex-1 min-h-0 flex flex-col lg:flex-row overflow-hidden">
+      <!-- Left: Catalog Grid -->
+      <div class="flex-1 min-w-0 overflow-y-auto p-4 sm:p-5">
+        @if (placeLoadingProducts()) {
+          <es-skeleton-layout variant="product-grid" [count]="8" />
+        } @else if (filteredPlaceProducts().length === 0) {
+          <div class="py-20 text-center text-gray-400">
+            <svg class="w-12 h-12 mx-auto text-gray-300 mb-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+            </svg>
+            <p class="text-sm font-bold text-gray-700">No products match your search or filter</p>
+            <p class="text-xs mt-1">Try searching a different keyword or resetting filters.</p>
             <button
               type="button"
-              (click)="selectPlaceProduct(p)"
-              [class]="isPlaceProductSelected(p.id)
-                ? 'text-left rounded-xl border-2 border-orange-500 bg-orange-50/60 shadow-sm p-2 flex flex-col gap-1.5 transition-all cursor-pointer'
-                : 'text-left rounded-xl border border-gray-200 bg-white hover:border-orange-300 hover:shadow-xs p-2 flex flex-col gap-1.5 transition-all cursor-pointer'">
-              <div class="w-full aspect-square rounded-lg bg-gray-100 overflow-hidden relative">
-                @if (getPlaceProductImage(p)) {
-                  <img [src]="getPlaceProductImage(p)" [alt]="p.name" class="w-full h-full object-cover"
-                    (error)="onImgError($event)" />
-                } @else {
-                  <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">No image</div>
-                }
-                <span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded-md bg-black/65 text-[9px] font-bold text-white truncate max-w-[92%]">
-                  {{ p.shopName || 'Shop' }}
-                </span>
-              </div>
-              <div class="min-w-0 space-y-0.5 px-0.5">
-                <p class="text-[10px] text-gray-400 font-semibold truncate">{{ p.brandName || 'Brand' }}</p>
-                <p class="text-[11px] font-bold text-gray-900 line-clamp-2 leading-snug">{{ p.name }}</p>
-                <p class="text-xs font-extrabold text-orange-600">${{ p.basePrice | number:'1.0-0' }}</p>
-              </div>
+              (click)="clearPlaceFilters()"
+              class="mt-3 px-4 py-2 rounded-xl bg-orange-600 text-white text-xs font-bold cursor-pointer hover:bg-orange-700">
+              Clear Filters
             </button>
-          }
-        </div>
-      }
-    </div>
-
-    <!-- Sticky checkout footer — always visible, never cut off -->
-    <div class="shrink-0 border-t border-gray-200 bg-white px-4 sm:px-5 py-3.5 shadow-[0_-4px_16px_rgba(15,23,42,0.06)]">
-      <div class="flex flex-col gap-3">
-        @if (placeSelectedProduct(); as sel) {
-          <div class="flex items-center gap-3 min-w-0">
-            <div class="w-11 h-11 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
-              @if (getPlaceProductImage(sel)) {
-                <img [src]="getPlaceProductImage(sel)" [alt]="sel.name" class="w-full h-full object-cover" (error)="onImgError($event)" />
-              }
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="text-xs font-black text-gray-900 truncate">{{ sel.name }}</p>
-              <p class="text-[10px] text-gray-500 truncate">{{ sel.shopName }} · {{ sel.categoryName || 'Category' }}</p>
-            </div>
           </div>
         } @else {
-          <p class="text-[11px] text-amber-700 font-semibold bg-amber-50 border border-amber-100 rounded-xl px-3 py-2">
-            Select a product above, then choose variant and buyer details.
-          </p>
-        }
+          <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 xl:grid-cols-4 2xl:grid-cols-5 gap-3.5">
+            @for (p of filteredPlaceProducts(); track p.id) {
+              <div
+                (click)="orderPlacementType() === 'multiple' ? toggleOrAddMultiProduct(p) : selectPlaceProduct(p)"
+                [class]="orderPlacementType() === 'multiple'
+                  ? (isProductInMultiOrder(p.id) > 0
+                      ? 'group text-left rounded-2xl border-2 border-orange-500 bg-orange-50/40 shadow-sm p-2.5 flex flex-col justify-between gap-2 transition-all cursor-pointer relative hover:shadow-md'
+                      : 'group text-left rounded-2xl border border-gray-200 bg-white hover:border-orange-300 hover:shadow-sm p-2.5 flex flex-col justify-between gap-2 transition-all cursor-pointer relative')
+                  : (isPlaceProductSelected(p.id)
+                      ? 'group text-left rounded-2xl border-2 border-orange-500 bg-orange-50/50 shadow-sm p-2.5 flex flex-col justify-between gap-2 transition-all cursor-pointer relative'
+                      : 'group text-left rounded-2xl border border-gray-200 bg-white hover:border-orange-300 hover:shadow-sm p-2.5 flex flex-col justify-between gap-2 transition-all cursor-pointer relative')">
+                <div>
+                  <div class="w-full aspect-square rounded-xl bg-gray-100 overflow-hidden relative mb-2">
+                    @if (getPlaceProductImage(p)) {
+                      <img [src]="getPlaceProductImage(p)" [alt]="p.name" class="w-full h-full object-cover transition-transform group-hover:scale-105"
+                        (error)="onImgError($event)" />
+                    } @else {
+                      <div class="w-full h-full flex items-center justify-center text-[10px] font-bold text-gray-400">No Image</div>
+                    }
+                    <span class="absolute bottom-1.5 left-1.5 px-2 py-0.5 rounded-md bg-black/70 backdrop-blur-xs text-[9px] font-bold text-white truncate max-w-[90%]">
+                      {{ p.shopName || 'Shop' }}
+                    </span>
+                    @if (orderPlacementType() === 'multiple' && isProductInMultiOrder(p.id) > 0) {
+                      <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-emerald-600 text-white text-[10px] font-black shadow-sm flex items-center gap-1">
+                        ✓ {{ isProductInMultiOrder(p.id) }} in order
+                      </span>
+                    }
+                    @if (orderPlacementType() === 'single' && isPlaceProductSelected(p.id)) {
+                      <span class="absolute top-1.5 right-1.5 px-2 py-0.5 rounded-full bg-orange-600 text-white text-[10px] font-black shadow-sm">
+                        Selected
+                      </span>
+                    }
+                  </div>
+                  <div class="min-w-0 space-y-0.5">
+                    <p class="text-[10px] text-gray-400 font-semibold truncate">{{ p.brandName || 'Brand' }}</p>
+                    <p class="text-xs font-bold text-gray-900 line-clamp-2 leading-snug">{{ p.name }}</p>
+                  </div>
+                </div>
 
-        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2">
-          <div class="col-span-2 sm:col-span-3 lg:col-span-2">
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Variant</label>
-            <select
-              [ngModel]="placeVariantId()"
-              (ngModelChange)="placeVariantId.set($event)"
-              [disabled]="!placeProductId() || placeLoadingVariants()"
-              class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 disabled:opacity-50">
-              <option value="">{{ placeLoadingVariants() ? 'Loading…' : (placeProductId() ? 'Select variant…' : 'Pick product first') }}</option>
-              @for (v of placeVariants(); track v.id) {
-                <option [value]="v.id">{{ v.sku }} — ${{ v.price }} (stock {{ v.stockQty }})</option>
-              }
-            </select>
+                <div class="pt-2 border-t border-gray-100 flex items-center justify-between gap-1 mt-auto">
+                  <span class="text-sm font-black text-orange-600">${{ p.basePrice | number:'1.0-2' }}</span>
+                  @if (orderPlacementType() === 'multiple') {
+                    <button
+                      type="button"
+                      (click)="$event.stopPropagation(); toggleOrAddMultiProduct(p)"
+                      class="px-2.5 py-1 rounded-lg bg-orange-600 hover:bg-orange-700 text-white text-[10px] font-black cursor-pointer shadow-xs transition-colors flex items-center gap-1">
+                      <span>+ Add</span>
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      (click)="$event.stopPropagation(); selectPlaceProduct(p)"
+                      [class]="isPlaceProductSelected(p.id)
+                        ? 'px-2.5 py-1 rounded-lg bg-orange-600 text-white text-[10px] font-black cursor-pointer'
+                        : 'px-2.5 py-1 rounded-lg bg-gray-100 hover:bg-orange-50 hover:text-orange-600 text-gray-700 text-[10px] font-bold cursor-pointer transition-colors'">
+                      {{ isPlaceProductSelected(p.id) ? 'Selected' : 'Select' }}
+                    </button>
+                  }
+                </div>
+              </div>
+            }
           </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Qty*</label>
-            <input type="number" min="1" [ngModel]="placeQty()" (ngModelChange)="placeQty.set(+$event || 1)"
-              class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Buyer*</label>
-            <input type="text" [ngModel]="placeCustomerName()" (ngModelChange)="placeCustomerName.set($event)"
-            placeholder="Buyer name"
-              class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Phone</label>
-            <input type="text" [ngModel]="placeCustomerPhone()" (ngModelChange)="placeCustomerPhone.set($event)"
-              placeholder="Optional"
-              class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
-          </div>
-          <div>
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">City</label>
-            <input type="text" [ngModel]="placeCity()" (ngModelChange)="placeCity.set($event)"
-              placeholder="Optional"
-              class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
-          </div>
+        }
+      </div>
+
+      <!-- Right: Order Workspace & Summary Panel -->
+      <div class="w-full lg:w-[440px] xl:w-[480px] shrink-0 border-t lg:border-t-0 lg:border-l border-gray-200 bg-slate-50/70 flex flex-col h-full overflow-hidden">
+        
+        <!-- Panel Header -->
+        <div class="shrink-0 px-4 py-3 border-b border-gray-200 bg-white flex items-center justify-between gap-2">
+          @if (orderPlacementType() === 'multiple') {
+            <div class="flex items-center gap-2">
+              <span class="text-xs font-black text-gray-900 uppercase tracking-wide">Selected Items</span>
+              <span class="px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 text-[11px] font-black">
+                {{ multiOrderItems().length }} products · {{ multiTotalItemsCount() }} pcs
+              </span>
+            </div>
+            @if (multiOrderItems().length > 0) {
+              <button
+                type="button"
+                (click)="clearMultiItems()"
+                class="text-[11px] font-bold text-rose-600 hover:text-rose-700 cursor-pointer">
+                Clear All
+              </button>
+            }
+          } @else {
+            <span class="text-xs font-black text-gray-900 uppercase tracking-wide">Single Product Details</span>
+          }
         </div>
 
-        <div class="flex flex-col sm:flex-row sm:items-end gap-2">
-          <div class="flex-1 min-w-0">
-            <label class="block text-[10px] font-bold text-gray-500 mb-0.5 uppercase tracking-wide">Address</label>
-            <input type="text" [ngModel]="placeAddress()" (ngModelChange)="placeAddress.set($event)"
-              placeholder="Optional delivery address"
-              class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
+        <!-- Scrollable Products In Order -->
+        <div class="flex-1 min-h-0 overflow-y-auto p-4 space-y-3">
+          @if (orderPlacementType() === 'multiple') {
+            @if (multiOrderItems().length === 0) {
+              <div class="py-12 text-center text-gray-400 px-4">
+                <div class="w-14 h-14 rounded-2xl bg-orange-100/60 text-orange-500 mx-auto flex items-center justify-center mb-3">
+                  <svg class="w-7 h-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                  </svg>
+                </div>
+                <h4 class="text-xs font-extrabold text-gray-800">No Products Added Yet</h4>
+                <p class="text-[11px] text-gray-500 mt-1 max-w-[280px] mx-auto leading-relaxed">
+                  Click "+ Add" on any products from the catalog to build a multi-item order. Each product can have distinct quantities and variants!
+                </p>
+              </div>
+            } @else {
+              @for (item of multiOrderItems(); track item.id; let idx = $index) {
+                <div class="bg-white rounded-xl border border-gray-200 shadow-xs p-3 space-y-2.5">
+                  <div class="flex items-start justify-between gap-2.5">
+                    <div class="flex items-center gap-2.5 min-w-0">
+                      <div class="w-12 h-12 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-100">
+                        @if (item.productImage) {
+                          <img [src]="item.productImage" [alt]="item.productName" class="w-full h-full object-cover" />
+                        } @else {
+                          <div class="w-full h-full flex items-center justify-center text-[9px] text-gray-400">No Img</div>
+                        }
+                      </div>
+                      <div class="min-w-0">
+                        <h5 class="text-xs font-bold text-gray-900 truncate leading-snug">{{ item.productName }}</h5>
+                        <p class="text-[10px] text-gray-500 truncate mt-0.5">
+                          Shop: <span class="font-semibold text-gray-700">{{ item.shopName }}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      (click)="removeMultiItem(idx)"
+                      class="shrink-0 w-6 h-6 rounded-md text-gray-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center cursor-pointer transition-colors"
+                      title="Remove product">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  <!-- Variant & Quantity Controls -->
+                  <div class="grid grid-cols-12 gap-2 items-center bg-gray-50/80 p-2 rounded-lg border border-gray-100">
+                    <div class="col-span-7">
+                      <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Variant</label>
+                      <select
+                        [ngModel]="item.variantId"
+                        (ngModelChange)="onMultiItemVariantChange(idx, $event)"
+                        [disabled]="item.loadingVariants ? true : false"
+                        class="w-full px-2 py-1 bg-white border border-gray-200 rounded-md text-[11px] font-semibold text-gray-800 outline-hidden focus:border-orange-500 cursor-pointer disabled:opacity-50">
+                        @if (item.loadingVariants) {
+                          <option value="">Loading variants…</option>
+                        } @else {
+                          @for (v of item.variants; track v.id) {
+                            <option [value]="v.id">
+                              {{ v.sku }} — ${{ v.price }} (stock {{ v.stockQty }})
+                            </option>
+                          }
+                        }
+                      </select>
+                    </div>
+
+                    <!-- Quantity Stepper -->
+                    <div class="col-span-5 flex flex-col items-end">
+                      <label class="block text-[9px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Qty</label>
+                      <div class="inline-flex items-center border border-gray-200 rounded-md bg-white shadow-2xs">
+                        <button
+                          type="button"
+                          (click)="updateMultiItemQty(idx, -1)"
+                          [disabled]="item.quantity <= 1"
+                          class="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer font-bold text-xs">
+                          -
+                        </button>
+                        <input
+                          type="number"
+                          min="1"
+                          [max]="item.stockQty > 0 ? item.stockQty : 9999"
+                          [ngModel]="item.quantity"
+                          (ngModelChange)="setMultiItemQtyDirect(idx, +$event)"
+                          class="w-8 text-center text-xs font-black text-gray-900 border-x border-gray-100 outline-hidden py-0.5" />
+                        <button
+                          type="button"
+                          (click)="updateMultiItemQty(idx, 1)"
+                          [disabled]="item.stockQty > 0 && item.quantity >= item.stockQty"
+                          class="w-6 h-6 flex items-center justify-center text-gray-500 hover:text-gray-900 disabled:opacity-30 cursor-pointer font-bold text-xs">
+                          +
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Line Total -->
+                  <div class="flex items-center justify-between text-[11px] pt-1">
+                    <span class="text-gray-500 font-medium">Unit: ${{ item.price | number:'1.2-2' }}</span>
+                    <span class="font-extrabold text-gray-900">
+                      Line Total: <span class="text-orange-600">${{ item.price * item.quantity | number:'1.2-2' }}</span>
+                    </span>
+                  </div>
+                </div>
+              }
+            }
+          } @else {
+            <!-- Single Mode Product Configuration -->
+            @if (placeSelectedProduct(); as sel) {
+              <div class="bg-white rounded-xl border border-gray-200 shadow-xs p-3.5 space-y-3">
+                <div class="flex items-center gap-3">
+                  <div class="w-14 h-14 rounded-lg bg-gray-100 overflow-hidden shrink-0 border border-gray-200">
+                    @if (getPlaceProductImage(sel)) {
+                      <img [src]="getPlaceProductImage(sel)" [alt]="sel.name" class="w-full h-full object-cover" />
+                    }
+                  </div>
+                  <div class="min-w-0">
+                    <h5 class="text-xs font-black text-gray-900 truncate">{{ sel.name }}</h5>
+                    <p class="text-[10px] text-gray-500 truncate mt-0.5">
+                      {{ sel.shopName }} · {{ sel.categoryName || 'Category' }}
+                    </p>
+                    <p class="text-xs font-extrabold text-orange-600 mt-1">${{ sel.basePrice | number:'1.0-2' }}</p>
+                  </div>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t border-gray-100">
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Select Variant*</label>
+                    <select
+                      [ngModel]="placeVariantId()"
+                      (ngModelChange)="placeVariantId.set($event)"
+                      [disabled]="placeLoadingVariants()"
+                      class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 disabled:opacity-50">
+                      <option value="">{{ placeLoadingVariants() ? 'Loading variants…' : 'Choose variant…' }}</option>
+                      @for (v of placeVariants(); track v.id) {
+                        <option [value]="v.id">{{ v.sku }} — ${{ v.price }} (stock: {{ v.stockQty }})</option>
+                      }
+                    </select>
+                  </div>
+
+                  <div>
+                    <label class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1">Quantity*</label>
+                    <input
+                      type="number"
+                      min="1"
+                      [ngModel]="placeQty()"
+                      (ngModelChange)="placeQty.set(+$event || 1)"
+                      class="w-full px-2.5 py-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
+                  </div>
+                </div>
+
+                <div class="pt-2 border-t border-gray-100 flex items-center justify-between text-xs font-extrabold">
+                  <span class="text-gray-500">Order Subtotal:</span>
+                  <span class="text-orange-600 text-sm">${{ singleProductTotalAmount() | number:'1.2-2' }}</span>
+                </div>
+              </div>
+            } @else {
+              <div class="py-12 text-center text-gray-400 px-4">
+                <div class="w-12 h-12 rounded-xl bg-orange-100 text-orange-500 mx-auto flex items-center justify-center mb-2">
+                  <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" />
+                  </svg>
+                </div>
+                <h4 class="text-xs font-extrabold text-gray-800">No Product Selected</h4>
+                <p class="text-[11px] text-gray-500 mt-1 max-w-[260px] mx-auto">
+                  Click on any product card in the catalog on the left to configure variant and quantity.
+                </p>
+              </div>
+            }
+          }
+        </div>
+
+        <!-- Sticky Checkout & Buyer Info Box -->
+        <div class="shrink-0 border-t border-gray-200 bg-white p-4 space-y-3 shadow-lg">
+          <!-- Customer & Delivery Fields -->
+          <div class="space-y-2">
+            <span class="block text-[10px] font-black text-gray-400 uppercase tracking-wider">Buyer & Delivery Details</span>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <input
+                  type="text"
+                  [ngModel]="placeCustomerName()"
+                  (ngModelChange)="placeCustomerName.set($event)"
+                  placeholder="Buyer Name*"
+                  class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  [ngModel]="placeCustomerPhone()"
+                  (ngModelChange)="placeCustomerPhone.set($event)"
+                  placeholder="Buyer Phone"
+                  class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2">
+              <div>
+                <input
+                  type="text"
+                  [ngModel]="placeCity()"
+                  (ngModelChange)="placeCity.set($event)"
+                  placeholder="City"
+                  class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  [ngModel]="placeAddress()"
+                  (ngModelChange)="placeAddress.set($event)"
+                  placeholder="Delivery Address"
+                  class="w-full px-2.5 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-xs font-semibold outline-hidden focus:border-orange-500" />
+              </div>
+            </div>
           </div>
-          <div class="flex items-center justify-end gap-2 shrink-0">
-            <button type="button" [disabled]="isPlacingOrder()" (click)="closePlaceOrder()"
-              class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs cursor-pointer disabled:opacity-50">
-              {{ isPlaceOrderPage() ? 'Back' : 'Cancel' }}
+
+          <!-- Total Calculation Card -->
+          <div class="bg-orange-50/70 border border-orange-200/60 rounded-xl p-3 space-y-1 text-xs">
+            <div class="flex items-center justify-between text-gray-600 font-semibold">
+              <span>Items Total ({{ orderPlacementType() === 'multiple' ? multiTotalItemsCount() : placeQty() }} pcs):</span>
+              <span class="font-bold text-gray-900">${{ grandOrderTotal() | number:'1.2-2' }}</span>
+            </div>
+            <div class="flex items-center justify-between text-gray-500 text-[11px]">
+              <span>Payment Mode:</span>
+              <span class="font-bold text-gray-700">Cash On Delivery (COD)</span>
+            </div>
+            <div class="pt-1.5 border-t border-orange-200/80 flex items-center justify-between font-black text-gray-900">
+              <span class="text-xs uppercase tracking-wider">Grand Total:</span>
+              <span class="text-base text-orange-600">${{ grandOrderTotal() | number:'1.2-2' }}</span>
+            </div>
+          </div>
+
+          <!-- Action Buttons -->
+          <div class="flex items-center justify-end gap-2 pt-1">
+            <button
+              type="button"
+              [disabled]="isPlacingOrder()"
+              (click)="closePlaceOrder()"
+              class="px-4 py-2.5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 text-gray-700 font-bold text-xs cursor-pointer disabled:opacity-50 transition-colors">
+              {{ isPlaceOrderPage() ? 'Back to Orders' : 'Cancel' }}
             </button>
-            <button type="button" [disabled]="isPlacingOrder()" (click)="submitPlaceOrder()"
-              class="inline-flex items-center justify-center gap-2 min-w-[132px] px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md shadow-orange-600/25 cursor-pointer disabled:opacity-50">
+            <button
+              type="button"
+              [disabled]="isPlacingOrder() || (orderPlacementType() === 'multiple' ? multiOrderItems().length === 0 : !placeProductId())"
+              (click)="submitPlaceOrder()"
+              class="flex-1 inline-flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-black text-xs shadow-md shadow-orange-600/30 cursor-pointer disabled:opacity-50 transition-all">
               @if (isPlacingOrder()) {
-                <svg class="animate-spin w-3.5 h-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <svg class="animate-spin w-4 h-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
                 </svg>
-                <span>Placing…</span>
+                <span>Placing Order…</span>
               } @else {
-                <span>Place Order</span>
+                <span>Confirm & Place Order (${{ grandOrderTotal() | number:'1.2-2' }})</span>
               }
             </button>
           </div>
@@ -807,3 +1089,4 @@
     </div>
   </div>
 </ng-template>
+

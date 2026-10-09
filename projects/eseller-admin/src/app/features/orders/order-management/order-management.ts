@@ -17,6 +17,23 @@ import {
 type OrderTab = 'all' | 'pending' | 'confirmed' | 'processing' | 'ontheway' | 'delivered' | 'cancelled';
 type PlaceOrderMode = 'modal' | 'page';
 
+export interface PlaceOrderMultiItem {
+  id: string;
+  productId: string;
+  productName: string;
+  productImage: string;
+  shopId: string;
+  shopName: string;
+  brandName: string;
+  variantId: string;
+  variantSku: string;
+  price: number;
+  stockQty: number;
+  quantity: number;
+  variants: { id: string; sku: string; price: number; stockQty: number }[];
+  loadingVariants: boolean;
+}
+
 @Component({
   selector: 'app-order-management',
   standalone: true,
@@ -67,6 +84,33 @@ export class OrderManagement implements OnInit {
   readonly placeOrderOpen = computed(() => this.placeOrderMode() !== null);
   readonly isPlaceOrderPage = computed(() => this.placeOrderMode() === 'page');
   readonly isPlacingOrder = signal<boolean>(false);
+
+  // Mode: Single product vs Multiple products
+  readonly orderPlacementType = signal<'single' | 'multiple'>('multiple');
+  readonly multiOrderItems = signal<PlaceOrderMultiItem[]>([]);
+  readonly placeOrderNotes = signal<string>('Placed by Management');
+
+  readonly multiTotalItemsCount = computed(() => {
+    return this.multiOrderItems().reduce((acc, item) => acc + item.quantity, 0);
+  });
+
+  readonly multiGrandTotalAmount = computed(() => {
+    return this.multiOrderItems().reduce((acc, item) => acc + (item.price * item.quantity), 0);
+  });
+
+  readonly singleProductTotalAmount = computed(() => {
+    const variantId = this.placeVariantId();
+    const v = this.placeVariants().find(x => x.id === variantId);
+    const unitPrice = v ? v.price : (Number(this.placeSelectedProduct()?.basePrice) || 0);
+    return unitPrice * Math.max(1, Number(this.placeQty()) || 1);
+  });
+
+  readonly grandOrderTotal = computed(() => {
+    return this.orderPlacementType() === 'multiple'
+      ? this.multiGrandTotalAmount()
+      : this.singleProductTotalAmount();
+  });
+
   readonly placeShopId = signal<string>('');
   readonly placeCatalogProducts = signal<AdminProductDto[]>([]);
   readonly placeCategories = signal<AdminCategoryDto[]>([]);
@@ -80,7 +124,7 @@ export class OrderManagement implements OnInit {
   readonly placeVariants = signal<{ id: string; sku: string; price: number; stockQty: number }[]>([]);
   readonly placeVariantId = signal<string>('');
   readonly placeQty = signal<number>(1);
-  readonly placeCustomerName = signal<string>('Platform Admin');
+  readonly placeCustomerName = signal<string>('Buyer');
   readonly placeCustomerPhone = signal<string>('');
   readonly placeAddress = signal<string>('');
   readonly placeCity = signal<string>('');
@@ -422,7 +466,7 @@ export class OrderManagement implements OnInit {
         next: () => {
           this.isDeleting.set(false);
           this.deleteModalOpen.set(false);
-          this.toast.show(`Successfully deleted ${ids.length} orders.`, 'success');
+          this.toast.show(`Deleted Successfully! ${ids.length} orders removed.`, 'success');
           this.clearSelection();
           this.loadOrders();
         },
@@ -452,7 +496,7 @@ export class OrderManagement implements OnInit {
           set.delete(order.id);
           this.selectedOrderIds.set(set);
 
-          this.toast.show(`Order #${order.orderNumber || order.id.slice(0, 8)} deleted permanently.`, 'info');
+          this.toast.show(`Deleted Successfully! Order #${order.orderNumber || order.id.slice(0, 8)} has been deleted.`, 'success');
           this.loadOrders();
         },
         error: (err) => {
@@ -625,6 +669,8 @@ export class OrderManagement implements OnInit {
 
   openPlaceOrder(mode: PlaceOrderMode = 'modal'): void {
     this.placeOrderMode.set(mode);
+    this.orderPlacementType.set('multiple');
+    this.multiOrderItems.set([]);
     this.placeShopId.set('');
     this.placeCatalogProducts.set([]);
     this.placeCategories.set([]);
@@ -638,11 +684,16 @@ export class OrderManagement implements OnInit {
     this.placeVariants.set([]);
     this.placeVariantId.set('');
     this.placeQty.set(1);
-    this.placeCustomerName.set('Platform Admin');
+    this.placeCustomerName.set('Buyer');
     this.placeCustomerPhone.set('');
     this.placeAddress.set('');
     this.placeCity.set('');
+    this.placeOrderNotes.set('Placed by Management');
     this.loadPlaceOrderCatalog();
+  }
+
+  setOrderPlacementType(type: 'single' | 'multiple'): void {
+    this.orderPlacementType.set(type);
   }
 
   loadPlaceOrderCatalog(): void {
@@ -711,6 +762,136 @@ export class OrderManagement implements OnInit {
     return this.placeProductId() === productId;
   }
 
+  isProductInMultiOrder(productId: string): number {
+    return this.multiOrderItems()
+      .filter(item => item.productId === productId)
+      .reduce((sum, item) => sum + item.quantity, 0);
+  }
+
+  toggleOrAddMultiProduct(product: AdminProductDto): void {
+    const items = [...this.multiOrderItems()];
+    const existingIndex = items.findIndex(item => item.productId === product.id);
+
+    if (existingIndex > -1) {
+      const item = items[existingIndex];
+      const maxStock = item.stockQty > 0 ? item.stockQty : 9999;
+      if (item.quantity < maxStock) {
+        items[existingIndex] = { ...item, quantity: item.quantity + 1 };
+        this.multiOrderItems.set(items);
+        this.toast.show(`Increased "${product.name}" qty to ${item.quantity + 1}`, 'info');
+      } else {
+        this.toast.show(`Max stock reached for this variant (${item.stockQty}).`, 'warning');
+      }
+      return;
+    }
+
+    const newItem: PlaceOrderMultiItem = {
+      id: `${product.id}_${Date.now()}`,
+      productId: product.id,
+      productName: product.name,
+      productImage: this.getPlaceProductImage(product),
+      shopId: product.shopId || '',
+      shopName: product.shopName || 'Shop',
+      brandName: product.brandName || '',
+      variantId: '',
+      variantSku: '',
+      price: Number(product.basePrice) || 0,
+      stockQty: 0,
+      quantity: 1,
+      variants: [],
+      loadingVariants: true
+    };
+
+    this.multiOrderItems.set([...items, newItem]);
+
+    this.adminService.getProductVariants(product.id).subscribe({
+      next: (variants) => {
+        const mapped = (variants || []).map((v: any) => ({
+          id: v.id || v.variantId,
+          sku: v.sku || 'SKU',
+          price: Number(v.price) || Number(product.basePrice) || 0,
+          stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
+        }));
+
+        const currentItems = [...this.multiOrderItems()];
+        const idx = currentItems.findIndex(i => i.productId === product.id);
+        if (idx > -1) {
+          const first = mapped[0];
+          currentItems[idx] = {
+            ...currentItems[idx],
+            variants: mapped,
+            loadingVariants: false,
+            variantId: first ? first.id : '',
+            variantSku: first ? first.sku : 'Default',
+            price: first ? first.price : currentItems[idx].price,
+            stockQty: first ? first.stockQty : 0
+          };
+          this.multiOrderItems.set(currentItems);
+        }
+      },
+      error: () => {
+        const currentItems = [...this.multiOrderItems()];
+        const idx = currentItems.findIndex(i => i.productId === product.id);
+        if (idx > -1) {
+          currentItems[idx] = { ...currentItems[idx], loadingVariants: false };
+          this.multiOrderItems.set(currentItems);
+        }
+        this.toast.show(`Failed to load variants for ${product.name}`, 'warning');
+      }
+    });
+  }
+
+  removeMultiItem(index: number): void {
+    const items = [...this.multiOrderItems()];
+    items.splice(index, 1);
+    this.multiOrderItems.set(items);
+  }
+
+  clearMultiItems(): void {
+    this.multiOrderItems.set([]);
+  }
+
+  onMultiItemVariantChange(index: number, variantId: string): void {
+    const items = [...this.multiOrderItems()];
+    const item = items[index];
+    if (!item) return;
+
+    const sel = item.variants.find(v => v.id === variantId);
+    if (sel) {
+      items[index] = {
+        ...item,
+        variantId: sel.id,
+        variantSku: sel.sku,
+        price: sel.price,
+        stockQty: sel.stockQty,
+        quantity: Math.min(item.quantity, Math.max(1, sel.stockQty))
+      };
+      this.multiOrderItems.set(items);
+    }
+  }
+
+  updateMultiItemQty(index: number, delta: number): void {
+    const items = [...this.multiOrderItems()];
+    const item = items[index];
+    if (!item) return;
+
+    const maxStock = item.stockQty > 0 ? item.stockQty : 9999;
+    const newQty = Math.max(1, Math.min(item.quantity + delta, maxStock));
+    items[index] = { ...item, quantity: newQty };
+    this.multiOrderItems.set(items);
+  }
+
+  setMultiItemQtyDirect(index: number, qty: number): void {
+    const items = [...this.multiOrderItems()];
+    const item = items[index];
+    if (!item) return;
+
+    const maxStock = item.stockQty > 0 ? item.stockQty : 9999;
+    const validQty = Math.max(1, Math.min(Number(qty) || 1, maxStock));
+    items[index] = { ...item, quantity: validQty };
+    this.multiOrderItems.set(items);
+  }
+
   closePlaceOrder(): void {
     if (this.isPlacingOrder()) return;
     const wasPage = this.placeOrderMode() === 'page';
@@ -721,45 +902,91 @@ export class OrderManagement implements OnInit {
   }
 
   submitPlaceOrder(): void {
-    const variantId = this.placeVariantId();
-    const qty = Math.max(1, Number(this.placeQty()) || 1);
-    if (!this.placeProductId()) {
-      this.toast.show('Select a product from the catalog.', 'warning');
-      return;
-    }
-    if (!this.placeShopId()) {
-      this.toast.show('Selected product has no seller shop.', 'warning');
-      return;
-    }
-    if (!variantId) {
-      this.toast.show('Select a product variant.', 'warning');
-      return;
-    }
-
-    this.isPlacingOrder.set(true);
-    this.adminService.placeAdminOrder({
-      productVariantId: variantId,
-      quantity: qty,
-      customerName: this.placeCustomerName().trim() || undefined,
-      customerPhone: this.placeCustomerPhone().trim() || undefined,
-      shippingAddress: this.placeAddress().trim() || undefined,
-      city: this.placeCity().trim() || undefined,
-      orderNotes: 'Placed by Management'
-    }).subscribe({
-      next: (res) => {
-        this.isPlacingOrder.set(false);
-        const wasPage = this.placeOrderMode() === 'page';
-        this.placeOrderMode.set(null);
-        this.toast.show(res?.message || 'Order placed successfully.', 'success');
-        this.loadOrders();
-        if (wasPage) {
-          void this.router.navigate(['/orders'], { queryParams: {} });
-        }
-      },
-      error: (err) => {
-        this.isPlacingOrder.set(false);
-        this.toast.show(err?.error?.error || 'Failed to place order.', 'error');
+    if (this.orderPlacementType() === 'single') {
+      const variantId = this.placeVariantId();
+      const qty = Math.max(1, Number(this.placeQty()) || 1);
+      if (!this.placeProductId()) {
+        this.toast.show('Select a product from the catalog.', 'warning');
+        return;
       }
-    });
+      if (!this.placeShopId()) {
+        this.toast.show('Selected product has no seller shop.', 'warning');
+        return;
+      }
+      if (!variantId) {
+        this.toast.show('Select a product variant.', 'warning');
+        return;
+      }
+
+      this.isPlacingOrder.set(true);
+      this.adminService.placeAdminOrder({
+        productVariantId: variantId,
+        quantity: qty,
+        customerName: this.placeCustomerName().trim() || undefined,
+        customerPhone: this.placeCustomerPhone().trim() || undefined,
+        shippingAddress: this.placeAddress().trim() || undefined,
+        city: this.placeCity().trim() || undefined,
+        orderNotes: this.placeOrderNotes().trim() || 'Placed by Management'
+      }).subscribe({
+        next: (res) => {
+          this.isPlacingOrder.set(false);
+          const wasPage = this.placeOrderMode() === 'page';
+          this.placeOrderMode.set(null);
+          this.toast.show(res?.message || 'Order placed successfully.', 'success');
+          this.loadOrders();
+          if (wasPage) {
+            void this.router.navigate(['/orders'], { queryParams: {} });
+          }
+        },
+        error: (err) => {
+          this.isPlacingOrder.set(false);
+          this.toast.show(err?.error?.error || 'Failed to place order.', 'error');
+        }
+      });
+    } else {
+      // Multiple items mode
+      const items = this.multiOrderItems();
+      if (items.length === 0) {
+        this.toast.show('Please add at least one product to the order.', 'warning');
+        return;
+      }
+
+      const invalidItem = items.find(i => !i.variantId);
+      if (invalidItem) {
+        this.toast.show(`Please select a valid variant for "${invalidItem.productName}".`, 'warning');
+        return;
+      }
+
+      const payloadItems = items.map(i => ({
+        productVariantId: i.variantId,
+        quantity: i.quantity
+      }));
+
+      this.isPlacingOrder.set(true);
+      this.adminService.placeAdminOrder({
+        items: payloadItems,
+        customerName: this.placeCustomerName().trim() || undefined,
+        customerPhone: this.placeCustomerPhone().trim() || undefined,
+        shippingAddress: this.placeAddress().trim() || undefined,
+        city: this.placeCity().trim() || undefined,
+        orderNotes: this.placeOrderNotes().trim() || 'Placed by Management'
+      }).subscribe({
+        next: (res) => {
+          this.isPlacingOrder.set(false);
+          const wasPage = this.placeOrderMode() === 'page';
+          this.placeOrderMode.set(null);
+          this.multiOrderItems.set([]);
+          this.toast.show(res?.message || 'Order placed successfully with multiple products!', 'success');
+          this.loadOrders();
+          if (wasPage) {
+            void this.router.navigate(['/orders'], { queryParams: {} });
+          }
+        },
+        error: (err) => {
+          this.isPlacingOrder.set(false);
+          this.toast.show(err?.error?.error || 'Failed to place multi-product order.', 'error');
+        }
+      });
+    }
   }
 }
