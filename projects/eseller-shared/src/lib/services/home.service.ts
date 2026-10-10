@@ -122,7 +122,7 @@ export class HomeService {
             siteTitle: 'EsellerGlobal',
             metaDescription:
               'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.',
-            faviconUrl: '/favicon.svg',
+            faviconUrl: '/favicon.ico',
             facebookUrl: 'https://facebook.com',
             twitterUrl: 'https://x.com',
             instagramUrl: 'https://instagram.com',
