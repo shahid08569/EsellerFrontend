@@ -19,7 +19,7 @@ function hydrateAuthHandoffFromHash(): void {
     const expiresAt = payload.accessTokenExpiresAt
       ? new Date(payload.accessTokenExpiresAt).toISOString()
       : new Date(Date.now() + 3600000).toISOString();
-    window.localStorage.setItem(
+    window.sessionStorage?.setItem(
       'eseller_auth_session',
       JSON.stringify({
         accessToken: payload.accessToken,
@@ -32,6 +32,7 @@ function hydrateAuthHandoffFromHash(): void {
         }
       })
     );
+    window.localStorage?.removeItem('eseller_auth_session');
     const clean = window.location.pathname + window.location.search;
     window.history.replaceState(null, '', clean || '/dashboard');
   } catch (e) {

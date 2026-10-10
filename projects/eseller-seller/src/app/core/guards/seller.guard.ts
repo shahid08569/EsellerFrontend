@@ -17,9 +17,10 @@ export const sellerGuard: CanActivateFn = () => {
     return true;
   }
 
-  if (typeof window !== 'undefined' && window.localStorage) {
+  if (typeof window !== 'undefined') {
     try {
-      const saved = window.localStorage.getItem('eseller_auth_session');
+      const saved = window.sessionStorage?.getItem('eseller_auth_session')
+        ?? window.localStorage?.getItem('eseller_auth_session');
       if (saved) {
         const data = JSON.parse(saved);
         const savedExpires = data?.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null;
@@ -35,10 +36,13 @@ export const sellerGuard: CanActivateFn = () => {
             accessTokenExpiresAt: savedExpires || new Date(Date.now() + 15 * 60 * 1000),
             account: data.account
           });
+          // Purge localStorage
+          window.localStorage?.removeItem('eseller_auth_session');
           return true;
         }
         if (savedExpired) {
-          window.localStorage.removeItem('eseller_auth_session');
+          window.sessionStorage?.removeItem('eseller_auth_session');
+          window.localStorage?.removeItem('eseller_auth_session');
           authStore.clearAuth();
         }
       }

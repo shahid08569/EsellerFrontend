@@ -47,26 +47,45 @@ export class AuthStore {
   }
 
   private restoreFromStorage(): void {
-    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (typeof window === 'undefined') return;
+
     try {
-      const saved = window.localStorage.getItem('eseller_auth_session');
+      // 1. Check secure sessionStorage first
+      let saved = window.sessionStorage?.getItem('eseller_auth_session');
+
+      // 2. Backward compatibility: if in localStorage, migrate and immediately purge from localStorage
+      if (!saved && window.localStorage) {
+        const legacy = window.localStorage.getItem('eseller_auth_session');
+        if (legacy) {
+          saved = legacy;
+          window.sessionStorage?.setItem('eseller_auth_session', legacy);
+          window.localStorage.removeItem('eseller_auth_session');
+        }
+      } else if (window.localStorage) {
+        // Guarantee localStorage has zero residual tokens
+        window.localStorage.removeItem('eseller_auth_session');
+      }
+
       if (!saved) return;
       const data = JSON.parse(saved);
       if (!data?.accessToken || !data?.account) {
-        window.localStorage.removeItem('eseller_auth_session');
+        window.sessionStorage?.removeItem('eseller_auth_session');
+        window.localStorage?.removeItem('eseller_auth_session');
         return;
       }
       const expiresAt = data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null;
       // Never restore an expired JWT from storage (XSS surface + stale auth)
       if (expiresAt && expiresAt.getTime() <= Date.now()) {
-        window.localStorage.removeItem('eseller_auth_session');
+        window.sessionStorage?.removeItem('eseller_auth_session');
+        window.localStorage?.removeItem('eseller_auth_session');
         return;
       }
       this._accessToken.set(data.accessToken);
       this._currentAccount.set(data.account);
       this._accessTokenExpiresAt.set(expiresAt);
     } catch {
-      window.localStorage.removeItem('eseller_auth_session');
+      window.sessionStorage?.removeItem('eseller_auth_session');
+      window.localStorage?.removeItem('eseller_auth_session');
     }
   }
 
@@ -90,15 +109,22 @@ export class AuthStore {
         : new Date(payload.accessTokenExpiresAt);
     this._accessTokenExpiresAt.set(expiresAt);
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.setItem(
-        'eseller_auth_session',
-        JSON.stringify({
-          accessToken: payload.accessToken,
-          accessTokenExpiresAt: expiresAt.toISOString(),
-          account: payload.account
-        })
-      );
+    if (typeof window !== 'undefined') {
+      // Save strictly to tab-scoped sessionStorage, never permanent localStorage
+      if (window.sessionStorage) {
+        window.sessionStorage.setItem(
+          'eseller_auth_session',
+          JSON.stringify({
+            accessToken: payload.accessToken,
+            accessTokenExpiresAt: expiresAt.toISOString(),
+            account: payload.account
+          })
+        );
+      }
+      // Guarantee localStorage is purged
+      if (window.localStorage) {
+        window.localStorage.removeItem('eseller_auth_session');
+      }
     }
   }
 
@@ -114,15 +140,20 @@ export class AuthStore {
         : new Date(accessTokenExpiresAt);
     this._accessTokenExpiresAt.set(expiresAt);
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      const saved = window.localStorage.getItem('eseller_auth_session');
-      if (saved) {
-        try {
-          const data = JSON.parse(saved);
-          data.accessToken = accessToken;
-          data.accessTokenExpiresAt = expiresAt.toISOString();
-          window.localStorage.setItem('eseller_auth_session', JSON.stringify(data));
-        } catch {}
+    if (typeof window !== 'undefined') {
+      if (window.sessionStorage) {
+        const saved = window.sessionStorage.getItem('eseller_auth_session');
+        if (saved) {
+          try {
+            const data = JSON.parse(saved);
+            data.accessToken = accessToken;
+            data.accessTokenExpiresAt = expiresAt.toISOString();
+            window.sessionStorage.setItem('eseller_auth_session', JSON.stringify(data));
+          } catch {}
+        }
+      }
+      if (window.localStorage) {
+        window.localStorage.removeItem('eseller_auth_session');
       }
     }
   }
@@ -136,8 +167,9 @@ export class AuthStore {
     this._currentAccount.set(null);
     this._accessTokenExpiresAt.set(null);
 
-    if (typeof window !== 'undefined' && window.localStorage) {
-      window.localStorage.removeItem('eseller_auth_session');
+    if (typeof window !== 'undefined') {
+      window.sessionStorage?.removeItem('eseller_auth_session');
+      window.localStorage?.removeItem('eseller_auth_session');
     }
   }
 
