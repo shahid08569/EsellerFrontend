@@ -248,19 +248,21 @@ export class MainLayout implements OnInit, OnDestroy {
 
   confirmLogout() {
     this.showLogoutModal.set(false);
-    // After logout land on main storefront (not login page)
-    const storeUrl = this.storeUrl || '/';
+    this.authStore.clearAuth();
+    if (typeof window !== 'undefined') {
+      window.sessionStorage?.clear();
+      window.localStorage?.clear();
+    }
+    const logoutTarget = `${this.storeUrl}/auth/login?logout=true`;
     this.authService.logout().subscribe({
       next: () => {
-        this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = storeUrl;
+          window.location.href = logoutTarget;
         }
       },
       error: () => {
-        this.authStore.clearAuth();
         if (typeof window !== 'undefined') {
-          window.location.href = storeUrl;
+          window.location.href = logoutTarget;
         }
       }
     });

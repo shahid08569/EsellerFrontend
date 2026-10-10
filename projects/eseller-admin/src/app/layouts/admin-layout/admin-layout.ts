@@ -286,17 +286,18 @@ export class AdminLayout implements OnInit {
 
   confirmLogout(): void {
     this.logoutModalOpen.set(false);
-    // After logout land on main storefront (not login page)
-    const storeUrl = environment.customerUrl || '/';
+    this.authStore.clearAuth();
+    if (typeof window !== 'undefined') {
+      window.sessionStorage?.clear();
+      window.localStorage?.clear();
+    }
+    const logoutTarget = `${environment.customerUrl}/auth/login?logout=true`;
     this.authService.logout().subscribe({
       next: () => {
-        this.authStore.clearAuth();
-        this.toast.show('Signed out successfully.', 'info');
-        window.location.href = storeUrl;
+        window.location.href = logoutTarget;
       },
       error: () => {
-        this.authStore.clearAuth();
-        window.location.href = storeUrl;
+        window.location.href = logoutTarget;
       }
     });
   }

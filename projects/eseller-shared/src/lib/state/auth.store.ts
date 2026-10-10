@@ -49,6 +49,17 @@ export class AuthStore {
   private restoreFromStorage(): void {
     if (typeof window === 'undefined') return;
 
+    // If an explicit logout signal is present in URL, immediately purge storage and do not restore
+    try {
+      const search = window.location.search || '';
+      const hash = window.location.hash || '';
+      if (search.includes('logout=true') || hash.includes('logout=true')) {
+        window.sessionStorage?.removeItem('eseller_auth_session');
+        window.localStorage?.removeItem('eseller_auth_session');
+        return;
+      }
+    } catch {}
+
     try {
       // 1. Check secure sessionStorage first
       let saved = window.sessionStorage?.getItem('eseller_auth_session');

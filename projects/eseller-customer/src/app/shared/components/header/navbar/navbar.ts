@@ -229,11 +229,19 @@ export class Navbar implements OnInit, OnDestroy {
     this.authService.logout().subscribe({
       next: () => {
         this.authStore.clearAuth();
+        if (typeof window !== 'undefined') {
+          window.sessionStorage?.clear();
+          window.localStorage?.clear();
+        }
         this.toastService.show('You have been signed out successfully.', 'info');
         this.router.navigate(['/auth/login'], { queryParams: { logout: 'true' } });
       },
       error: () => {
         this.authStore.clearAuth();
+        if (typeof window !== 'undefined') {
+          window.sessionStorage?.clear();
+          window.localStorage?.clear();
+        }
         this.toastService.show('You have been signed out successfully.', 'info');
         this.router.navigate(['/auth/login'], { queryParams: { logout: 'true' } });
       }
