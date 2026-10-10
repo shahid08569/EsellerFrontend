@@ -352,8 +352,18 @@ export class Products implements OnInit, OnDestroy {
       return;
     }
     if (col === 'new-arrivals') {
-      this.productsSub = this.homeService.getNewArrivals(limit).subscribe({
-        next: (items) => this.applyListResult(items),
+      this.productsSub = this.homeService.getNewArrivals(limit * 3).subscribe({
+        next: (items) => {
+          const seen = new Set<string>();
+          const distinct = (items || []).filter((p) => {
+            const cat = (p.categoryId || p.categoryName || '').trim().toLowerCase();
+            if (!cat) return true;
+            if (seen.has(cat)) return false;
+            seen.add(cat);
+            return true;
+          });
+          this.applyListResult(distinct);
+        },
         error: () => this.applyListResult([])
       });
       return;

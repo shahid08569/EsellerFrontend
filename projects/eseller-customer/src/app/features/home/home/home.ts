@@ -72,7 +72,7 @@ export class Home implements OnInit, OnDestroy {
       paymentLogos: this.homeService.getPaymentShowcaseLogos(false),
       categories: this.homeService.getCategories(false),
       brands: this.homeService.getBrands(false),
-      sections: this.homeService.getHomepageSections(8)
+      sections: this.homeService.getHomepageSections(16)
     }).subscribe({
       next: ({ banners, paymentLogos, categories, brands, sections }) => {
         this.banners.set(Array.isArray(banners) ? banners : []);
@@ -99,8 +99,17 @@ export class Home implements OnInit, OnDestroy {
               .filter((p, i, arr) => arr.findIndex(x => x.id === p.id) === i)
               .slice(0, 8);
 
+        const seenNewArrivalCategories = new Set<string>();
+        const uniqueCategoryNewArrivals = (sections.newArrivals || []).filter((p) => {
+          const cat = (p.categoryId || p.categoryName || '').trim().toLowerCase();
+          if (!cat) return true;
+          if (seenNewArrivalCategories.has(cat)) return false;
+          seenNewArrivalCategories.add(cat);
+          return true;
+        });
+
         this.flashSaleProducts.set(sections.flashSale || []);
-        this.newArrivals.set(sections.newArrivals || []);
+        this.newArrivals.set(uniqueCategoryNewArrivals);
         this.featuredProducts.set(featuredProducts);
         this.bestSellingProducts.set(sections.bestSelling || []);
         this.hotSellingProducts.set(sections.hotSelling || []);
