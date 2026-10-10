@@ -1,46 +1,46 @@
 <footer class="mt-16 font-sans">
 
   <!-- ============================================================ -->
-  <!-- 1. TOP BRAND & VALUE PROPOSITION BAR (Orange Background) -->
+  <!-- 1. TOP BRAND & VALUE PROPOSITION BAR (White Background, Black Text) -->
   <!-- ============================================================ -->
-  <div class="bg-orange-500 text-white border-b border-orange-600/60 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+  <div class="bg-white text-gray-900 border-t border-b border-gray-200 shadow-2xs">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 flex flex-col md:flex-row items-center justify-between gap-4 md:gap-8">
 
-      <!-- Prominent Brand Logo + Tagline -->
-      <a routerLink="/" class="flex flex-col items-center md:items-start gap-2 group">
+      <!-- Prominent Brand Logo + Tagline (Tightly grouped) -->
+      <a routerLink="/" class="flex flex-col items-center md:items-start group" aria-label="eSeller Global Home">
         <img
           [src]="footerLogoSrc()"
           alt="eSeller Global"
-          class="h-16 sm:h-20 lg:h-24 w-auto max-w-[280px] sm:max-w-[360px] object-contain brightness-0 invert group-hover:scale-[1.02] transition-transform duration-200"
+          class="h-20 sm:h-24 md:h-28 w-auto max-w-[320px] sm:max-w-[400px] object-contain group-hover:scale-[1.02] transition-transform duration-200"
           (error)="onFooterLogoError($event)"
         />
-        <span class="text-xs sm:text-sm text-white/95 tracking-wide font-medium">
+        <span class="text-xs sm:text-sm text-gray-700 tracking-wide font-medium mt-0.5 sm:mt-1">
           Shop Without Borders &mdash; Premier Global Marketplace
         </span>
       </a>
 
-      <!-- Quick Trust Badges in English -->
-      <div class="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6 text-xs sm:text-sm text-white/95 font-medium">
-        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
-          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Quick Trust Badges in English (Black Text with Rose Accent Icons) -->
+      <div class="flex flex-wrap items-center justify-center md:justify-end gap-5 sm:gap-7 text-xs sm:text-sm text-gray-800 font-semibold">
+        <div class="flex items-center gap-2 hover:text-primary transition-colors">
+          <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
           </svg>
           <span>Fast &amp; Secure Shipping</span>
         </div>
-        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
-          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 hover:text-primary transition-colors">
+          <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
           <span>100% Genuine Products</span>
         </div>
-        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
-          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 hover:text-primary transition-colors">
+          <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
           <span>256-Bit SSL Protection</span>
         </div>
-        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
-          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 hover:text-primary transition-colors">
+          <svg class="w-5 h-5 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
           </svg>
           <span>24/7 Dedicated Support</span>
@@ -127,7 +127,7 @@
           </ul>
         </div>
 
-        <!-- Column 5: Right Side Trust & Certified Brands Badges -->
+        <!-- Column 5: Right Side Trust & Certified Badges -->
         <div class="col-span-2 md:col-span-1 flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-start gap-4 pt-1">
 
           <!-- 1. eSeller Global Verified Marketplace Seal -->
@@ -179,13 +179,13 @@
   <div class="h-[2px] w-full bg-gradient-to-r from-[#D4AF37]/20 via-[#D4AF37]/85 to-[#D4AF37]/20"></div>
 
   <!-- ============================================================ -->
-  <!-- 4. BOTTOM BAR / DOWN FOOTER (Dark Green Background: #15332A) -->
+  <!-- 4. BOTTOM BAR / DOWN FOOTER (Pure Rose: bg-primary-active - Matches Top-most Bar) -->
   <!-- ============================================================ -->
-  <div class="bg-[#15332A] text-white/90">
+  <div class="bg-primary-active text-white border-t border-white/15">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
 
       <!-- Left: Copyright Notice in English -->
-      <div class="text-xs text-white/85 font-normal tracking-wide text-center md:text-left">
+      <div class="text-xs text-white/90 font-medium tracking-wide text-center md:text-left">
         Copyright &copy; {{ currentYear() }} <span class="font-bold text-white tracking-wider">ESELLER GLOBAL</span>. All rights reserved.
       </div>
 
@@ -198,7 +198,7 @@
             [href]="socialLinks().facebook"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
             aria-label="Facebook"
             title="Facebook"
           >
@@ -214,7 +214,7 @@
             [href]="socialLinks().twitter"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
             aria-label="X (Twitter)"
             title="X"
           >
@@ -230,7 +230,7 @@
             [href]="socialLinks().instagram"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
             aria-label="Instagram"
             title="Instagram"
           >
@@ -246,7 +246,7 @@
             [href]="socialLinks().youtube"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
             aria-label="YouTube"
             title="YouTube"
           >
@@ -262,7 +262,7 @@
             [href]="socialLinks().linkedin"
             target="_blank"
             rel="noopener noreferrer"
-            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            class="w-8 h-8 rounded-full bg-white/15 hover:bg-white/30 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
             aria-label="LinkedIn"
             title="LinkedIn"
           >
@@ -324,8 +324,8 @@
         }
 
         <!-- 256 Bit SSL Encryption Badge -->
-        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0d221c] border border-emerald-500/40 text-emerald-300 text-[11px] font-medium shadow-2xs">
-          <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-black/25 border border-white/20 text-white text-[11px] font-medium shadow-2xs">
+          <svg class="w-3.5 h-3.5 text-amber-300 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
           <span class="whitespace-nowrap font-sans font-semibold tracking-tight">256 BitSSL Encryption</span>
