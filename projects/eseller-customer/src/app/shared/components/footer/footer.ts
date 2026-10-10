@@ -96,12 +96,12 @@ export class Footer implements OnInit {
 
   private setFallbackCategories(): void {
     this.topCategories.set([
-      { name: 'Elektronik & Bilgisayar', slug: 'electronics' },
-      { name: 'Moda & Giyim', slug: 'fashion' },
-      { name: 'Ayakkabı & Çanta', slug: 'shoes-bags' },
-      { name: 'Saat & Takı', slug: 'jewelry-watches' },
-      { name: 'Ev & Yaşam', slug: 'home-living' },
-      { name: 'Kozmetik & Kişisel Bakım', slug: 'beauty-health' }
+      { name: "Women's Apparel", slug: 'womens-apparel' },
+      { name: "Women's Bags", slug: 'womens-bags' },
+      { name: "Men's Fashion", slug: 'mens-fashion' },
+      { name: "Men's Bags", slug: 'mens-bags' },
+      { name: 'Fashion Watches', slug: 'fashion-watches' },
+      { name: 'Beauty & Personal Care', slug: 'beauty-personal-care' }
     ]);
   }
 

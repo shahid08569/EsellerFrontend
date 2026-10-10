@@ -1,196 +1,195 @@
-<footer class="mt-16 text-gray-800 bg-[#FAF8F5] border-t border-[#E8E2D8] font-sans">
+<footer class="mt-16 font-sans">
 
   <!-- ============================================================ -->
-  <!-- 1. TOP BRAND & VALUE PROPOSITION BAR -->
+  <!-- 1. TOP BRAND & VALUE PROPOSITION BAR (Orange Background) -->
   <!-- ============================================================ -->
-  <div class="border-b border-[#E8E2D8]/80 bg-[#FAF8F5]">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-6">
-      <!-- Logo + Tagline -->
-      <a routerLink="/" class="flex flex-col items-start gap-1 group">
+  <div class="bg-orange-500 text-white border-b border-orange-600/60 shadow-sm">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 flex flex-col md:flex-row items-center justify-between gap-6">
+
+      <!-- Prominent Brand Logo + Tagline -->
+      <a routerLink="/" class="flex flex-col items-center md:items-start gap-2 group">
         <img
           [src]="footerLogoSrc()"
-          alt="EsellerGlobal"
-          class="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain group-hover:opacity-95 transition-opacity"
+          alt="eSeller Global"
+          class="h-16 sm:h-20 lg:h-24 w-auto max-w-[280px] sm:max-w-[360px] object-contain brightness-0 invert group-hover:scale-[1.02] transition-transform duration-200"
           (error)="onFooterLogoError($event)"
         />
-        <span class="text-xs text-gray-700 tracking-wider font-medium">Shop Without Borders — Güvenli Alışverişin Küresel Adresi</span>
+        <span class="text-xs sm:text-sm text-white/95 tracking-wide font-medium">
+          Shop Without Borders &mdash; Premier Global Marketplace
+        </span>
       </a>
 
-      <!-- Quick Trust Badges -->
-      <div class="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6 text-xs text-gray-700 font-medium">
-        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
-          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <!-- Quick Trust Badges in English -->
+      <div class="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6 text-xs sm:text-sm text-white/95 font-medium">
+        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
+          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
           </svg>
-          <span>Hızlı ve Güvenli Kargo</span>
+          <span>Fast &amp; Secure Shipping</span>
         </div>
-        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
-          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
+          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
           </svg>
-          <span>%100 Orijinal Ürün</span>
+          <span>100% Genuine Products</span>
         </div>
-        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
-          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
+          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
           </svg>
-          <span>256-Bit SSL Koruma</span>
+          <span>256-Bit SSL Protection</span>
         </div>
-        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
-          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div class="flex items-center gap-2 hover:text-amber-200 transition-colors">
+          <svg class="w-5 h-5 text-amber-200 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
           </svg>
-          <span>7/24 Kesintisiz Destek</span>
+          <span>24/7 Dedicated Support</span>
         </div>
       </div>
+
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- 2. MAIN 5-COLUMN SECTION (Matches Koçak Reference Layout) -->
+  <!-- 2. MIDDLE 5-COLUMN SECTION (Navbar Background Color: bg-primary) -->
   <!-- ============================================================ -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
+  <div class="bg-primary text-white border-t border-white/10">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
 
-      <!-- Column 1: Kategoriler -->
-      <div>
-        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
-          Kategoriler
-        </h3>
-        <ul class="space-y-2.5 text-sm text-gray-600">
-          @for (cat of topCategories(); track cat.slug) {
+        <!-- Column 1: Categories -->
+        <div>
+          <h3 class="text-base font-bold text-white tracking-tight font-serif mb-4 pb-1 border-b border-white/20 inline-block">
+            Categories
+          </h3>
+          <ul class="space-y-2.5 text-sm text-white/85">
+            @for (cat of topCategories(); track cat.slug) {
+              <li>
+                <a
+                  [routerLink]="['/catalog']"
+                  [queryParams]="{ category: cat.slug }"
+                  class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150"
+                >
+                  {{ cat.name }}
+                </a>
+              </li>
+            }
+          </ul>
+        </div>
+
+        <!-- Column 2: About Us -->
+        <div>
+          <h3 class="text-base font-bold text-white tracking-tight font-serif mb-4 pb-1 border-b border-white/20 inline-block">
+            About Us
+          </h3>
+          <ul class="space-y-2.5 text-sm text-white/85">
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">About Our Platform</a></li>
             <li>
-              <a
-                [routerLink]="['/catalog']"
-                [queryParams]="{ category: cat.slug }"
-                class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150"
-              >
-                {{ cat.name }}
+              <a routerLink="/auth/seller-register" class="hover:text-amber-300 font-semibold transition-all inline-flex items-center gap-1.5 hover:translate-x-1 transform duration-150">
+                <span class="text-amber-300">🏪</span> Sell on eSeller
               </a>
             </li>
-          }
-        </ul>
-      </div>
-
-      <!-- Column 2: Kurumsal -->
-      <div>
-        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
-          Kurumsal
-        </h3>
-        <ul class="space-y-2.5 text-sm text-gray-600">
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Hakkımızda</a></li>
-          <li>
-            <a routerLink="/auth/seller-register" class="hover:text-primary font-semibold text-gray-800 transition-colors inline-flex items-center gap-1.5 hover:translate-x-0.5 transform duration-150">
-              <span class="text-amber-500">🏪</span> Mağazalar (Satıcı Olun)
-            </a>
-          </li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">İmalathanemiz &amp; Depolar</a></li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Sertifikalarımız</a></li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Plaketlerimiz &amp; Başarılar</a></li>
-          <li><a routerLink="/blogs" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Basında Biz</a></li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Kariyer</a></li>
-        </ul>
-      </div>
-
-      <!-- Column 3: Sipariş & Hizmetler -->
-      <div>
-        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
-          Sipariş &amp; Hizmetler
-        </h3>
-        <ul class="space-y-2.5 text-sm text-gray-600">
-          <li><a routerLink="/orders" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Sipariş Takibi</a></li>
-          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Kargo Seçenekleri</a></li>
-          <li><a routerLink="/dashboard" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Hesap Bilgileri</a></li>
-          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Teslimat ve İade</a></li>
-          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Mtn Kargo / Global Express</a></li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Neredeyiz? (Mağaza Konumları)</a></li>
-        </ul>
-      </div>
-
-      <!-- Column 4: Sıkça Sorulan Sorular -->
-      <div>
-        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
-          Sıkça Sorulan Sorular
-        </h3>
-        <ul class="space-y-2.5 text-sm text-gray-600">
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Sıkça Sorulan Sorular (SSS)</a></li>
-          <li><a routerLink="/privacy" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">KVKK ve Gizlilik Politikası</a></li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">İşlem Rehberi</a></li>
-          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Mesafeli Satış Sözleşmesi</a></li>
-          <li><a routerLink="/privacy" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Gizlilik ve Güvenlik</a></li>
-          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Yardım &amp; Destek Merkezi</a></li>
-        </ul>
-      </div>
-
-      <!-- Column 5: Güven Damgası & ETBİS Badges (Matches Reference Image) -->
-      <div class="col-span-2 md:col-span-1 flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-start gap-5 pt-2">
-
-        <!-- TR GO Güven Damgası Badge -->
-        <div class="flex items-center gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-sky-200/70 shadow-2xs hover:shadow-xs transition-shadow">
-          <div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center">
-            <!-- Circular Cyan Seal -->
-            <svg class="w-10 h-10 text-sky-500" viewBox="0 0 48 48" fill="none">
-              <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2.5" stroke-dasharray="115 20"/>
-              <circle cx="24" cy="24" r="17" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
-              <text x="24" y="22" text-anchor="middle" font-size="11" font-weight="900" fill="#0284C7" font-family="sans-serif">TR</text>
-              <text x="24" y="32" text-anchor="middle" font-size="9" font-weight="800" fill="#0284C7" font-family="sans-serif">GO</text>
-            </svg>
-            <span class="absolute -top-1 -right-1 text-sky-500 text-xs font-black">★</span>
-          </div>
-          <div class="flex flex-col text-left">
-            <span class="text-xs font-black tracking-tight text-sky-700 leading-tight">GÜVEN</span>
-            <span class="text-xs font-black tracking-tight text-sky-700 leading-tight">DAMGASI</span>
-            <span class="text-[9px] text-gray-500 font-medium leading-none mt-0.5">Doğrulanmış Mağaza</span>
-          </div>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Verified Hubs &amp; Warehouses</a></li>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Trust &amp; Certifications</a></li>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Awards &amp; Recognition</a></li>
+            <li><a routerLink="/blogs" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Press &amp; Media</a></li>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Careers</a></li>
+          </ul>
         </div>
 
-        <!-- ETBİS QR Code Badge -->
-        <div class="flex items-center gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-gray-200/80 shadow-2xs hover:shadow-xs transition-shadow">
-          <!-- QR Code Representation -->
-          <div class="w-11 h-11 bg-white border border-gray-300 p-1 rounded flex items-center justify-center flex-shrink-0 relative">
-            <svg class="w-full h-full text-gray-900" viewBox="0 0 24 24" fill="currentColor">
-              <path d="M2 2h7v7H2V2zm2 2v3h3V4H4zm9-2h7v7h-7V2zm2 2v3h3V4h-3zM2 13h7v7H2v-7zm2 2v3h3v-3H4zm13-2h2v2h-2v-2zm-4 0h2v2h-2v-2zm0 4h2v2h-2v-2zm4 0h2v4h-2v-4zm-4 2h2v2h-2v-2zm2-2h2v2h-2v-2zM5 5h1v1H5V5zm11 0h1v1h-1V5zM5 16h1v1H5v-1z"/>
-            </svg>
-            <!-- Red ETBIS Emblem in center -->
-            <div class="absolute inset-0 flex items-center justify-center">
-              <span class="bg-red-600 text-white text-[7px] font-black px-0.5 rounded leading-none">E</span>
+        <!-- Column 3: Orders & Services -->
+        <div>
+          <h3 class="text-base font-bold text-white tracking-tight font-serif mb-4 pb-1 border-b border-white/20 inline-block">
+            Orders &amp; Services
+          </h3>
+          <ul class="space-y-2.5 text-sm text-white/85">
+            <li><a routerLink="/orders" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Order Tracking</a></li>
+            <li><a routerLink="/terms" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Shipping Options</a></li>
+            <li><a routerLink="/dashboard" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Account Settings</a></li>
+            <li><a routerLink="/terms" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Delivery &amp; Returns Policy</a></li>
+            <li><a routerLink="/terms" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Global Express Delivery</a></li>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Hub &amp; Store Locations</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 4: Help & FAQ -->
+        <div>
+          <h3 class="text-base font-bold text-white tracking-tight font-serif mb-4 pb-1 border-b border-white/20 inline-block">
+            Help &amp; FAQ
+          </h3>
+          <ul class="space-y-2.5 text-sm text-white/85">
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Frequently Asked Questions</a></li>
+            <li><a routerLink="/privacy" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Privacy &amp; Data Protection</a></li>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Buyer Shopping Guide</a></li>
+            <li><a routerLink="/terms" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Terms &amp; Conditions</a></li>
+            <li><a routerLink="/privacy" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">Security &amp; Buyer Protection</a></li>
+            <li><a routerLink="/about" class="hover:text-amber-300 transition-all inline-block hover:translate-x-1 transform duration-150">24/7 Support Center</a></li>
+          </ul>
+        </div>
+
+        <!-- Column 5: Right Side Trust & Certified Brands Badges -->
+        <div class="col-span-2 md:col-span-1 flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-start gap-4 pt-1">
+
+          <!-- 1. eSeller Global Verified Marketplace Seal -->
+          <div class="w-full sm:w-auto bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/20 shadow-sm flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-amber-400 text-slate-900 flex items-center justify-center font-black text-sm flex-shrink-0 shadow-xs">
+              <svg class="w-6 h-6 text-slate-950" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+              </svg>
+            </div>
+            <div class="flex flex-col text-left">
+              <span class="text-xs font-black tracking-tight text-white leading-tight uppercase">VERIFIED STORE</span>
+              <span class="text-[10px] text-amber-300 font-semibold leading-tight">100% Buyer Protection</span>
+              <span class="text-[9px] text-white/70 leading-none mt-0.5">eSeller Certified Hub</span>
             </div>
           </div>
-          <div class="flex flex-col text-left">
-            <span class="text-[11px] font-bold text-red-600 leading-tight tracking-tight">ETBİS</span>
-            <span class="text-[10px] text-gray-700 font-medium leading-tight">Kayıtlıdır</span>
-            <span class="text-[9px] text-gray-500 font-normal leading-none mt-0.5">T.C. Ticaret Bak.</span>
-          </div>
-        </div>
 
-        <!-- 100% Genuine Seal -->
-        <div class="flex items-center gap-2 text-xs text-emerald-800 font-semibold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200/60">
-          <span class="text-emerald-600">🛡️</span>
-          <span>%100 Orijinal Ürün Garantisi</span>
+          <!-- 2. Certified Merchant & Brand Quality Seal -->
+          <div class="w-full sm:w-auto bg-white/10 backdrop-blur-xs p-3.5 rounded-xl border border-white/20 shadow-sm flex items-center gap-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-500 text-white flex items-center justify-center font-bold text-sm flex-shrink-0 shadow-xs">
+              <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"/>
+              </svg>
+            </div>
+            <div class="flex flex-col text-left">
+              <span class="text-xs font-black tracking-tight text-white leading-tight uppercase">GENUINE BRANDS</span>
+              <span class="text-[10px] text-emerald-300 font-semibold leading-tight">Authentic Guaranteed</span>
+              <span class="text-[9px] text-white/70 leading-none mt-0.5">Direct From Sellers</span>
+            </div>
+          </div>
+
+          <!-- 3. PCI-DSS Level 1 & Bank-Grade Security Seal -->
+          <div class="w-full sm:w-auto bg-white/10 backdrop-blur-xs px-3.5 py-2.5 rounded-xl border border-white/20 shadow-sm flex items-center gap-2.5">
+            <span class="text-base text-amber-300">🔒</span>
+            <div class="flex flex-col text-left">
+              <span class="text-[11px] font-bold text-white leading-tight">Bank-Grade Security</span>
+              <span class="text-[9px] text-white/70 leading-tight">PCI-DSS Level 1 Encrypted</span>
+            </div>
+          </div>
+
         </div>
 
       </div>
-
     </div>
   </div>
 
   <!-- ============================================================ -->
-  <!-- 3. GOLDEN LUXURY DIVIDER LINE (Matches Reference Screenshot) -->
+  <!-- 3. GOLDEN ACCENT DIVIDER LINE -->
   <!-- ============================================================ -->
-  <div class="h-[2px] w-full bg-gradient-to-r from-[#D4AF37]/10 via-[#D4AF37]/75 to-[#D4AF37]/10"></div>
+  <div class="h-[2px] w-full bg-gradient-to-r from-[#D4AF37]/20 via-[#D4AF37]/85 to-[#D4AF37]/20"></div>
 
   <!-- ============================================================ -->
-  <!-- 4. BOTTOM BAR / SUB-FOOTER (Deep Forest / Luxury Dark Tone) -->
+  <!-- 4. BOTTOM BAR / DOWN FOOTER (Dark Green Background: #15332A) -->
   <!-- ============================================================ -->
   <div class="bg-[#15332A] text-white/90">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4.5 flex flex-col md:flex-row items-center justify-between gap-4">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5 flex flex-col md:flex-row items-center justify-between gap-4">
 
-      <!-- Left: Copyright Notice -->
-      <div class="text-xs text-white/80 font-normal tracking-wide text-center md:text-left">
-        Copyright &copy; {{ currentYear() }} <span class="font-bold text-white tracking-wider">ESELLER GLOBAL</span>. Tüm hakları saklıdır.
+      <!-- Left: Copyright Notice in English -->
+      <div class="text-xs text-white/85 font-normal tracking-wide text-center md:text-left">
+        Copyright &copy; {{ currentYear() }} <span class="font-bold text-white tracking-wider">ESELLER GLOBAL</span>. All rights reserved.
       </div>
 
-      <!-- Center: Social Media Circular Icon Buttons (Configured by SuperAdmin) -->
+      <!-- Center: Social Media Circular Icon Buttons -->
       <div class="flex items-center gap-2.5">
 
         <!-- Facebook -->
@@ -273,7 +272,7 @@
           </a>
         }
 
-        <!-- WhatsApp (Optional) -->
+        <!-- WhatsApp -->
         @if (socialLinks().whatsapp) {
           <a
             [href]="socialLinks().whatsapp"
@@ -306,8 +305,7 @@
             </div>
           }
         } @else {
-          <!-- Standard Fallback Payment Logos: Mastercard & Visa -->
-          <!-- Mastercard -->
+          <!-- Fallback Payment Logos: Mastercard & Visa & Amex -->
           <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="Mastercard">
             <svg class="h-4 sm:h-5 w-auto" viewBox="0 0 36 24" fill="none">
               <circle cx="13" cy="12" r="8" fill="#EB001B"/>
@@ -316,18 +314,16 @@
             </svg>
           </div>
 
-          <!-- Visa -->
           <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="Visa">
             <span class="text-[12px] font-black italic tracking-tighter text-[#1A1F71] font-sans">VISA</span>
           </div>
 
-          <!-- Troy / Local Card -->
-          <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="Troy">
-            <span class="text-[11px] font-black tracking-tight text-[#0066B2] font-sans">troy</span>
+          <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="American Express">
+            <span class="text-[10px] font-black tracking-tight text-[#006FCF] font-sans">AMEX</span>
           </div>
         }
 
-        <!-- 256 Bit SSL Encryption Badge (Matches Reference Screenshot) -->
+        <!-- 256 Bit SSL Encryption Badge -->
         <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0d221c] border border-emerald-500/40 text-emerald-300 text-[11px] font-medium shadow-2xs">
           <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
