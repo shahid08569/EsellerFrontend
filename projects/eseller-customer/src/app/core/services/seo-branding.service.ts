@@ -67,7 +67,11 @@ export class SeoBrandingService {
     this.upsertMeta('name', 'twitter:description', description);
     this.upsertMeta('name', 'twitter:image', logoAbs);
 
-    this.setFavicon(faviconAbs);
+    // Only override static index.html favicons if a distinct, dedicated square favicon URL is configured
+    if (b.faviconUrl && b.faviconUrl.trim() && !b.faviconUrl.includes('eseller-global-nav')) {
+      const faviconAbs = this.toAbsoluteUrl(b.faviconUrl.trim());
+      this.setFavicon(faviconAbs);
+    }
   }
 
   private toAbsoluteUrl(raw: string): string {
@@ -77,7 +81,6 @@ export class SeoBrandingService {
       return resolved;
     }
     if (resolved.startsWith('/')) {
-      // Brand assets live on the customer origin; uploads often on API host via resolveMediaUrl
       if (resolved.startsWith('/brand/') || resolved.startsWith('/favicon')) {
         return `${environment.customerUrl.replace(/\/$/, '')}${resolved}`;
       }
@@ -96,33 +99,22 @@ export class SeoBrandingService {
   }
 
   private setFavicon(href: string): void {
-    if (!href || href.includes('eseller-mark.svg')) {
+    if (
+      !href ||
+      href.includes('eseller-global-nav') ||
+      href.includes('eseller-mark.svg') ||
+      href.endsWith('/favicon.ico') ||
+      href === '/favicon.ico'
+    ) {
       return;
     }
     const head = this.doc.head;
     if (!head) return;
 
-    const selectors = [
-      'link[rel="icon"]',
-      'link[rel="shortcut icon"]',
-      'link[rel="apple-touch-icon"]'
-    ];
-    for (const sel of selectors) {
-      head.querySelectorAll(sel).forEach((el) => el.parentElement?.removeChild(el));
+    // Gracefully update existing link element without deleting other sizes or adding timestamp jitter
+    const icon = head.querySelector('link[rel="icon"]') as HTMLLinkElement | null;
+    if (icon) {
+      icon.href = href;
     }
-
-    const isIco = href.endsWith('.ico') || href.includes('.ico?');
-    const isSvg = href.endsWith('.svg') || href.includes('.svg?');
-
-    const icon = this.doc.createElement('link');
-    icon.setAttribute('rel', 'icon');
-    icon.setAttribute('type', isIco ? 'image/x-icon' : (isSvg ? 'image/svg+xml' : 'image/png'));
-    icon.setAttribute('href', `${href}${href.includes('?') ? '&' : '?'}v=${Date.now()}`);
-    head.appendChild(icon);
-
-    const apple = this.doc.createElement('link');
-    apple.setAttribute('rel', 'apple-touch-icon');
-    apple.setAttribute('href', href);
-    head.appendChild(apple);
   }
 }
