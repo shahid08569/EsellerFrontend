@@ -105,7 +105,13 @@ export class HomeService {
                 raw.MetaDescription ??
                 'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.'
             ),
-            faviconUrl: String(raw.faviconUrl ?? raw.FaviconUrl ?? navLogoUrl)
+            faviconUrl: String(raw.faviconUrl ?? raw.FaviconUrl ?? navLogoUrl),
+            facebookUrl: raw.facebookUrl ?? raw.FacebookUrl ?? '',
+            twitterUrl: raw.twitterUrl ?? raw.TwitterUrl ?? '',
+            instagramUrl: raw.instagramUrl ?? raw.InstagramUrl ?? '',
+            youtubeUrl: raw.youtubeUrl ?? raw.YoutubeUrl ?? '',
+            linkedinUrl: raw.linkedinUrl ?? raw.LinkedinUrl ?? '',
+            whatsappUrl: raw.whatsappUrl ?? raw.WhatsappUrl ?? ''
           } as PlatformBrandingDto;
         }),
         catchError(() =>
@@ -116,7 +122,13 @@ export class HomeService {
             siteTitle: 'EsellerGlobal',
             metaDescription:
               'Shop Without Borders on EsellerGlobal — multi-vendor marketplace for electronics, fashion, and more from verified merchants worldwide.',
-            faviconUrl: '/favicon.svg'
+            faviconUrl: '/favicon.svg',
+            facebookUrl: 'https://facebook.com',
+            twitterUrl: 'https://x.com',
+            instagramUrl: 'https://instagram.com',
+            youtubeUrl: 'https://youtube.com',
+            linkedinUrl: 'https://linkedin.com',
+            whatsappUrl: ''
           } as PlatformBrandingDto)
         ),
         shareReplay(1)

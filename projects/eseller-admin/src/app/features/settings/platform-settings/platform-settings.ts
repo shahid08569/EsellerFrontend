@@ -9,6 +9,13 @@ const KEY_FOOTER = 'Branding.FooterLogoUrl';
 const KEY_TAGLINE = 'Branding.Tagline';
 const KEY_SITE_TITLE = 'Branding.SiteTitle';
 const KEY_META_DESC = 'Branding.MetaDescription';
+const KEY_FACEBOOK = 'Social.FacebookUrl';
+const KEY_TWITTER = 'Social.TwitterUrl';
+const KEY_INSTAGRAM = 'Social.InstagramUrl';
+const KEY_YOUTUBE = 'Social.YoutubeUrl';
+const KEY_LINKEDIN = 'Social.LinkedinUrl';
+const KEY_WHATSAPP = 'Social.WhatsappUrl';
+
 const DEFAULT_NAV = '/brand/eseller-global-nav.png';
 const DEFAULT_FOOTER = '/brand/eseller-global-logo.png';
 const DEFAULT_TAGLINE = 'Shop Without Borders';
@@ -53,6 +60,15 @@ export class PlatformSettings implements OnInit {
   readonly siteTitle = signal<string>(DEFAULT_SITE_TITLE);
   readonly metaDescription = signal<string>(DEFAULT_META_DESC);
 
+  // Social Links
+  readonly facebookUrl = signal<string>('https://facebook.com');
+  readonly twitterUrl = signal<string>('https://x.com');
+  readonly instagramUrl = signal<string>('https://instagram.com');
+  readonly youtubeUrl = signal<string>('https://youtube.com');
+  readonly linkedinUrl = signal<string>('https://linkedin.com');
+  readonly whatsappUrl = signal<string>('');
+  readonly isSavingSocial = signal<boolean>(false);
+
   ngOnInit(): void {
     this.loadSettings();
   }
@@ -86,6 +102,12 @@ export class PlatformSettings implements OnInit {
             if (s.key === KEY_TAGLINE && s.value) this.brandingTagline.set(s.value);
             if (s.key === KEY_SITE_TITLE && s.value) this.siteTitle.set(s.value);
             if (s.key === KEY_META_DESC && s.value) this.metaDescription.set(s.value);
+            if (s.key === KEY_FACEBOOK && s.value) this.facebookUrl.set(s.value);
+            if (s.key === KEY_TWITTER && s.value) this.twitterUrl.set(s.value);
+            if (s.key === KEY_INSTAGRAM && s.value) this.instagramUrl.set(s.value);
+            if (s.key === KEY_YOUTUBE && s.value) this.youtubeUrl.set(s.value);
+            if (s.key === KEY_LINKEDIN && s.value) this.linkedinUrl.set(s.value);
+            if (s.key === KEY_WHATSAPP && s.value) this.whatsappUrl.set(s.value);
           });
         } finally {
           this.isLoading.set(false);
@@ -299,6 +321,41 @@ export class PlatformSettings implements OnInit {
         this.isChangingPassword.set(false);
         this.toast.show(err?.error?.error || 'Failed to update password.', 'error');
       }
+    });
+  }
+
+  saveSocialLinks(): void {
+    this.isSavingSocial.set(true);
+    const list = [
+      { key: KEY_FACEBOOK, val: this.facebookUrl().trim() },
+      { key: KEY_TWITTER, val: this.twitterUrl().trim() },
+      { key: KEY_INSTAGRAM, val: this.instagramUrl().trim() },
+      { key: KEY_YOUTUBE, val: this.youtubeUrl().trim() },
+      { key: KEY_LINKEDIN, val: this.linkedinUrl().trim() },
+      { key: KEY_WHATSAPP, val: this.whatsappUrl().trim() }
+    ];
+
+    let pending = list.length;
+    let failed = false;
+
+    list.forEach(item => {
+      this.adminService.updateSetting(item.key, { value: item.val, isActive: true }).subscribe({
+        next: () => {
+          pending--;
+          if (pending === 0) {
+            this.isSavingSocial.set(false);
+            if (!failed) this.toast.show('Footer social media links saved successfully', 'success');
+          }
+        },
+        error: () => {
+          failed = true;
+          pending--;
+          if (pending === 0) {
+            this.isSavingSocial.set(false);
+            this.toast.show('Some social media links failed to save', 'error');
+          }
+        }
+      });
     });
   }
 }

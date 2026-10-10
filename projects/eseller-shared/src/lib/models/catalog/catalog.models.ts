@@ -139,6 +139,12 @@ export interface PlatformBrandingDto {
   metaDescription?: string;
   /** Favicon URL (defaults to nav logo when empty) */
   faviconUrl?: string;
+  facebookUrl?: string;
+  twitterUrl?: string;
+  instagramUrl?: string;
+  youtubeUrl?: string;
+  linkedinUrl?: string;
+  whatsappUrl?: string;
 }
 
 export interface PaymentShowcaseLogoDto {

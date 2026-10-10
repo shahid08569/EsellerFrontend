@@ -240,6 +240,80 @@
       </div>
     </div>
 
+    <!-- 4. SOCIAL MEDIA LINKS (Footer) -->
+    <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
+      <div class="border-b border-gray-100 pb-2 flex items-center justify-between">
+        <div>
+          <h3 class="text-sm font-bold text-gray-900">Social Media Links (Footer)</h3>
+          <p class="text-[11px] text-gray-500 mt-0.5">Configure your official social media channels shown in the storefront footer.</p>
+        </div>
+        <button
+          type="button"
+          (click)="saveSocialLinks()"
+          [disabled]="isSavingSocial()"
+          class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold transition-colors cursor-pointer disabled:opacity-50">
+          {{ isSavingSocial() ? 'Saving…' : 'Save Social Links' }}
+        </button>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Facebook URL</label>
+          <input
+            type="url"
+            [ngModel]="facebookUrl()"
+            (ngModelChange)="facebookUrl.set($event)"
+            placeholder="https://facebook.com/yourbrand"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">X (Twitter) URL</label>
+          <input
+            type="url"
+            [ngModel]="twitterUrl()"
+            (ngModelChange)="twitterUrl.set($event)"
+            placeholder="https://x.com/yourbrand"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">Instagram URL</label>
+          <input
+            type="url"
+            [ngModel]="instagramUrl()"
+            (ngModelChange)="instagramUrl.set($event)"
+            placeholder="https://instagram.com/yourbrand"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">YouTube URL</label>
+          <input
+            type="url"
+            [ngModel]="youtubeUrl()"
+            (ngModelChange)="youtubeUrl.set($event)"
+            placeholder="https://youtube.com/@yourbrand"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">LinkedIn URL</label>
+          <input
+            type="url"
+            [ngModel]="linkedinUrl()"
+            (ngModelChange)="linkedinUrl.set($event)"
+            placeholder="https://linkedin.com/company/yourbrand"
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+        <div>
+          <label class="block text-xs font-bold text-gray-700 mb-1">WhatsApp / Support Link</label>
+          <input
+            type="url"
+            [ngModel]="whatsappUrl()"
+            (ngModelChange)="whatsappUrl.set($event)"
+            placeholder="https://wa.me/..."
+            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+        </div>
+      </div>
+    </div>
+
     <!-- 5. Management PASSWORD -->
     <div class="bg-white border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
       <div class="border-b border-gray-100 pb-2">

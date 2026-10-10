@@ -1,67 +1,343 @@
-<footer class="bg-primary text-white mt-16">
-  <div class="max-w-7xl mx-auto px-3 md:px-4 py-8 md:py-12 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+<footer class="mt-16 text-gray-800 bg-[#FAF8F5] border-t border-[#E8E2D8] font-sans">
 
-    <!-- Column 1: Brand — white logo on rose footer -->
-    <div class="sm:col-span-2 md:col-span-1">
-      <a routerLink="/" class="inline-block mb-4 group">
+  <!-- ============================================================ -->
+  <!-- 1. TOP BRAND & VALUE PROPOSITION BAR -->
+  <!-- ============================================================ -->
+  <div class="border-b border-[#E8E2D8]/80 bg-[#FAF8F5]">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex flex-col md:flex-row items-center justify-between gap-6">
+      <!-- Logo + Tagline -->
+      <a routerLink="/" class="flex flex-col items-start gap-1 group">
         <img
           [src]="footerLogoSrc()"
-          alt="EsellerGlobal — Shop Without Borders"
-          class="h-36 md:h-48 lg:h-56 w-auto max-w-[340px] md:max-w-[420px] lg:max-w-[480px] object-contain brightness-0 invert group-hover:scale-[1.02] transition-transform"
+          alt="EsellerGlobal"
+          class="h-10 sm:h-12 w-auto max-w-[220px] sm:max-w-[260px] object-contain group-hover:opacity-95 transition-opacity"
           (error)="onFooterLogoError($event)"
         />
+        <span class="text-xs text-gray-700 tracking-wider font-medium">Shop Without Borders — Güvenli Alışverişin Küresel Adresi</span>
       </a>
-      <p class="text-sm text-white/85 leading-relaxed">
-        Your one-stop marketplace for everything you love. Shop from trusted sellers, chat directly, and get it delivered.
-      </p>
-    </div>
 
-    <!-- Column 2: Quick Links -->
-    <div>
-      <h4 class="text-sm font-semibold uppercase tracking-wide mb-4 text-white">Quick Links</h4>
-      <ul class="space-y-2 text-sm text-white/80">
-        <li><a routerLink="/about" class="hover:text-white transition-colors">About Us</a></li>
-        <li><a routerLink="/blogs" class="hover:text-white transition-colors">Blogs &amp; Stories</a></li>
-        <li><a routerLink="/auth/seller-register" class="hover:text-white font-semibold transition-colors flex items-center gap-1.5"><span class="text-amber-300">🏪</span> Sell on Eseller</a></li>
-        <li><a routerLink="/terms" class="hover:text-white transition-colors">Terms &amp; Conditions</a></li>
-        <li><a routerLink="/privacy" class="hover:text-white transition-colors">Privacy Policy</a></li>
-      </ul>
+      <!-- Quick Trust Badges -->
+      <div class="flex flex-wrap items-center justify-center md:justify-end gap-4 sm:gap-6 text-xs text-gray-700 font-medium">
+        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
+          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16V6a1 1 0 00-1-1H4a1 1 0 00-1 1v10a1 1 0 001 1h1m8-1a1 1 0 01-1 1H9m4-1V8a1 1 0 011-1h2.586a1 1 0 01.707.293l3.414 3.414a1 1 0 01.293.707V16a1 1 0 01-1 1h-1m-6-1a1 1 0 001 1h1M5 17a2 2 0 104 0m-4 0a2 2 0 114 0m6 0a2 2 0 104 0m-4 0a2 2 0 114 0"/>
+          </svg>
+          <span>Hızlı ve Güvenli Kargo</span>
+        </div>
+        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
+          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
+          </svg>
+          <span>%100 Orijinal Ürün</span>
+        </div>
+        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
+          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span>256-Bit SSL Koruma</span>
+        </div>
+        <div class="flex items-center gap-1.5 hover:text-primary transition-colors">
+          <svg class="w-4 h-4 text-[#D4AF37]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z"/>
+          </svg>
+          <span>7/24 Kesintisiz Destek</span>
+        </div>
+      </div>
     </div>
+  </div>
 
-    <!-- Column 3: My Account -->
-    <div>
-      <h4 class="text-sm font-semibold uppercase tracking-wide mb-4 text-white">My Account</h4>
-      <ul class="space-y-2 text-sm text-white/80">
-        <li><a routerLink="/auth/login" class="hover:text-white transition-colors">Login</a></li>
-        @if (canShop()) {
-          <li><a routerLink="/orders" class="hover:text-white transition-colors">Order History</a></li>
-        }
-        <li>
+  <!-- ============================================================ -->
+  <!-- 2. MAIN 5-COLUMN SECTION (Matches Koçak Reference Layout) -->
+  <!-- ============================================================ -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 lg:py-14">
+    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-8 lg:gap-10">
+
+      <!-- Column 1: Kategoriler -->
+      <div>
+        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
+          Kategoriler
+        </h3>
+        <ul class="space-y-2.5 text-sm text-gray-600">
+          @for (cat of topCategories(); track cat.slug) {
+            <li>
+              <a
+                [routerLink]="['/catalog']"
+                [queryParams]="{ category: cat.slug }"
+                class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150"
+              >
+                {{ cat.name }}
+              </a>
+            </li>
+          }
+        </ul>
+      </div>
+
+      <!-- Column 2: Kurumsal -->
+      <div>
+        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
+          Kurumsal
+        </h3>
+        <ul class="space-y-2.5 text-sm text-gray-600">
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Hakkımızda</a></li>
+          <li>
+            <a routerLink="/auth/seller-register" class="hover:text-primary font-semibold text-gray-800 transition-colors inline-flex items-center gap-1.5 hover:translate-x-0.5 transform duration-150">
+              <span class="text-amber-500">🏪</span> Mağazalar (Satıcı Olun)
+            </a>
+          </li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">İmalathanemiz &amp; Depolar</a></li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Sertifikalarımız</a></li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Plaketlerimiz &amp; Başarılar</a></li>
+          <li><a routerLink="/blogs" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Basında Biz</a></li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Kariyer</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 3: Sipariş & Hizmetler -->
+      <div>
+        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
+          Sipariş &amp; Hizmetler
+        </h3>
+        <ul class="space-y-2.5 text-sm text-gray-600">
+          <li><a routerLink="/orders" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Sipariş Takibi</a></li>
+          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Kargo Seçenekleri</a></li>
+          <li><a routerLink="/dashboard" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Hesap Bilgileri</a></li>
+          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Teslimat ve İade</a></li>
+          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Mtn Kargo / Global Express</a></li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Neredeyiz? (Mağaza Konumları)</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 4: Sıkça Sorulan Sorular -->
+      <div>
+        <h3 class="text-base font-bold text-gray-900 tracking-tight font-serif mb-4 pb-1 border-b border-gray-200/60 inline-block">
+          Sıkça Sorulan Sorular
+        </h3>
+        <ul class="space-y-2.5 text-sm text-gray-600">
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Sıkça Sorulan Sorular (SSS)</a></li>
+          <li><a routerLink="/privacy" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">KVKK ve Gizlilik Politikası</a></li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">İşlem Rehberi</a></li>
+          <li><a routerLink="/terms" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Mesafeli Satış Sözleşmesi</a></li>
+          <li><a routerLink="/privacy" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Gizlilik ve Güvenlik</a></li>
+          <li><a routerLink="/about" class="hover:text-primary transition-colors inline-block hover:translate-x-0.5 transform duration-150">Yardım &amp; Destek Merkezi</a></li>
+        </ul>
+      </div>
+
+      <!-- Column 5: Güven Damgası & ETBİS Badges (Matches Reference Image) -->
+      <div class="col-span-2 md:col-span-1 flex flex-col sm:flex-row md:flex-col items-start md:items-end justify-start gap-5 pt-2">
+
+        <!-- TR GO Güven Damgası Badge -->
+        <div class="flex items-center gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-sky-200/70 shadow-2xs hover:shadow-xs transition-shadow">
+          <div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center">
+            <!-- Circular Cyan Seal -->
+            <svg class="w-10 h-10 text-sky-500" viewBox="0 0 48 48" fill="none">
+              <circle cx="24" cy="24" r="22" stroke="currentColor" stroke-width="2.5" stroke-dasharray="115 20"/>
+              <circle cx="24" cy="24" r="17" stroke="currentColor" stroke-width="1.5" stroke-opacity="0.5"/>
+              <text x="24" y="22" text-anchor="middle" font-size="11" font-weight="900" fill="#0284C7" font-family="sans-serif">TR</text>
+              <text x="24" y="32" text-anchor="middle" font-size="9" font-weight="800" fill="#0284C7" font-family="sans-serif">GO</text>
+            </svg>
+            <span class="absolute -top-1 -right-1 text-sky-500 text-xs font-black">★</span>
+          </div>
+          <div class="flex flex-col text-left">
+            <span class="text-xs font-black tracking-tight text-sky-700 leading-tight">GÜVEN</span>
+            <span class="text-xs font-black tracking-tight text-sky-700 leading-tight">DAMGASI</span>
+            <span class="text-[9px] text-gray-500 font-medium leading-none mt-0.5">Doğrulanmış Mağaza</span>
+          </div>
+        </div>
+
+        <!-- ETBİS QR Code Badge -->
+        <div class="flex items-center gap-2.5 bg-white px-3.5 py-2.5 rounded-xl border border-gray-200/80 shadow-2xs hover:shadow-xs transition-shadow">
+          <!-- QR Code Representation -->
+          <div class="w-11 h-11 bg-white border border-gray-300 p-1 rounded flex items-center justify-center flex-shrink-0 relative">
+            <svg class="w-full h-full text-gray-900" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2 2h7v7H2V2zm2 2v3h3V4H4zm9-2h7v7h-7V2zm2 2v3h3V4h-3zM2 13h7v7H2v-7zm2 2v3h3v-3H4zm13-2h2v2h-2v-2zm-4 0h2v2h-2v-2zm0 4h2v2h-2v-2zm4 0h2v4h-2v-4zm-4 2h2v2h-2v-2zm2-2h2v2h-2v-2zM5 5h1v1H5V5zm11 0h1v1h-1V5zM5 16h1v1H5v-1z"/>
+            </svg>
+            <!-- Red ETBIS Emblem in center -->
+            <div class="absolute inset-0 flex items-center justify-center">
+              <span class="bg-red-600 text-white text-[7px] font-black px-0.5 rounded leading-none">E</span>
+            </div>
+          </div>
+          <div class="flex flex-col text-left">
+            <span class="text-[11px] font-bold text-red-600 leading-tight tracking-tight">ETBİS</span>
+            <span class="text-[10px] text-gray-700 font-medium leading-tight">Kayıtlıdır</span>
+            <span class="text-[9px] text-gray-500 font-normal leading-none mt-0.5">T.C. Ticaret Bak.</span>
+          </div>
+        </div>
+
+        <!-- 100% Genuine Seal -->
+        <div class="flex items-center gap-2 text-xs text-emerald-800 font-semibold bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-200/60">
+          <span class="text-emerald-600">🛡️</span>
+          <span>%100 Orijinal Ürün Garantisi</span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============================================================ -->
+  <!-- 3. GOLDEN LUXURY DIVIDER LINE (Matches Reference Screenshot) -->
+  <!-- ============================================================ -->
+  <div class="h-[2px] w-full bg-gradient-to-r from-[#D4AF37]/10 via-[#D4AF37]/75 to-[#D4AF37]/10"></div>
+
+  <!-- ============================================================ -->
+  <!-- 4. BOTTOM BAR / SUB-FOOTER (Deep Forest / Luxury Dark Tone) -->
+  <!-- ============================================================ -->
+  <div class="bg-[#15332A] text-white/90">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4.5 flex flex-col md:flex-row items-center justify-between gap-4">
+
+      <!-- Left: Copyright Notice -->
+      <div class="text-xs text-white/80 font-normal tracking-wide text-center md:text-left">
+        Copyright &copy; {{ currentYear() }} <span class="font-bold text-white tracking-wider">ESELLER GLOBAL</span>. Tüm hakları saklıdır.
+      </div>
+
+      <!-- Center: Social Media Circular Icon Buttons (Configured by SuperAdmin) -->
+      <div class="flex items-center gap-2.5">
+
+        <!-- Facebook -->
+        @if (socialLinks().facebook) {
           <a
-            routerLink="/wishlist"
-            (click)="onProtectedNav($event, '/wishlist', 'save items to your wishlist')"
-            class="hover:text-white transition-colors"
-          >Wishlist</a>
-        </li>
-        <li><a routerLink="/dashboard" class="hover:text-white transition-colors">Dashboard</a></li>
-      </ul>
-    </div>
+            [href]="socialLinks().facebook"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            aria-label="Facebook"
+            title="Facebook"
+          >
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z"/>
+            </svg>
+          </a>
+        }
 
-    <!-- Column 4: Contact -->
-    <div>
-      <h4 class="text-sm font-semibold uppercase tracking-wide mb-4 text-white">Get In Touch</h4>
-      <ul class="space-y-2 text-sm text-white/80">
-        <li>support@eseller.com</li>
-        <li>+1 (555) 123-4567</li>
-        <li>Mon–Sat, 9am–6pm</li>
-      </ul>
-    </div>
+        <!-- X (formerly Twitter) -->
+        @if (socialLinks().twitter) {
+          <a
+            [href]="socialLinks().twitter"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            aria-label="X (Twitter)"
+            title="X"
+          >
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/>
+            </svg>
+          </a>
+        }
 
+        <!-- Instagram -->
+        @if (socialLinks().instagram) {
+          <a
+            [href]="socialLinks().instagram"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            aria-label="Instagram"
+            title="Instagram"
+          >
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/>
+            </svg>
+          </a>
+        }
+
+        <!-- YouTube -->
+        @if (socialLinks().youtube) {
+          <a
+            [href]="socialLinks().youtube"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            aria-label="YouTube"
+            title="YouTube"
+          >
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+            </svg>
+          </a>
+        }
+
+        <!-- LinkedIn -->
+        @if (socialLinks().linkedin) {
+          <a
+            [href]="socialLinks().linkedin"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-8 h-8 rounded-full bg-white/10 hover:bg-white/25 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            aria-label="LinkedIn"
+            title="LinkedIn"
+          >
+            <svg class="w-3.5 h-3.5 fill-current" viewBox="0 0 24 24">
+              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z"/>
+            </svg>
+          </a>
+        }
+
+        <!-- WhatsApp (Optional) -->
+        @if (socialLinks().whatsapp) {
+          <a
+            [href]="socialLinks().whatsapp"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="w-8 h-8 rounded-full bg-emerald-600 hover:bg-emerald-500 text-white flex items-center justify-center transition-all duration-200 hover:scale-110 shadow-2xs"
+            aria-label="WhatsApp"
+            title="WhatsApp"
+          >
+            <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24">
+              <path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981z"/>
+            </svg>
+          </a>
+        }
+
+      </div>
+
+      <!-- Right: Dynamic Payment Logos & 256 Bit SSL Badge -->
+      <div class="flex items-center flex-wrap justify-center md:justify-end gap-2.5">
+
+        <!-- Dynamic SuperAdmin Payment Logos (if configured) -->
+        @if (paymentLogos().length > 0) {
+          @for (logo of paymentLogos(); track logo.id) {
+            <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" [title]="logo.name">
+              <img
+                [src]="resolveMedia(logo.imageUrl)"
+                [alt]="logo.name"
+                class="h-4 sm:h-5 w-auto max-w-[48px] object-contain"
+              />
+            </div>
+          }
+        } @else {
+          <!-- Standard Fallback Payment Logos: Mastercard & Visa -->
+          <!-- Mastercard -->
+          <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="Mastercard">
+            <svg class="h-4 sm:h-5 w-auto" viewBox="0 0 36 24" fill="none">
+              <circle cx="13" cy="12" r="8" fill="#EB001B"/>
+              <circle cx="23" cy="12" r="8" fill="#F79E1B" fill-opacity="0.9"/>
+              <path d="M18 6.9a8 8 0 0 0-2.6 5.1A8 8 0 0 0 18 17.1a8 8 0 0 0 2.6-5.1A8 8 0 0 0 18 6.9z" fill="#FF5F00"/>
+            </svg>
+          </div>
+
+          <!-- Visa -->
+          <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="Visa">
+            <span class="text-[12px] font-black italic tracking-tighter text-[#1A1F71] font-sans">VISA</span>
+          </div>
+
+          <!-- Troy / Local Card -->
+          <div class="h-6 sm:h-7 px-2 py-0.5 bg-white rounded flex items-center justify-center shadow-2xs" title="Troy">
+            <span class="text-[11px] font-black tracking-tight text-[#0066B2] font-sans">troy</span>
+          </div>
+        }
+
+        <!-- 256 Bit SSL Encryption Badge (Matches Reference Screenshot) -->
+        <div class="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#0d221c] border border-emerald-500/40 text-emerald-300 text-[11px] font-medium shadow-2xs">
+          <svg class="w-3.5 h-3.5 text-emerald-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+          </svg>
+          <span class="whitespace-nowrap font-sans font-semibold tracking-tight">256 BitSSL Encryption</span>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
-  <div class="border-t border-white/20">
-    <div class="max-w-7xl mx-auto px-3 md:px-4 py-4 text-center text-xs text-white/70">
-      © 2026 EsellerGlobal — Multi-Vendor Marketplace. All rights reserved.
-    </div>
-  </div>
 </footer>
