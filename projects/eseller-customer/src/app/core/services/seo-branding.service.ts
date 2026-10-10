@@ -44,7 +44,10 @@ export class SeoBrandingService {
   }
 
   apply(b: PlatformBrandingDto): void {
-    const siteTitle = (b.siteTitle || DEFAULT_TITLE).trim() || DEFAULT_TITLE;
+    const rawTitle = (b.siteTitle || '').trim();
+    const siteTitle = (!rawTitle || rawTitle === 'EsellerGlobal' || rawTitle === 'Eseller — Home')
+      ? DEFAULT_TITLE
+      : rawTitle;
     const description =
       (b.metaDescription || DEFAULT_DESCRIPTION).trim() || DEFAULT_DESCRIPTION;
     const faviconRaw = (b.faviconUrl || b.navLogoUrl || '/favicon.ico').trim();
