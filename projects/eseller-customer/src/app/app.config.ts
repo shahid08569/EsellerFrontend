@@ -1,10 +1,17 @@
 import {
   ApplicationConfig,
+  ErrorHandler,
   inject,
   provideZonelessChangeDetection,
   provideAppInitializer
 } from '@angular/core';
-import { RouteReuseStrategy, provideRouter, withInMemoryScrolling } from '@angular/router';
+import {
+  PreloadAllModules,
+  RouteReuseStrategy,
+  provideRouter,
+  withInMemoryScrolling,
+  withPreloading
+} from '@angular/router';
 import { CustomRouteReuseStrategy } from './core/services/custom-route-reuse-strategy';
 import {
   provideHttpClient,
@@ -20,22 +27,31 @@ import {
   authInterceptor,
   refreshInterceptor,
   errorInterceptor,
-  authBootstrapFactory
+  authBootstrapFactory,
+  ChunkLoadErrorHandler,
+  setupChunkLoadRecovery
 } from 'eseller-shared';
 
 import { routes } from './app.routes';
 import { SeoBrandingService } from './core/services/seo-branding.service';
+
+setupChunkLoadRecovery();
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
     provideRouter(
       routes,
+      withPreloading(PreloadAllModules),
       withInMemoryScrolling({
         scrollPositionRestoration: 'disabled',
         anchorScrolling: 'enabled'
       })
     ),
+    {
+      provide: ErrorHandler,
+      useClass: ChunkLoadErrorHandler
+    },
     {
       provide: RouteReuseStrategy,
       useClass: CustomRouteReuseStrategy

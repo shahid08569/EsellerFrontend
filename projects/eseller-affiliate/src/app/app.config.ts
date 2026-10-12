@@ -1,24 +1,33 @@
 import {
   ApplicationConfig,
+  ErrorHandler,
   provideZonelessChangeDetection,
   provideAppInitializer
 } from '@angular/core';
-import { provideRouter } from '@angular/router';
+import { provideRouter, withPreloading, PreloadAllModules } from '@angular/router';
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 
 import {
   authInterceptor,
   refreshInterceptor,
   errorInterceptor,
-  authBootstrapFactory
+  authBootstrapFactory,
+  ChunkLoadErrorHandler,
+  setupChunkLoadRecovery
 } from 'eseller-shared';
 
 import { routes } from './app.routes';
 
+setupChunkLoadRecovery();
+
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZonelessChangeDetection(),
-    provideRouter(routes),
+    provideRouter(routes, withPreloading(PreloadAllModules)),
+    {
+      provide: ErrorHandler,
+      useClass: ChunkLoadErrorHandler
+    },
     provideHttpClient(
       withInterceptors([
         authInterceptor,

@@ -30,7 +30,8 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
       if (
         !(error instanceof HttpErrorResponse) ||
         error.status !== 401 ||
-        shouldSkip
+        shouldSkip ||
+        !authStore.isAuthenticated()
       ) {
         return throwError(() => error);
       }

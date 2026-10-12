@@ -25,6 +25,7 @@ export * from './lib/services/dashboard.service';
 export * from './lib/services/notification.service';
 export * from './lib/services/order.service';
 export * from './lib/services/chat.service';
+export * from './lib/services/chunk-error-handler.service';
 export * from './lib/models/notifications/notification.models';
 export * from './lib/utils/navigation.utils';
 export * from './lib/utils/media-url';
