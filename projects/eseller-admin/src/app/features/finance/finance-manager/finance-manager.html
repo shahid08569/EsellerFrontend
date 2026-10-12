@@ -120,7 +120,7 @@
               <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
                 <th class="py-3.5 px-4 font-extrabold">Recipient</th>
                 <th class="py-3.5 px-4 font-extrabold">Amount & Date</th>
-                <th class="py-3.5 px-4 font-extrabold">Payout Method / Bank</th>
+                <th class="py-3.5 px-4 font-extrabold">Bank Details</th>
                 <th class="py-3.5 px-4 font-extrabold text-center">Status</th>
                 <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
               </tr>
@@ -148,22 +148,16 @@
                       {{ w.requestedAt | date:'mediumDate' }}
                     </div>
                   </td>
-                  <td class="py-3.5 px-4 text-xs">
-                    <div class="font-bold text-gray-800">{{ w.paymentMethod || w.payoutMethod || 'Bank Transfer' }}</div>
-                    @if (w.accountDetails) {
-                      <div class="font-mono text-gray-500 text-[11px] mt-0.5">{{ w.accountDetails }}</div>
-                    }
-                    <div class="mt-1.5">
-                      <button
-                        type="button"
-                        (click)="viewSellerBank(w.accountId, w.storeName || w.userName || 'Seller')"
-                        class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-[11px] font-bold transition-colors cursor-pointer shadow-2xs">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                          <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                        </svg>
-                        Bank Details
-                      </button>
-                    </div>
+                  <td class="py-3.5 px-4">
+                    <button
+                      type="button"
+                      (click)="viewSellerBank(w.accountId, w.storeName || w.userName || 'Seller')"
+                      class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 text-xs font-bold transition-colors cursor-pointer shadow-2xs">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                      </svg>
+                      Bank Details
+                    </button>
                   </td>
                   <td class="py-3.5 px-4 text-center">
                     <span [class]="w.status === 'Approved' ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800' : w.status === 'Processed' ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800' : w.status === 'Rejected' ? 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-rose-100 text-rose-800' : 'px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800'">
@@ -509,7 +503,7 @@
         <div class="bg-gray-50 p-3 rounded-xl border border-gray-100 text-xs space-y-1">
           <div class="flex justify-between">
             <span class="text-gray-500">Account:</span>
-            <span class="font-bold text-gray-900">{{ selectedWithdrawal()!.userName }}</span>
+            <span class="font-bold text-gray-900">{{ selectedWithdrawal()!.storeName || selectedWithdrawal()!.userName }}</span>
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500">Amount:</span>
@@ -517,7 +511,7 @@
           </div>
           <div class="flex justify-between">
             <span class="text-gray-500">Payment Channel:</span>
-            <span class="font-mono text-gray-800">{{ selectedWithdrawal()!.paymentMethod }} - {{ selectedWithdrawal()!.accountDetails }}</span>
+            <span class="font-mono text-gray-800">{{ selectedWithdrawal()!.paymentMethod || selectedWithdrawal()!.payoutMethod || 'Bank Card' }}</span>
           </div>
         </div>
 
