@@ -32,6 +32,7 @@ export class WithdrawalList implements OnInit {
   readonly minimumWithdrawal = signal<number>(100);
 
   readonly bankModalOpen = signal<boolean>(false);
+  readonly requestPayoutModalOpen = signal<boolean>(false);
   readonly isSavingBank = signal<boolean>(false);
   readonly isSubmittingWithdraw = signal<boolean>(false);
   readonly hasSavedBank = signal<boolean>(false);
@@ -127,6 +128,75 @@ export class WithdrawalList implements OnInit {
       },
       error: () => this.isLoading.set(false)
     });
+  }
+
+  initiateWithdrawalRequest(): void {
+    if (!this.hasSavedBank()) {
+      this.toast.show('Please add your bank / payout details first before requesting a payout.', 'error');
+      this.openBankModal();
+      return;
+    }
+    const min = this.minimumWithdrawal();
+    const bal = this.availableBalance() || 0;
+    if (bal < min) {
+      this.toast.show(`Your available balance ($ ${bal.toFixed(2)}) is less than the minimum withdrawal amount of $ ${min.toFixed(0)}.`, 'error');
+      return;
+    }
+    this.withdrawAmount.set(Math.max(min, Math.min(bal, bal)));
+    this.requestPayoutModalOpen.set(true);
+  }
+
+  closeRequestPayoutModal(): void {
+    if (this.isSubmittingWithdraw()) return;
+    this.requestPayoutModalOpen.set(false);
+  }
+
+  submitDirectWithdrawal(): void {
+    if (!this.hasSavedBank()) {
+      this.toast.show('Please add your bank / payout details first before requesting a payout.', 'error');
+      this.requestPayoutModalOpen.set(false);
+      this.openBankModal();
+      return;
+    }
+
+    const amount = Number(this.withdrawAmount());
+    const balance = this.availableBalance();
+    const min = this.minimumWithdrawal();
+
+    if (amount < min) {
+      this.toast.show(`Minimum withdrawal amount is $ ${min}`, 'error');
+      return;
+    }
+    if (amount > balance) {
+      this.toast.show('Requested amount exceeds available balance.', 'error');
+      return;
+    }
+
+    this.isSubmittingWithdraw.set(true);
+    const details = `${this.cardHolderName().trim()} · ${this.bankName().trim()} · ${this.savedMasked()}`;
+    this.sellerSvc
+      .requestWithdrawal({
+        amount,
+        payoutMethod: 'Bank Card',
+        accountDetails: details
+      })
+      .subscribe({
+        next: () => {
+          this.isSubmittingWithdraw.set(false);
+          this.requestPayoutModalOpen.set(false);
+          this.toast.show(`Withdrawal request of $ ${amount} submitted to Super Admin.`, 'success');
+          this.loadData();
+        },
+        error: (err) => {
+          this.isSubmittingWithdraw.set(false);
+          const msg = err?.error?.error || 'Withdrawal request failed.';
+          this.toast.show(msg, 'error');
+          if (err?.error?.errorCode === 'BANK_DETAILS_REQUIRED') {
+            this.requestPayoutModalOpen.set(false);
+            this.openBankModal();
+          }
+        }
+      });
   }
 
   openBankModal(): void {

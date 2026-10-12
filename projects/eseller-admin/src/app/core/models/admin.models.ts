@@ -250,10 +250,13 @@ export interface AdminCommissionDto {
 
 export interface AdminWithdrawalDto {
   id: string;
+  accountId: string;
   affiliateId?: string;
+  affiliateEmail?: string;
   shopId?: string;
   userName?: string;
   userType?: string;
+  storeName?: string;
   requesterName?: string;
   amount: number;
   paymentMethod?: string;
@@ -263,6 +266,7 @@ export interface AdminWithdrawalDto {
   requestedAt?: string;
   status: 'Pending' | 'Approved' | 'Paid' | 'Processed' | 'Rejected' | string;
   createdAt: string;
+  hasBankDetails?: boolean;
 }
 
 export interface AdminCouponDto {
