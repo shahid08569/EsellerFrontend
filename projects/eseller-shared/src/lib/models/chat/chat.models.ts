@@ -12,6 +12,9 @@ export interface ChatMessageDto {
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
   attachmentSizeBytes?: number | null;
+  isEdited?: boolean;
+  editedAt?: string | null;
+  isDeletedForEveryone?: boolean;
 }
 
 export interface PagedChatMessages {
@@ -54,4 +57,17 @@ export interface SignalRIncomingMessage {
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
+}
+
+export interface SignalRMessageEdited {
+  messageId: string;
+  orderRequestId: string;
+  newContent: string;
+  editedAt: string;
+}
+
+export interface SignalRMessageDeleted {
+  messageId: string;
+  orderRequestId: string;
+  isDeletedForEveryone: boolean;
 }

@@ -7,7 +7,7 @@ import {
 } from '@microsoft/signalr';
 
 import { AuthStore } from '../state/auth.store';
-import { SignalRIncomingMessage } from '../models/chat/chat.models';
+import { SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted } from '../models/chat/chat.models';
 
 export interface SignalRIncomingNotification {
   notificationId: string;
@@ -36,6 +36,12 @@ export class SignalRService {
   private messageReadHandlers = new Set<(messageId: string, readAt: string) => void>();
   private messageReadHubBound = false;
 
+  private messageEditedHandlers = new Set<(payload: SignalRMessageEdited) => void>();
+  private messageEditedHubBound = false;
+
+  private messageDeletedHandlers = new Set<(payload: SignalRMessageDeleted) => void>();
+  private messageDeletedHubBound = false;
+
   private receiveNotificationHandlers = new Set<(payload: SignalRIncomingNotification) => void>();
   private receiveNotificationHubBound = false;
   private unreadCountHandlers = new Set<(count: number) => void>();
@@ -49,8 +55,7 @@ export class SignalRService {
       this.chatConnection &&
       this.chatConnection.state === HubConnectionState.Connected
     ) {
-      this.ensureReceiveMessageHubHandler();
-      this.ensureMessageReadHubHandler();
+      this.ensureAllChatHubHandlers();
       return;
     }
 
@@ -88,6 +93,8 @@ export class SignalRService {
       this.chatState.set(HubConnectionState.Disconnected);
       this.receiveMessageHubBound = false;
       this.messageReadHubBound = false;
+      this.messageEditedHubBound = false;
+      this.messageDeletedHubBound = false;
     });
     this.chatConnection.onreconnecting(() =>
       this.chatState.set(HubConnectionState.Reconnecting)
@@ -96,18 +103,17 @@ export class SignalRService {
       this.chatState.set(HubConnectionState.Connected);
       this.receiveMessageHubBound = false;
       this.messageReadHubBound = false;
-      this.ensureReceiveMessageHubHandler();
-      this.ensureMessageReadHubHandler();
+      this.messageEditedHubBound = false;
+      this.messageDeletedHubBound = false;
+      this.ensureAllChatHubHandlers();
     });
 
-    this.ensureReceiveMessageHubHandler();
-    this.ensureMessageReadHubHandler();
+    this.ensureAllChatHubHandlers();
 
     try {
       await this.chatConnection.start();
       this.chatState.set(HubConnectionState.Connected);
-      this.ensureReceiveMessageHubHandler();
-      this.ensureMessageReadHubHandler();
+      this.ensureAllChatHubHandlers();
     } catch (err) {
       this.chatState.set(HubConnectionState.Disconnected);
       try { await this.chatConnection?.stop(); } catch { /* ignore */ }
@@ -172,6 +178,29 @@ export class SignalRService {
     return () => {
       this.messageReadHandlers.delete(callback);
     };
+  }
+
+  onMessageEdited(callback: (payload: SignalRMessageEdited) => void): () => void {
+    this.messageEditedHandlers.add(callback);
+    this.ensureMessageEditedHubHandler();
+    return () => {
+      this.messageEditedHandlers.delete(callback);
+    };
+  }
+
+  onMessageDeleted(callback: (payload: SignalRMessageDeleted) => void): () => void {
+    this.messageDeletedHandlers.add(callback);
+    this.ensureMessageDeletedHubHandler();
+    return () => {
+      this.messageDeletedHandlers.delete(callback);
+    };
+  }
+
+  private ensureAllChatHubHandlers(): void {
+    this.ensureReceiveMessageHubHandler();
+    this.ensureMessageReadHubHandler();
+    this.ensureMessageEditedHubHandler();
+    this.ensureMessageDeletedHubHandler();
   }
 
   private ensureMessageReadHubHandler(): void {
@@ -368,6 +397,53 @@ export class SignalRService {
       }
     );
     this.receiveMessageHubBound = true;
+  }
+
+  private ensureMessageEditedHubHandler(): void {
+    if (!this.chatConnection || this.messageEditedHubBound) return;
+
+    this.chatConnection.on(
+      'MessageEdited',
+      (messageId: string, orderRequestId: string, newContent: string, editedAt: string) => {
+        const payload: SignalRMessageEdited = {
+          messageId: String(messageId || ''),
+          orderRequestId: String(orderRequestId || ''),
+          newContent: String(newContent || ''),
+          editedAt: typeof editedAt === 'string' ? editedAt : new Date(editedAt as any).toISOString()
+        };
+        for (const handler of this.messageEditedHandlers) {
+          try {
+            handler(payload);
+          } catch {
+            /* isolate subscriber errors */
+          }
+        }
+      }
+    );
+    this.messageEditedHubBound = true;
+  }
+
+  private ensureMessageDeletedHubHandler(): void {
+    if (!this.chatConnection || this.messageDeletedHubBound) return;
+
+    this.chatConnection.on(
+      'MessageDeleted',
+      (messageId: string, orderRequestId: string, isDeletedForEveryone: boolean) => {
+        const payload: SignalRMessageDeleted = {
+          messageId: String(messageId || ''),
+          orderRequestId: String(orderRequestId || ''),
+          isDeletedForEveryone: !!isDeletedForEveryone
+        };
+        for (const handler of this.messageDeletedHandlers) {
+          try {
+            handler(payload);
+          } catch {
+            /* isolate subscriber errors */
+          }
+        }
+      }
+    );
+    this.messageDeletedHubBound = true;
   }
 
   private buildConnection(url: string): HubConnection {

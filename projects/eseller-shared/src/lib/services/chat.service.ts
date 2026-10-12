@@ -83,4 +83,12 @@ export class ChatService {
       catchError(() => of([]))
     );
   }
+
+  editMessage(messageId: string, message: string): Observable<any> {
+    return this.api.put<any>(`/Chat/messages/${messageId}`, { message });
+  }
+
+  deleteMessage(messageId: string, forEveryone: boolean = false): Observable<any> {
+    return this.api.delete<any>(`/Chat/messages/${messageId}?forEveryone=${forEveryone}`);
+  }
 }

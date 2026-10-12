@@ -742,7 +742,7 @@ export class AdminService {
     );
   }
 
-  getOrderMessages(orderId: string, pageNumber: number = 1, pageSize: number = 50): Observable<any[]> {
+  getOrderMessages(orderId: string, pageNumber: number = 1, pageSize: number = 200): Observable<any[]> {
     return this.api.get<any>(`/Chat/${orderId}/messages?pageNumber=${pageNumber}&pageSize=${pageSize}`).pipe(
       map(res => {
         if (Array.isArray(res)) return res;
@@ -786,6 +786,14 @@ export class AdminService {
     const form = new FormData();
     form.append('file', file, file.name);
     return this.api.postForm(`/Chat/attachments`, form);
+  }
+
+  editChatMessage(messageId: string, message: string): Observable<any> {
+    return this.api.put<any>(`/Chat/messages/${messageId}`, { message });
+  }
+
+  deleteChatMessage(messageId: string, forEveryone: boolean = false): Observable<any> {
+    return this.api.delete<any>(`/Chat/messages/${messageId}?forEveryone=${forEveryone}`);
   }
 
   sendMessage(

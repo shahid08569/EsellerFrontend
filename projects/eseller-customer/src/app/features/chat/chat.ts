@@ -3,6 +3,7 @@ import {
   OnInit,
   OnDestroy,
   AfterViewChecked,
+  HostListener,
   inject,
   signal,
   computed,
@@ -18,6 +19,8 @@ import {
   ChatService,
   OrderService,
   SignalRIncomingMessage,
+  SignalRMessageEdited,
+  SignalRMessageDeleted,
   SkeletonLayout
 } from 'eseller-shared';
 import { HubConnectionState } from '@microsoft/signalr';
@@ -27,6 +30,9 @@ export interface ChatMessage {
   sender: 'customer' | 'seller' | 'superadmin' | 'system';
   text: string;
   timestamp: Date;
+  isEdited?: boolean;
+  editedAt?: Date | string | null;
+  isDeletedForEveryone?: boolean;
 }
 
 export interface ChatThread {
@@ -91,6 +97,8 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('chatFeedContainer') private chatFeedContainer?: ElementRef<HTMLDivElement>;
   private shouldScrollToBottom = false;
   private unsubscribeReceiveMessage?: () => void;
+  private unsubscribeMessageEdited?: () => void;
+  private unsubscribeMessageDeleted?: () => void;
 
   readonly isLoadingInbox = signal(true);
   readonly threads = signal<ChatThread[]>([]);
@@ -104,6 +112,9 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
   readonly isFeedbackError = signal(false);
   readonly order = signal<StoredOrder | null>(null);
   readonly mobileShowChat = signal(false);
+  readonly editingMessage = signal<ChatMessage | null>(null);
+  readonly deleteModalMessage = signal<ChatMessage | null>(null);
+  readonly activeMenuMessageId = signal<string | null>(null);
 
   readonly selectedThread = computed(() => {
     const id = this.selectedThreadId();
@@ -158,6 +169,8 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
       this.signalRService.leaveOrderRoom(id).catch(() => {});
     }
     this.unsubscribeReceiveMessage?.();
+    this.unsubscribeMessageEdited?.();
+    this.unsubscribeMessageDeleted?.();
   }
 
   ngAfterViewChecked(): void {
@@ -175,6 +188,33 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
         this.unsubscribeReceiveMessage = this.signalRService.onReceiveMessage((incoming) => {
           this.handleIncoming(incoming);
         });
+
+        this.unsubscribeMessageEdited = this.signalRService.onMessageEdited((payload) => {
+          this.messages.update((list) =>
+            list.map((m) =>
+              m.id && String(m.id).toLowerCase() === payload.messageId.toLowerCase()
+                ? { ...m, text: payload.newContent, isEdited: true, editedAt: payload.editedAt }
+                : m
+            )
+          );
+        });
+
+        this.unsubscribeMessageDeleted = this.signalRService.onMessageDeleted((payload) => {
+          if (payload.isDeletedForEveryone) {
+            this.messages.update((list) =>
+              list.map((m) =>
+                m.id && String(m.id).toLowerCase() === payload.messageId.toLowerCase()
+                  ? { ...m, text: 'This message was deleted', isDeletedForEveryone: true }
+                  : m
+              )
+            );
+          } else {
+            this.messages.update((list) =>
+              list.filter((m) => !m.id || String(m.id).toLowerCase() !== payload.messageId.toLowerCase())
+            );
+          }
+        });
+
         const id = this.selectedThreadId();
         if (id) {
           this.signalRService.joinOrderRoom(id).catch(() => {});
@@ -382,12 +422,18 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
           ]);
         } else {
           this.messages.set(
-            items.map((m) => ({
-              id: m.id,
-              sender: this.mapSenderRole(m.senderRole),
-              text: m.message,
-              timestamp: new Date(m.sentAt)
-            }))
+            items.map((m) => {
+              const isDel = !!m.isDeletedForEveryone;
+              return {
+                id: m.id,
+                sender: this.mapSenderRole(m.senderRole),
+                text: isDel ? 'This message was deleted' : m.message,
+                timestamp: new Date(m.sentAt),
+                isEdited: !!m.isEdited,
+                editedAt: m.editedAt,
+                isDeletedForEveryone: isDel
+              };
+            })
           );
         }
         this.shouldScrollToBottom = true;
@@ -446,7 +492,101 @@ Please verify payment / dispatch. Thank you.`
     this.mobileShowChat.set(false);
   }
 
+  startEditMessage(msg: ChatMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    this.editingMessage.set(msg);
+    this.messageText.set(msg.text);
+    this.activeMenuMessageId.set(null);
+  }
+
+  cancelEdit(): void {
+    this.editingMessage.set(null);
+    this.messageText.set('');
+  }
+
+  submitEditMessage(): void {
+    const msg = this.editingMessage();
+    const newContent = this.messageText().trim();
+    if (!msg || !newContent || !msg.id) return;
+
+    if (newContent === msg.text) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.isSending.set(true);
+    this.chatService.editMessage(msg.id, newContent).subscribe({
+      next: () => {
+        this.isSending.set(false);
+        const now = new Date().toISOString();
+        this.messages.update((list) =>
+          list.map((m) =>
+            m.id === msg.id ? { ...m, text: newContent, isEdited: true, editedAt: now } : m
+          )
+        );
+        this.cancelEdit();
+      },
+      error: () => {
+        this.isSending.set(false);
+        this.showFeedback('Failed to edit message. Please try again.', true);
+      }
+    });
+  }
+
+  openDeleteModal(msg: ChatMessage): void {
+    this.deleteModalMessage.set(msg);
+    this.activeMenuMessageId.set(null);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalMessage.set(null);
+  }
+
+  confirmDelete(forEveryone: boolean): void {
+    const msg = this.deleteModalMessage();
+    if (!msg || !msg.id) return;
+
+    this.chatService.deleteMessage(msg.id, forEveryone).subscribe({
+      next: () => {
+        if (forEveryone) {
+          this.messages.update((list) =>
+            list.map((m) =>
+              m.id === msg.id
+                ? { ...m, text: 'This message was deleted', isDeletedForEveryone: true }
+                : m
+            )
+          );
+        } else {
+          this.messages.update((list) => list.filter((m) => m.id !== msg.id));
+        }
+        this.closeDeleteModal();
+      },
+      error: () => {
+        this.showFeedback('Failed to delete message.', true);
+      }
+    });
+  }
+
+  toggleMessageMenu(msgId: string, event?: Event): void {
+    event?.stopPropagation();
+    if (this.activeMenuMessageId() === msgId) {
+      this.activeMenuMessageId.set(null);
+    } else {
+      this.activeMenuMessageId.set(msgId);
+    }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.activeMenuMessageId.set(null);
+  }
+
   sendMessage(presetText?: string): void {
+    if (this.editingMessage()) {
+      this.submitEditMessage();
+      return;
+    }
+
     const text = (presetText || this.messageText()).trim();
     const orderId = this.selectedThreadId();
     if (!text || !orderId || this.isSending()) return;

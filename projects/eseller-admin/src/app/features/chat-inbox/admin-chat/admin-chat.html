@@ -220,35 +220,86 @@
             </div>
           } @else {
             @for (msg of messages(); track msg.id) {
-              <div [class]="msg.isFromAdmin ? 'flex justify-end' : 'flex justify-start'">
+              <div class="group relative flex" [class]="msg.isFromAdmin ? 'justify-end' : 'justify-start'">
                 <div [class]="msg.isFromAdmin
-                  ? 'max-w-md bg-orange-600 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5'
-                  : 'max-w-md bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5'">
-                  <div class="font-bold text-[10px]" [class]="msg.isFromAdmin ? 'text-orange-100' : 'text-slate-400'">
-                    {{ msg.senderName || (msg.isFromAdmin ? 'Management' : 'Customer') }}
-                  </div>
-                  @if (msg.content) {
-                    <div class="whitespace-pre-wrap leading-relaxed">{{ msg.content }}</div>
-                  }
-                  @if (msg.attachmentUrl) {
-                    <div class="mt-1.5">
-                      @if (isImageAttachment(msg)) {
-                        <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener" class="block">
-                          <img [src]="attachmentHref(msg.attachmentUrl)" [alt]="msg.attachmentFileName || 'attachment'"
-                               class="max-w-[220px] max-h-40 rounded-lg border border-white/20 object-cover" />
-                        </a>
-                      } @else {
-                        <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener"
-                           class="inline-flex items-center gap-1.5 text-[11px] font-bold underline underline-offset-2"
-                           [class.text-orange-100]="msg.isFromAdmin"
-                           [class.text-orange-700]="!msg.isFromAdmin">
-                          📎 {{ msg.attachmentFileName || 'Download file' }}
-                        </a>
-                      }
+                  ? 'max-w-md bg-orange-600 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5 relative'
+                  : 'max-w-md bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5 relative'">
+                  
+                  <div class="flex items-center justify-between gap-3">
+                    <div class="font-bold text-[10px]" [class]="msg.isFromAdmin ? 'text-orange-100' : 'text-slate-400'">
+                      {{ msg.senderName || (msg.isFromAdmin ? 'Management' : 'Customer') }}
                     </div>
+
+                    @if (!msg.isDeletedForEveryone) {
+                      <div class="relative">
+                        <button
+                          type="button"
+                          (click)="toggleMessageMenu(msg.id, $event)"
+                          class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded cursor-pointer"
+                          [class]="msg.isFromAdmin ? 'text-orange-200 hover:text-white hover:bg-orange-700/60' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'"
+                          title="Message options">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                          </svg>
+                        </button>
+
+                        @if (activeMenuMessageId() === msg.id) {
+                          <div
+                            class="absolute right-0 top-5 z-30 w-32 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-700"
+                            (click)="$event.stopPropagation()">
+                            <button
+                              type="button"
+                              (click)="startEditMessage(msg)"
+                              class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 cursor-pointer">
+                              <span>✏️</span> Edit
+                            </button>
+                            <button
+                              type="button"
+                              (click)="openDeleteModal(msg)"
+                              class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-rose-50 text-rose-600 cursor-pointer">
+                              <span>🗑️</span> Delete
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+
+                  @if (msg.isDeletedForEveryone) {
+                    <div class="italic flex items-center gap-1.5 py-1 text-[11px]" [class]="msg.isFromAdmin ? 'text-orange-200' : 'text-slate-400'">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 18.364A9 9 0 005.636 5.636m12.728 12.728A9 9 0 015.636 5.636m12.728 12.728L5.636 5.636" />
+                      </svg>
+                      This message was deleted
+                    </div>
+                  } @else {
+                    @if (msg.content) {
+                      <div class="whitespace-pre-wrap leading-relaxed">{{ msg.content }}</div>
+                    }
+                    @if (msg.attachmentUrl) {
+                      <div class="mt-1.5">
+                        @if (isImageAttachment(msg)) {
+                          <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener" class="block">
+                            <img [src]="attachmentHref(msg.attachmentUrl)" [alt]="msg.attachmentFileName || 'attachment'"
+                                 class="max-w-[220px] max-h-40 rounded-lg border border-white/20 object-cover" />
+                          </a>
+                        } @else {
+                          <a [href]="attachmentHref(msg.attachmentUrl)" target="_blank" rel="noopener"
+                             class="inline-flex items-center gap-1.5 text-[11px] font-bold underline underline-offset-2"
+                             [class.text-orange-100]="msg.isFromAdmin"
+                             [class.text-orange-700]="!msg.isFromAdmin">
+                            📎 {{ msg.attachmentFileName || 'Download file' }}
+                          </a>
+                        }
+                      </div>
+                    }
                   }
-                  <div class="text-[9px] text-right" [class]="msg.isFromAdmin ? 'text-orange-100' : 'text-slate-400'">
-                    {{ msg.createdAt | date:'shortTime' }}
+
+                  <div class="text-[9px] text-right flex items-center justify-end gap-1" [class]="msg.isFromAdmin ? 'text-orange-100' : 'text-slate-400'">
+                    @if (msg.isEdited && !msg.isDeletedForEveryone) {
+                      <span class="italic font-normal opacity-85">(edited)</span>
+                    }
+                    <span>{{ msg.createdAt | date:'shortTime' }}</span>
                   </div>
                 </div>
               </div>
@@ -257,6 +308,15 @@
         </div>
 
         <div class="p-3 border-t border-slate-100 bg-white space-y-2">
+          @if (editingMessage(); as editMsg) {
+            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+              <div class="flex items-center gap-2 min-w-0">
+                <span class="font-bold text-amber-800 shrink-0">✏️ Editing:</span>
+                <span class="truncate text-slate-700 italic">"{{ editMsg.content }}"</span>
+              </div>
+              <button type="button" (click)="cancelEdit()" class="text-amber-800 hover:text-amber-950 font-bold cursor-pointer text-xs shrink-0">✕ Cancel</button>
+            </div>
+          }
           @if (pendingAttachment(); as att) {
             <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 text-xs">
               <span class="truncate font-semibold text-orange-800">📎 {{ att.fileName }}</span>
@@ -284,10 +344,46 @@
               (click)="sendMessage()"
               [disabled]="sendingMessage() || uploadingFile() || (!newMessage().trim() && !pendingAttachment())"
               class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer transition-all">
-              {{ sendingMessage() ? 'Sending...' : (uploadingFile() ? 'Uploading...' : 'Send') }}
+              {{ sendingMessage() ? 'Sending...' : (uploadingFile() ? 'Uploading...' : (editingMessage() ? 'Update' : 'Send')) }}
             </button>
           </div>
         </div>
+
+        @if (deleteModalMessage(); as delMsg) {
+          <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4" (click)="closeDeleteModal()">
+            <div class="bg-white rounded-2xl shadow-xl max-w-xs w-full p-5 space-y-4" (click)="$event.stopPropagation()">
+              <div class="text-center space-y-1">
+                <div class="w-10 h-10 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 class="text-sm font-bold text-slate-900">Delete message?</h3>
+                <p class="text-xs text-slate-500">Choose how you want to delete this message.</p>
+              </div>
+              <div class="flex flex-col gap-2 pt-1">
+                <button
+                  type="button"
+                  (click)="confirmDelete(true)"
+                  class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs">
+                  Delete for everyone
+                </button>
+                <button
+                  type="button"
+                  (click)="confirmDelete(false)"
+                  class="w-full py-2.5 px-4 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs transition-colors cursor-pointer">
+                  Delete for me
+                </button>
+                <button
+                  type="button"
+                  (click)="closeDeleteModal()"
+                  class="w-full py-2 px-4 rounded-xl text-slate-500 hover:text-slate-800 font-bold text-xs transition-colors cursor-pointer">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        }
       } @else {
         <div class="h-full flex flex-col items-center justify-center text-slate-400">
           <div class="w-12 h-12 mb-2 rounded-2xl bg-orange-50 border border-orange-100 text-orange-600 flex items-center justify-center">

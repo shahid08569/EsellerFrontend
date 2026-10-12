@@ -1,8 +1,8 @@
-import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, HostListener, inject, signal, computed } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { ToastService, SignalRService, SignalRIncomingMessage, ChatService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -15,6 +15,9 @@ export interface AdminDisplayMessage {
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
+  isEdited?: boolean;
+  editedAt?: string | Date | null;
+  isDeletedForEveryone?: boolean;
 }
 
 @Component({
@@ -50,6 +53,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     contentType: string;
     sizeBytes: number;
   } | null>(null);
+  readonly editingMessage = signal<AdminDisplayMessage | null>(null);
+  readonly deleteModalMessage = signal<AdminDisplayMessage | null>(null);
+  readonly activeMenuMessageId = signal<string | null>(null);
 
   readonly enrichedConversations = computed(() => {
     void this.chatUnread.byConversationId();
@@ -102,6 +108,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   );
 
   private unsubscribeSignalR?: () => void;
+  private unsubscribeEdited?: () => void;
+  private unsubscribeDeleted?: () => void;
 
   ngOnInit(): void {
     this.initSignalR();
@@ -117,6 +125,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       }
     }
     this.unsubscribeSignalR?.();
+    this.unsubscribeEdited?.();
+    this.unsubscribeDeleted?.();
   }
 
   ngAfterViewChecked(): void {
@@ -153,6 +163,26 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       .then(() => {
         this.unsubscribeSignalR = this.signalRService.onReceiveMessage((incoming: SignalRIncomingMessage) => {
           this.handleIncomingMessage(incoming);
+        });
+        this.unsubscribeEdited = this.signalRService.onMessageEdited((payload) => {
+          this.messages.update(list => list.map(m =>
+            String(m.id).toLowerCase() === payload.messageId.toLowerCase()
+              ? { ...m, content: payload.newContent, isEdited: true, editedAt: payload.editedAt }
+              : m
+          ));
+        });
+        this.unsubscribeDeleted = this.signalRService.onMessageDeleted((payload) => {
+          if (payload.isDeletedForEveryone) {
+            this.messages.update(list => list.map(m =>
+              String(m.id).toLowerCase() === payload.messageId.toLowerCase()
+                ? { ...m, content: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+                : m
+            ));
+          } else {
+            this.messages.update(list => list.filter(m =>
+              String(m.id).toLowerCase() !== payload.messageId.toLowerCase()
+            ));
+          }
         });
         const active = this.activeConversation();
         if (active) {
@@ -345,15 +375,19 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
             const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
             const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+            const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
             return {
-              id: m.id,
+              id: m.id || m.Id,
               senderName: senderDisplayName,
-              content: m.message || m.content || '',
-              createdAt: m.sentAt || m.createdAt || new Date().toISOString(),
+              content: isDel ? 'This message was deleted' : (m.message || m.content || m.Message || m.Content || ''),
+              createdAt: m.sentAt || m.createdAt || m.SentAt || m.CreatedAt || new Date().toISOString(),
               isFromAdmin: isFromAdmin,
-              attachmentUrl: m.attachmentUrl || null,
-              attachmentFileName: m.attachmentFileName || null,
-              attachmentContentType: m.attachmentContentType || null
+              attachmentUrl: isDel ? null : (m.attachmentUrl || m.AttachmentUrl || null),
+              attachmentFileName: isDel ? null : (m.attachmentFileName || m.AttachmentFileName || null),
+              attachmentContentType: isDel ? null : (m.attachmentContentType || m.AttachmentContentType || null),
+              isEdited: !!(m.isEdited ?? m.IsEdited),
+              editedAt: m.editedAt || m.EditedAt || null,
+              isDeletedForEveryone: isDel
             };
           }));
           this.queueScrollToLatest();
@@ -392,7 +426,97 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  startEditMessage(msg: AdminDisplayMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    this.editingMessage.set(msg);
+    this.newMessage.set(msg.content);
+    this.activeMenuMessageId.set(null);
+  }
+
+  cancelEdit(): void {
+    this.editingMessage.set(null);
+    this.newMessage.set('');
+  }
+
+  submitEditMessage(): void {
+    const msg = this.editingMessage();
+    const newContent = this.newMessage().trim();
+    if (!msg || !newContent) return;
+
+    if (newContent === msg.content) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.sendingMessage.set(true);
+    this.adminService.editChatMessage(msg.id, newContent).subscribe({
+      next: () => {
+        this.sendingMessage.set(false);
+        const now = new Date().toISOString();
+        this.messages.update(list => list.map(m =>
+          m.id === msg.id ? { ...m, content: newContent, isEdited: true, editedAt: now } : m
+        ));
+        this.cancelEdit();
+      },
+      error: (err) => {
+        this.sendingMessage.set(false);
+        this.toast.show(err?.error?.error || 'Failed to edit message', 'error');
+      }
+    });
+  }
+
+  openDeleteModal(msg: AdminDisplayMessage): void {
+    this.deleteModalMessage.set(msg);
+    this.activeMenuMessageId.set(null);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalMessage.set(null);
+  }
+
+  confirmDelete(forEveryone: boolean): void {
+    const msg = this.deleteModalMessage();
+    if (!msg) return;
+
+    this.adminService.deleteChatMessage(msg.id, forEveryone).subscribe({
+      next: () => {
+        if (forEveryone) {
+          this.messages.update(list => list.map(m =>
+            m.id === msg.id
+              ? { ...m, content: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m => m.id !== msg.id));
+        }
+        this.closeDeleteModal();
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || 'Failed to delete message', 'error');
+      }
+    });
+  }
+
+  toggleMessageMenu(msgId: string, event?: Event): void {
+    event?.stopPropagation();
+    if (this.activeMenuMessageId() === msgId) {
+      this.activeMenuMessageId.set(null);
+    } else {
+      this.activeMenuMessageId.set(msgId);
+    }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.activeMenuMessageId.set(null);
+  }
+
   sendMessage(): void {
+    if (this.editingMessage()) {
+      this.submitEditMessage();
+      return;
+    }
+
     const text = this.newMessage().trim();
     const attachment = this.pendingAttachment();
     const convo = this.activeConversation();

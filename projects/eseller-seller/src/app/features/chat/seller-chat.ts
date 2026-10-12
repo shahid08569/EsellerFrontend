@@ -1,9 +1,9 @@
-import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, HostListener, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { SellerService } from '../../core/services/seller.service';
-import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, ChatMessageDto, SkeletonLayout } from 'eseller-shared';
+import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout } from 'eseller-shared';
 
 interface ChatMessage {
   id?: string;
@@ -15,6 +15,9 @@ interface ChatMessage {
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
+  isEdited?: boolean;
+  editedAt?: string | Date | null;
+  isDeletedForEveryone?: boolean;
 }
 
 interface ChatConversation {
@@ -51,6 +54,8 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   private shouldScrollToBottom = false;
   private receiveMessageUnsubscribe: (() => void) | null = null;
   private messageReadUnsubscribe: (() => void) | null = null;
+  private messageEditedUnsubscribe: (() => void) | null = null;
+  private messageDeletedUnsubscribe: (() => void) | null = null;
 
   readonly isLoading = signal<boolean>(true);
   readonly conversations = signal<ChatConversation[]>([]);
@@ -61,6 +66,9 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly uploadingFile = signal<boolean>(false);
   readonly pendingAttachment = signal<PendingAttachment | null>(null);
   readonly searchTerm = signal<string>('');
+  readonly editingMessage = signal<ChatMessage | null>(null);
+  readonly deleteModalMessage = signal<ChatMessage | null>(null);
+  readonly activeMenuMessageId = signal<string | null>(null);
 
   readonly selectedConversation = computed(() => {
     const id = this.selectedRoomId();
@@ -98,8 +106,12 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     }
     this.receiveMessageUnsubscribe?.();
     this.messageReadUnsubscribe?.();
+    this.messageEditedUnsubscribe?.();
+    this.messageDeletedUnsubscribe?.();
     this.receiveMessageUnsubscribe = null;
     this.messageReadUnsubscribe = null;
+    this.messageEditedUnsubscribe = null;
+    this.messageDeletedUnsubscribe = null;
   }
 
   ngAfterViewChecked(): void {
@@ -146,16 +158,20 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
   private mapApiMessage(m: ChatMessageDto | any): ChatMessage {
     const role = m.senderRole ?? m.SenderRole;
+    const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
     return {
       id: m.id,
       senderRole: role,
-      message: m.message || m.content || m.Message || '',
+      message: isDel ? 'This message was deleted' : (m.message || m.content || m.Message || ''),
       createdAt: m.sentAt || m.createdAt || new Date().toISOString(),
       isMe: this.isMyRole(String(role)) || role === 2,
       isRead: !!m.isRead,
-      attachmentUrl: m.attachmentUrl || null,
-      attachmentFileName: m.attachmentFileName || null,
-      attachmentContentType: m.attachmentContentType || null
+      attachmentUrl: isDel ? null : (m.attachmentUrl || null),
+      attachmentFileName: isDel ? null : (m.attachmentFileName || null),
+      attachmentContentType: isDel ? null : (m.attachmentContentType || null),
+      isEdited: !!(m.isEdited ?? m.IsEdited),
+      editedAt: m.editedAt || m.EditedAt || null,
+      isDeletedForEveryone: isDel
     };
   }
 
@@ -223,6 +239,28 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
       this.messageReadUnsubscribe = this.signalR.onMessageRead((messageId, readAt) => {
         this.applyMessageRead(messageId, readAt);
+      });
+
+      this.messageEditedUnsubscribe = this.signalR.onMessageEdited((payload) => {
+        this.messages.update(list => list.map(m =>
+          m.id && String(m.id).toLowerCase() === payload.messageId.toLowerCase()
+            ? { ...m, message: payload.newContent, isEdited: true, editedAt: payload.editedAt }
+            : m
+        ));
+      });
+
+      this.messageDeletedUnsubscribe = this.signalR.onMessageDeleted((payload) => {
+        if (payload.isDeletedForEveryone) {
+          this.messages.update(list => list.map(m =>
+            m.id && String(m.id).toLowerCase() === payload.messageId.toLowerCase()
+              ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m =>
+            !m.id || String(m.id).toLowerCase() !== payload.messageId.toLowerCase()
+          ));
+        }
       });
 
       const roomId = this.selectedRoomId();
@@ -350,7 +388,97 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  startEditMessage(msg: ChatMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    this.editingMessage.set(msg);
+    this.messageText.set(msg.message);
+    this.activeMenuMessageId.set(null);
+  }
+
+  cancelEdit(): void {
+    this.editingMessage.set(null);
+    this.messageText.set('');
+  }
+
+  submitEditMessage(): void {
+    const msg = this.editingMessage();
+    const newContent = this.messageText().trim();
+    if (!msg || !newContent || !msg.id) return;
+
+    if (newContent === msg.message) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.isSending.set(true);
+    this.chatService.editMessage(msg.id, newContent).subscribe({
+      next: () => {
+        this.isSending.set(false);
+        const now = new Date().toISOString();
+        this.messages.update(list => list.map(m =>
+          m.id === msg.id ? { ...m, message: newContent, isEdited: true, editedAt: now } : m
+        ));
+        this.cancelEdit();
+      },
+      error: (err) => {
+        this.isSending.set(false);
+        this.toast.show(err?.error?.error || 'Failed to edit message', 'error');
+      }
+    });
+  }
+
+  openDeleteModal(msg: ChatMessage): void {
+    this.deleteModalMessage.set(msg);
+    this.activeMenuMessageId.set(null);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalMessage.set(null);
+  }
+
+  confirmDelete(forEveryone: boolean): void {
+    const msg = this.deleteModalMessage();
+    if (!msg || !msg.id) return;
+
+    this.chatService.deleteMessage(msg.id, forEveryone).subscribe({
+      next: () => {
+        if (forEveryone) {
+          this.messages.update(list => list.map(m =>
+            m.id === msg.id
+              ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m => m.id !== msg.id));
+        }
+        this.closeDeleteModal();
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || 'Failed to delete message', 'error');
+      }
+    });
+  }
+
+  toggleMessageMenu(msgId: string, event?: Event): void {
+    event?.stopPropagation();
+    if (this.activeMenuMessageId() === msgId) {
+      this.activeMenuMessageId.set(null);
+    } else {
+      this.activeMenuMessageId.set(msgId);
+    }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.activeMenuMessageId.set(null);
+  }
+
   sendMessage(): void {
+    if (this.editingMessage()) {
+      this.submitEditMessage();
+      return;
+    }
+
     const text = this.messageText().trim();
     const attachment = this.pendingAttachment();
     const roomId = this.selectedRoomId();

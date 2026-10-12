@@ -1,7 +1,7 @@
-import { Component, OnInit, OnDestroy, inject, signal, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
+import { Component, OnInit, OnDestroy, HostListener, inject, signal, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted } from 'eseller-shared';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
 
 export interface AdminChatMessage {
@@ -15,6 +15,9 @@ export interface AdminChatMessage {
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
+  isEdited?: boolean;
+  editedAt?: string | Date | null;
+  isDeletedForEveryone?: boolean;
 }
 
 interface PendingAttachment {
@@ -52,6 +55,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly pendingAttachment = signal<PendingAttachment | null>(null);
   readonly messages = signal<AdminChatMessage[]>([]);
   readonly isLoading = signal<boolean>(false);
+  readonly editingMessage = signal<AdminChatMessage | null>(null);
+  readonly deleteModalMessage = signal<AdminChatMessage | null>(null);
+  readonly activeMenuMessageId = signal<string | null>(null);
 
   private supportRoomId: string | null = null;
   private shouldScrollToBottom = false;
@@ -59,6 +65,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private unsubscribeSignalR?: () => void;
   private unsubscribeMessageRead?: () => void;
+  private unsubscribeMessageEdited?: () => void;
+  private unsubscribeMessageDeleted?: () => void;
   private realtimeHooksAttached = false;
 
   tickState(msg: AdminChatMessage): 'pending' | 'sent' | 'read' {
@@ -177,6 +185,28 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           )
         );
       });
+
+      this.unsubscribeMessageEdited = this.signalR.onMessageEdited((payload) => {
+        this.messages.update(list => list.map(m =>
+          m.id && m.id.toLowerCase() === payload.messageId.toLowerCase()
+            ? { ...m, message: payload.newContent, isEdited: true, editedAt: payload.editedAt }
+            : m
+        ));
+      });
+
+      this.unsubscribeMessageDeleted = this.signalR.onMessageDeleted((payload) => {
+        if (payload.isDeletedForEveryone) {
+          this.messages.update(list => list.map(m =>
+            m.id && m.id.toLowerCase() === payload.messageId.toLowerCase()
+              ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m =>
+            !m.id || m.id.toLowerCase() !== payload.messageId.toLowerCase()
+          ));
+        }
+      });
     }).catch(() => {});
   }
 
@@ -214,6 +244,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     if (this.pollTimer) clearInterval(this.pollTimer);
     this.unsubscribeSignalR?.();
     this.unsubscribeMessageRead?.();
+    this.unsubscribeMessageEdited?.();
+    this.unsubscribeMessageDeleted?.();
     if (this.joinedRoomId) {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
     }
@@ -287,7 +319,97 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  startEditMessage(msg: AdminChatMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    this.editingMessage.set(msg);
+    this.messageText.set(msg.message);
+    this.activeMenuMessageId.set(null);
+  }
+
+  cancelEdit(): void {
+    this.editingMessage.set(null);
+    this.messageText.set('');
+  }
+
+  submitEditMessage(): void {
+    const msg = this.editingMessage();
+    const newContent = this.messageText().trim();
+    if (!msg || !newContent || !msg.id) return;
+
+    if (newContent === msg.message) {
+      this.cancelEdit();
+      return;
+    }
+
+    this.isSending.set(true);
+    this.chatService.editMessage(msg.id, newContent).subscribe({
+      next: () => {
+        this.isSending.set(false);
+        const now = new Date().toISOString();
+        this.messages.update(list => list.map(m =>
+          m.id === msg.id ? { ...m, message: newContent, isEdited: true, editedAt: now } : m
+        ));
+        this.cancelEdit();
+      },
+      error: (err) => {
+        this.isSending.set(false);
+        this.toast.show(err?.error?.error || 'Failed to edit message', 'error');
+      }
+    });
+  }
+
+  openDeleteModal(msg: AdminChatMessage): void {
+    this.deleteModalMessage.set(msg);
+    this.activeMenuMessageId.set(null);
+  }
+
+  closeDeleteModal(): void {
+    this.deleteModalMessage.set(null);
+  }
+
+  confirmDelete(forEveryone: boolean): void {
+    const msg = this.deleteModalMessage();
+    if (!msg || !msg.id) return;
+
+    this.chatService.deleteMessage(msg.id, forEveryone).subscribe({
+      next: () => {
+        if (forEveryone) {
+          this.messages.update(list => list.map(m =>
+            m.id === msg.id
+              ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m => m.id !== msg.id));
+        }
+        this.closeDeleteModal();
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || 'Failed to delete message', 'error');
+      }
+    });
+  }
+
+  toggleMessageMenu(msgId: string, event?: Event): void {
+    event?.stopPropagation();
+    if (this.activeMenuMessageId() === msgId) {
+      this.activeMenuMessageId.set(null);
+    } else {
+      this.activeMenuMessageId.set(msgId);
+    }
+  }
+
+  @HostListener('document:click')
+  onDocumentClick(): void {
+    this.activeMenuMessageId.set(null);
+  }
+
   sendMessage(): void {
+    if (this.editingMessage()) {
+      this.submitEditMessage();
+      return;
+    }
+
     const text = this.messageText().trim();
     const attachment = this.pendingAttachment();
     if ((!text && !attachment) || this.isSending()) return;
@@ -316,21 +438,25 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         const formatted: AdminChatMessage[] = list.map((m: any) => {
           const role = String(m.senderRole || '');
           const isSeller = this.isShopkeeperRole(role);
+          const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
           return {
             id: m.id || `msg-${Math.random()}`,
             sender: isSeller ? 'seller' : 'admin',
             senderName: isSeller
               ? (this.shop()?.name || 'Merchant')
               : 'Customer Service',
-            message: m.message || m.content || '',
+            message: isDel ? 'This message was deleted' : (m.message || m.content || ''),
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',
               minute: '2-digit'
             }),
             isRead: !!m.isRead,
-            attachmentUrl: m.attachmentUrl || null,
-            attachmentFileName: m.attachmentFileName || null,
-            attachmentContentType: m.attachmentContentType || null
+            attachmentUrl: isDel ? null : (m.attachmentUrl || null),
+            attachmentFileName: isDel ? null : (m.attachmentFileName || null),
+            attachmentContentType: isDel ? null : (m.attachmentContentType || null),
+            isEdited: !!(m.isEdited ?? m.IsEdited),
+            editedAt: m.editedAt || m.EditedAt || null,
+            isDeletedForEveryone: isDel
           };
         });
 
