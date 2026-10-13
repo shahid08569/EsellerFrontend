@@ -114,6 +114,7 @@
         </div>
 
         <!-- 2. SHOP MANAGEMENT DROPDOWN -->
+        @if (canAccessShops() || canAccessTraffic()) {
         <div>
           <button 
             type="button"
@@ -150,62 +151,70 @@
                [class.opacity-0]="!isDropdownOpen('shops')"
                [class.opacity-100]="isDropdownOpen('shops')">
             <div class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/60 rounded-xl my-1 border-l-2 border-orange-500">
-              <a [routerLink]="['/shops']" [queryParams]="{tab: 'pending', view: 'applications'}"
-                class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
-                style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isShopNav('pending')"
-                [class.font-bold]="isShopNav('pending')"
-                [class.bg-slate-800/80]="isShopNav('pending')">
-                <span>Pending Applications</span>
-                @if (pendingShopsCount() > 0) {
-                  <span class="admin-nav-count">
-                    {{ formatNavBadge(pendingShopsCount()) }}
-                  </span>
-                }
-              </a>
-              <a [routerLink]="['/shops']" [queryParams]="{view: 'stores'}"
-                class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
-                style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isShopNav('stores')"
-                [class.font-bold]="isShopNav('stores')"
-                [class.bg-slate-800/80]="isShopNav('stores')">
-                <span>Approved Stores</span>
-              </a>
-              <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}"
-                class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
-                style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isShopNav('tiers')"
-                [class.font-bold]="isShopNav('tiers')"
-                [class.bg-slate-800/80]="isShopNav('tiers')">
-                <span>Tier Upgrades</span>
-                @if (pendingTierCount() > 0) {
-                  <span class="admin-nav-count">
-                    {{ formatNavBadge(pendingTierCount()) }}
-                  </span>
-                }
-              </a>
-              <a [routerLink]="['/shops']" [queryParams]="{view: 'traffic'}"
-                class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
-                style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isShopNav('traffic')"
-                [class.font-bold]="isShopNav('traffic')"
-                [class.bg-slate-800/80]="isShopNav('traffic')">
-                <span>Shop Traffic &amp; Visitors</span>
-                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Live</span>
-              </a>
-              <a [routerLink]="['/shops']" [queryParams]="{tab: 'all', view: 'applications'}"
-                class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
-                style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isShopNav('all')"
-                [class.font-bold]="isShopNav('all')"
-                [class.bg-slate-800/80]="isShopNav('all')">
-                <span>All Shopkeepers</span>
-              </a>
+              @if (canAccessShops()) {
+                <a [routerLink]="['/shops']" [queryParams]="{tab: 'pending', view: 'applications'}"
+                  class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isShopNav('pending')"
+                  [class.font-bold]="isShopNav('pending')"
+                  [class.bg-slate-800/80]="isShopNav('pending')">
+                  <span>Pending Applications</span>
+                  @if (pendingShopsCount() > 0) {
+                    <span class="admin-nav-count">
+                      {{ formatNavBadge(pendingShopsCount()) }}
+                    </span>
+                  }
+                </a>
+                <a [routerLink]="['/shops']" [queryParams]="{view: 'stores'}"
+                  class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isShopNav('stores')"
+                  [class.font-bold]="isShopNav('stores')"
+                  [class.bg-slate-800/80]="isShopNav('stores')">
+                  <span>Approved Stores</span>
+                </a>
+                <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}"
+                  class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isShopNav('tiers')"
+                  [class.font-bold]="isShopNav('tiers')"
+                  [class.bg-slate-800/80]="isShopNav('tiers')">
+                  <span>Tier Upgrades</span>
+                  @if (pendingTierCount() > 0) {
+                    <span class="admin-nav-count">
+                      {{ formatNavBadge(pendingTierCount()) }}
+                    </span>
+                  }
+                </a>
+              }
+              @if (canAccessTraffic()) {
+                <a [routerLink]="['/shops']" [queryParams]="{view: 'traffic'}"
+                  class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isShopNav('traffic')"
+                  [class.font-bold]="isShopNav('traffic')"
+                  [class.bg-slate-800/80]="isShopNav('traffic')">
+                  <span>Shop Traffic &amp; Visitors</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Live</span>
+                </a>
+              }
+              @if (canAccessShops()) {
+                <a [routerLink]="['/shops']" [queryParams]="{tab: 'all', view: 'applications'}"
+                  class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isShopNav('all')"
+                  [class.font-bold]="isShopNav('all')"
+                  [class.bg-slate-800/80]="isShopNav('all')">
+                  <span>All Shopkeepers</span>
+                </a>
+              }
             </div>
           </div>
         </div>
+        }
 
         <!-- 3. PRODUCTS (dropdown) -->
+        @if (canAccessProducts()) {
         <div>
           <button
             type="button"
@@ -291,8 +300,10 @@
             </div>
           </div>
         </div>
+        }
 
         <!-- 4. ORDERS (dropdown) -->
+        @if (canAccessOrders()) {
         <div>
           <button
             type="button"
@@ -340,17 +351,20 @@
                   <span class="admin-nav-count">{{ formatNavBadge(pendingOrdersCount()) }}</span>
                 }
               </a>
-              <a [routerLink]="['/orders']" [queryParams]="{action: 'create'}"
-                class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
-                style="color: #f1f5f9 !important;"
-                [class.text-orange-400]="isOrderNav('create')"
-                [class.font-bold]="isOrderNav('create')"
-                [class.bg-slate-800/80]="isOrderNav('create')">
-                Create Order
-              </a>
+              @if (permissionService.has('orders:place')) {
+                <a [routerLink]="['/orders']" [queryParams]="{action: 'create'}"
+                  class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isOrderNav('create')"
+                  [class.font-bold]="isOrderNav('create')"
+                  [class.bg-slate-800/80]="isOrderNav('create')">
+                  Create Order
+                </a>
+              }
             </div>
           </div>
         </div>
+        }
 
         <!-- 5. PRODUCT REVIEWS -->
         <a 
@@ -488,6 +502,7 @@
         </div>
 
         <!-- 8. DIVIDED DROPDOWN 2: USERS & ACCESS -->
+        @if (canAccessCustomers() || canAccessShops() || canAccessPartners() || canAccessAffiliates()) {
         <div>
           <button 
             type="button"
@@ -524,36 +539,46 @@
                [class.opacity-0]="!isDropdownOpen('users')"
                [class.opacity-100]="isDropdownOpen('users')">
             <div class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/60 rounded-xl my-1 border-l-2 border-orange-500">
-              <a routerLink="/customers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Customers (Shoppers)</span>
-                @if (pendingCustomersCount() > 0) {
-                  <span class="admin-nav-count">{{ formatNavBadge(pendingCustomersCount()) }}</span>
-                }
-              </a>
-              <a routerLink="/sellers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Sellers (Merchants)</span>
-                @if (pendingSellersCount() > 0) {
-                  <span class="admin-nav-count">{{ formatNavBadge(pendingSellersCount()) }}</span>
-                }
-              </a>
-              <a routerLink="/shops" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Seller Registrations</span>
-                @if (pendingShopsCount() > 0) {
-                  <span class="admin-nav-count">{{ formatNavBadge(pendingShopsCount()) }}</span>
-                }
-              </a>
-              <a routerLink="/partners" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Partner Operators</span>
-              </a>
-              <a routerLink="/affiliates" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Affiliates &amp; Referrals</span>
-                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-bold">New</span>
-              </a>
+              @if (canAccessCustomers()) {
+                <a routerLink="/customers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Customers (Shoppers)</span>
+                  @if (pendingCustomersCount() > 0) {
+                    <span class="admin-nav-count">{{ formatNavBadge(pendingCustomersCount()) }}</span>
+                  }
+                </a>
+              }
+              @if (canAccessShops()) {
+                <a routerLink="/sellers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Sellers (Merchants)</span>
+                  @if (pendingSellersCount() > 0) {
+                    <span class="admin-nav-count">{{ formatNavBadge(pendingSellersCount()) }}</span>
+                  }
+                </a>
+                <a routerLink="/shops" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Seller Registrations</span>
+                  @if (pendingShopsCount() > 0) {
+                    <span class="admin-nav-count">{{ formatNavBadge(pendingShopsCount()) }}</span>
+                  }
+                </a>
+              }
+              @if (canAccessPartners()) {
+                <a routerLink="/partners" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Partner Operators</span>
+                </a>
+              }
+              @if (canAccessAffiliates()) {
+                <a routerLink="/affiliates" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Affiliates &amp; Referrals</span>
+                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-bold">New</span>
+                </a>
+              }
             </div>
           </div>
         </div>
+        }
 
         <!-- 9. DIVIDED DROPDOWN 3: FINANCE & REPORTS -->
+        @if (canAccessFinance()) {
         <div>
           <button 
             type="button"
@@ -602,6 +627,7 @@
             </div>
           </div>
         </div>
+        }
 
         <!-- 10. MANAGE PASSWORD & PROFILE -->
         <a 

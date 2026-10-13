@@ -4,6 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { ToastService, SkeletonLayout, AuthStore } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPartnerDto } from '../../../core/models/admin.models';
+import { 
+  PLATFORM_PERMISSIONS, 
+  PERMISSION_CATEGORIES, 
+  PermissionDefinition 
+} from '../../../core/services/admin-permission.service';
 
 @Component({
   selector: 'app-partner-management',
@@ -30,18 +35,18 @@ export class PartnerManagement implements OnInit {
     this.activePartnersCount() < this.maxPartners
   );
 
-  // Add Partner Modal
+  // Granular Permissions Metadata
+  readonly allPermissions: PermissionDefinition[] = PLATFORM_PERMISSIONS;
+  readonly categories: string[] = PERMISSION_CATEGORIES;
+
+  // Add / Edit Partner Modal
   readonly modalOpen = signal<boolean>(false);
+  readonly modalMode = signal<'create' | 'edit'>('create');
+  readonly editingPartner = signal<AdminPartnerDto | null>(null);
+
   readonly formEmail = signal<string>('');
   readonly formPassword = signal<string>('');
-  readonly formPermissions = signal<{ [key: string]: boolean }>({
-    shops: true,
-    products: true,
-    orders: true,
-    finance: false,
-    content: true,
-    settings: false
-  });
+  readonly formPermissions = signal<Record<string, boolean>>({});
 
   ngOnInit(): void {
     this.loadPartners();
@@ -63,22 +68,101 @@ export class PartnerManagement implements OnInit {
     });
   }
 
+  getCategoryPermissions(category: string): PermissionDefinition[] {
+    return this.allPermissions.filter(p => p.category === category);
+  }
+
   openAddModal(): void {
     if (!this.canAddPartner()) {
       this.toast.show('Maximum limit of 3 partners reached. You cannot add more partners.', 'error');
       return;
     }
+    this.modalMode.set('create');
+    this.editingPartner.set(null);
     this.formEmail.set('');
     this.formPassword.set('');
-    this.formPermissions.set({
-      shops: true,
-      products: true,
-      orders: true,
-      finance: false,
-      content: true,
-      settings: false
-    });
+
+    // Default safe operations permissions
+    const initPerms: Record<string, boolean> = {};
+    for (const p of this.allPermissions) {
+      initPerms[p.key] = !p.isConfidential;
+    }
+    this.formPermissions.set(initPerms);
     this.modalOpen.set(true);
+  }
+
+  openEditModal(partner: AdminPartnerDto): void {
+    this.modalMode.set('edit');
+    this.editingPartner.set(partner);
+    this.formEmail.set(partner.email || partner.name || '');
+    this.formPassword.set('');
+
+    const assigned = this.parsePartnerPermissions(partner.permissions);
+    const hasAll = assigned.includes('*') || assigned.includes('all');
+
+    const initPerms: Record<string, boolean> = {};
+    for (const p of this.allPermissions) {
+      if (hasAll) {
+        initPerms[p.key] = true;
+      } else {
+        const prefix = p.key.split(':')[0];
+        initPerms[p.key] = assigned.includes(p.key) || assigned.includes(prefix);
+      }
+    }
+    this.formPermissions.set(initPerms);
+    this.modalOpen.set(true);
+  }
+
+  parsePartnerPermissions(perms: any): string[] {
+    if (!perms) return [];
+    if (Array.isArray(perms)) return perms.map(x => String(x).trim());
+    if (typeof perms === 'string') {
+      try {
+        if (perms.trim().startsWith('[')) {
+          const parsed = JSON.parse(perms);
+          if (Array.isArray(parsed)) return parsed.map(x => String(x).trim());
+        }
+      } catch {}
+      return perms.split(',').map(x => x.trim()).filter(Boolean);
+    }
+    return [];
+  }
+
+  setPreset(preset: 'all' | 'operations' | 'readonly' | 'clear'): void {
+    const updated: Record<string, boolean> = {};
+    for (const p of this.allPermissions) {
+      if (preset === 'all') {
+        updated[p.key] = true;
+      } else if (preset === 'clear') {
+        updated[p.key] = false;
+      } else if (preset === 'readonly') {
+        updated[p.key] = p.key.endsWith(':view');
+      } else if (preset === 'operations') {
+        // Safe operational authority, excluding confidential authorities
+        updated[p.key] = !p.isConfidential;
+      }
+    }
+    this.formPermissions.set(updated);
+  }
+
+  togglePermission(key: string): void {
+    const current = { ...this.formPermissions() };
+    current[key] = !current[key];
+    this.formPermissions.set(current);
+  }
+
+  selectedPermissionsCount(): number {
+    return Object.values(this.formPermissions()).filter(Boolean).length;
+  }
+
+  formatPermissionBadge(perm: string): string {
+    const found = this.allPermissions.find(p => p.key === perm);
+    return found ? found.label : perm;
+  }
+
+  isPermissionConfidential(perm: string): boolean {
+    const found = this.allPermissions.find(p => p.key === perm);
+    return !!found?.isConfidential;
   }
 
   // Deactivate Modal State
@@ -130,41 +214,55 @@ export class PartnerManagement implements OnInit {
 
   closeModal(): void {
     this.modalOpen.set(false);
-  }
-
-  togglePermission(key: string): void {
-    const current = { ...this.formPermissions() };
-    current[key] = !current[key];
-    this.formPermissions.set(current);
+    this.editingPartner.set(null);
   }
 
   savePartner(): void {
-    const email = this.formEmail().trim();
-    const password = this.formPassword();
-
-    if (!email || !password) {
-      this.toast.show('Email and temporary password are required', 'error');
-      return;
-    }
-
     const selectedPerms = Object.keys(this.formPermissions()).filter(k => this.formPermissions()[k]);
 
-    this.isSaving.set(true);
-    this.adminService.addPartner({
-      email,
-      password,
-      permissions: selectedPerms
-    }).subscribe({
-      next: () => {
-        this.isSaving.set(false);
-        this.toast.show(`Partner "${email}" created successfully`, 'success');
-        this.closeModal();
-        this.loadPartners();
-      },
-      error: (err) => {
-        this.isSaving.set(false);
-        this.toast.show(err?.error?.error || 'Failed to create partner account', 'error');
+    if (this.modalMode() === 'create') {
+      const email = this.formEmail().trim();
+      const password = this.formPassword();
+
+      if (!email || !password) {
+        this.toast.show('Email and temporary password are required', 'error');
+        return;
       }
-    });
+
+      this.isSaving.set(true);
+      this.adminService.addPartner({
+        email,
+        password,
+        permissions: selectedPerms
+      }).subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.toast.show(`Partner "${email}" created successfully`, 'success');
+          this.closeModal();
+          this.loadPartners();
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toast.show(err?.error?.error || 'Failed to create partner account', 'error');
+        }
+      });
+    } else {
+      const partner = this.editingPartner();
+      if (!partner) return;
+
+      this.isSaving.set(true);
+      this.adminService.updatePartner(partner.id, selectedPerms).subscribe({
+        next: () => {
+          this.isSaving.set(false);
+          this.toast.show(`Permissions updated for "${partner.email}"`, 'success');
+          this.closeModal();
+          this.loadPartners();
+        },
+        error: (err) => {
+          this.isSaving.set(false);
+          this.toast.show(err?.error?.error || 'Failed to update partner permissions', 'error');
+        }
+      });
+    }
   }
 }

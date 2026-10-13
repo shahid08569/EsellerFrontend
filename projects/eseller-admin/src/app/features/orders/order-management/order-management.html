@@ -43,12 +43,14 @@
         <span class="text-white/50 mx-1">·</span>
         Filtered = <span class="font-semibold text-amber-200">{{ totalFilteredCount() }}</span>
       </div>
-      <button
-        type="button"
-        (click)="openPlaceOrder('modal')"
-        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-extrabold transition-colors cursor-pointer shadow-md hover:bg-orange-50">
-        + Place Order
-      </button>
+      @if (canPlaceOrder()) {
+        <button
+          type="button"
+          (click)="openPlaceOrder('modal')"
+          class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-white text-slate-950 text-xs font-extrabold transition-colors cursor-pointer shadow-md hover:bg-orange-50">
+          + Place Order
+        </button>
+      }
       <button 
         type="button" 
         (click)="loadOrders()" 

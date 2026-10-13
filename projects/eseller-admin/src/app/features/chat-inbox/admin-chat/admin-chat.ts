@@ -18,6 +18,8 @@ export interface AdminDisplayMessage {
   isEdited?: boolean;
   editedAt?: string | Date | null;
   isDeletedForEveryone?: boolean;
+  isRead?: boolean;
+  readAt?: string | Date | null;
 }
 
 @Component({
@@ -124,6 +126,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   private unsubscribeSignalR?: () => void;
   private unsubscribeEdited?: () => void;
   private unsubscribeDeleted?: () => void;
+  private unsubscribeMessageRead?: () => void;
 
   ngOnInit(): void {
     this.initSignalR();
@@ -141,6 +144,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     this.unsubscribeSignalR?.();
     this.unsubscribeEdited?.();
     this.unsubscribeDeleted?.();
+    this.unsubscribeMessageRead?.();
   }
 
   ngAfterViewChecked(): void {
@@ -197,6 +201,13 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               String(m.id).toLowerCase() !== payload.messageId.toLowerCase()
             ));
           }
+        });
+        this.unsubscribeMessageRead = this.signalRService.onMessageRead((messageId) => {
+          this.messages.update(list => list.map(m =>
+            String(m.id).toLowerCase() === String(messageId).toLowerCase()
+              ? { ...m, isRead: true }
+              : m
+          ));
         });
         const active = this.activeConversation();
         if (active) {
@@ -403,7 +414,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               attachmentContentType: isDel ? null : (m.attachmentContentType || m.AttachmentContentType || null),
               isEdited: !!(m.isEdited ?? m.IsEdited),
               editedAt: m.editedAt || m.EditedAt || null,
-              isDeletedForEveryone: isDel
+              isDeletedForEveryone: isDel,
+              isRead: !!(m.isRead ?? m.IsRead),
+              readAt: m.readAt || m.ReadAt || null
             };
           }));
           this.queueScrollToLatest();

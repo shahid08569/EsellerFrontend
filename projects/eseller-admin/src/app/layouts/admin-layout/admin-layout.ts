@@ -8,8 +8,8 @@ import { AdminChatWidget } from '../../shared/components/admin-chat-widget/admin
 import { NotificationBell } from '../../shared/components/notification-bell/notification-bell';
 import { AdminChatUnreadService } from '../../core/services/admin-chat-unread.service';
 import { environment } from '../../../environments/environment';
-
 import { HttpClient } from '@angular/common/http';
+import { AdminPermissionService } from '../../core/services/admin-permission.service';
 
 @Component({
   selector: 'app-admin-layout',
@@ -25,17 +25,24 @@ export class AdminLayout implements OnInit {
   readonly chatUnread = inject(AdminChatUnreadService);
   readonly router = inject(Router);
   private readonly toast = inject(ToastService);
+  readonly permissionService = inject(AdminPermissionService);
   readonly customerUrl = environment.customerUrl;
   readonly sellerUrl = environment.sellerUrl;
   readonly customerPortalUrl = environment.customerPortalUrl;
 
   readonly isSuperAdmin = computed(() => this.authStore.role() === 'SuperAdmin');
   readonly isPartner = computed(() => this.authStore.role() === 'Partner');
-  readonly partnerPermissions = signal<string[]>([]);
-  readonly canAccessSettings = computed(() => {
-    if (this.isSuperAdmin()) return true;
-    return this.partnerPermissions().includes('settings');
-  });
+  readonly partnerPermissions = computed(() => this.permissionService.permissions());
+
+  readonly canAccessOrders = computed(() => this.permissionService.has('orders:view') || this.permissionService.has('orders:manage'));
+  readonly canAccessShops = computed(() => this.permissionService.has('shops:view') || this.permissionService.has('shops:manage'));
+  readonly canAccessTraffic = computed(() => this.permissionService.has('traffic:view') || this.permissionService.has('traffic:manage'));
+  readonly canAccessProducts = computed(() => this.permissionService.has('products:view') || this.permissionService.has('products:manage'));
+  readonly canAccessFinance = computed(() => this.permissionService.has('finance:view') || this.permissionService.has('finance:manage'));
+  readonly canAccessCustomers = computed(() => this.permissionService.has('customers:manage'));
+  readonly canAccessAffiliates = computed(() => this.permissionService.has('affiliates:manage'));
+  readonly canAccessPartners = computed(() => this.isSuperAdmin());
+  readonly canAccessSettings = computed(() => this.permissionService.has('settings:manage'));
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
@@ -91,19 +98,7 @@ export class AdminLayout implements OnInit {
     this.currentUrl.set(this.router.url || '');
     this.autoExpandActiveDropdown(this.router.url);
 
-    this.http.get<any>(`${environment.apiUrl}/api/v1/auth/me`).subscribe({
-      next: (res) => {
-        if (res?.permissions) {
-          try {
-            const parsed = typeof res.permissions === 'string' ? JSON.parse(res.permissions) : res.permissions;
-            this.partnerPermissions.set(Array.isArray(parsed) ? parsed : []);
-          } catch {
-            this.partnerPermissions.set(typeof res.permissions === 'string' ? res.permissions.split(',') : []);
-          }
-        }
-      },
-      error: () => {}
-    });
+    this.permissionService.loadPermissions();
 
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)

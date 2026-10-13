@@ -900,6 +900,13 @@ export class AdminService {
     return this.api.put<any>(`/admin/partners/${id}/deactivate`, {});
   }
 
+  updatePartner(id: string, permissions: string | string[]): Observable<any> {
+    const payload = {
+      permissions: Array.isArray(permissions) ? permissions.join(',') : permissions
+    };
+    return this.api.put<any>(`/admin/partners/${id}`, payload);
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 10. FINANCE (Commissions & Withdrawals)
   // ═══════════════════════════════════════════════════════════

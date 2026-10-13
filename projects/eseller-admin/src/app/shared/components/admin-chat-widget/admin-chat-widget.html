@@ -308,7 +308,13 @@
                     }
                     <span>{{ msg.timestamp }}</span>
                     @if (msg.sender === 'admin') {
-                      <span class="font-bold">✓</span>
+                      @if (msg.isTemp) {
+                        <span class="opacity-70 font-semibold text-[10px]" title="Sent">✓</span>
+                      } @else if (!msg.isRead) {
+                        <span class="opacity-80 font-bold text-[10px] tracking-tighter" title="Delivered">✓✓</span>
+                      } @else {
+                        <span class="font-black text-amber-300 text-[10px] tracking-tighter drop-shadow-xs" style="color: #fcd34d !important;" title="Read by merchant">✓✓</span>
+                      }
                     }
                   </div>
                 </div>
@@ -402,9 +408,10 @@
               type="button"
               (click)="sendMessage()"
               [disabled]="(!messageText().trim() && !pendingAttachment()) || isSending() || uploadingFile()"
-              class="w-9 h-9 rounded-full bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center shadow-md transition-all cursor-pointer disabled:opacity-40 shrink-0">
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 -rotate-45 translate-x-px" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+              class="w-9 h-9 rounded-full bg-orange-600 hover:bg-orange-700 text-white flex items-center justify-center shadow-md transition-all cursor-pointer disabled:opacity-40 shrink-0"
+              title="Send message">
+              <svg class="w-4 h-4 fill-current transform rotate-45 -ml-0.5" viewBox="0 0 24 24">
+                <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
               </svg>
             </button>
           </div>

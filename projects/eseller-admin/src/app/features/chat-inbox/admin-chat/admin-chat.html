@@ -350,6 +350,13 @@
                       <span class="italic font-normal opacity-85">(edited)</span>
                     }
                     <span>{{ msg.createdAt | date:'shortTime' }}</span>
+                    @if (msg.isFromAdmin) {
+                      @if (!msg.isRead) {
+                        <span class="opacity-80 font-bold text-[10px] tracking-tighter" title="Delivered">✓✓</span>
+                      } @else {
+                        <span class="font-black text-amber-300 text-[10px] tracking-tighter drop-shadow-xs" style="color: #fcd34d !important;" title="Read by merchant">✓✓</span>
+                      }
+                    }
                   </div>
                 </div>
 

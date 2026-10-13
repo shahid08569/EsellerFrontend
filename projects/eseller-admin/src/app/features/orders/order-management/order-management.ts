@@ -6,6 +6,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import {
   AdminBrandDto,
   AdminCategoryDto,
@@ -45,6 +46,10 @@ export class OrderManagement implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly permissionService = inject(AdminPermissionService);
+
+  readonly canPlaceOrder = computed(() => this.permissionService.has('orders:place'));
+  readonly canManageOrders = computed(() => this.permissionService.has('orders:manage'));
 
   readonly isLoading = signal<boolean>(true);
   readonly orders = signal<AdminOrderDto[]>([]);
@@ -287,6 +292,11 @@ export class OrderManagement implements OnInit {
     this.loadOrders();
     this.route.queryParams.subscribe(params => {
       if (params['action'] === 'create') {
+        if (!this.canPlaceOrder()) {
+          this.toast.show('You do not have permission to place orders', 'error');
+          this.router.navigate(['/orders']);
+          return;
+        }
         if (this.placeOrderMode() !== 'page') {
           this.openPlaceOrder('page');
         }
@@ -491,12 +501,20 @@ export class OrderManagement implements OnInit {
   }
 
   openDeleteModal(order: AdminOrderDto): void {
+    if (!this.canManageOrders()) {
+      this.toast.show('You do not have permission to manage orders', 'error');
+      return;
+    }
     this.orderToDelete.set(order);
     this.isBatchDelete.set(false);
     this.deleteModalOpen.set(true);
   }
 
   openBatchDeleteModal(): void {
+    if (!this.canManageOrders()) {
+      this.toast.show('You do not have permission to manage orders', 'error');
+      return;
+    }
     if (this.selectedOrderIds().size === 0) return;
     this.orderToDelete.set(null);
     this.isBatchDelete.set(true);
@@ -652,6 +670,11 @@ export class OrderManagement implements OnInit {
 
   updateStatus(order: AdminOrderDto, newStatus: number, selectEl?: HTMLSelectElement): void {
     if (!newStatus) return;
+    if (!this.canManageOrders()) {
+      this.toast.show('You do not have permission to manage orders', 'error');
+      if (selectEl) selectEl.value = '';
+      return;
+    }
     const allowed = this.getNextStatusOptions(order.status).map(o => o.value);
     if (!allowed.includes(newStatus)) {
       this.toast.show('That status step is no longer available for this order.', 'error');
@@ -734,6 +757,10 @@ export class OrderManagement implements OnInit {
   }
 
   openPlaceOrder(mode: PlaceOrderMode = 'modal'): void {
+    if (!this.canPlaceOrder()) {
+      this.toast.show('You do not have permission to place orders', 'error');
+      return;
+    }
     this.placeOrderMode.set(mode);
     this.orderStep.set('select');
     this.placeMobileTab.set('catalog');

@@ -31,6 +31,9 @@ export interface AdminToSellerMessage {
   isEdited?: boolean;
   editedAt?: string | Date | null;
   isDeletedForEveryone?: boolean;
+  isTemp?: boolean;
+  isRead?: boolean;
+  readAt?: string | Date | null;
 }
 
 @Component({
@@ -49,6 +52,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly chatUnread = inject(AdminChatUnreadService);
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
+
+  private unsubscribeSignalR?: () => void;
+  private unsubscribeEdited?: () => void;
+  private unsubscribeDeleted?: () => void;
+  private unsubscribeMessageRead?: () => void;
 
   readonly isOpen = signal<boolean>(false);
   readonly messageText = signal<string>('');
@@ -136,9 +144,6 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private shouldScrollToBottom = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private joinedRoomId: string | null = null;
-  private unsubscribeSignalR?: () => void;
-  private unsubscribeEdited?: () => void;
-  private unsubscribeDeleted?: () => void;
 
   ngOnInit(): void {
     this.chatUnread.start();
@@ -247,6 +252,20 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           return next;
         });
       });
+
+      this.unsubscribeMessageRead = this.signalR.onMessageRead((messageId, readAt) => {
+        this.messagesMap.update(map => {
+          const next: Record<string, AdminToSellerMessage[]> = {};
+          for (const [k, v] of Object.entries(map)) {
+            next[k] = v.map(m =>
+              m.id && m.id.toLowerCase() === messageId.toLowerCase()
+                ? { ...m, isRead: true, readAt: readAt || new Date().toISOString() }
+                : m
+            );
+          }
+          return next;
+        });
+      });
     }).catch(() => {});
 
     this.pollTimer = setInterval(() => {
@@ -262,6 +281,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.unsubscribeSignalR?.();
     this.unsubscribeEdited?.();
     this.unsubscribeDeleted?.();
+    this.unsubscribeMessageRead?.();
     if (this.joinedRoomId) {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
     }
@@ -520,7 +540,10 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             attachmentContentType: isDel ? null : (m.attachmentContentType || null),
             isEdited: !!(m.isEdited ?? m.IsEdited),
             editedAt: m.editedAt || m.EditedAt || null,
-            isDeletedForEveryone: isDel
+            isDeletedForEveryone: isDel,
+            isRead: !!(m.isRead ?? m.IsRead),
+            readAt: m.readAt || m.ReadAt || null,
+            isTemp: false
           };
         });
 
@@ -783,7 +806,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           timestamp: stamp,
           attachmentUrl: attachment?.url || null,
           attachmentFileName: attachment?.fileName || null,
-          attachmentContentType: attachment?.contentType || null
+          attachmentContentType: attachment?.contentType || null,
+          isTemp: true,
+          isRead: false
         }
       ]
     }));
@@ -827,7 +852,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
                 timestamp: stamp,
                 attachmentUrl: attachment?.url || null,
                 attachmentFileName: attachment?.fileName || null,
-                attachmentContentType: attachment?.contentType || null
+                attachmentContentType: attachment?.contentType || null,
+                isTemp: false,
+                isRead: false
               }
             ]
           };
