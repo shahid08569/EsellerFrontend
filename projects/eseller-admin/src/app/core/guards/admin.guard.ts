@@ -1,6 +1,6 @@
 import { inject } from '@angular/core';
 import { CanActivateFn } from '@angular/router';
-import { AuthStore } from 'eseller-shared';
+import { AuthStore, safeDecodeHandoff } from 'eseller-shared';
 import { environment } from '../../../environments/environment';
 
 export const adminGuard: CanActivateFn = () => {
@@ -14,10 +14,48 @@ export const adminGuard: CanActivateFn = () => {
     return true;
   }
 
-  // Fallback: restore from storage if AuthStore constructor race occurs
-  if (typeof window !== 'undefined' && window.localStorage) {
+  // Fallback: restore from storage or hash if AuthStore constructor race occurs
+  if (typeof window !== 'undefined') {
     try {
-      const saved = window.localStorage.getItem('eseller_auth_session');
+      // 1. Check if hash has auth handoff
+      if (window.location.hash && window.location.hash.includes('#auth=')) {
+        const match = window.location.hash.match(/#auth=([^&]+)/);
+        if (match && match[1]) {
+          const payload = safeDecodeHandoff<any>(decodeURIComponent(match[1]));
+          if (payload?.accessToken && payload?.accountId) {
+            const r = payload.account?.roleType || payload.roleType;
+            if (r === 'SuperAdmin' || r === 'Partner') {
+              const exp = payload.accessTokenExpiresAt ? new Date(payload.accessTokenExpiresAt) : new Date(Date.now() + 15 * 60 * 1000);
+              authStore.setAuth({
+                accessToken: payload.accessToken,
+                accessTokenExpiresAt: exp,
+                account: payload.account || {
+                  accountId: payload.accountId,
+                  username: payload.username,
+                  email: payload.email,
+                  roleType: r
+                }
+              });
+              window.sessionStorage?.setItem('eseller_auth_session', JSON.stringify({
+                accessToken: payload.accessToken,
+                accessTokenExpiresAt: exp.toISOString(),
+                account: payload.account || {
+                  accountId: payload.accountId,
+                  username: payload.username,
+                  email: payload.email,
+                  roleType: r
+                }
+              }));
+              return true;
+            }
+          }
+        }
+      }
+
+      // 2. Check sessionStorage then localStorage
+      const saved = window.sessionStorage?.getItem('eseller_auth_session')
+        ?? window.localStorage?.getItem('eseller_auth_session');
+
       if (saved) {
         const data = JSON.parse(saved);
         const r = data?.account?.roleType;
@@ -30,10 +68,12 @@ export const adminGuard: CanActivateFn = () => {
             accessTokenExpiresAt: savedExpires || new Date(Date.now() + 15 * 60 * 1000),
             account: data.account
           });
+          window.localStorage?.removeItem('eseller_auth_session');
           return true;
         }
         if (savedExpired) {
-          window.localStorage.removeItem('eseller_auth_session');
+          window.sessionStorage?.removeItem('eseller_auth_session');
+          window.localStorage?.removeItem('eseller_auth_session');
           authStore.clearAuth();
         }
       }
