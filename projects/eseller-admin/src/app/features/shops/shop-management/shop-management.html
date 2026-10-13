@@ -923,27 +923,14 @@
                       }
                     </td>
                     <td class="px-4 py-3.5 text-right">
-                      <div class="flex items-center justify-end gap-2 whitespace-nowrap">
-                        <!-- View Detail Button: Compact White/Clean -->
-                        <button 
-                          type="button" 
-                          (click)="openTrafficDetailModal(item)" 
-                          title="View traffic statistics, trajectory & records"
-                          class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-bold text-[11px] transition-colors border border-slate-200 hover:border-slate-300 shadow-2xs cursor-pointer inline-flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.264 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          <span>View Detail</span>
-                        </button>
-
+                      <div class="flex items-center justify-end whitespace-nowrap">
                         <!-- Edit Traffic Button: Compact Wheat/Warm -->
                         <button 
                           type="button" 
                           (click)="openTrafficEditModal(item)" 
-                          title="Manually set or override storefront visitors"
-                          class="px-2.5 py-1.5 rounded-lg bg-[#faf6ee] hover:bg-[#f3ece0] text-amber-900 font-bold text-[11px] transition-colors border border-amber-200/90 shadow-2xs cursor-pointer inline-flex items-center gap-1">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          title="Set or distribute storefront visitors"
+                          class="px-3 py-1.5 rounded-lg bg-[#faf6ee] hover:bg-[#f3ece0] text-amber-900 font-bold text-[11px] transition-colors border border-amber-200/90 shadow-2xs cursor-pointer inline-flex items-center gap-1.5">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                           </svg>
                           <span>Edit Traffic</span>
@@ -1485,9 +1472,9 @@
           </select>
         </div>
 
-        <!-- Custom Badge Text Override -->
+        <!-- Custom Badge Text -->
         <div>
-          <label class="block text-xs font-bold text-gray-700 mb-1.5">Custom Badge Text (Optional Override)</label>
+          <label class="block text-xs font-bold text-gray-700 mb-1.5">Custom Badge Text (Optional)</label>
           <input 
             type="text" 
             [ngModel]="assignCustomBadge()" 
@@ -2354,23 +2341,32 @@
             </div>
           </div>
 
-          <!-- MANUAL VISITOR OVERRIDE CONTROLLER -->
-          <div id="admin-traffic-override-card" class="rounded-2xl border-2 border-orange-200 bg-orange-50/30 p-4 sm:p-5 space-y-4">
+          <!-- MANAGEMENT VISITOR ALLOCATION CONTROLLER -->
+          <div id="management-traffic-allocation-card" class="rounded-2xl border-2 border-orange-200 bg-orange-50/30 p-4 sm:p-5 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-orange-200/60 pb-3">
               <div>
                 <h4 class="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-2">
                   <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                   </svg>
-                  Management Visitor Override
+                  Management Visitor Allocation
                 </h4>
                 <p class="text-[11px] text-orange-800/80 mt-0.5">
-                  Set or adjust visitor metrics for any month or specific date. Changes reflect instantly on seller dashboard.
+                  Distribute visitors randomly across custom dates, set monthly total, or assign specific date counts. Reflects instantly on storefront.
                 </p>
               </div>
 
-              <!-- Mode Switch: Monthly vs Daily -->
-              <div class="inline-flex rounded-xl bg-white p-1 border border-orange-200 shadow-2xs shrink-0">
+              <!-- Mode Switch: Range vs Monthly vs Daily -->
+              <div class="inline-flex rounded-xl bg-white p-1 border border-orange-200 shadow-2xs shrink-0 flex-wrap gap-1">
+                <button
+                  type="button"
+                  (click)="overrideMode.set('range')"
+                  class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
+                  [class.bg-orange-600]="overrideMode() === 'range'"
+                  [class.text-white]="overrideMode() === 'range'"
+                  [class.text-slate-600]="overrideMode() !== 'range'">
+                  Date Range Distribution
+                </button>
                 <button
                   type="button"
                   (click)="overrideMode.set('month')"
@@ -2378,7 +2374,7 @@
                   [class.bg-orange-600]="overrideMode() === 'month'"
                   [class.text-white]="overrideMode() === 'month'"
                   [class.text-slate-600]="overrideMode() !== 'month'">
-                  Monthly Override
+                  Monthly Allocation
                 </button>
                 <button
                   type="button"
@@ -2387,12 +2383,71 @@
                   [class.bg-orange-600]="overrideMode() === 'date'"
                   [class.text-white]="overrideMode() === 'date'"
                   [class.text-slate-600]="overrideMode() !== 'date'">
-                  Date-Specific Override
+                  Daily Allocation
                 </button>
               </div>
             </div>
 
-            <!-- Mode A: Monthly Override Form -->
+            <!-- Mode 1: Date Range Distribution Form -->
+            @if (overrideMode() === 'range') {
+              <form (ngSubmit)="submitRangeDistribution()" class="space-y-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <div>
+                    <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">Start Date</label>
+                    <input 
+                      type="date" 
+                      [ngModel]="rangeDistributeStartDate()" 
+                      (ngModelChange)="rangeDistributeStartDate.set($event)"
+                      name="rangeDistributeStartDate"
+                      class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">End Date</label>
+                    <input 
+                      type="date" 
+                      [ngModel]="rangeDistributeEndDate()" 
+                      (ngModelChange)="rangeDistributeEndDate.set($event)"
+                      name="rangeDistributeEndDate"
+                      class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+                  </div>
+
+                  <div>
+                    <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">Total Target Visits</label>
+                    <input 
+                      type="number" 
+                      min="1" 
+                      [ngModel]="rangeDistributeVisits()" 
+                      (ngModelChange)="rangeDistributeVisits.set($event)"
+                      name="rangeDistributeVisits"
+                      placeholder="e.g. 100"
+                      class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+                  </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row items-center gap-3">
+                  <input 
+                    type="text" 
+                    [ngModel]="rangeDistributeNote()" 
+                    (ngModelChange)="rangeDistributeNote.set($event)"
+                    name="rangeDistributeNote"
+                    placeholder="Management note (e.g. 5-day promotional traffic allocation)"
+                    class="w-full flex-1 bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-700 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
+                  
+                  <button 
+                    type="submit" 
+                    [disabled]="isSubmittingOverride()"
+                    class="w-full sm:w-auto px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50 whitespace-nowrap">
+                    {{ isSubmittingOverride() ? 'Distributing...' : 'Distribute & Save Visitors' }}
+                  </button>
+                </div>
+                <p class="text-[11px] text-orange-900/70 italic">
+                  Backend will randomly distribute the exact total visits across the selected days so their sum equals precisely your target.
+                </p>
+              </form>
+            }
+
+            <!-- Mode 2: Monthly Allocation Form -->
             @if (overrideMode() === 'month') {
               <form (ngSubmit)="submitMonthlyOverride()" class="space-y-3">
                 <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
@@ -2456,13 +2511,13 @@
                     type="submit" 
                     [disabled]="isSubmittingOverride()"
                     class="w-full sm:w-auto px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50 whitespace-nowrap">
-                    {{ isSubmittingOverride() ? 'Saving...' : 'Apply Monthly Override' }}
+                    {{ isSubmittingOverride() ? 'Saving...' : 'Apply Monthly Allocation' }}
                   </button>
                 </div>
               </form>
             }
 
-            <!-- Mode B: Date-Specific Override Form -->
+            <!-- Mode 3: Date-Specific Allocation Form -->
             @if (overrideMode() === 'date') {
               <form (ngSubmit)="submitDailyOverride()" class="space-y-3">
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -2514,19 +2569,19 @@
                     type="submit" 
                     [disabled]="isSubmittingOverride()"
                     class="w-full sm:w-auto px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50 whitespace-nowrap">
-                    {{ isSubmittingOverride() ? 'Saving...' : 'Apply Date Override' }}
+                    {{ isSubmittingOverride() ? 'Saving...' : 'Apply Daily Allocation' }}
                   </button>
                 </div>
               </form>
             }
           </div>
 
-          <!-- MONTHLY HISTORY BREAKDOWN TABLE -->
+          <!-- VISITOR HISTORY BREAKDOWN TABLE -->
           <div class="rounded-2xl border border-slate-200 bg-white overflow-hidden shadow-2xs">
             <div class="px-4 py-3 bg-slate-50 border-b border-slate-200 flex items-center justify-between">
               <div>
-                <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Monthly Visitor History</h4>
-                <p class="text-[11px] text-slate-400">View month records or open Detail &amp; Manage to inspect auto-tracked vs management allocation breakdown</p>
+                <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Visitor History</h4>
+                <p class="text-[11px] text-slate-400">Monthly recorded storefront visitor counts &amp; daily averages</p>
               </div>
             </div>
 
@@ -2537,7 +2592,7 @@
                     <th class="px-4 py-2.5">Month</th>
                     <th class="px-4 py-2.5 text-right">Total Visits</th>
                     <th class="px-4 py-2.5 text-right">Unique Visitors</th>
-                    <th class="px-4 py-2.5 text-right">Action</th>
+                    <th class="px-4 py-2.5 text-right">Daily Visitors</th>
                   </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100 font-medium">
@@ -2552,14 +2607,10 @@
                       <td class="px-4 py-2.5 text-right text-slate-600">
                         {{ m.uniqueVisitors | number }}
                       </td>
-                      <td class="px-4 py-2.5 text-right">
-                        <button
-                          type="button"
-                          (click)="openMonthDetailModal(m)"
-                          class="px-3 py-1.5 rounded-lg bg-orange-50 hover:bg-orange-100 text-orange-700 font-bold text-[11px] transition-colors cursor-pointer border border-orange-200 inline-flex items-center gap-1.5 shadow-2xs">
-                          <span>Detail &amp; Manage</span>
-                          <span>✎</span>
-                        </button>
+                      <td class="px-4 py-2.5 text-right font-medium">
+                        <span class="px-2.5 py-1 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
+                          ~{{ ((m.visits / 30) | number:'1.0-0') }} visits / day
+                        </span>
                       </td>
                     </tr>
                   }
@@ -2579,134 +2630,6 @@
           (click)="closeTrafficDetailModal()"
           class="px-4 py-2 bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs rounded-xl transition-colors cursor-pointer">
           Done / Close
-        </button>
-      </div>
-
-    </div>
-  </div>
-}
-
-<!-- DEDICATED MONTH DETAIL & TRAFFIC OVERRIDE POPUP MODAL -->
-@if (monthDetailModalOpen() && selectedMonthData(); as m) {
-  <div class="fixed inset-0 z-70 flex items-center justify-center p-3 sm:p-4 bg-slate-950/80 backdrop-blur-sm animate-in fade-in duration-200">
-    <div 
-      class="bg-white rounded-3xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden relative animate-in zoom-in-95 duration-200 text-left"
-      (click)="$event.stopPropagation()">
-
-      <!-- Header -->
-      <div class="px-5 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
-        <div>
-          <div class="flex items-center gap-2">
-            <h3 class="text-base font-black text-slate-900 tracking-tight">{{ m.monthName }} Traffic Analysis</h3>
-            <span class="px-2 py-0.5 rounded-full text-[10px] font-black bg-orange-100 text-orange-800 border border-orange-200">
-              {{ selectedTrafficShop()?.shopName }}
-            </span>
-          </div>
-          <p class="text-xs text-slate-500 mt-0.5">Auto-tracked visits vs management allocation breakdown</p>
-        </div>
-        <button 
-          type="button" 
-          (click)="closeMonthDetailModal()" 
-          class="w-8 h-8 rounded-full bg-white hover:bg-slate-100 text-slate-500 border border-slate-200 flex items-center justify-center font-bold text-xs cursor-pointer transition-colors">
-          ✕
-        </button>
-      </div>
-
-      <!-- Body -->
-      <div class="p-5 space-y-5">
-        <!-- 3 Breakdown Metric Cards -->
-        <div class="grid grid-cols-3 gap-2.5">
-          <div class="rounded-xl p-3 bg-slate-50 border border-slate-200/80 text-center">
-            <span class="text-[10px] font-black uppercase tracking-wider text-slate-500 block">Total Visits</span>
-            <span class="text-lg font-black text-slate-900 block mt-1 tabular-nums">{{ m.visits | number }}</span>
-            <span class="text-[10px] text-slate-400">Total recorded</span>
-          </div>
-
-          <div class="rounded-xl p-3 bg-emerald-50 border border-emerald-200/80 text-center">
-            <span class="text-[10px] font-black uppercase tracking-wider text-emerald-700 block">Auto-Tracked</span>
-            <span class="text-lg font-black text-emerald-800 block mt-1 tabular-nums">{{ (m.autoTrackedVisits ?? 0) | number }}</span>
-            <span class="text-[10px] text-emerald-600">Organic clicks</span>
-          </div>
-
-          <div class="rounded-xl p-3 bg-amber-50 border border-amber-200/80 text-center">
-            <span class="text-[10px] font-black uppercase tracking-wider text-amber-700 block">Management Set</span>
-            <span class="text-lg font-black text-amber-800 block mt-1 tabular-nums">{{ (m.manualVisits ?? 0) | number }}</span>
-            <span class="text-[10px] text-amber-600">Management entry</span>
-          </div>
-        </div>
-
-        <!-- Additional Unique Visitor Info -->
-        <div class="flex items-center justify-between p-3 rounded-xl bg-indigo-50/60 border border-indigo-200/60 text-xs">
-          <span class="text-indigo-900 font-bold">Estimated Unique Visitors</span>
-          <span class="text-indigo-950 font-black tabular-nums">{{ (m.uniqueVisitors || 0) | number }} visitors</span>
-        </div>
-
-        <!-- Override Editor Form -->
-        <div class="rounded-2xl border border-orange-200 bg-orange-50/40 p-4 space-y-3">
-          <h4 class="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-1.5">
-            <span>✎</span>
-            <span>Adjust / Update Month Visitors</span>
-          </h4>
-
-          <div class="grid grid-cols-2 gap-3">
-            <div>
-              <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
-                Total Visits
-              </label>
-              <input 
-                type="number" 
-                min="0" 
-                [ngModel]="overrideMonthVisits()" 
-                (ngModelChange)="overrideMonthVisits.set($event)"
-                name="monthDetailVisits"
-                placeholder="e.g. 5000"
-                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
-            </div>
-
-            <div>
-              <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
-                Unique Visitors
-              </label>
-              <input 
-                type="number" 
-                min="0" 
-                [ngModel]="overrideMonthUnique()" 
-                (ngModelChange)="overrideMonthUnique.set($event)"
-                name="monthDetailUnique"
-                placeholder="e.g. 3800"
-                class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
-            </div>
-          </div>
-
-          <div>
-            <label class="block text-[11px] font-black text-slate-700 uppercase tracking-wider mb-1">
-              Management Note / Reason
-            </label>
-            <input 
-              type="text" 
-              [ngModel]="overrideMonthNote()" 
-              (ngModelChange)="overrideMonthNote.set($event)"
-              name="monthDetailNote"
-              placeholder="e.g. Monthly target calibration"
-              class="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs text-slate-800 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden" />
-          </div>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <div class="px-5 py-3 border-t border-slate-100 bg-slate-50 flex items-center justify-end gap-2.5">
-        <button 
-          type="button" 
-          (click)="closeMonthDetailModal()"
-          class="px-4 py-2 rounded-xl border border-slate-200 text-xs font-bold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer">
-          Cancel
-        </button>
-        <button 
-          type="button" 
-          (click)="saveMonthDetailOverride()"
-          [disabled]="isSubmittingOverride()"
-          class="px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer disabled:opacity-50">
-          {{ isSubmittingOverride() ? 'Saving...' : 'Save & Update Month' }}
         </button>
       </div>
 

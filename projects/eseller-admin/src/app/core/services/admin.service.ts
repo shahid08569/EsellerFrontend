@@ -1476,11 +1476,23 @@ export class AdminService {
     return this.api.get<ShopTrafficSummaryDto>(url);
   }
 
-  overrideMonthlyTraffic(shopId: string, data: { year: number; month: number; totalVisits: number; uniqueVisitors?: number; note?: string }): Observable<any> {
+  setMonthlyTraffic(shopId: string, data: { year: number; month: number; totalVisits: number; uniqueVisitors?: number; note?: string }): Observable<any> {
     return this.api.post<any>(`/admin/shops/${shopId}/traffic/monthly`, data);
   }
 
-  overrideDailyTraffic(shopId: string, data: { date: string; visitCount: number; uniqueVisitors?: number; note?: string }): Observable<any> {
+  setDailyTraffic(shopId: string, data: { date: string; visitCount: number; uniqueVisitors?: number; note?: string }): Observable<any> {
     return this.api.post<any>(`/admin/shops/${shopId}/traffic/daily`, data);
+  }
+
+  distributeRangeTraffic(shopId: string, data: { startDate: string; endDate: string; totalVisits: number; note?: string }): Observable<any> {
+    return this.api.post<any>(`/admin/shops/${shopId}/traffic/distribute`, data);
+  }
+
+  overrideMonthlyTraffic(shopId: string, data: { year: number; month: number; totalVisits: number; uniqueVisitors?: number; note?: string }): Observable<any> {
+    return this.setMonthlyTraffic(shopId, data);
+  }
+
+  overrideDailyTraffic(shopId: string, data: { date: string; visitCount: number; uniqueVisitors?: number; note?: string }): Observable<any> {
+    return this.setDailyTraffic(shopId, data);
   }
 }

@@ -74,7 +74,7 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly trafficDetailRange = signal<string>('30d');
   readonly hoverTrafficPoint = signal<ShopTrafficPointDto | null>(null);
 
-  // Manual Override signals
+  // Visitor Allocation signals
   readonly overrideYear = signal<number>(new Date().getFullYear());
   readonly overrideMonth = signal<number>(new Date().getMonth() + 1);
   readonly overrideMonthVisits = signal<number>(0);
@@ -85,7 +85,13 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly overrideDateVisits = signal<number>(0);
   readonly overrideDateUnique = signal<number | null>(null);
   readonly overrideDateNote = signal<string>('');
-  readonly overrideMode = signal<'month' | 'date'>('month');
+  readonly overrideMode = signal<'range' | 'month' | 'date'>('range');
+
+  // Custom Date Range Distribution signals
+  readonly rangeDistributeStartDate = signal<string>(new Date(Date.now() - 4 * 86400000).toISOString().substring(0, 10));
+  readonly rangeDistributeEndDate = signal<string>(new Date().toISOString().substring(0, 10));
+  readonly rangeDistributeVisits = signal<number>(100);
+  readonly rangeDistributeNote = signal<string>('');
   readonly monthDetailModalOpen = signal<boolean>(false);
   readonly selectedMonthData = signal<ShopTrafficMonthDto | null>(null);
   readonly trafficCustomStartDate = signal<string>('');
@@ -1290,9 +1296,9 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   openTrafficEditModal(shop: AdminShopTrafficItemDto): void {
     this.openTrafficDetailModal(shop);
-    this.overrideMode.set('month');
+    this.overrideMode.set('range');
     setTimeout(() => {
-      const el = document.getElementById('admin-traffic-override-card');
+      const el = document.getElementById('management-traffic-allocation-card');
       if (el) {
         el.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
@@ -1447,6 +1453,41 @@ export class ShopManagement implements OnInit, OnDestroy {
       error: (err) => {
         this.isSubmittingOverride.set(false);
         this.toast.show(err?.error?.error || 'Failed to update daily visitor count.', 'error');
+      }
+    });
+  }
+
+  submitRangeDistribution(): void {
+    const shop = this.selectedTrafficShop();
+    if (!shop) return;
+    const s = this.rangeDistributeStartDate();
+    const e = this.rangeDistributeEndDate();
+    const total = Number(this.rangeDistributeVisits()) || 0;
+    if (!s || !e) {
+      this.toast.show('Please select both start and end dates.', 'warning');
+      return;
+    }
+    if (total <= 0) {
+      this.toast.show('Please enter a valid total visit count to distribute.', 'warning');
+      return;
+    }
+
+    this.isSubmittingOverride.set(true);
+    this.adminService.distributeRangeTraffic(shop.shopId, {
+      startDate: s,
+      endDate: e,
+      totalVisits: total,
+      note: this.rangeDistributeNote() || undefined
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(res?.message || 'Traffic allocated and distributed successfully across dates!', 'success');
+        this.loadShopTrafficDetail(shop.shopId, this.trafficDetailRange());
+        this.loadAllShopsTraffic();
+      },
+      error: (err) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(err?.error?.error || 'Failed to distribute traffic.', 'error');
       }
     });
   }
