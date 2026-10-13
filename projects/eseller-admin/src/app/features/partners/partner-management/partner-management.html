@@ -117,7 +117,12 @@
                   {{ p.createdAt | date:'mediumDate' }}
                 </td>
                 <td class="py-3.5 px-4 text-right">
-                  @if (p.isActive !== false) {
+                  @if (isSelf(p)) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 text-slate-600 font-bold text-xs border border-slate-200">
+                      <span>👤</span>
+                      <span>You (Active)</span>
+                    </span>
+                  } @else if (p.isActive !== false) {
                     <button 
                       type="button" 
                       (click)="promptDeactivatePartner(p)"

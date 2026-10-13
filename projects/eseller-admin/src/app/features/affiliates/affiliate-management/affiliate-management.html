@@ -3,11 +3,11 @@
   <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
     <div>
       <h1 class="text-2xl font-black text-gray-900 tracking-tight">Affiliates & Store Referrals</h1>
-      <p class="text-xs text-gray-500 mt-1">Monitor merchant referral links, invitation conversions, and newly onboarded stores.</p>
+      <p class="text-xs text-gray-500 mt-1">Track store invitations, merchant referral networks, and onboarded partner shops.</p>
     </div>
     <div class="flex items-center gap-2">
       <div class="text-xs font-bold text-gray-700 bg-white border border-gray-200 px-3.5 py-2 rounded-xl shadow-2xs">
-        Active Affiliates: <span class="text-orange-600 font-extrabold">{{ affiliates().length }}</span>
+        Registered Stores: <span class="text-orange-600 font-extrabold">{{ affiliates().length }}</span>
       </div>
     </div>
   </div>
@@ -16,7 +16,7 @@
   <div class="bg-white border border-gray-100 rounded-2xl shadow-sm overflow-hidden">
     @if (isLoading()) {
       <div class="p-2">
-        <es-skeleton-layout variant="table" [count]="7" [columns]="6" />
+        <es-skeleton-layout variant="table" [count]="6" [columns]="3" />
       </div>
     } @else if (affiliates().length === 0) {
       <div class="p-12 text-center text-gray-400">
@@ -31,47 +31,62 @@
         <table class="w-full text-left text-sm">
           <thead>
             <tr class="border-b border-slate-800 text-[11px] font-extrabold uppercase tracking-wider text-white bg-slate-900">
-              <th class="py-3.5 px-4 font-extrabold">Affiliate Store</th>
-              <th class="py-3.5 px-4 font-extrabold">Referral Code</th>
-              <th class="py-3.5 px-4 font-extrabold text-center">Link Clicks</th>
-              <th class="py-3.5 px-4 font-extrabold text-center">Registered Stores</th>
-              <th class="py-3.5 px-4 font-extrabold text-center">Active Stores</th>
-              <th class="py-3.5 px-4 font-extrabold text-right">Actions</th>
+              <th class="py-3.5 px-6 font-extrabold">Shop Name</th>
+              <th class="py-3.5 px-6 font-extrabold text-center">Total Affiliates</th>
+              <th class="py-3.5 px-6 font-extrabold text-right">Action</th>
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-100">
             @for (a of affiliates(); track a.id) {
               <tr class="hover:bg-orange-50/20 transition-colors">
-                <td class="py-3.5 px-4">
-                  <div class="font-extrabold text-gray-900">{{ a.shopName || 'Storefront' }}</div>
-                  <div class="text-xs text-gray-500 font-medium">{{ a.shopOwner }} &bull; {{ a.shopEmail }}</div>
+                <!-- 1. Shop Name Column -->
+                <td class="py-4 px-6">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-orange-50 border border-orange-200 text-orange-700 font-black text-sm flex items-center justify-center shrink-0 shadow-2xs">
+                      🏪
+                    </div>
+                    <div>
+                      <div class="font-black text-gray-900 text-sm flex items-center gap-2">
+                        <span>{{ getShopName(a) }}</span>
+                        <span class="px-2 py-0.5 rounded-md bg-orange-50 border border-orange-200 text-orange-700 font-mono font-bold text-[11px]">
+                          {{ getReferralCode(a) }}
+                        </span>
+                      </div>
+                      <div class="text-xs text-gray-500 font-medium mt-0.5">
+                        {{ getOwnerInfo(a) }}
+                      </div>
+                    </div>
+                  </div>
                 </td>
-                <td class="py-3.5 px-4">
-                  <span class="px-2.5 py-1 rounded-lg bg-orange-50 border border-orange-200 text-orange-700 font-mono font-black text-xs">
-                    {{ a.code }}
-                  </span>
+
+                <!-- 2. Total Affiliates (Referred Stores Count) Column -->
+                <td class="py-4 px-6 text-center">
+                  <div class="inline-flex flex-col items-center">
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-black shadow-2xs"
+                          [class.bg-emerald-100]="getReferredCount(a) > 0"
+                          [class.text-emerald-800]="getReferredCount(a) > 0"
+                          [class.border]="getReferredCount(a) > 0"
+                          [class.border-emerald-200]="getReferredCount(a) > 0"
+                          [class.bg-slate-100]="getReferredCount(a) === 0"
+                          [class.text-slate-600]="getReferredCount(a) === 0">
+                      <span>{{ getReferredCount(a) }}</span>
+                      <span>{{ getReferredCount(a) === 1 ? 'Affiliate Store' : 'Affiliate Stores' }}</span>
+                    </span>
+                    @if (getActiveStoresCount(a) > 0) {
+                      <span class="text-[10px] text-emerald-600 font-bold mt-1">
+                        ({{ getActiveStoresCount(a) }} active with products)
+                      </span>
+                    }
+                  </div>
                 </td>
-                <td class="py-3.5 px-4 text-center font-bold text-gray-700 text-xs">
-                  {{ a.clicksCount || 0 }}
-                </td>
-                <td class="py-3.5 px-4 text-center font-extrabold text-emerald-600 text-xs">
-                  {{ a.conversionsCount || 0 }} stores
-                </td>
-                <td class="py-3.5 px-4 text-center text-xs">
-                  <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full font-bold text-[11px]"
-                        [class.bg-emerald-100]="(a.activeStoresCount || 0) > 0"
-                        [class.text-emerald-800]="(a.activeStoresCount || 0) > 0"
-                        [class.bg-gray-100]="(a.activeStoresCount || 0) === 0"
-                        [class.text-gray-600]="(a.activeStoresCount || 0) === 0">
-                    {{ a.activeStoresCount || 0 }} active
-                  </span>
-                </td>
-                <td class="py-3.5 px-4 text-right">
+
+                <!-- 3. Detail Button Column -->
+                <td class="py-4 px-6 text-right">
                   <button 
                     type="button" 
                     (click)="openDetails(a)"
-                    class="px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs cursor-pointer shadow-xs transition-colors inline-flex items-center gap-1.5">
-                    <span>View Referrals</span>
+                    class="px-4 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs cursor-pointer shadow-xs transition-all inline-flex items-center gap-1.5 active:scale-95">
+                    <span>Detail</span>
                     <span>↗</span>
                   </button>
                 </td>
@@ -97,10 +112,10 @@
           </div>
           <div>
             <h3 class="text-base font-black text-gray-900">
-              Affiliate Details: {{ selectedAffiliate()!.shopName }}
+              Affiliate Details: {{ getShopName(selectedAffiliate()!) }}
             </h3>
             <p class="text-xs text-gray-500 mt-0.5">
-              Owner: <strong class="text-gray-800">{{ selectedAffiliate()!.shopOwner }}</strong> &bull; {{ selectedAffiliate()!.shopEmail }}
+              Owner: <strong class="text-gray-800">{{ selectedAffiliate()!.shopOwner || selectedAffiliate()!.sellerName || 'Merchant' }}</strong> &bull; {{ selectedAffiliate()!.shopEmail || selectedAffiliate()!.email || 'No Email' }}
             </p>
           </div>
         </div>
@@ -120,25 +135,25 @@
           <div class="p-3.5 bg-orange-50/60 rounded-2xl border border-orange-100">
             <span class="block text-[10px] font-bold text-orange-600 uppercase tracking-wider">Referral Code</span>
             <span class="text-base font-mono font-black text-orange-700 mt-1 block">
-              {{ selectedAffiliate()!.code }}
+              {{ getReferralCode(selectedAffiliate()!) }}
             </span>
           </div>
           <div class="p-3.5 bg-gray-50 rounded-2xl border border-gray-100">
             <span class="block text-[10px] font-bold text-gray-500 uppercase tracking-wider">Link Clicks</span>
             <span class="text-base font-black text-gray-800 mt-1 block">
-              {{ selectedAffiliate()!.clicksCount }} clicks
+              {{ getClicksCount(selectedAffiliate()!) }} clicks
             </span>
           </div>
           <div class="p-3.5 bg-emerald-50/60 rounded-2xl border border-emerald-100">
             <span class="block text-[10px] font-bold text-emerald-600 uppercase tracking-wider">Referred Stores</span>
             <span class="text-base font-black text-emerald-700 mt-1 block">
-              {{ selectedAffiliate()!.conversionsCount }} joined
+              {{ getReferredCount(selectedAffiliate()!) }} joined
             </span>
           </div>
           <div class="p-3.5 bg-blue-50/60 rounded-2xl border border-blue-100">
             <span class="block text-[10px] font-bold text-blue-600 uppercase tracking-wider">Active Stores</span>
             <span class="text-base font-black text-blue-700 mt-1 block">
-              {{ selectedAffiliate()!.activeStoresCount }} with products
+              {{ getActiveStoresCount(selectedAffiliate()!) }} with products
             </span>
           </div>
         </div>
@@ -148,7 +163,7 @@
           <div class="flex items-center justify-between">
             <h4 class="text-xs font-black uppercase tracking-wider text-gray-700 flex items-center gap-1.5">
               <span>🏪</span>
-              <span>Referred Stores Onboarded ({{ affiliateDetails()?.referredShops?.length || 0 }})</span>
+              <span>Referred Stores Onboarded ({{ getReferredStoresList().length }})</span>
             </h4>
             <span class="text-[11px] text-gray-400">Stores registered through this merchant's invite link</span>
           </div>
@@ -157,10 +172,10 @@
             <div class="p-4 border border-gray-100 rounded-2xl">
               <es-skeleton-layout variant="table" [count]="3" [columns]="5" />
             </div>
-          } @else if (!affiliateDetails()?.referredShops?.length) {
+          } @else if (getReferredStoresList().length === 0) {
             <div class="p-8 text-center text-gray-400 bg-gray-50 rounded-2xl border border-dashed border-gray-200">
               <p class="text-xs font-bold text-gray-600">No stores have registered through this link yet</p>
-              <p class="text-[11px] mt-0.5">When other shopkeepers sign up with code {{ selectedAffiliate()!.code }}, their store profiles will be listed here.</p>
+              <p class="text-[11px] mt-0.5">When other shopkeepers sign up with code {{ getReferralCode(selectedAffiliate()!) }}, their store profiles will be listed here.</p>
             </div>
           } @else {
             <div class="border border-gray-200 rounded-2xl overflow-hidden shadow-2xs">
@@ -177,17 +192,19 @@
                     </tr>
                   </thead>
                   <tbody class="divide-y divide-gray-100 bg-white">
-                    @for (store of affiliateDetails()!.referredShops; track store.id) {
+                    @for (store of getReferredStoresList(); track store.id || store.shopId || store.shopName) {
                       <tr class="hover:bg-orange-50/20 transition-colors">
                         <td class="py-3 px-3">
                           <span class="font-extrabold text-gray-900 block text-xs">{{ store.shopName }}</span>
-                          <span class="text-[10px] text-gray-400 font-mono">{{ store.id }}</span>
+                          @if (store.shopSlug) {
+                            <span class="text-[10px] text-gray-400 font-mono">{{ store.shopSlug }}</span>
+                          }
                         </td>
                         <td class="py-3 px-3">
-                          <span class="font-bold text-gray-800 block">{{ store.ownerName }}</span>
-                          <span class="text-[10px] text-gray-500 block">{{ store.email }}</span>
-                          @if (store.phoneNumber) {
-                            <span class="text-[10px] text-gray-400 font-mono block">{{ store.phoneNumber }}</span>
+                          <span class="font-bold text-gray-800 block">{{ store.ownerName || store.sellerName || 'Merchant' }}</span>
+                          <span class="text-[10px] text-gray-500 block">{{ store.email || 'No email' }}</span>
+                          @if (store.phoneNumber || store.phone) {
+                            <span class="text-[10px] text-gray-400 font-mono block">{{ store.phoneNumber || store.phone }}</span>
                           }
                         </td>
                         <td class="py-3 px-3 text-center">
@@ -200,13 +217,13 @@
                           </span>
                         </td>
                         <td class="py-3 px-3 text-center font-bold text-gray-700">
-                          📦 {{ store.productsCount }} items
+                          📦 {{ store.productsCount ?? store.totalProducts ?? 0 }} items
                         </td>
                         <td class="py-3 px-3 text-center">
-                          @if (store.hasListedProducts) {
+                          @if (store.hasListedProducts || (store.productsCount ?? 0) > 0) {
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px]">
                               <span class="w-1.5 h-1.5 rounded-full bg-emerald-600"></span>
-                              Active ({{ store.productsCount }} items)
+                              Active
                             </span>
                           } @else {
                             <span class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 font-bold text-[10px]">

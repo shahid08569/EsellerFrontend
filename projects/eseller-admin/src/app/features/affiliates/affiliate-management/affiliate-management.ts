@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminAffiliateDto, AdminAffiliateDetailDto } from '../../../core/models/admin.models';
+import { AdminAffiliateDto, AdminAffiliateDetailDto, AdminReferredStoreDto } from '../../../core/models/admin.models';
 
 @Component({
   selector: 'app-affiliate-management',
@@ -38,6 +38,38 @@ export class AffiliateManagement implements OnInit {
         this.isLoading.set(false);
       }
     });
+  }
+
+  getShopName(a: AdminAffiliateDto): string {
+    return a.shopName || 'Storefront';
+  }
+
+  getReferralCode(a: AdminAffiliateDto): string {
+    return a.code || a.referralCode || 'N/A';
+  }
+
+  getOwnerInfo(a: AdminAffiliateDto): string {
+    const owner = a.shopOwner || a.sellerName || 'Merchant';
+    const email = a.shopEmail || a.email || '';
+    return email ? `${owner} • ${email}` : owner;
+  }
+
+  getReferredCount(a: AdminAffiliateDto): number {
+    return a.conversionsCount ?? a.totalConversions ?? 0;
+  }
+
+  getClicksCount(a: AdminAffiliateDto): number {
+    return a.clicksCount ?? a.totalClicks ?? 0;
+  }
+
+  getActiveStoresCount(a: AdminAffiliateDto): number {
+    return a.activeStoresCount ?? a.activeConversions ?? 0;
+  }
+
+  getReferredStoresList(): AdminReferredStoreDto[] {
+    const d = this.affiliateDetails();
+    if (!d) return [];
+    return d.referredStores || d.referredShops || [];
   }
 
   openDetails(affiliate: AdminAffiliateDto): void {

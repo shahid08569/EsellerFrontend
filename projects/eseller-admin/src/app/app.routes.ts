@@ -94,6 +94,14 @@ export const routes: Routes = [
         loadComponent: () => import('./features/settings/platform-settings/platform-settings').then(m => m.PlatformSettings)
       },
       {
+        path: 'manage-password',
+        loadComponent: () => import('./features/profile/manage-password/manage-password').then(m => m.ManagePassword)
+      },
+      {
+        path: 'profile',
+        loadComponent: () => import('./features/profile/manage-password/manage-password').then(m => m.ManagePassword)
+      },
+      {
         path: 'audit-logs',
         loadComponent: () => import('./features/audit-logs/audit-logs-view/audit-logs-view').then(m => m.AuditLogsView)
       }

@@ -9,6 +9,8 @@ import { NotificationBell } from '../../shared/components/notification-bell/noti
 import { AdminChatUnreadService } from '../../core/services/admin-chat-unread.service';
 import { environment } from '../../../environments/environment';
 
+import { HttpClient } from '@angular/common/http';
+
 @Component({
   selector: 'app-admin-layout',
   standalone: true,
@@ -16,6 +18,7 @@ import { environment } from '../../../environments/environment';
   templateUrl: './admin-layout.html'
 })
 export class AdminLayout implements OnInit {
+  private readonly http = inject(HttpClient);
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
   private readonly adminService = inject(AdminService);
@@ -25,6 +28,14 @@ export class AdminLayout implements OnInit {
   readonly customerUrl = environment.customerUrl;
   readonly sellerUrl = environment.sellerUrl;
   readonly customerPortalUrl = environment.customerPortalUrl;
+
+  readonly isSuperAdmin = computed(() => this.authStore.role() === 'SuperAdmin');
+  readonly isPartner = computed(() => this.authStore.role() === 'Partner');
+  readonly partnerPermissions = signal<string[]>([]);
+  readonly canAccessSettings = computed(() => {
+    if (this.isSuperAdmin()) return true;
+    return this.partnerPermissions().includes('settings');
+  });
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
@@ -79,6 +90,20 @@ export class AdminLayout implements OnInit {
     this.chatUnread.start();
     this.currentUrl.set(this.router.url || '');
     this.autoExpandActiveDropdown(this.router.url);
+
+    this.http.get<any>(`${environment.apiUrl}/api/v1/auth/me`).subscribe({
+      next: (res) => {
+        if (res?.permissions) {
+          try {
+            const parsed = typeof res.permissions === 'string' ? JSON.parse(res.permissions) : res.permissions;
+            this.partnerPermissions.set(Array.isArray(parsed) ? parsed : []);
+          } catch {
+            this.partnerPermissions.set(typeof res.permissions === 'string' ? res.permissions.split(',') : []);
+          }
+        }
+      },
+      error: () => {}
+    });
 
     this.router.events.pipe(
       filter(e => e instanceof NavigationEnd)

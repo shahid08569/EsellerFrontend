@@ -404,40 +404,47 @@ export interface AdminWithdrawalPaymentMethodDto {
 
 export interface AdminAffiliateDto {
   id: string;
-  code: string;
-  shopId: string;
+  code?: string;
+  referralCode?: string;
+  shopId?: string;
   shopName: string;
-  shopOwner: string;
-  shopEmail: string;
-  clicksCount: number;
-  conversionsCount: number;
-  activeStoresCount: number;
+  shopSlug?: string;
+  shopOwner?: string;
+  sellerName?: string;
+  shopEmail?: string;
+  email?: string;
+  phone?: string;
+  clicksCount?: number;
+  totalClicks?: number;
+  conversionsCount?: number;
+  totalConversions?: number;
+  activeStoresCount?: number;
+  activeConversions?: number;
+  totalEarned?: number;
+  isActive?: boolean;
   createdAt: string;
 }
 
 export interface AdminReferredStoreDto {
-  id: string;
+  id?: string;
+  shopId?: string;
   shopName: string;
-  ownerName: string;
-  email: string;
+  shopSlug?: string;
+  ownerName?: string;
+  sellerName?: string;
+  email?: string;
   phoneNumber?: string | null;
+  phone?: string | null;
+  status?: string;
   isApproved: boolean;
-  productsCount: number;
+  productsCount?: number;
+  totalProducts?: number;
   registeredAt: string;
   hasListedProducts: boolean;
 }
 
 export interface AdminAffiliateDetailDto {
-  affiliate: {
-    id: string;
-    code: string;
-    shopId: string;
-    shopName: string;
-    shopOwner: string;
-    shopEmail: string;
-    clicksCount: number;
-    conversionsCount: number;
-    createdAt: string;
-  };
-  referredShops: AdminReferredStoreDto[];
+  affiliate: AdminAffiliateDto;
+  referredShops?: AdminReferredStoreDto[];
+  referredStores?: AdminReferredStoreDto[];
 }

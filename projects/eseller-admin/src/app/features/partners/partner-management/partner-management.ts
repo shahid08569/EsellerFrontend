@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SkeletonLayout, AuthStore } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPartnerDto } from '../../../core/models/admin.models';
 
@@ -14,6 +14,7 @@ import { AdminPartnerDto } from '../../../core/models/admin.models';
 export class PartnerManagement implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
+  readonly authStore = inject(AuthStore);
 
   readonly isLoading = signal<boolean>(true);
   readonly partners = signal<AdminPartnerDto[]>([]);
@@ -85,7 +86,19 @@ export class PartnerManagement implements OnInit {
   readonly partnerToDeactivate = signal<AdminPartnerDto | null>(null);
   readonly isDeactivating = signal<boolean>(false);
 
+  isSelf(partner: AdminPartnerDto): boolean {
+    const cur = this.authStore.currentAccount();
+    if (!cur) return false;
+    if (partner.accountId && cur.accountId && partner.accountId.toLowerCase() === cur.accountId.toLowerCase()) return true;
+    if (partner.email && cur.email && partner.email.toLowerCase() === cur.email.toLowerCase()) return true;
+    return false;
+  }
+
   promptDeactivatePartner(partner: AdminPartnerDto): void {
+    if (this.isSelf(partner)) {
+      this.toast.show('You cannot deactivate your own account.', 'error');
+      return;
+    }
     this.partnerToDeactivate.set(partner);
     this.deactivateModalOpen.set(true);
   }
