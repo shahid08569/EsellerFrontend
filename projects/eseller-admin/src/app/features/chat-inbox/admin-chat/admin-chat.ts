@@ -56,6 +56,20 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly editingMessage = signal<AdminDisplayMessage | null>(null);
   readonly deleteModalMessage = signal<AdminDisplayMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
+  readonly menuOpenUpwards = signal<boolean>(false);
+  readonly isSelectionMode = signal<boolean>(false);
+  readonly selectedMessageIds = signal<string[]>([]);
+  readonly batchDeleteModalOpen = signal<boolean>(false);
+
+  readonly selectedCount = computed(() => this.selectedMessageIds().length);
+
+  readonly canDeleteSelectedForEveryone = computed(() => {
+    const selectedIds = new Set(this.selectedMessageIds());
+    if (selectedIds.size === 0) return false;
+    const allSelected = this.messages().filter(m => selectedIds.has(m.id));
+    if (allSelected.length === 0) return false;
+    return allSelected.every(m => m.isFromAdmin && !m.isDeletedForEveryone);
+  });
 
   readonly enrichedConversations = computed(() => {
     void this.chatUnread.byConversationId();
@@ -349,6 +363,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       }
     }
 
+    this.exitSelectionMode();
+    this.cancelEdit();
     this.activeConversation.set(convo);
     this.messages.set([]);
 
@@ -497,13 +513,98 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  toggleMessageMenu(msgId: string, event?: Event): void {
+  toggleMessageMenu(msgId: string, event?: MouseEvent | Event): void {
     event?.stopPropagation();
     if (this.activeMenuMessageId() === msgId) {
       this.activeMenuMessageId.set(null);
-    } else {
-      this.activeMenuMessageId.set(msgId);
+      return;
     }
+
+    if (event && (event as MouseEvent).currentTarget) {
+      const btn = (event as MouseEvent).currentTarget as HTMLElement;
+      const rect = btn.getBoundingClientRect();
+      const container = this.messagesContainer?.nativeElement;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const isNearBottom = (rect.bottom - containerRect.top) > (containerRect.height * 0.58);
+        this.menuOpenUpwards.set(isNearBottom);
+      } else {
+        const isNearBottom = rect.bottom > (window.innerHeight - 220);
+        this.menuOpenUpwards.set(isNearBottom);
+      }
+    } else {
+      this.menuOpenUpwards.set(false);
+    }
+
+    this.activeMenuMessageId.set(msgId);
+  }
+
+  startSelectionMode(initialMsgId?: string): void {
+    this.isSelectionMode.set(true);
+    this.activeMenuMessageId.set(null);
+    if (initialMsgId) {
+      this.selectedMessageIds.set([initialMsgId]);
+    } else {
+      this.selectedMessageIds.set([]);
+    }
+  }
+
+  exitSelectionMode(): void {
+    this.isSelectionMode.set(false);
+    this.selectedMessageIds.set([]);
+    this.batchDeleteModalOpen.set(false);
+  }
+
+  toggleSelectMessage(msgId: string): void {
+    if (!this.isSelectionMode()) return;
+    const current = this.selectedMessageIds();
+    if (current.includes(msgId)) {
+      const next = current.filter(id => id !== msgId);
+      this.selectedMessageIds.set(next);
+      if (next.length === 0) {
+        this.exitSelectionMode();
+      }
+    } else {
+      this.selectedMessageIds.set([...current, msgId]);
+    }
+  }
+
+  isMessageSelected(msgId: string): boolean {
+    return this.selectedMessageIds().includes(msgId);
+  }
+
+  openBatchDeleteModal(): void {
+    if (this.selectedMessageIds().length === 0) return;
+    this.batchDeleteModalOpen.set(true);
+  }
+
+  closeBatchDeleteModal(): void {
+    this.batchDeleteModalOpen.set(false);
+  }
+
+  confirmBatchDelete(forEveryone: boolean): void {
+    const ids = this.selectedMessageIds();
+    if (!ids || ids.length === 0) return;
+
+    this.adminService.batchDeleteChatMessages(ids, forEveryone).subscribe({
+      next: () => {
+        const idSet = new Set(ids);
+        if (forEveryone) {
+          this.messages.update(list => list.map(m =>
+            idSet.has(m.id)
+              ? { ...m, content: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m => !idSet.has(m.id)));
+        }
+        this.exitSelectionMode();
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || 'Failed to delete selected messages', 'error');
+        this.closeBatchDeleteModal();
+      }
+    });
   }
 
   @HostListener('document:click')

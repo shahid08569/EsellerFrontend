@@ -73,6 +73,20 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly editingMessage = signal<AdminToSellerMessage | null>(null);
   readonly deleteModalMessage = signal<AdminToSellerMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
+  readonly menuOpenUpwards = signal<boolean>(false);
+  readonly isSelectionMode = signal<boolean>(false);
+  readonly selectedMessageIds = signal<string[]>([]);
+  readonly batchDeleteModalOpen = signal<boolean>(false);
+
+  readonly selectedCount = computed(() => this.selectedMessageIds().length);
+  readonly canDeleteSelectedForEveryone = computed(() => {
+    const ids = this.selectedMessageIds();
+    if (ids.length === 0) return false;
+    const msgs = this.getCurrentMessages();
+    const idSet = new Set(ids);
+    const selected = msgs.filter(m => idSet.has(m.id));
+    return selected.length > 0 && selected.every(m => m.sender === 'admin' && !m.isDeletedForEveryone);
+  });
 
   readonly filteredShops = computed(() => {
     const list = this.shops();
@@ -368,6 +382,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
     }
 
+    this.cancelEdit();
+    this.exitSelectionMode();
     this.selectedShop.set(shop);
     this.currentView.set('chat');
     this.signalR.joinOrderRoom(shop.id).then(() => {
@@ -434,6 +450,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   backToDirectory(): void {
+    this.cancelEdit();
+    this.exitSelectionMode();
     this.currentView.set('directory');
     this.chatUnread.refresh();
     if (this.directoryTab() === 'customers') this.loadCustomerConvos();
@@ -631,13 +649,105 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  toggleMessageMenu(msgId: string, event?: Event): void {
+  toggleMessageMenu(msgId: string, event?: MouseEvent | Event): void {
     event?.stopPropagation();
     if (this.activeMenuMessageId() === msgId) {
       this.activeMenuMessageId.set(null);
-    } else {
-      this.activeMenuMessageId.set(msgId);
+      return;
     }
+
+    if (event && (event as MouseEvent).currentTarget) {
+      const btn = (event as MouseEvent).currentTarget as HTMLElement;
+      const rect = btn.getBoundingClientRect();
+      const container = this.messagesContainer?.nativeElement;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const isNearBottom = (rect.bottom - containerRect.top) > (containerRect.height * 0.58);
+        this.menuOpenUpwards.set(isNearBottom);
+      } else {
+        const isNearBottom = rect.bottom > (window.innerHeight - 220);
+        this.menuOpenUpwards.set(isNearBottom);
+      }
+    } else {
+      this.menuOpenUpwards.set(false);
+    }
+
+    this.activeMenuMessageId.set(msgId);
+  }
+
+  startSelectionMode(initialMsgId?: string): void {
+    this.isSelectionMode.set(true);
+    this.activeMenuMessageId.set(null);
+    if (initialMsgId) {
+      this.selectedMessageIds.set([initialMsgId]);
+    } else {
+      this.selectedMessageIds.set([]);
+    }
+  }
+
+  exitSelectionMode(): void {
+    this.isSelectionMode.set(false);
+    this.selectedMessageIds.set([]);
+    this.batchDeleteModalOpen.set(false);
+  }
+
+  toggleSelectMessage(msgId: string): void {
+    if (!this.isSelectionMode()) return;
+    const current = this.selectedMessageIds();
+    if (current.includes(msgId)) {
+      const next = current.filter(id => id !== msgId);
+      this.selectedMessageIds.set(next);
+      if (next.length === 0) {
+        this.exitSelectionMode();
+      }
+    } else {
+      this.selectedMessageIds.set([...current, msgId]);
+    }
+  }
+
+  isMessageSelected(msgId: string): boolean {
+    return this.selectedMessageIds().includes(msgId);
+  }
+
+  openBatchDeleteModal(): void {
+    if (this.selectedMessageIds().length === 0) return;
+    this.batchDeleteModalOpen.set(true);
+  }
+
+  closeBatchDeleteModal(): void {
+    this.batchDeleteModalOpen.set(false);
+  }
+
+  confirmBatchDelete(forEveryone: boolean): void {
+    const ids = this.selectedMessageIds();
+    const shop = this.selectedShop();
+    if (!ids || ids.length === 0 || !shop) return;
+
+    this.adminService.batchDeleteChatMessages(ids, forEveryone).subscribe({
+      next: () => {
+        const idSet = new Set(ids);
+        if (forEveryone) {
+          this.messagesMap.update(map => ({
+            ...map,
+            [shop.id]: (map[shop.id] || []).map(m =>
+              idSet.has(m.id)
+                ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
+                : m
+            )
+          }));
+        } else {
+          this.messagesMap.update(map => ({
+            ...map,
+            [shop.id]: (map[shop.id] || []).filter(m => !idSet.has(m.id))
+          }));
+        }
+        this.exitSelectionMode();
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || 'Failed to delete selected messages', 'error');
+        this.closeBatchDeleteModal();
+      }
+    });
   }
 
   @HostListener('document:click')

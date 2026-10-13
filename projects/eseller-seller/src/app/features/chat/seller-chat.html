@@ -94,10 +94,35 @@
           </span>
         </div>
 
+        @if (isSelectionMode()) {
+          <div class="bg-primary text-white px-4 py-2 flex items-center justify-between text-xs font-bold shrink-0">
+            <div class="flex items-center gap-2">
+              <button type="button" (click)="exitSelectionMode()" class="p-1 hover:bg-white/20 rounded-lg cursor-pointer">
+                ✕
+              </button>
+              <span>{{ selectedCount() }} selected</span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button
+                type="button"
+                [disabled]="selectedCount() === 0"
+                (click)="openBatchDeleteModal()"
+                class="px-3 py-1 rounded-lg bg-white/20 hover:bg-white/30 text-white font-bold transition-colors disabled:opacity-40 cursor-pointer">
+                Delete
+              </button>
+            </div>
+          </div>
+        }
+
         <div #messagesContainer class="flex-1 overflow-y-auto p-4 bg-gray-50/30 scrollbar-thin flex flex-col">
           <div class="space-y-3 mt-auto">
             @for (msg of messages(); track msg.id || (msg.createdAt + msg.message)) {
-              <div class="group relative flex flex-col" [class.items-end]="msg.isMe" [class.items-start]="!msg.isMe">
+              <div
+                class="group relative flex flex-col"
+                [class.items-end]="msg.isMe"
+                [class.items-start]="!msg.isMe"
+                (click)="isSelectionMode() && msg.id ? toggleSelectMessage(msg.id) : null"
+                [class.cursor-pointer]="isSelectionMode()">
                 <div class="flex items-center gap-1 text-[10px] text-gray-400 px-1 mb-0.5">
                   <span>{{ msg.isMe ? 'You (Shop)' : 'Customer Service' }} • {{ msg.createdAt | date:'shortTime' }}</span>
                   @if (msg.isEdited && !msg.isDeletedForEveryone) {
@@ -105,7 +130,17 @@
                   }
                 </div>
                 
-                <div class="relative flex items-center gap-1" [class.flex-row-reverse]="msg.isMe">
+                <div class="relative flex items-center gap-1.5" [class.flex-row-reverse]="msg.isMe">
+                  @if (isSelectionMode() && msg.id) {
+                    <div class="shrink-0 self-center">
+                      <input
+                        type="checkbox"
+                        [checked]="isMessageSelected(msg.id)"
+                        (change)="toggleSelectMessage(msg.id)"
+                        (click)="$event.stopPropagation()"
+                        class="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary cursor-pointer" />
+                    </div>
+                  }
                   <div
                     class="max-w-[75vw] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed space-y-1.5"
                     [class.bg-primary]="msg.isMe"
@@ -155,7 +190,7 @@
                     }
                   </div>
 
-                  @if (!msg.isDeletedForEveryone) {
+                  @if (!msg.isDeletedForEveryone && !isSelectionMode()) {
                     <div class="relative">
                       <button
                         type="button"
@@ -172,21 +207,32 @@
                           class="absolute z-30 w-32 bg-white rounded-xl shadow-lg border border-gray-100 py-1 text-xs text-gray-700"
                           [class.right-0]="msg.isMe"
                           [class.left-0]="!msg.isMe"
+                          [class.bottom-full]="menuOpenUpwards()"
+                          [class.mb-1]="menuOpenUpwards()"
+                          [class.top-5]="!menuOpenUpwards()"
                           (click)="$event.stopPropagation()">
                           @if (msg.isMe) {
                             <button
                               type="button"
                               (click)="startEditMessage(msg)"
                               class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-gray-50 hover:text-primary cursor-pointer">
-                              <span>✏️</span> Edit
+                              Edit
                             </button>
                           }
                           <button
                             type="button"
                             (click)="openDeleteModal(msg)"
                             class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-rose-50 text-rose-600 cursor-pointer">
-                            <span>🗑️</span> Delete
+                            Delete
                           </button>
+                          @if (msg.id) {
+                            <button
+                              type="button"
+                              (click)="startSelectionMode(msg.id)"
+                              class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-gray-50 text-gray-700 cursor-pointer">
+                              Select
+                            </button>
+                          }
                         </div>
                       }
                     </div>
@@ -207,7 +253,7 @@
           @if (editingMessage(); as editMsg) {
             <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
               <div class="flex items-center gap-2 min-w-0">
-                <span class="font-bold text-amber-800 shrink-0">✏️ Editing:</span>
+                <span class="font-bold text-amber-800 shrink-0">Editing:</span>
                 <span class="truncate text-gray-700 italic">"{{ editMsg.message }}"</span>
               </div>
               <button type="button" (click)="cancelEdit()" class="text-amber-800 hover:text-amber-950 font-bold cursor-pointer text-xs shrink-0">✕ Cancel</button>
@@ -257,12 +303,14 @@
                 <p class="text-xs text-gray-500">Choose how you want to delete this message.</p>
               </div>
               <div class="flex flex-col gap-2 pt-1">
-                <button
-                  type="button"
-                  (click)="confirmDelete(true)"
-                  class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs">
-                  Delete for everyone
-                </button>
+                @if (delMsg.isMe) {
+                  <button
+                    type="button"
+                    (click)="confirmDelete(true)"
+                    class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs">
+                    Delete for everyone
+                  </button>
+                }
                 <button
                   type="button"
                   (click)="confirmDelete(false)"
@@ -272,6 +320,50 @@
                 <button
                   type="button"
                   (click)="closeDeleteModal()"
+                  class="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 font-bold text-xs transition-colors cursor-pointer">
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+
+        @if (batchDeleteModalOpen()) {
+          <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4" (click)="closeBatchDeleteModal()">
+            <div class="bg-white rounded-2xl shadow-xl max-w-xs w-full p-5 space-y-4" (click)="$event.stopPropagation()">
+              <div class="text-center space-y-1">
+                <div class="w-10 h-10 mx-auto rounded-full bg-rose-50 text-rose-600 flex items-center justify-center">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </div>
+                <h3 class="text-sm font-bold text-gray-900">Delete {{ selectedCount() }} messages?</h3>
+                <p class="text-xs text-gray-500">
+                  @if (canDeleteSelectedForEveryone()) {
+                    All selected messages were sent by you. Choose how you want to delete them.
+                  } @else {
+                    Some selected messages were sent by other participants and can only be deleted for you.
+                  }
+                </p>
+              </div>
+              <div class="flex flex-col gap-2 pt-1">
+                @if (canDeleteSelectedForEveryone()) {
+                  <button
+                    type="button"
+                    (click)="confirmBatchDelete(true)"
+                    class="w-full py-2.5 px-4 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs transition-colors cursor-pointer shadow-xs">
+                    Delete for everyone
+                  </button>
+                }
+                <button
+                  type="button"
+                  (click)="confirmBatchDelete(false)"
+                  class="w-full py-2.5 px-4 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-700 font-bold text-xs transition-colors cursor-pointer">
+                  Delete for me
+                </button>
+                <button
+                  type="button"
+                  (click)="closeBatchDeleteModal()"
                   class="w-full py-2 px-4 rounded-xl text-gray-500 hover:text-gray-800 font-bold text-xs transition-colors cursor-pointer">
                   Cancel
                 </button>

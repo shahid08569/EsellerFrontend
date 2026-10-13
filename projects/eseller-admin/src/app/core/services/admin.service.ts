@@ -796,6 +796,10 @@ export class AdminService {
     return this.api.delete<any>(`/Chat/messages/${messageId}?forEveryone=${forEveryone}`);
   }
 
+  batchDeleteChatMessages(messageIds: string[], forEveryone: boolean = false): Observable<any> {
+    return this.api.post<any>('/Chat/messages/batch-delete', { messageIds, forEveryone });
+  }
+
   sendMessage(
     conversationId: string,
     message: string,

@@ -115,6 +115,20 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
   readonly editingMessage = signal<ChatMessage | null>(null);
   readonly deleteModalMessage = signal<ChatMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
+  readonly menuOpenUpwards = signal<boolean>(false);
+  readonly isSelectionMode = signal<boolean>(false);
+  readonly selectedMessageIds = signal<string[]>([]);
+  readonly batchDeleteModalOpen = signal<boolean>(false);
+
+  readonly selectedCount = computed(() => this.selectedMessageIds().length);
+  readonly canDeleteSelectedForEveryone = computed(() => {
+    const ids = this.selectedMessageIds();
+    if (ids.length === 0) return false;
+    const msgs = this.messages();
+    const idSet = new Set(ids);
+    const selected = msgs.filter(m => idSet.has(m.id));
+    return selected.length > 0 && selected.every(m => m.sender === 'customer' && !m.isDeletedForEveryone);
+  });
 
   readonly selectedThread = computed(() => {
     const id = this.selectedThreadId();
@@ -370,6 +384,8 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
       this.signalRService.leaveOrderRoom(prev).catch(() => {});
     }
 
+    this.cancelEdit();
+    this.exitSelectionMode();
     this.selectedThreadId.set(orderRequestId);
     this.mobileShowChat.set(true);
     this.messages.set([]);
@@ -489,6 +505,8 @@ Please verify payment / dispatch. Thank you.`
   }
 
   backToInbox(): void {
+    this.cancelEdit();
+    this.exitSelectionMode();
     this.mobileShowChat.set(false);
   }
 
@@ -567,13 +585,98 @@ Please verify payment / dispatch. Thank you.`
     });
   }
 
-  toggleMessageMenu(msgId: string, event?: Event): void {
+  toggleMessageMenu(msgId: string, event?: MouseEvent | Event): void {
     event?.stopPropagation();
     if (this.activeMenuMessageId() === msgId) {
       this.activeMenuMessageId.set(null);
-    } else {
-      this.activeMenuMessageId.set(msgId);
+      return;
     }
+
+    if (event && (event as MouseEvent).currentTarget) {
+      const btn = (event as MouseEvent).currentTarget as HTMLElement;
+      const rect = btn.getBoundingClientRect();
+      const container = this.chatFeedContainer?.nativeElement;
+      if (container) {
+        const containerRect = container.getBoundingClientRect();
+        const isNearBottom = (rect.bottom - containerRect.top) > (containerRect.height * 0.58);
+        this.menuOpenUpwards.set(isNearBottom);
+      } else {
+        const isNearBottom = rect.bottom > (window.innerHeight - 220);
+        this.menuOpenUpwards.set(isNearBottom);
+      }
+    } else {
+      this.menuOpenUpwards.set(false);
+    }
+
+    this.activeMenuMessageId.set(msgId);
+  }
+
+  startSelectionMode(initialMsgId?: string): void {
+    this.isSelectionMode.set(true);
+    this.activeMenuMessageId.set(null);
+    if (initialMsgId) {
+      this.selectedMessageIds.set([initialMsgId]);
+    } else {
+      this.selectedMessageIds.set([]);
+    }
+  }
+
+  exitSelectionMode(): void {
+    this.isSelectionMode.set(false);
+    this.selectedMessageIds.set([]);
+    this.batchDeleteModalOpen.set(false);
+  }
+
+  toggleSelectMessage(msgId: string): void {
+    if (!this.isSelectionMode()) return;
+    const current = this.selectedMessageIds();
+    if (current.includes(msgId)) {
+      const next = current.filter(id => id !== msgId);
+      this.selectedMessageIds.set(next);
+      if (next.length === 0) {
+        this.exitSelectionMode();
+      }
+    } else {
+      this.selectedMessageIds.set([...current, msgId]);
+    }
+  }
+
+  isMessageSelected(msgId: string): boolean {
+    return this.selectedMessageIds().includes(msgId);
+  }
+
+  openBatchDeleteModal(): void {
+    if (this.selectedMessageIds().length === 0) return;
+    this.batchDeleteModalOpen.set(true);
+  }
+
+  closeBatchDeleteModal(): void {
+    this.batchDeleteModalOpen.set(false);
+  }
+
+  confirmBatchDelete(forEveryone: boolean): void {
+    const ids = this.selectedMessageIds();
+    if (!ids || ids.length === 0) return;
+
+    this.chatService.batchDeleteMessages(ids, forEveryone).subscribe({
+      next: () => {
+        const idSet = new Set(ids);
+        if (forEveryone) {
+          this.messages.update(list => list.map(m =>
+            idSet.has(m.id)
+              ? { ...m, text: 'This message was deleted', isDeletedForEveryone: true }
+              : m
+          ));
+        } else {
+          this.messages.update(list => list.filter(m => !idSet.has(m.id)));
+        }
+        this.exitSelectionMode();
+      },
+      error: () => {
+        this.showFeedback('Failed to delete selected messages.', true);
+        this.closeBatchDeleteModal();
+      }
+    });
   }
 
   @HostListener('document:click')
