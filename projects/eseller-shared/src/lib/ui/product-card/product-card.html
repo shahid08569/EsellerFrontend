@@ -157,10 +157,10 @@
 
     <button
       type="button"
-      (click)="onAddToCart($event)"
-      class="mt-auto w-full py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm"
+      (click)="onBuyNow($event)"
+      class="mt-auto w-full py-2.5 rounded-full bg-rose-600 hover:bg-rose-700 text-white text-sm font-semibold transition-colors cursor-pointer shadow-sm flex items-center justify-center gap-1.5"
     >
-      {{ isInCart() ? 'In Cart' : 'Buy Now' }}
+      <span>Buy Now</span>
     </button>
   </div>
 </div>

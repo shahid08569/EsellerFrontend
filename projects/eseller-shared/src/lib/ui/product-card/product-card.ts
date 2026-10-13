@@ -286,6 +286,19 @@ export class ProductCard implements OnInit, OnDestroy {
     });
   }
 
+  onBuyNow(event: Event): void {
+    event.preventDefault();
+    event.stopPropagation();
+    const p = this.product();
+    this.router.navigate(['/products', p.slug], {
+      queryParams: { buyNow: '1' },
+      state: {
+        primaryImageUrl: p.primaryImageUrl ?? null,
+        productName: p.name
+      }
+    });
+  }
+
   onAddToCart(event: Event): void {
     event.preventDefault();
     event.stopPropagation();

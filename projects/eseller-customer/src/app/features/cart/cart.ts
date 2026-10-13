@@ -334,6 +334,14 @@ export class Cart implements OnInit {
     const dialCode = this.selectedDialCode();
     const fullPhone = `${dialCode} ${rawPhone}`.trim();
 
+    const validGuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const itemsPayload = items
+      .filter((i) => (i.variantId && validGuidRegex.test(i.variantId)) || (i.productId && validGuidRegex.test(i.productId)))
+      .map((i) => ({
+        productVariantId: (i.variantId && validGuidRegex.test(i.variantId) ? i.variantId : i.productId)!,
+        quantity: i.quantity
+      }));
+
     const orderPayload: CreateOrderRequest = {
       customerName: this.customerName().trim(),
       customerPhone: fullPhone,
@@ -342,7 +350,8 @@ export class Cart implements OnInit {
       state: this.selectedState()?.trim() || '',
       country: this.selectedCountry()?.trim() || '',
       orderNotes: this.orderNotes().trim(),
-      referralCode: null
+      referralCode: null,
+      items: itemsPayload
     };
 
     const saveAndRedirect = (finalOrderRef: string, isApiCreated: boolean = false) => {

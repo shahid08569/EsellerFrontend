@@ -448,6 +448,12 @@ export class ProductDetail implements OnInit, OnDestroy {
         this.loading.set(false);
         // Secondary content after first paint — keeps page feeling instant
         this.loadDeferredResources(product);
+
+        if (this.route.snapshot.queryParamMap.get('buyNow') === '1') {
+          setTimeout(() => {
+            this.openOrderModal();
+          }, 150);
+        }
       });
   }
 
@@ -741,10 +747,21 @@ export class ProductDetail implements OnInit, OnDestroy {
     };
 
     const validGuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-    if (this.authStore.isAuthenticated() && selVar?.id && validGuidRegex.test(selVar.id)) {
+    const targetVariantId = (selVar?.id && validGuidRegex.test(selVar.id))
+      ? selVar.id
+      : (this.variants().find((v) => v.isActive && validGuidRegex.test(v.id))?.id || (validGuidRegex.test(prod.id) ? prod.id : null));
+
+    if (this.authStore.isAuthenticated() && targetVariantId) {
       this.orderService.buyNow({
-        productVariantId: selVar.id,
-        quantity: this.quantity()
+        productVariantId: targetVariantId,
+        quantity: this.quantity(),
+        customerName: this.customerName().trim(),
+        customerPhone: fullPhone,
+        shippingAddress: this.deliveryAddress().trim(),
+        city: this.deliveryCity().trim(),
+        state: this.selectedState()?.trim() || '',
+        country: this.selectedCountry()?.trim() || '',
+        orderNotes: this.orderNotes().trim() || null
       }).subscribe({
         next: (res) => {
           // Pass the real OrderRequest GUID so chat joins the seller order room
@@ -762,7 +779,7 @@ export class ProductDetail implements OnInit, OnDestroy {
       });
     } else {
       this.isSubmittingOrder.set(false);
-      this.toastService.show('Please sign in and select a valid product variant to place an order.', 'error');
+      this.toastService.show('Please sign in to place your order.', 'error');
     }
   }
 

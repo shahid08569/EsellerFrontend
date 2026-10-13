@@ -60,6 +60,11 @@ export interface OrderTrackingDto {
   timeline: OrderStatusHistoryDto[];
 }
 
+export interface CreateOrderItemInput {
+  productVariantId: string;
+  quantity: number;
+}
+
 export interface CreateOrderRequest {
   referralCode?: string | null;
   customerName?: string | null;
@@ -69,12 +74,20 @@ export interface CreateOrderRequest {
   state?: string | null;
   country?: string | null;
   orderNotes?: string | null;
+  items?: CreateOrderItemInput[];
 }
 
 export interface BuyNowRequest {
   productVariantId: string;
   quantity: number;
   referralCode?: string | null;
+  customerName?: string | null;
+  customerPhone?: string | null;
+  shippingAddress?: string | null;
+  city?: string | null;
+  state?: string | null;
+  country?: string | null;
+  orderNotes?: string | null;
 }
 
 export interface PagedOrdersResult<T> {
