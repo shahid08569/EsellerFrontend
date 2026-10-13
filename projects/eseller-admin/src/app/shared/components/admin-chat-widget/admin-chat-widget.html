@@ -308,12 +308,12 @@
                     }
                     <span>{{ msg.timestamp }}</span>
                     @if (msg.sender === 'admin') {
-                      @if (msg.isTemp) {
-                        <span class="opacity-70 font-semibold text-[10px]" title="Sent">✓</span>
-                      } @else if (!msg.isRead) {
-                        <span class="opacity-80 font-bold text-[10px] tracking-tighter" title="Delivered">✓✓</span>
+                      @if (msg.isRead) {
+                        <span class="font-black text-[10px] tracking-tighter drop-shadow-xs" style="color: #38bdf8 !important;" title="Read by merchant">✓✓</span>
+                      } @else if (msg.isDelivered) {
+                        <span class="opacity-80 font-bold text-[10px] tracking-tighter text-slate-200" title="Delivered">✓✓</span>
                       } @else {
-                        <span class="font-black text-amber-300 text-[10px] tracking-tighter drop-shadow-xs" style="color: #fcd34d !important;" title="Read by merchant">✓✓</span>
+                        <span class="opacity-70 font-semibold text-[10px] text-slate-300" title="Sent">✓</span>
                       }
                     }
                   </div>

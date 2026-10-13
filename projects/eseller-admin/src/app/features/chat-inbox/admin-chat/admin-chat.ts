@@ -18,6 +18,8 @@ export interface AdminDisplayMessage {
   isEdited?: boolean;
   editedAt?: string | Date | null;
   isDeletedForEveryone?: boolean;
+  isDelivered?: boolean;
+  deliveredAt?: string | Date | null;
   isRead?: boolean;
   readAt?: string | Date | null;
 }
@@ -126,6 +128,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   private unsubscribeSignalR?: () => void;
   private unsubscribeEdited?: () => void;
   private unsubscribeDeleted?: () => void;
+  private unsubscribeMessageDelivered?: () => void;
   private unsubscribeMessageRead?: () => void;
 
   ngOnInit(): void {
@@ -144,6 +147,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     this.unsubscribeSignalR?.();
     this.unsubscribeEdited?.();
     this.unsubscribeDeleted?.();
+    this.unsubscribeMessageDelivered?.();
     this.unsubscribeMessageRead?.();
   }
 
@@ -202,10 +206,17 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             ));
           }
         });
-        this.unsubscribeMessageRead = this.signalRService.onMessageRead((messageId) => {
+        this.unsubscribeMessageDelivered = this.signalRService.onMessageDelivered((messageId, deliveredAt) => {
           this.messages.update(list => list.map(m =>
             String(m.id).toLowerCase() === String(messageId).toLowerCase()
-              ? { ...m, isRead: true }
+              ? { ...m, isDelivered: true, deliveredAt }
+              : m
+          ));
+        });
+        this.unsubscribeMessageRead = this.signalRService.onMessageRead((messageId, readAt) => {
+          this.messages.update(list => list.map(m =>
+            String(m.id).toLowerCase() === String(messageId).toLowerCase()
+              ? { ...m, isRead: true, isDelivered: true, readAt }
               : m
           ));
         });
@@ -416,7 +427,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               editedAt: m.editedAt || m.EditedAt || null,
               isDeletedForEveryone: isDel,
               isRead: !!(m.isRead ?? m.IsRead),
-              readAt: m.readAt || m.ReadAt || null
+              readAt: m.readAt || m.ReadAt || null,
+              isDelivered: !!(m.deliveredAt || m.DeliveredAt || m.isRead || m.IsRead),
+              deliveredAt: m.deliveredAt || m.DeliveredAt || null
             };
           }));
           this.queueScrollToLatest();
@@ -650,7 +663,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       isFromAdmin: true,
       attachmentUrl: attachment?.url || null,
       attachmentFileName: attachment?.fileName || null,
-      attachmentContentType: attachment?.contentType || null
+      attachmentContentType: attachment?.contentType || null,
+      isDelivered: false,
+      isRead: false
     }]);
     this.newMessage.set('');
     this.pendingAttachment.set(null);
@@ -665,6 +680,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       next: (msg) => {
         this.sendingMessage.set(false);
         const realId = msg?.messageId ? String(msg.messageId) : tempId;
+        const isDelivered = !!(msg?.isDelivered);
+        const deliveredAt = msg?.deliveredAt || null;
         this.messages.update(prev => {
           const withoutDupes = prev.filter(m =>
             m.id !== tempId && String(m.id).toLowerCase() !== realId.toLowerCase()
@@ -677,7 +694,10 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             isFromAdmin: true,
             attachmentUrl: attachment?.url || null,
             attachmentFileName: attachment?.fileName || null,
-            attachmentContentType: attachment?.contentType || null
+            attachmentContentType: attachment?.contentType || null,
+            isDelivered: isDelivered,
+            deliveredAt: deliveredAt,
+            isRead: false
           }];
         });
 

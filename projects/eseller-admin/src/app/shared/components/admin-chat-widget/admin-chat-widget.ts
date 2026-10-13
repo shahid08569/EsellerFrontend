@@ -32,6 +32,8 @@ export interface AdminToSellerMessage {
   editedAt?: string | Date | null;
   isDeletedForEveryone?: boolean;
   isTemp?: boolean;
+  isDelivered?: boolean;
+  deliveredAt?: string | Date | null;
   isRead?: boolean;
   readAt?: string | Date | null;
 }
@@ -56,6 +58,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private unsubscribeSignalR?: () => void;
   private unsubscribeEdited?: () => void;
   private unsubscribeDeleted?: () => void;
+  private unsubscribeMessageDelivered?: () => void;
   private unsubscribeMessageRead?: () => void;
 
   readonly isOpen = signal<boolean>(false);
@@ -253,13 +256,27 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         });
       });
 
+      this.unsubscribeMessageDelivered = this.signalR.onMessageDelivered((messageId, deliveredAt) => {
+        this.messagesMap.update(map => {
+          const next: Record<string, AdminToSellerMessage[]> = {};
+          for (const [k, v] of Object.entries(map)) {
+            next[k] = v.map(m =>
+              m.id && m.id.toLowerCase() === messageId.toLowerCase()
+                ? { ...m, isDelivered: true, deliveredAt: deliveredAt || new Date().toISOString() }
+                : m
+            );
+          }
+          return next;
+        });
+      });
+
       this.unsubscribeMessageRead = this.signalR.onMessageRead((messageId, readAt) => {
         this.messagesMap.update(map => {
           const next: Record<string, AdminToSellerMessage[]> = {};
           for (const [k, v] of Object.entries(map)) {
             next[k] = v.map(m =>
               m.id && m.id.toLowerCase() === messageId.toLowerCase()
-                ? { ...m, isRead: true, readAt: readAt || new Date().toISOString() }
+                ? { ...m, isRead: true, isDelivered: true, readAt: readAt || new Date().toISOString() }
                 : m
             );
           }
@@ -281,6 +298,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.unsubscribeSignalR?.();
     this.unsubscribeEdited?.();
     this.unsubscribeDeleted?.();
+    this.unsubscribeMessageDelivered?.();
     this.unsubscribeMessageRead?.();
     if (this.joinedRoomId) {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
@@ -543,6 +561,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             isDeletedForEveryone: isDel,
             isRead: !!(m.isRead ?? m.IsRead),
             readAt: m.readAt || m.ReadAt || null,
+            isDelivered: !!(m.deliveredAt || m.DeliveredAt || m.isRead || m.IsRead),
+            deliveredAt: m.deliveredAt || m.DeliveredAt || null,
             isTemp: false
           };
         });
@@ -808,6 +828,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           attachmentFileName: attachment?.fileName || null,
           attachmentContentType: attachment?.contentType || null,
           isTemp: true,
+          isDelivered: false,
           isRead: false
         }
       ]
@@ -836,6 +857,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       next: (res) => {
         this.isSending.set(false);
         const realId = res?.messageId ? String(res.messageId) : tempId;
+        const isDelivered = !!(res?.isDelivered);
+        const deliveredAt = res?.deliveredAt || null;
         this.messagesMap.update(map => {
           const list = (map[shop.id] || []).filter(m =>
             m.id !== tempId && String(m.id).toLowerCase() !== realId.toLowerCase()
@@ -854,6 +877,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
                 attachmentFileName: attachment?.fileName || null,
                 attachmentContentType: attachment?.contentType || null,
                 isTemp: false,
+                isDelivered: isDelivered,
+                deliveredAt: deliveredAt,
                 isRead: false
               }
             ]

@@ -36,6 +36,9 @@ export class SignalRService {
   private messageReadHandlers = new Set<(messageId: string, readAt: string) => void>();
   private messageReadHubBound = false;
 
+  private messageDeliveredHandlers = new Set<(messageId: string, deliveredAt: string) => void>();
+  private messageDeliveredHubBound = false;
+
   private messageEditedHandlers = new Set<(payload: SignalRMessageEdited) => void>();
   private messageEditedHubBound = false;
 
@@ -93,6 +96,7 @@ export class SignalRService {
       this.chatState.set(HubConnectionState.Disconnected);
       this.receiveMessageHubBound = false;
       this.messageReadHubBound = false;
+      this.messageDeliveredHubBound = false;
       this.messageEditedHubBound = false;
       this.messageDeletedHubBound = false;
     });
@@ -103,6 +107,7 @@ export class SignalRService {
       this.chatState.set(HubConnectionState.Connected);
       this.receiveMessageHubBound = false;
       this.messageReadHubBound = false;
+      this.messageDeliveredHubBound = false;
       this.messageEditedHubBound = false;
       this.messageDeletedHubBound = false;
       this.ensureAllChatHubHandlers();
@@ -172,6 +177,14 @@ export class SignalRService {
     };
   }
 
+  onMessageDelivered(callback: (messageId: string, deliveredAt: string) => void): () => void {
+    this.messageDeliveredHandlers.add(callback);
+    this.ensureMessageDeliveredHubHandler();
+    return () => {
+      this.messageDeliveredHandlers.delete(callback);
+    };
+  }
+
   onMessageRead(callback: (messageId: string, readAt: string) => void): () => void {
     this.messageReadHandlers.add(callback);
     this.ensureMessageReadHubHandler();
@@ -198,9 +211,27 @@ export class SignalRService {
 
   private ensureAllChatHubHandlers(): void {
     this.ensureReceiveMessageHubHandler();
+    this.ensureMessageDeliveredHubHandler();
     this.ensureMessageReadHubHandler();
     this.ensureMessageEditedHubHandler();
     this.ensureMessageDeletedHubHandler();
+  }
+
+  private ensureMessageDeliveredHubHandler(): void {
+    if (!this.chatConnection || this.messageDeliveredHubBound) return;
+
+    this.chatConnection.on('MessageDelivered', (messageId: string, deliveredAt: string) => {
+      const id = String(messageId || '').toLowerCase();
+      const at = typeof deliveredAt === 'string' ? deliveredAt : new Date(deliveredAt as any).toISOString();
+      for (const handler of this.messageDeliveredHandlers) {
+        try {
+          handler(id, at);
+        } catch {
+          /* isolate subscriber errors */
+        }
+      }
+    });
+    this.messageDeliveredHubBound = true;
   }
 
   private ensureMessageReadHubHandler(): void {

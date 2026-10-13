@@ -244,7 +244,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         });
         this.queueScrollToLatest();
 
-        if (!isMe) {
+        if (!isMe && (typeof document === 'undefined' || !document.hidden)) {
           this.chatService.markConversationAsRead(roomId).subscribe({ error: () => {} });
         }
 
