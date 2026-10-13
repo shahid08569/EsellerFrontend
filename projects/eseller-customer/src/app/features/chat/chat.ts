@@ -95,6 +95,7 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
   readonly orderService = inject(OrderService);
 
   @ViewChild('chatFeedContainer') private chatFeedContainer?: ElementRef<HTMLDivElement>;
+  @ViewChild('chatTextarea') chatTextarea?: ElementRef<HTMLTextAreaElement>;
   private shouldScrollToBottom = false;
   private unsubscribeReceiveMessage?: () => void;
   private unsubscribeMessageEdited?: () => void;
@@ -107,7 +108,6 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
   readonly messages = signal<ChatMessage[]>([]);
   readonly messageText = signal('');
   readonly isSending = signal(false);
-  private pendingAutosend = false;
   readonly feedbackMessage = signal<string | null>(null);
   readonly isFeedbackError = signal(false);
   readonly order = signal<StoredOrder | null>(null);
@@ -171,7 +171,6 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
         const orderRef = params.get('orderRef');
         const shopId = params.get('shopId');
         const productId = params.get('productId');
-        this.pendingAutosend = params.get('autosend') === '1';
         void this.openFromQuery(orderRef, shopId, productId);
       });
     });
@@ -458,11 +457,6 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
         const ord = this.order();
         if (ord && !this.messageText().trim()) {
           this.prefillOrderTemplate(ord);
-          if (this.pendingAutosend) {
-            this.pendingAutosend = false;
-            // One-click send after finalize checkout
-            setTimeout(() => this.sendOrderConfirmationNow(), 250);
-          }
         }
       },
       error: () => {}
@@ -502,6 +496,7 @@ ${addressSummary}${ord.customer.notes ? '\nNote: ' + ord.customer.notes : ''}
 
 Please verify payment / dispatch. Thank you.`
     );
+    this.adjustTextareaHeight();
   }
 
   backToInbox(): void {
@@ -515,11 +510,13 @@ Please verify payment / dispatch. Thank you.`
     this.editingMessage.set(msg);
     this.messageText.set(msg.text);
     this.activeMenuMessageId.set(null);
+    this.adjustTextareaHeight();
   }
 
   cancelEdit(): void {
     this.editingMessage.set(null);
     this.messageText.set('');
+    this.adjustTextareaHeight();
   }
 
   submitEditMessage(): void {
@@ -700,7 +697,8 @@ Please verify payment / dispatch. Thank you.`
       ...list,
       { id: tempId, sender: 'customer', text, timestamp: new Date() }
     ]);
-    if (!presetText) this.messageText.set('');
+    this.messageText.set('');
+    this.adjustTextareaHeight();
     this.shouldScrollToBottom = true;
 
     this.chatService.sendMessage(orderId, text).subscribe({
@@ -729,6 +727,37 @@ Please verify payment / dispatch. Thank you.`
   sendOrderConfirmationNow(): void {
     const text = this.messageText().trim();
     if (text) this.sendMessage(text);
+  }
+
+  clearOrderTemplate(): void {
+    this.messageText.set('');
+    this.adjustTextareaHeight();
+  }
+
+  onTextInput(event: Event): void {
+    const textarea = event.target as HTMLTextAreaElement;
+    if (textarea) {
+      this.adjustTextareaHeight(textarea);
+    }
+  }
+
+  adjustTextareaHeight(textarea?: HTMLTextAreaElement): void {
+    setTimeout(() => {
+      const el = textarea || this.chatTextarea?.nativeElement;
+      if (!el) return;
+      el.style.height = 'auto';
+      const scrollH = el.scrollHeight;
+      const clamped = Math.min(Math.max(scrollH, 44), 160);
+      el.style.height = `${clamped}px`;
+    }, 0);
+  }
+
+  copyMessageText(text: string): void {
+    if (!text || typeof navigator === 'undefined' || !navigator.clipboard) return;
+    navigator.clipboard.writeText(text).then(() => {
+      this.showFeedback('Message copied to clipboard');
+      this.activeMenuMessageId.set(null);
+    }).catch(() => {});
   }
 
   onEnterKey(event: Event): void {

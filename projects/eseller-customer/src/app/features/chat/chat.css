@@ -1,0 +1,64 @@
+/* Premium Chat Styling */
+:host {
+  display: block;
+}
+
+/* Custom scrollbars */
+.chat-scroll::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+
+.chat-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.4);
+  border-radius: 9999px;
+}
+
+.chat-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.7);
+}
+
+/* Smooth textarea scrollbar */
+textarea::-webkit-scrollbar {
+  width: 4px;
+}
+
+textarea::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+textarea::-webkit-scrollbar-thumb {
+  background: rgba(203, 213, 225, 0.6);
+  border-radius: 9999px;
+}
+
+textarea::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.8);
+}
+
+/* Subtle chat backdrop texture */
+.chat-bg-pattern {
+  background-color: #fafaf9;
+  background-image: radial-gradient(rgba(217, 119, 6, 0.04) 1px, transparent 0);
+  background-size: 24px 24px;
+}
+
+/* Modal and menu animations */
+@keyframes chatMenuPop {
+  0% {
+    opacity: 0;
+    transform: scale(0.95) translateY(4px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+.chat-menu-pop {
+  animation: chatMenuPop 0.15s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}

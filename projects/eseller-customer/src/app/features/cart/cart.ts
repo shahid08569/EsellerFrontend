@@ -396,8 +396,7 @@ export class Cart implements OnInit {
       this.router.navigate(['/chat'], {
         queryParams: {
           support: '1',
-          orderRef: finalOrderRef,
-          autosend: '1'
+          orderRef: finalOrderRef
         }
       });
     };
