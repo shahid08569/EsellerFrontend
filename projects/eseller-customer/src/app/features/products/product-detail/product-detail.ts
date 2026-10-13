@@ -476,6 +476,14 @@ export class ProductDetail implements OnInit, OnDestroy {
         error: () => this.relatedProducts.set([])
       });
     }
+
+    if (prod.shopId) {
+      const visitKey = `visited_shop_${prod.shopId}`;
+      if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(visitKey)) {
+        sessionStorage.setItem(visitKey, '1');
+        this.homeService.recordShopVisit(prod.shopId).subscribe();
+      }
+    }
   }
 
   private initDefaultVariantAttributes(vars: ProductVariantDto[]): void {

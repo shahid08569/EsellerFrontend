@@ -1,0 +1,449 @@
+<div class="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+
+  <!-- Page Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+    <div>
+      <div class="flex items-center gap-2.5">
+        <div class="w-10 h-10 rounded-2xl bg-linear-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white shadow-md shadow-emerald-500/20">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+          </svg>
+        </div>
+        <div>
+          <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            Shop Traffic &amp; Visitor Analytics
+          </h1>
+          <p class="text-xs sm:text-sm text-slate-500 dark:text-slate-400 mt-0.5">
+            Real-time storefront visits, audience trajectory &amp; monthly traffic records
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Period Filters -->
+    <div class="flex items-center gap-1.5 p-1 rounded-xl bg-slate-100 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 self-start md:self-auto">
+      <button
+        type="button"
+        (click)="setRange('7d')"
+        [class.bg-white]="selectedRange() === '7d'"
+        [class.dark:bg-slate-800]="selectedRange() === '7d'"
+        [class.text-emerald-600]="selectedRange() === '7d'"
+        [class.dark:text-emerald-400]="selectedRange() === '7d'"
+        [class.font-black]="selectedRange() === '7d'"
+        [class.shadow-xs]="selectedRange() === '7d'"
+        [class.text-slate-600]="selectedRange() !== '7d'"
+        [class.dark:text-slate-400]="selectedRange() !== '7d'"
+        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+        7 Days
+      </button>
+      <button
+        type="button"
+        (click)="setRange('30d')"
+        [class.bg-white]="selectedRange() === '30d'"
+        [class.dark:bg-slate-800]="selectedRange() === '30d'"
+        [class.text-emerald-600]="selectedRange() === '30d'"
+        [class.dark:text-emerald-400]="selectedRange() === '30d'"
+        [class.font-black]="selectedRange() === '30d'"
+        [class.shadow-xs]="selectedRange() === '30d'"
+        [class.text-slate-600]="selectedRange() !== '30d'"
+        [class.dark:text-slate-400]="selectedRange() !== '30d'"
+        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+        30 Days
+      </button>
+      <button
+        type="button"
+        (click)="setRange('thismonth')"
+        [class.bg-white]="selectedRange() === 'thismonth'"
+        [class.dark:bg-slate-800]="selectedRange() === 'thismonth'"
+        [class.text-emerald-600]="selectedRange() === 'thismonth'"
+        [class.dark:text-emerald-400]="selectedRange() === 'thismonth'"
+        [class.font-black]="selectedRange() === 'thismonth'"
+        [class.shadow-xs]="selectedRange() === 'thismonth'"
+        [class.text-slate-600]="selectedRange() !== 'thismonth'"
+        [class.dark:text-slate-400]="selectedRange() !== 'thismonth'"
+        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+        This Month
+      </button>
+      <button
+        type="button"
+        (click)="setRange('90d')"
+        [class.bg-white]="selectedRange() === '90d'"
+        [class.dark:bg-slate-800]="selectedRange() === '90d'"
+        [class.text-emerald-600]="selectedRange() === '90d'"
+        [class.dark:text-emerald-400]="selectedRange() === '90d'"
+        [class.font-black]="selectedRange() === '90d'"
+        [class.shadow-xs]="selectedRange() === '90d'"
+        [class.text-slate-600]="selectedRange() !== '90d'"
+        [class.dark:text-slate-400]="selectedRange() !== '90d'"
+        class="px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer">
+        90 Days
+      </button>
+    </div>
+  </div>
+
+  @if (isLoading()) {
+    <div class="py-12">
+      <es-skeleton-layout variant="page" />
+    </div>
+  } @else {
+
+    <!-- KPI Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      
+      <!-- Card 1: All Time Total -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-emerald-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider">All-Time Visitors</span>
+          <div class="w-8 h-8 rounded-xl bg-emerald-50 dark:bg-emerald-950/60 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+          {{ traffic()?.totalVisits || 0 | number }}
+        </p>
+        <p class="text-[11px] text-slate-400 mt-1 font-medium">
+          Lifetime visits recorded to your storefront
+        </p>
+      </div>
+
+      <!-- Card 2: This Month -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider">This Month</span>
+          <div class="w-8 h-8 rounded-xl bg-blue-50 dark:bg-blue-950/60 text-blue-600 dark:text-blue-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+          {{ traffic()?.thisMonthVisits || 0 | number }}
+        </p>
+        <div class="flex items-center gap-1.5 mt-1">
+          @if ((traffic()?.growthRate ?? 0) >= 0) {
+            <span class="inline-flex items-center text-[11px] font-extrabold text-emerald-600 dark:text-emerald-400">
+              ↑ +{{ traffic()?.growthRate }}%
+            </span>
+          } @else {
+            <span class="inline-flex items-center text-[11px] font-extrabold text-rose-600 dark:text-rose-400">
+              ↓ {{ traffic()?.growthRate }}%
+            </span>
+          }
+          <span class="text-[11px] text-slate-400">vs last month ({{ traffic()?.lastMonthVisits || 0 | number }})</span>
+        </div>
+      </div>
+
+      <!-- Card 3: Today -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-amber-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider">Today's Visits</span>
+          <div class="w-8 h-8 rounded-xl bg-amber-50 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+        </div>
+        <p class="text-2xl sm:text-3xl font-black text-slate-900 dark:text-white tabular-nums tracking-tight">
+          {{ traffic()?.todayVisits || 0 | number }}
+        </p>
+        <span class="inline-flex items-center gap-1 text-[11px] text-emerald-500 font-bold mt-1">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          Live real-time counter
+        </span>
+      </div>
+
+      <!-- Card 4: Trajectory / Trend -->
+      <div class="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs relative overflow-hidden group">
+        <div class="absolute -right-4 -bottom-4 w-24 h-24 bg-purple-500/10 rounded-full blur-xl pointer-events-none"></div>
+        <div class="flex items-center justify-between text-slate-500 dark:text-slate-400 mb-2">
+          <span class="text-xs font-bold uppercase tracking-wider">Trend Trajectory</span>
+          <div class="w-8 h-8 rounded-xl bg-purple-50 dark:bg-purple-950/60 text-purple-600 dark:text-purple-400 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18L9 11.25l4.306 4.307a11.95 11.95 0 015.814-5.519l2.74-1.22m0 0l-5.94-2.28m5.94 2.28l-2.28 5.941" />
+            </svg>
+          </div>
+        </div>
+        <div class="flex items-center gap-2">
+          @if ((traffic()?.trendDirection) === 'up') {
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 7a1 1 0 110-2h5a1 1 0 011 1v5a1 1 0 11-2 0V8.414l-4.293 4.293a1 1 0 01-1.414 0L8 10.414l-4.293 4.293a1 1 0 01-1.414-1.414l5-5a1 1 0 011.414 0L11 10.586 14.586 7H12z" clip-rule="evenodd" />
+              </svg>
+              Growth Accelerating
+            </span>
+          } @else if ((traffic()?.trendDirection) === 'down') {
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold bg-rose-50 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300 border border-rose-200 dark:border-rose-800">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M12 13a1 1 0 100 2h5a1 1 0 001-1V9a1 1 0 10-2 0v2.586l-4.293-4.293a1 1 0 00-1.414 0L8 9.586 3.707 5.293a1 1 0 00-1.414 1.414l5 5a1 1 0 001.414 0L11 9.414 14.586 13H12z" clip-rule="evenodd" />
+              </svg>
+              Decline Observed
+            </span>
+          } @else {
+            <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
+              Steady Traffic
+            </span>
+          }
+        </div>
+        <p class="text-[11px] text-slate-400 mt-2 font-medium">
+          Based on recent storefront visit patterns
+        </p>
+      </div>
+
+    </div>
+
+    <!-- Dynamic Graph Container -->
+    <div class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-6">
+        <div>
+          <h2 class="text-base font-black text-slate-900 dark:text-white flex items-center gap-2">
+            <span>Storefront Visitor Trajectory</span>
+            @if (activeHoverPoint(); as hp) {
+              <span class="text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/60 px-2 py-0.5 rounded-md border border-emerald-200 dark:border-emerald-800 animate-in fade-in">
+                {{ hp.label }}: {{ hp.visits | number }} visits ({{ hp.uniqueVisitors | number }} unique)
+              </span>
+            }
+          </h2>
+          <p class="text-xs text-slate-400 mt-0.5">
+            Hover over points on the graph to inspect daily visitor counts
+          </p>
+        </div>
+
+        <div class="flex items-center gap-3 text-xs font-semibold text-slate-500">
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-3 rounded-full bg-emerald-500"></span>
+            <span>Daily Visits</span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <span class="w-3 h-1.5 rounded-full bg-emerald-500/30"></span>
+            <span>Trend Area</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- SVG Line & Area Graph -->
+      <div class="relative w-full overflow-x-auto">
+        <svg
+          viewBox="0 0 800 240"
+          preserveAspectRatio="none"
+          class="w-full h-56 sm:h-72 overflow-visible">
+          
+          <defs>
+            <linearGradient id="emeraldGradient" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#10B981" stop-opacity="0.3" />
+              <stop offset="100%" stop-color="#10B981" stop-opacity="0.0" />
+            </linearGradient>
+          </defs>
+
+          <!-- Horizontal Grid Lines -->
+          <line x1="20" y1="20" x2="780" y2="20" stroke="#94A3B8" stroke-opacity="0.15" stroke-dasharray="4 4" />
+          <line x1="20" y1="75" x2="780" y2="75" stroke="#94A3B8" stroke-opacity="0.15" stroke-dasharray="4 4" />
+          <line x1="20" y1="130" x2="780" y2="130" stroke="#94A3B8" stroke-opacity="0.15" stroke-dasharray="4 4" />
+          <line x1="20" y1="185" x2="780" y2="185" stroke="#94A3B8" stroke-opacity="0.15" stroke-dasharray="4 4" />
+          <line x1="20" y1="220" x2="780" y2="220" stroke="#94A3B8" stroke-opacity="0.25" />
+
+          <!-- Filled Area -->
+          @if (svgAreaPath()) {
+            <path
+              [attr.d]="svgAreaPath()"
+              fill="url(#emeraldGradient)" />
+          }
+
+          <!-- Stroke Line -->
+          @if (svgPath()) {
+            <path
+              [attr.d]="svgPath()"
+              fill="none"
+              stroke="#10B981"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round" />
+          }
+
+          <!-- Interactive Data Points -->
+          @for (pt of chartPoints(); track pt.date) {
+            <g
+              class="cursor-pointer group"
+              (mouseenter)="hoverPoint(pt)"
+              (mouseleave)="hoverPoint(null)">
+              <circle
+                [attr.cx]="pt.x"
+                [attr.cy]="pt.y"
+                r="4.5"
+                class="fill-white dark:fill-slate-900 stroke-emerald-500 stroke-2 transition-transform group-hover:scale-150" />
+              
+              <!-- Subtle vertical guide on hover -->
+              <line
+                [attr.x1]="pt.x"
+                [attr.y1]="20"
+                [attr.x2]="pt.x"
+                [attr.y2]="220"
+                stroke="#10B981"
+                stroke-opacity="0.3"
+                stroke-dasharray="2 2"
+                class="opacity-0 group-hover:opacity-100 transition-opacity" />
+            </g>
+          }
+        </svg>
+
+        <!-- X-Axis Labels (Spread) -->
+        <div class="flex justify-between items-center text-[10px] text-slate-400 mt-2 px-4 select-none">
+          @if (chartPoints().length > 0) {
+            <span>{{ chartPoints()[0].label }}</span>
+            @if (chartPoints().length > 4) {
+              <span>{{ chartPoints()[Math.floor(chartPoints().length / 2)].label }}</span>
+            }
+            <span>{{ chartPoints()[chartPoints().length - 1].label }}</span>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Breakdown Table Section -->
+    <div class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 class="text-base font-black text-slate-900 dark:text-white">
+            Visitor Records Breakdown
+          </h3>
+          <p class="text-xs text-slate-400">
+            Compare monthly totals or view detailed daily timeline logs
+          </p>
+        </div>
+
+        <div class="flex items-center gap-1 p-1 rounded-xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700/60 self-start sm:self-auto">
+          <button
+            type="button"
+            (click)="activeTab.set('daily')"
+            [class.bg-white]="activeTab() === 'daily'"
+            [class.dark:bg-slate-900]="activeTab() === 'daily'"
+            [class.text-emerald-600]="activeTab() === 'daily'"
+            [class.dark:text-emerald-400]="activeTab() === 'daily'"
+            [class.shadow-xs]="activeTab() === 'daily'"
+            class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
+            Daily Timeline
+          </button>
+          <button
+            type="button"
+            (click)="activeTab.set('monthly')"
+            [class.bg-white]="activeTab() === 'monthly'"
+            [class.dark:bg-slate-900]="activeTab() === 'monthly'"
+            [class.text-emerald-600]="activeTab() === 'monthly'"
+            [class.dark:text-emerald-400]="activeTab() === 'monthly'"
+            [class.shadow-xs]="activeTab() === 'monthly'"
+            class="px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer">
+            Monthly History
+          </button>
+        </div>
+      </div>
+
+      <!-- Tab 1: Daily Timeline Table -->
+      @if (activeTab() === 'daily') {
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider text-[10px] font-black border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Date</th>
+                <th class="py-3 px-4">Storefront Visits</th>
+                <th class="py-3 px-4">Unique Visitors (Est.)</th>
+                <th class="py-3 px-4 text-right">Traffic Share</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-200">
+              @for (item of traffic()?.timeline || []; track item.date) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-bold flex items-center gap-2">
+                    <span class="w-2 h-2 rounded-full" [class.bg-emerald-500]="item.visits > 0" [class.bg-slate-300]="item.visits === 0"></span>
+                    <span>{{ item.label }} ({{ item.date }})</span>
+                    @if (item.isManual) {
+                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        Manual Entry
+                      </span>
+                    }
+                  </td>
+                  <td class="py-3 px-4 font-black tabular-nums">
+                    {{ item.visits | number }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
+                    {{ item.uniqueVisitors | number }}
+                  </td>
+                  <td class="py-3 px-4 text-right tabular-nums">
+                    @if ((traffic()?.thisMonthVisits ?? 0) > 0) {
+                      <span class="font-bold text-emerald-600 dark:text-emerald-400">
+                        {{ ((item.visits / (traffic()?.thisMonthVisits || 1)) * 100) | number:'1.1-1' }}%
+                      </span>
+                    } @else {
+                      <span class="text-slate-400">0%</span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="py-8 text-center text-slate-400 font-medium">
+                    No visit records found for this period.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+      <!-- Tab 2: Monthly Breakdown Table -->
+      @if (activeTab() === 'monthly') {
+        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider text-[10px] font-black border-b border-slate-200 dark:border-slate-800">
+              <tr>
+                <th class="py-3 px-4">Month &amp; Year</th>
+                <th class="py-3 px-4">Total Visitors</th>
+                <th class="py-3 px-4">Unique Visitors (Est.)</th>
+                <th class="py-3 px-4 text-right">Status</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-200">
+              @for (m of traffic()?.monthlyBreakdown || []; track (m.year + '-' + m.month)) {
+                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
+                  <td class="py-3 px-4 font-bold">
+                    {{ m.monthName }}
+                  </td>
+                  <td class="py-3 px-4 font-black tabular-nums text-slate-900 dark:text-white">
+                    {{ m.visits | number }}
+                  </td>
+                  <td class="py-3 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
+                    {{ m.uniqueVisitors | number }}
+                  </td>
+                  <td class="py-3 px-4 text-right">
+                    @if (m.isManual) {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
+                        Admin Verified
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+                        Auto Live
+                      </span>
+                    }
+                  </td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="py-8 text-center text-slate-400 font-medium">
+                    No monthly records available.
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      }
+
+    </div>
+
+  }
+
+</div>

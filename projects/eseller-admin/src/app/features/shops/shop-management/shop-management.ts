@@ -4,11 +4,11 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthStore, ToastService, SignalRService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto } from '../../../core/models/admin.models';
+import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto, AdminShopTrafficItemDto, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
-type ViewMode = 'stores' | 'applications' | 'tiers';
+type ViewMode = 'stores' | 'applications' | 'tiers' | 'traffic';
 
 export interface TierUpgradeRequest {
   id: string;
@@ -61,6 +61,84 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly activeTab = signal<FilterTab>('all');
   readonly searchTerm = signal<string>('');
   readonly actionInProgress = signal<string | null>(null);
+
+  // Traffic & Visitor Analytics State
+  readonly Math = Math;
+  readonly shopTraffics = signal<AdminShopTrafficItemDto[]>([]);
+  readonly trafficLoading = signal<boolean>(false);
+  readonly trafficSearch = signal<string>('');
+  readonly selectedTrafficShop = signal<AdminShopTrafficItemDto | null>(null);
+  readonly shopTrafficDetail = signal<ShopTrafficSummaryDto | null>(null);
+  readonly isTrafficModalOpen = signal<boolean>(false);
+  readonly trafficDetailLoading = signal<boolean>(false);
+  readonly trafficDetailRange = signal<string>('30d');
+  readonly hoverTrafficPoint = signal<ShopTrafficPointDto | null>(null);
+
+  // Manual Override signals
+  readonly overrideYear = signal<number>(new Date().getFullYear());
+  readonly overrideMonth = signal<number>(new Date().getMonth() + 1);
+  readonly overrideMonthVisits = signal<number>(0);
+  readonly overrideMonthUnique = signal<number | null>(null);
+  readonly overrideMonthNote = signal<string>('');
+  readonly isSubmittingOverride = signal<boolean>(false);
+  readonly overrideDate = signal<string>(new Date().toISOString().substring(0, 10));
+  readonly overrideDateVisits = signal<number>(0);
+  readonly overrideDateUnique = signal<number | null>(null);
+  readonly overrideDateNote = signal<string>('');
+  readonly overrideMode = signal<'month' | 'date'>('month');
+
+  readonly filteredShopTraffics = computed(() => {
+    const q = (this.trafficSearch() || this.searchTerm()).trim().toLowerCase();
+    const list = this.shopTraffics();
+    if (!q) return list;
+    return list.filter(item =>
+      (item.shopName && item.shopName.toLowerCase().includes(q)) ||
+      (item.slug && item.slug.toLowerCase().includes(q)) ||
+      (item.ownerName && item.ownerName.toLowerCase().includes(q)) ||
+      (item.ownerEmail && item.ownerEmail.toLowerCase().includes(q))
+    );
+  });
+
+  readonly modalMaxVisits = computed(() => {
+    const points = this.shopTrafficDetail()?.timeline || [];
+    if (!points.length) return 10;
+    const max = Math.max(...points.map(p => p.visits), 10);
+    return Math.ceil(max * 1.15);
+  });
+
+  readonly modalChartPoints = computed(() => {
+    const points = this.shopTrafficDetail()?.timeline || [];
+    const max = this.modalMaxVisits();
+    const count = points.length;
+    if (count <= 1) return [];
+
+    const width = 800;
+    const height = 200;
+    const padding = 20;
+
+    return points.map((p, i) => {
+      const x = padding + (i / (count - 1)) * (width - padding * 2);
+      const y = height - padding - (p.visits / max) * (height - padding * 2);
+      return { ...p, x, y };
+    });
+  });
+
+  readonly modalSvgPath = computed(() => {
+    const pts = this.modalChartPoints();
+    if (!pts.length) return '';
+    return pts.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, '');
+  });
+
+  readonly modalSvgAreaPath = computed(() => {
+    const pts = this.modalChartPoints();
+    if (!pts.length) return '';
+    const height = 200;
+    const padding = 20;
+    const firstX = pts[0].x.toFixed(1);
+    const lastX = pts[pts.length - 1].x.toFixed(1);
+    const bottomY = (height - padding).toFixed(1);
+    return `${this.modalSvgPath()} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
+  });
 
   /** One row per shop — newest request only */
   readonly latestTierRequests = computed(() => {
@@ -314,8 +392,11 @@ export class ShopManagement implements OnInit, OnDestroy {
       const tabParam = params.get('tab') as FilterTab | null;
       const viewParam = params.get('view') as ViewMode | null;
 
-      if (viewParam && ['stores', 'applications', 'tiers'].includes(viewParam)) {
+      if (viewParam && ['stores', 'applications', 'tiers', 'traffic'].includes(viewParam)) {
         this.viewMode.set(viewParam);
+        if (viewParam === 'traffic') {
+          this.loadAllShopsTraffic();
+        }
       } else if (tabParam === 'pending') {
         this.viewMode.set('applications');
       }
@@ -444,6 +525,9 @@ export class ShopManagement implements OnInit, OnDestroy {
 
     // Fetch tier upgrade requests (Pending + Approved + Rejected)
     this.reloadTierRequests();
+
+    // Fetch shop traffic analytics
+    this.loadAllShopsTraffic();
   }
 
   // Filtered Applications List
@@ -594,6 +678,8 @@ export class ShopManagement implements OnInit, OnDestroy {
     });
     if (mode === 'tiers') {
       this.reloadTierRequests();
+    } else if (mode === 'traffic') {
+      this.loadAllShopsTraffic();
     }
   }
 
@@ -1160,6 +1246,112 @@ export class ShopManagement implements OnInit, OnDestroy {
       error: (err) => {
         this.actionInProgress.set(null);
         this.toast.show(err?.error?.error || 'Failed to remove tier upgrade request.', 'error');
+      }
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // SHOP TRAFFIC & VISITOR ANALYTICS METHODS
+  // ═══════════════════════════════════════════════════════════
+
+  loadAllShopsTraffic(): void {
+    this.trafficLoading.set(true);
+    this.adminService.getAllShopsTraffic().subscribe({
+      next: (items) => {
+        this.shopTraffics.set(items || []);
+        this.trafficLoading.set(false);
+      },
+      error: () => this.trafficLoading.set(false)
+    });
+  }
+
+  openTrafficDetailModal(shop: AdminShopTrafficItemDto): void {
+    this.selectedTrafficShop.set(shop);
+    this.isTrafficModalOpen.set(true);
+    this.overrideMonthVisits.set(Number(shop.thisMonthVisits) || 0);
+    this.overrideDateVisits.set(Number(shop.todayVisits) || 0);
+    this.loadShopTrafficDetail(shop.shopId, this.trafficDetailRange());
+  }
+
+  closeTrafficDetailModal(): void {
+    this.isTrafficModalOpen.set(false);
+    this.selectedTrafficShop.set(null);
+    this.shopTrafficDetail.set(null);
+  }
+
+  setTrafficDetailRange(range: string): void {
+    this.trafficDetailRange.set(range);
+    const shop = this.selectedTrafficShop();
+    if (shop) {
+      this.loadShopTrafficDetail(shop.shopId, range);
+    }
+  }
+
+  loadShopTrafficDetail(shopId: string, range: string): void {
+    this.trafficDetailLoading.set(true);
+    this.adminService.getShopTrafficDetail(shopId, range).subscribe({
+      next: (res) => {
+        this.shopTrafficDetail.set(res);
+        this.trafficDetailLoading.set(false);
+      },
+      error: () => this.trafficDetailLoading.set(false)
+    });
+  }
+
+  quickEditMonth(m: ShopTrafficMonthDto): void {
+    this.overrideMode.set('month');
+    this.overrideYear.set(m.year);
+    this.overrideMonth.set(m.month);
+    this.overrideMonthVisits.set(Number(m.visits) || 0);
+    this.overrideMonthUnique.set(Number(m.uniqueVisitors) || null);
+    this.overrideMonthNote.set(m.isManual ? 'Manual override by Admin' : '');
+  }
+
+  submitMonthlyOverride(): void {
+    const shop = this.selectedTrafficShop();
+    if (!shop) return;
+    this.isSubmittingOverride.set(true);
+
+    this.adminService.overrideMonthlyTraffic(shop.shopId, {
+      year: Number(this.overrideYear()),
+      month: Number(this.overrideMonth()),
+      totalVisits: Number(this.overrideMonthVisits()) || 0,
+      uniqueVisitors: this.overrideMonthUnique() ? Number(this.overrideMonthUnique()) : undefined,
+      note: this.overrideMonthNote() || undefined
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(res?.message || 'Monthly visitor count updated successfully!', 'success');
+        this.loadShopTrafficDetail(shop.shopId, this.trafficDetailRange());
+        this.loadAllShopsTraffic();
+      },
+      error: (err) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(err?.error?.error || 'Failed to update monthly visitor count.', 'error');
+      }
+    });
+  }
+
+  submitDailyOverride(): void {
+    const shop = this.selectedTrafficShop();
+    if (!shop) return;
+    this.isSubmittingOverride.set(true);
+
+    this.adminService.overrideDailyTraffic(shop.shopId, {
+      date: this.overrideDate(),
+      visitCount: Number(this.overrideDateVisits()) || 0,
+      uniqueVisitors: this.overrideDateUnique() ? Number(this.overrideDateUnique()) : undefined,
+      note: this.overrideDateNote() || undefined
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(res?.message || 'Daily visitor count updated successfully!', 'success');
+        this.loadShopTrafficDetail(shop.shopId, this.trafficDetailRange());
+        this.loadAllShopsTraffic();
+      },
+      error: (err) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(err?.error?.error || 'Failed to update daily visitor count.', 'error');
       }
     });
   }

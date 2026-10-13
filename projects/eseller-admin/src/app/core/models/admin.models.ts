@@ -448,3 +448,52 @@ export interface AdminAffiliateDetailDto {
   referredShops?: AdminReferredStoreDto[];
   referredStores?: AdminReferredStoreDto[];
 }
+
+export interface AdminShopTrafficItemDto {
+  shopId: string;
+  shopName: string;
+  slug: string;
+  logoUrl?: string | null;
+  ownerName: string;
+  ownerEmail: string;
+  rating: number;
+  isApproved: boolean;
+  isActive: boolean;
+  totalVisits: number;
+  todayVisits: number;
+  thisMonthVisits: number;
+  lastMonthVisits: number;
+  growthRate: number;
+  trendDirection: 'up' | 'down' | 'flat';
+}
+
+export interface ShopTrafficPointDto {
+  date: string;
+  label: string;
+  visits: number;
+  uniqueVisitors: number;
+  isManual: boolean;
+}
+
+export interface ShopTrafficMonthDto {
+  year: number;
+  month: number;
+  monthName: string;
+  visits: number;
+  uniqueVisitors: number;
+  isManual: boolean;
+}
+
+export interface ShopTrafficSummaryDto {
+  shopId: string;
+  shopName: string;
+  totalVisits: number;
+  todayVisits: number;
+  thisMonthVisits: number;
+  lastMonthVisits: number;
+  growthRate: number;
+  trendDirection: 'up' | 'down' | 'flat';
+  range: string;
+  timeline: ShopTrafficPointDto[];
+  monthlyBreakdown: ShopTrafficMonthDto[];
+}

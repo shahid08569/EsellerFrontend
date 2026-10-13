@@ -184,6 +184,15 @@
                   </span>
                 }
               </a>
+              <a [routerLink]="['/shops']" [queryParams]="{view: 'traffic'}"
+                class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                [class.text-orange-400]="isShopNav('traffic')"
+                [class.font-bold]="isShopNav('traffic')"
+                [class.bg-slate-800/80]="isShopNav('traffic')">
+                <span>Shop Traffic &amp; Visitors</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Live</span>
+              </a>
               <a [routerLink]="['/shops']" [queryParams]="{tab: 'all', view: 'applications'}"
                 class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
                 style="color: #f1f5f9 !important;"

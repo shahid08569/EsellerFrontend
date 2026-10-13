@@ -131,7 +131,13 @@ export const routes: Routes = [
           import('./features/referrals/referral-center').then(m => m.ReferralCenter)
       },
 
-      // SECTION 7: SETTINGS
+      // SECTION 7: TRAFFIC & SETTINGS
+      {
+        path: 'traffic',
+        loadComponent: () =>
+          import('./features/traffic/shop-traffic').then(m => m.ShopTraffic),
+        title: 'eSeller — Shop Traffic & Visitor Analytics'
+      },
       {
         path: 'settings',
         loadComponent: () => import('./features/settings/settings').then(m => m.Settings)

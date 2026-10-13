@@ -30,7 +30,9 @@ import {
   AdminSellerWalletDto,
   AdminWithdrawalPaymentMethodDto,
   AdminAffiliateDto,
-  AdminAffiliateDetailDto
+  AdminAffiliateDetailDto,
+  AdminShopTrafficItemDto,
+  ShopTrafficSummaryDto
 } from '../models/admin.models';
 
 @Injectable({ providedIn: 'root' })
@@ -1456,5 +1458,26 @@ export class AdminService {
       }),
       catchError(() => of([]))
     );
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 16. SHOP TRAFFIC & VISITOR ANALYTICS
+  // ═══════════════════════════════════════════════════════════
+  getAllShopsTraffic(): Observable<AdminShopTrafficItemDto[]> {
+    return this.api.get<AdminShopTrafficItemDto[]>('/admin/shops/traffic').pipe(
+      catchError(() => of([]))
+    );
+  }
+
+  getShopTrafficDetail(shopId: string, range = '30d'): Observable<ShopTrafficSummaryDto> {
+    return this.api.get<ShopTrafficSummaryDto>(`/admin/shops/${shopId}/traffic?range=${encodeURIComponent(range)}`);
+  }
+
+  overrideMonthlyTraffic(shopId: string, data: { year: number; month: number; totalVisits: number; uniqueVisitors?: number; note?: string }): Observable<any> {
+    return this.api.post<any>(`/admin/shops/${shopId}/traffic/monthly`, data);
+  }
+
+  overrideDailyTraffic(shopId: string, data: { date: string; visitCount: number; uniqueVisitors?: number; note?: string }): Observable<any> {
+    return this.api.post<any>(`/admin/shops/${shopId}/traffic/daily`, data);
   }
 }

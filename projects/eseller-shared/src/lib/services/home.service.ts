@@ -428,4 +428,12 @@ export class HomeService {
       { question }
     );
   }
+
+  /** Record a storefront visit to a seller's shop */
+  recordShopVisit(shopIdOrSlug: string): Observable<{ success: boolean }> {
+    if (!shopIdOrSlug) return of({ success: false });
+    return this.api.post<{ success: boolean }>(`/shops/${encodeURIComponent(shopIdOrSlug)}/visit`, {}).pipe(
+      catchError(() => of({ success: false }))
+    );
+  }
 }

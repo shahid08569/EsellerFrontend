@@ -57,21 +57,6 @@
         }
       </div>
 
-      <!-- Current Package Bar -->
-      <div class="px-3 pt-3">
-        <div class="p-2.5 rounded-xl bg-slate-900/90 border border-slate-800 flex items-center justify-between gap-2">
-          <div class="text-[10px] min-w-0">
-            <p class="font-bold text-slate-100 truncate">{{ shop()?.tierName || shop()?.badgeText || 'Bronze (Free)' }}</p>
-            <p class="text-slate-500 mt-0.5">Active Package</p>
-          </div>
-          <button 
-            type="button"
-            (click)="openTierModal()"
-            class="shrink-0 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-[10px] transition-colors cursor-pointer border border-slate-700">
-            Upgrade
-          </button>
-        </div>
-      </div>
 
       <!-- Navigation -->
       <nav class="flex-1 overflow-y-auto py-3 px-2 space-y-4 scrollbar-thin">
@@ -264,6 +249,21 @@
             Settings
           </div>
           <div class="space-y-0.5">
+            <a routerLink="/traffic"
+               routerLinkActive="seller-nav-active"
+               [routerLinkActiveOptions]="{ exact: true }"
+               (click)="closeSidebarOnMobile()"
+               class="seller-nav-link">
+              <span class="seller-nav-link-main">
+                <svg class="seller-nav-icon text-emerald-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                </svg>
+                <span>Shop Traffic Analytics</span>
+              </span>
+              <span class="seller-nav-badge !bg-emerald-500/20 !text-emerald-300 !border-emerald-500/30">Visits</span>
+            </a>
+
             <a routerLink="/settings"
                routerLinkActive="seller-nav-active"
                [routerLinkActiveOptions]="{ exact: true }"
@@ -290,30 +290,8 @@
 
       </nav>
 
-      <!-- User Profile & Logout -->
-      <div class="p-3 border-t border-slate-800/80 bg-slate-900/50 space-y-2.5">
-        <a
-          [href]="storeUrl"
-          rel="noopener noreferrer"
-          class="seller-nav-link w-full !bg-orange-600/20 !border-orange-500/40 !text-orange-200 hover:!bg-orange-600/30">
-          <span class="seller-nav-link-main">
-            <svg class="seller-nav-icon !text-orange-400" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
-            </svg>
-            <span>Back to Store</span>
-          </span>
-        </a>
-
-        <div class="flex items-center gap-2.5 px-1">
-          <div class="w-8 h-8 rounded-lg bg-slate-800 border border-slate-700 flex items-center justify-center text-[11px] font-black text-slate-200 shrink-0">
-            {{ (authStore.currentAccount()?.username || 'M').charAt(0).toUpperCase() }}
-          </div>
-          <div class="overflow-hidden min-w-0">
-            <p class="text-xs font-bold truncate text-white">{{ authStore.currentAccount()?.username || 'Merchant' }}</p>
-            <span class="text-[10px] text-slate-500 font-medium">Shopkeeper</span>
-          </div>
-        </div>
-
+      <!-- User Logout Only -->
+      <div class="p-3 border-t border-slate-800/80 bg-slate-900/50">
         <button 
           type="button"
           (click)="promptLogout()"
@@ -365,15 +343,32 @@
           <span class="text-sm font-black" [class.text-white]="isDarkMode()" [class.text-slate-900]="!isDarkMode()">
             {{ shop()?.name || 'Seller Dashboard' }}
           </span>
-          <div class="flex items-center gap-1.5 flex-wrap mt-0.5">
+          <div class="flex items-center gap-2 flex-wrap mt-0.5">
             <span class="text-[10px] text-slate-400 font-semibold uppercase tracking-wider">Merchant Portal</span>
+
+            <!-- Current Active Package Badge -->
             <span
-              class="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-extrabold uppercase tracking-wide border"
+              class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wide border shadow-xs"
               [style.background-color]="headerTierStyles().bg"
               [style.color]="headerTierStyles().color"
               [style.border-color]="headerTierStyles().border">
-              {{ headerTierLabel() }}
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-cyan-500 shrink-0" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M11.645 20.91l-.007-.003-.022-.012a15.247 15.247 0 01-.383-.218 25.18 25.18 0 01-4.244-3.17C4.688 15.36 2.25 12.174 2.25 8.25 2.25 5.322 4.714 3 7.5 3c1.378 0 2.653.518 3.63 1.374A5.968 5.968 0 0114.75 3c2.786 0 5.25 2.322 5.25 5.25 0 3.925-2.438 7.11-4.739 9.267a25.175 25.175 0 01-4.244 3.17 15.247 15.247 0 01-.383.219l-.022.012-.007.004-.003.001a.752.752 0 01-.704 0l-.003-.001z" />
+              </svg>
+              <span>Current Active Package: {{ headerTierLabel() }}</span>
             </span>
+
+            <!-- Upgrade Package Button -->
+            <button
+              type="button"
+              (click)="openTierModal()"
+              class="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold text-white bg-linear-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-xs hover:shadow-sm transition-all cursor-pointer border border-orange-400 active:scale-95">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 10.5L12 3m0 0l7.5 7.5M12 3v18" />
+              </svg>
+              <span>Upgrade Package</span>
+            </button>
+
             <span
               class="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full border border-amber-200 bg-amber-50 text-amber-800"
               [attr.title]="'Store rating ' + headerRating() + ' / 5'">
@@ -387,16 +382,6 @@
       </div>
 
       <div class="flex items-center gap-2 sm:gap-2.5">
-        <a
-          [href]="storeUrl"
-          rel="noopener noreferrer"
-          title="Back to Store — open customer website"
-          class="inline-flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white text-xs font-bold shadow-xs transition-colors cursor-pointer border border-orange-500">
-          <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 21v-7.5a.75.75 0 01.75-.75h3a.75.75 0 01.75.75V21m-4.5 0H2.36m11.14 0H18m0 0h3.64m-1.39 0V9.349m-16.5 11.65V9.35m0 0a3.001 3.001 0 003.75-.615A2.993 2.993 0 009.75 9.75c.896 0 1.7-.393 2.25-1.016a2.993 2.993 0 002.25 1.016c.896 0 1.7-.393 2.25-1.016a3.001 3.001 0 003.75.614m-16.5 0a3.004 3.004 0 01-.621-4.72L4.318 3.44A1.5 1.5 0 015.378 3h13.243a1.5 1.5 0 011.06.44l1.19 1.189a3 3 0 01-.621 4.72m-13.5 8.65h3.75a.75.75 0 00.75-.75V13.5a.75.75 0 00-.75-.75H6.75a.75.75 0 00-.75.75v3.75c0 .415.336.75.75.75z" />
-          </svg>
-          <span>Store</span>
-        </a>
 
         <button 
           type="button"

@@ -1,0 +1,89 @@
+import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { SellerService, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto } from '../../core/services/seller.service';
+import { SkeletonLayout } from 'eseller-shared';
+
+@Component({
+  selector: 'app-shop-traffic',
+  standalone: true,
+  imports: [CommonModule, SkeletonLayout],
+  templateUrl: './shop-traffic.html'
+})
+export class ShopTraffic implements OnInit {
+  private readonly sellerService = inject(SellerService);
+  readonly Math = Math;
+
+  readonly isLoading = signal<boolean>(true);
+  readonly selectedRange = signal<string>('30d');
+  readonly traffic = signal<ShopTrafficSummaryDto | null>(null);
+  readonly activeHoverPoint = signal<ShopTrafficPointDto | null>(null);
+  readonly activeTab = signal<'daily' | 'monthly'>('daily');
+
+  readonly maxVisits = computed(() => {
+    const points = this.traffic()?.timeline || [];
+    if (!points.length) return 10;
+    const max = Math.max(...points.map(p => p.visits), 10);
+    return Math.ceil(max * 1.15); // headroom
+  });
+
+  readonly chartPoints = computed(() => {
+    const points = this.traffic()?.timeline || [];
+    const max = this.maxVisits();
+    const count = points.length;
+    if (count <= 1) return [];
+
+    const width = 800;
+    const height = 240;
+    const padding = 20;
+
+    return points.map((p, i) => {
+      const x = padding + (i / (count - 1)) * (width - padding * 2);
+      const y = height - padding - (p.visits / max) * (height - padding * 2);
+      return { ...p, x, y };
+    });
+  });
+
+  readonly svgPath = computed(() => {
+    const pts = this.chartPoints();
+    if (!pts.length) return '';
+    return pts.reduce((acc, p, i) => `${acc} ${i === 0 ? 'M' : 'L'} ${p.x.toFixed(1)} ${p.y.toFixed(1)}`, '');
+  });
+
+  readonly svgAreaPath = computed(() => {
+    const pts = this.chartPoints();
+    if (!pts.length) return '';
+    const height = 240;
+    const padding = 20;
+    const firstX = pts[0].x.toFixed(1);
+    const lastX = pts[pts.length - 1].x.toFixed(1);
+    const bottomY = (height - padding).toFixed(1);
+    const linePath = this.svgPath();
+    return `${linePath} L ${lastX} ${bottomY} L ${firstX} ${bottomY} Z`;
+  });
+
+  ngOnInit(): void {
+    this.loadTraffic(this.selectedRange());
+  }
+
+  setRange(range: string): void {
+    this.selectedRange.set(range);
+    this.loadTraffic(range);
+  }
+
+  loadTraffic(range: string): void {
+    this.isLoading.set(true);
+    this.sellerService.getShopTraffic(range).subscribe({
+      next: (res) => {
+        this.traffic.set(res);
+        this.isLoading.set(false);
+      },
+      error: () => {
+        this.isLoading.set(false);
+      }
+    });
+  }
+
+  hoverPoint(point: ShopTrafficPointDto | null): void {
+    this.activeHoverPoint.set(point);
+  }
+}

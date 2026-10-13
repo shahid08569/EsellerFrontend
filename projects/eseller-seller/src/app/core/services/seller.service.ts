@@ -494,6 +494,42 @@ export class SellerService {
   getMyReferrals(): Observable<SellerReferralDto> {
     return this.api.get<SellerReferralDto>('/seller/referral/my');
   }
+
+  /** GET /Shops/my/traffic */
+  getShopTraffic(range = '30d'): Observable<ShopTrafficSummaryDto> {
+    return this.api.get<ShopTrafficSummaryDto>(`/Shops/my/traffic?range=${encodeURIComponent(range)}`);
+  }
+}
+
+export interface ShopTrafficPointDto {
+  date: string;
+  label: string;
+  visits: number;
+  uniqueVisitors: number;
+  isManual: boolean;
+}
+
+export interface ShopTrafficMonthDto {
+  year: number;
+  month: number;
+  monthName: string;
+  visits: number;
+  uniqueVisitors: number;
+  isManual: boolean;
+}
+
+export interface ShopTrafficSummaryDto {
+  shopId: string;
+  shopName: string;
+  totalVisits: number;
+  todayVisits: number;
+  thisMonthVisits: number;
+  lastMonthVisits: number;
+  growthRate: number;
+  trendDirection: 'up' | 'down' | 'flat';
+  range: string;
+  timeline: ShopTrafficPointDto[];
+  monthlyBreakdown: ShopTrafficMonthDto[];
 }
 
 export interface ReferredStoreDto {
