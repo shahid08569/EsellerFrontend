@@ -1469,8 +1469,11 @@ export class AdminService {
     );
   }
 
-  getShopTrafficDetail(shopId: string, range = '30d'): Observable<ShopTrafficSummaryDto> {
-    return this.api.get<ShopTrafficSummaryDto>(`/admin/shops/${shopId}/traffic?range=${encodeURIComponent(range)}`);
+  getShopTrafficDetail(shopId: string, range = '30d', startDate?: string, endDate?: string): Observable<ShopTrafficSummaryDto> {
+    let url = `/admin/shops/${shopId}/traffic?range=${encodeURIComponent(range)}`;
+    if (startDate) url += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
+    return this.api.get<ShopTrafficSummaryDto>(url);
   }
 
   overrideMonthlyTraffic(shopId: string, data: { year: number; month: number; totalVisits: number; uniqueVisitors?: number; note?: string }): Observable<any> {

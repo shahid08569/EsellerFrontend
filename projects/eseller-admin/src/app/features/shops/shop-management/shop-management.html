@@ -879,9 +879,7 @@
                   <th class="px-4 py-3">Owner / Merchant</th>
                   <th class="px-4 py-3 text-right">Today</th>
                   <th class="px-4 py-3 text-right">This Month</th>
-                  <th class="px-4 py-3 text-right">All-Time</th>
                   <th class="px-4 py-3 text-center">Trend</th>
-                  <th class="px-4 py-3 text-center">Rating</th>
                   <th class="px-4 py-3 text-right">Action</th>
                 </tr>
               </thead>
@@ -913,9 +911,6 @@
                     <td class="px-4 py-3.5 text-right font-black text-indigo-700">
                       {{ item.thisMonthVisits | number }}
                     </td>
-                    <td class="px-4 py-3.5 text-right font-black text-emerald-700">
-                      {{ item.totalVisits | number }}
-                    </td>
                     <td class="px-4 py-3.5 text-center">
                       @if (item.growthRate >= 0) {
                         <span class="inline-flex items-center gap-1 text-[11px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200">
@@ -927,20 +922,33 @@
                         </span>
                       }
                     </td>
-                    <td class="px-4 py-3.5 text-center font-bold text-amber-600">
-                      ★ {{ item.rating ? item.rating.toFixed(1) : '5.0' }}
-                    </td>
                     <td class="px-4 py-3.5 text-right">
-                      <button 
-                        type="button" 
-                        (click)="openTrafficDetailModal(item)" 
-                        class="px-3 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs transition-colors shadow-xs cursor-pointer inline-flex items-center gap-1.5">
-                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.264 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                        </svg>
-                        <span>View Detail & Edit Traffic</span>
-                      </button>
+                      <div class="flex items-center justify-end gap-2 whitespace-nowrap">
+                        <!-- View Detail Button: Compact White/Clean -->
+                        <button 
+                          type="button" 
+                          (click)="openTrafficDetailModal(item)" 
+                          title="View traffic statistics, trajectory & records"
+                          class="px-2.5 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 font-bold text-[11px] transition-colors border border-slate-200 hover:border-slate-300 shadow-2xs cursor-pointer inline-flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.264 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                          <span>View Detail</span>
+                        </button>
+
+                        <!-- Edit Traffic Button: Compact Wheat/Warm -->
+                        <button 
+                          type="button" 
+                          (click)="openTrafficEditModal(item)" 
+                          title="Manually set or override storefront visitors"
+                          class="px-2.5 py-1.5 rounded-lg bg-[#faf6ee] hover:bg-[#f3ece0] text-amber-900 font-bold text-[11px] transition-colors border border-amber-200/90 shadow-2xs cursor-pointer inline-flex items-center gap-1">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-amber-700" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                          </svg>
+                          <span>Edit Traffic</span>
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 }
@@ -2163,27 +2171,51 @@
           </div>
         </div>
 
-        <div class="flex items-center gap-2">
+        <div class="flex flex-col sm:flex-row sm:items-center gap-2">
           <!-- Time Range Selector -->
           <div class="inline-flex items-center rounded-xl bg-white p-1 border border-slate-200 shadow-2xs">
             @for (opt of [
-              { key: '7d', label: '7D' },
-              { key: '30d', label: '30D' },
-              { key: 'month', label: 'Month' },
-              { key: '90d', label: '90D' }
+              { key: '1w', label: '1 Week' },
+              { key: '1m', label: '1 Month' },
+              { key: '1y', label: '1 Year' },
+              { key: 'all', label: 'All' },
+              { key: 'custom', label: 'Custom' }
             ]; track opt.key) {
               <button
                 type="button"
                 (click)="setTrafficDetailRange(opt.key)"
                 class="px-2.5 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer"
-                [class.bg-orange-600]="trafficDetailRange() === opt.key"
-                [class.text-white]="trafficDetailRange() === opt.key"
-                [class.text-slate-600]="trafficDetailRange() !== opt.key"
-                [class.hover:bg-slate-100]="trafficDetailRange() !== opt.key">
+                [class.bg-orange-600]="(trafficDetailRange() === opt.key && !showTrafficCustomPicker()) || (opt.key === 'custom' && showTrafficCustomPicker())"
+                [class.text-white]="(trafficDetailRange() === opt.key && !showTrafficCustomPicker()) || (opt.key === 'custom' && showTrafficCustomPicker())"
+                [class.text-slate-600]="(trafficDetailRange() !== opt.key) && !(opt.key === 'custom' && showTrafficCustomPicker())"
+                [class.hover:bg-slate-100]="(trafficDetailRange() !== opt.key) && !(opt.key === 'custom' && showTrafficCustomPicker())">
                 {{ opt.label }}
               </button>
             }
           </div>
+
+          <!-- Custom Date Range Sub-Bar -->
+          @if (showTrafficCustomPicker()) {
+            <div class="inline-flex items-center gap-1.5 p-1 rounded-xl bg-white border border-slate-200 text-xs">
+              <input
+                type="date"
+                [ngModel]="trafficCustomStartDate()"
+                (ngModelChange)="trafficCustomStartDate.set($event)"
+                class="px-2 py-0.5 rounded-lg border border-slate-200 text-slate-800 text-[11px] font-semibold outline-hidden" />
+              <span class="text-slate-400 font-bold text-[10px]">to</span>
+              <input
+                type="date"
+                [ngModel]="trafficCustomEndDate()"
+                (ngModelChange)="trafficCustomEndDate.set($event)"
+                class="px-2 py-0.5 rounded-lg border border-slate-200 text-slate-800 text-[11px] font-semibold outline-hidden" />
+              <button
+                type="button"
+                (click)="applyTrafficCustomRange()"
+                class="px-2.5 py-1 rounded-lg bg-orange-600 hover:bg-orange-700 text-white font-bold text-[11px] cursor-pointer shadow-xs transition-colors">
+                Apply
+              </button>
+            </div>
+          }
 
           <button 
             type="button" 
@@ -2235,18 +2267,20 @@
             </div>
           </div>
 
-          <!-- DYNAMIC SVG CHART -->
+          <!-- DYNAMIC SVG CHART (Flicker-Free Stable Layout) -->
           <div class="rounded-2xl border border-slate-200 p-4 bg-white shadow-2xs">
-            <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center justify-between mb-3 min-h-[32px]">
               <div>
                 <h4 class="text-xs font-black uppercase tracking-wider text-slate-700">Visitor Trend Graph</h4>
                 <p class="text-[11px] text-slate-400">Dynamic daily visitor progression over selected range</p>
               </div>
-              @if (hoverTrafficPoint(); as hover) {
-                <div class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold shadow-xs">
-                  {{ hover.date | date:'mediumDate' }}: <span class="text-orange-400 font-black">{{ hover.visits | number }} visits</span> ({{ hover.uniqueVisitors | number }} unique)
-                </div>
-              }
+              <div class="h-7 flex items-center">
+                @if (hoverTrafficPoint(); as hover) {
+                  <div class="px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-bold shadow-xs">
+                    {{ hover.date | date:'mediumDate' }}: <span class="text-orange-400 font-black">{{ hover.visits | number }} visits</span> ({{ hover.uniqueVisitors | number }} unique)
+                  </div>
+                }
+              </div>
             </div>
 
             <div class="relative w-full h-48 bg-slate-50/60 rounded-xl p-2 border border-slate-100 flex items-center justify-center overflow-hidden">
@@ -2269,30 +2303,51 @@
 
                   <!-- Area fill -->
                   @if (modalSvgAreaPath()) {
-                    <path [attr.d]="modalSvgAreaPath()" fill="url(#adminTrafficGrad)" />
+                    <path [attr.d]="modalSvgAreaPath()" fill="url(#adminTrafficGrad)" class="pointer-events-none" />
                   }
 
                   <!-- Trend Line -->
                   @if (modalSvgPath()) {
-                    <path [attr.d]="modalSvgPath()" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+                    <path [attr.d]="modalSvgPath()" fill="none" stroke="#ea580c" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="pointer-events-none" />
                   }
 
-                  <!-- Interactive Data Points -->
-                  @for (pt of modalChartPoints(); track pt.date) {
-                    <g (mouseenter)="hoverTrafficPoint.set(pt)" (mouseleave)="hoverTrafficPoint.set(null)" class="cursor-pointer group">
-                      <circle 
-                        [attr.cx]="pt.x" 
-                        [attr.cy]="pt.y" 
-                        r="4" 
-                        class="fill-white stroke-orange-600 stroke-2 hover:r-6 hover:fill-orange-600 transition-all" />
-                      @if (pt.isManual) {
-                        <circle 
-                          [attr.cx]="pt.x" 
-                          [attr.cy]="pt.y" 
-                          r="1.5" 
-                          class="fill-amber-500" />
+                  <!-- Visual Vertical Guide Line for Active Hover Point -->
+                  @if (hoverTrafficPoint(); as hover) {
+                    @for (pt of modalChartPoints(); track pt.date) {
+                      @if (pt.date === hover.date) {
+                        <line
+                          [attr.x1]="pt.x"
+                          y1="20"
+                          [attr.x2]="pt.x"
+                          y2="180"
+                          stroke="#ea580c"
+                          stroke-width="1.5"
+                          stroke-dasharray="3 3"
+                          class="pointer-events-none opacity-80" />
                       }
-                    </g>
+                    }
+                  }
+
+                  <!-- Visual Data Circles (pointer-events: none) -->
+                  @for (pt of modalChartPoints(); track pt.date) {
+                    <circle 
+                      [attr.cx]="pt.x" 
+                      [attr.cy]="pt.y" 
+                      [attr.r]="hoverTrafficPoint()?.date === pt.date ? 6 : 4" 
+                      class="fill-white stroke-orange-600 stroke-2 pointer-events-none transition-all duration-100" />
+                  }
+
+                  <!-- Stable Invisible Hit Targets (Prevents Blinking / Flickering) -->
+                  @for (pt of modalChartPoints(); track pt.date) {
+                    <rect
+                      [attr.x]="pt.x - 12"
+                      y="0"
+                      width="24"
+                      height="200"
+                      fill="transparent"
+                      class="cursor-pointer"
+                      (mouseenter)="hoverTrafficPoint.set(pt)"
+                      (mouseleave)="hoverTrafficPoint.set(null)" />
                   }
                 </svg>
               }
@@ -2300,7 +2355,7 @@
           </div>
 
           <!-- MANUAL VISITOR OVERRIDE CONTROLLER -->
-          <div class="rounded-2xl border-2 border-orange-200 bg-orange-50/30 p-4 sm:p-5 space-y-4">
+          <div id="admin-traffic-override-card" class="rounded-2xl border-2 border-orange-200 bg-orange-50/30 p-4 sm:p-5 space-y-4">
             <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-orange-200/60 pb-3">
               <div>
                 <h4 class="text-xs font-black uppercase tracking-wider text-orange-950 flex items-center gap-2">

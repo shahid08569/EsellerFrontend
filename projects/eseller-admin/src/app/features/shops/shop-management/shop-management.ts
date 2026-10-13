@@ -88,6 +88,9 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly overrideMode = signal<'month' | 'date'>('month');
   readonly monthDetailModalOpen = signal<boolean>(false);
   readonly selectedMonthData = signal<ShopTrafficMonthDto | null>(null);
+  readonly trafficCustomStartDate = signal<string>('');
+  readonly trafficCustomEndDate = signal<string>('');
+  readonly showTrafficCustomPicker = signal<boolean>(false);
 
   readonly filteredShopTraffics = computed(() => {
     const q = (this.trafficSearch() || this.searchTerm()).trim().toLowerCase();
@@ -1279,22 +1282,66 @@ export class ShopManagement implements OnInit, OnDestroy {
   openTrafficDetailModal(shop: AdminShopTrafficItemDto): void {
     this.selectedTrafficShop.set(shop);
     this.isTrafficModalOpen.set(true);
+    this.showTrafficCustomPicker.set(false);
     this.overrideMonthVisits.set(Number(shop.thisMonthVisits) || 0);
     this.overrideDateVisits.set(Number(shop.todayVisits) || 0);
     this.loadShopTrafficDetail(shop.shopId, this.trafficDetailRange());
+  }
+
+  openTrafficEditModal(shop: AdminShopTrafficItemDto): void {
+    this.openTrafficDetailModal(shop);
+    this.overrideMode.set('month');
+    setTimeout(() => {
+      const el = document.getElementById('admin-traffic-override-card');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 200);
   }
 
   closeTrafficDetailModal(): void {
     this.isTrafficModalOpen.set(false);
     this.selectedTrafficShop.set(null);
     this.shopTrafficDetail.set(null);
+    this.showTrafficCustomPicker.set(false);
   }
 
   setTrafficDetailRange(range: string): void {
+    if (range === 'custom') {
+      this.showTrafficCustomPicker.set(true);
+      if (!this.trafficCustomStartDate()) {
+        const d = new Date();
+        d.setDate(d.getDate() - 14);
+        this.trafficCustomStartDate.set(d.toISOString().substring(0, 10));
+      }
+      if (!this.trafficCustomEndDate()) {
+        this.trafficCustomEndDate.set(new Date().toISOString().substring(0, 10));
+      }
+      return;
+    }
+    this.showTrafficCustomPicker.set(false);
     this.trafficDetailRange.set(range);
     const shop = this.selectedTrafficShop();
     if (shop) {
       this.loadShopTrafficDetail(shop.shopId, range);
+    }
+  }
+
+  applyTrafficCustomRange(): void {
+    const s = this.trafficCustomStartDate();
+    const e = this.trafficCustomEndDate();
+    if (!s || !e) return;
+    this.trafficDetailRange.set('custom');
+    const shop = this.selectedTrafficShop();
+    if (shop) {
+      this.trafficDetailLoading.set(true);
+      this.adminService.getShopTrafficDetail(shop.shopId, 'custom', s, e).subscribe({
+        next: (res) => {
+          this.shopTrafficDetail.set(res);
+          this.trafficDetailLoading.set(false);
+        },
+        error: () => this.trafficDetailLoading.set(false)
+      });
     }
   }
 

@@ -1,12 +1,13 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
 import { SellerService, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto } from '../../core/services/seller.service';
 import { SkeletonLayout } from 'eseller-shared';
 
 @Component({
   selector: 'app-shop-traffic',
   standalone: true,
-  imports: [CommonModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './shop-traffic.html'
 })
 export class ShopTraffic implements OnInit {
@@ -14,7 +15,10 @@ export class ShopTraffic implements OnInit {
   readonly Math = Math;
 
   readonly isLoading = signal<boolean>(true);
-  readonly selectedRange = signal<string>('30d');
+  readonly selectedRange = signal<string>('1m');
+  readonly customStartDate = signal<string>('');
+  readonly customEndDate = signal<string>('');
+  readonly showCustomPicker = signal<boolean>(false);
   readonly traffic = signal<ShopTrafficSummaryDto | null>(null);
   readonly activeHoverPoint = signal<ShopTrafficPointDto | null>(null);
   readonly activeTab = signal<'daily' | 'monthly'>('daily');
@@ -118,9 +122,38 @@ export class ShopTraffic implements OnInit {
   }
 
   setRange(range: string): void {
+    if (range === 'custom') {
+      this.showCustomPicker.set(true);
+      if (!this.customStartDate()) {
+        const d = new Date();
+        d.setDate(d.getDate() - 14);
+        this.customStartDate.set(d.toISOString().substring(0, 10));
+      }
+      if (!this.customEndDate()) {
+        this.customEndDate.set(new Date().toISOString().substring(0, 10));
+      }
+      return;
+    }
+    this.showCustomPicker.set(false);
     this.selectedRange.set(range);
     this.timelinePage.set(1);
     this.loadTraffic(range);
+  }
+
+  applyCustomRange(): void {
+    const s = this.customStartDate();
+    const e = this.customEndDate();
+    if (!s || !e) return;
+    this.selectedRange.set('custom');
+    this.timelinePage.set(1);
+    this.isLoading.set(true);
+    this.sellerService.getShopTraffic('custom', s, e).subscribe({
+      next: (res) => {
+        this.traffic.set(res);
+        this.isLoading.set(false);
+      },
+      error: () => this.isLoading.set(false)
+    });
   }
 
   setTimelineSort(sort: 'newest' | 'oldest'): void {
@@ -159,7 +192,7 @@ export class ShopTraffic implements OnInit {
 
   loadTraffic(range: string): void {
     this.isLoading.set(true);
-    this.sellerService.getShopTraffic(range).subscribe({
+    this.sellerService.getShopTraffic(range, this.customStartDate() || undefined, this.customEndDate() || undefined).subscribe({
       next: (res) => {
         this.traffic.set(res);
         this.isLoading.set(false);

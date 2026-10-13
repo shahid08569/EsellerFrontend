@@ -496,8 +496,11 @@ export class SellerService {
   }
 
   /** GET /Shops/my/traffic */
-  getShopTraffic(range = '30d'): Observable<ShopTrafficSummaryDto> {
-    return this.api.get<ShopTrafficSummaryDto>(`/Shops/my/traffic?range=${encodeURIComponent(range)}`);
+  getShopTraffic(range = '30d', startDate?: string, endDate?: string): Observable<ShopTrafficSummaryDto> {
+    let url = `/Shops/my/traffic?range=${encodeURIComponent(range)}`;
+    if (startDate) url += `&startDate=${encodeURIComponent(startDate)}`;
+    if (endDate) url += `&endDate=${encodeURIComponent(endDate)}`;
+    return this.api.get<ShopTrafficSummaryDto>(url);
   }
 }
 
