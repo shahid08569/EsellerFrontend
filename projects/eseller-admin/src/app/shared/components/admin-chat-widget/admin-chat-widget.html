@@ -333,9 +333,9 @@
 
                     @if (activeMenuMessageId() === msg.id) {
                       <div
-                        class="absolute z-30 w-32 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-700"
-                        [class.right-0]="msg.sender === 'admin'"
-                        [class.left-0]="msg.sender !== 'admin'"
+                        class="absolute z-30 w-32 bg-white rounded-xl shadow-xl border border-slate-200/80 py-1 text-xs text-slate-700 shadow-slate-900/10"
+                        [class.left-0]="msg.sender === 'admin'"
+                        [class.right-0]="msg.sender !== 'admin'"
                         [class.bottom-full]="menuOpenUpwards()"
                         [class.mb-1]="menuOpenUpwards()"
                         [class.top-5]="!menuOpenUpwards()"

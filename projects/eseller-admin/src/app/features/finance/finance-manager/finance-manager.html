@@ -165,35 +165,39 @@
                     </span>
                   </td>
                   <td class="py-3.5 px-4 text-right">
-                    @if (w.status === 'Pending') {
-                      <div class="flex items-center justify-end gap-2">
+                    @if (canManageFinance()) {
+                      @if (w.status === 'Pending') {
+                        <div class="flex items-center justify-end gap-2">
+                          <button 
+                            type="button" 
+                            (click)="approveWithdrawal(w)"
+                            [disabled]="actionInProgress() === w.id"
+                            class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
+                            Approve
+                          </button>
+                          <button 
+                            type="button" 
+                            (click)="openRejectModal(w)"
+                            [disabled]="actionInProgress() === w.id"
+                            class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer transition-colors border border-rose-200">
+                            Reject
+                          </button>
+                        </div>
+                      } @else if (w.status === 'Approved') {
                         <button 
                           type="button" 
-                          (click)="approveWithdrawal(w)"
+                          (click)="openProcessModal(w)"
                           [disabled]="actionInProgress() === w.id"
-                          class="px-2.5 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
-                          Approve
+                          class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
+                          Mark Paid & Process →
                         </button>
-                        <button 
-                          type="button" 
-                          (click)="openRejectModal(w)"
-                          [disabled]="actionInProgress() === w.id"
-                          class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold cursor-pointer transition-colors border border-rose-200">
-                          Reject
-                        </button>
-                      </div>
-                    } @else if (w.status === 'Approved') {
-                      <button 
-                        type="button" 
-                        (click)="openProcessModal(w)"
-                        [disabled]="actionInProgress() === w.id"
-                        class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold cursor-pointer transition-colors shadow-2xs">
-                        Mark Paid & Process →
-                      </button>
+                      } @else {
+                        <span class="text-xs text-gray-400 font-mono">
+                          {{ w.transactionReference || 'Completed' }}
+                        </span>
+                      }
                     } @else {
-                      <span class="text-xs text-gray-400 font-mono">
-                        {{ w.transactionReference || 'Completed' }}
-                      </span>
+                      <span class="text-xs text-gray-400 font-semibold italic">View Only</span>
                     }
                   </td>
                 </tr>

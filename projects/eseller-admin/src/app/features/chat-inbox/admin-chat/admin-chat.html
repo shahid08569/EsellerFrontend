@@ -260,59 +260,56 @@
                   </div>
                 }
 
+                @if (msg.isFromAdmin && !msg.isDeletedForEveryone && !isSelectionMode()) {
+                  <div class="relative shrink-0 mb-1">
+                    <button
+                      type="button"
+                      (click)="toggleMessageMenu(msg.id, $event)"
+                      class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
+                      title="Options">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+
+                    @if (activeMenuMessageId() === msg.id) {
+                      <div
+                        class="absolute left-0 z-30 w-32 bg-white rounded-xl shadow-xl border border-slate-200/80 py-1 text-xs text-slate-700 shadow-slate-900/10"
+                        [class.top-5]="!menuOpenUpwards()"
+                        [class.bottom-full]="menuOpenUpwards()"
+                        [class.mb-1]="menuOpenUpwards()"
+                        (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          (click)="startEditMessage(msg)"
+                          class="w-full text-left px-3 py-1.5 hover:bg-orange-50 hover:text-orange-600 cursor-pointer font-medium">
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          (click)="startSelectionMode(msg.id)"
+                          class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 cursor-pointer font-medium">
+                          Select
+                        </button>
+                        <button
+                          type="button"
+                          (click)="openDeleteModal(msg)"
+                          class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 cursor-pointer font-medium">
+                          Delete
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+
                 <div [class]="msg.isFromAdmin
                   ? 'max-w-md bg-orange-600 text-white rounded-2xl rounded-tr-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5 relative'
                   : 'max-w-md bg-white border border-slate-200 text-slate-800 rounded-2xl rounded-tl-xs px-4 py-2.5 text-xs shadow-xs space-y-0.5 relative'">
                   
-                  <div class="flex items-center justify-between gap-3">
+                  <div class="flex items-center justify-between gap-3 mb-0.5">
                     <div class="font-bold text-[10px]" [class]="msg.isFromAdmin ? 'text-orange-100' : 'text-slate-400'">
                       {{ msg.senderName || (msg.isFromAdmin ? 'Management' : 'Customer') }}
                     </div>
-
-                    @if (!msg.isDeletedForEveryone && !isSelectionMode()) {
-                      <div class="relative">
-                        <button
-                          type="button"
-                          (click)="toggleMessageMenu(msg.id, $event)"
-                          class="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded cursor-pointer"
-                          [class]="msg.isFromAdmin ? 'text-orange-200 hover:text-white hover:bg-orange-700/60' : 'text-slate-400 hover:text-slate-700 hover:bg-slate-100'"
-                          title="Message options">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
-                          </svg>
-                        </button>
-
-                        @if (activeMenuMessageId() === msg.id) {
-                          <div
-                            class="absolute right-0 z-30 w-32 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-xs text-slate-700"
-                            [class.top-5]="!menuOpenUpwards()"
-                            [class.bottom-full]="menuOpenUpwards()"
-                            [class.mb-1]="menuOpenUpwards()"
-                            (click)="$event.stopPropagation()">
-                            @if (msg.isFromAdmin) {
-                              <button
-                                type="button"
-                                (click)="startEditMessage(msg)"
-                                class="w-full text-left px-3 py-1.5 hover:bg-orange-50 hover:text-orange-600 cursor-pointer font-medium">
-                                Edit
-                              </button>
-                            }
-                            <button
-                              type="button"
-                              (click)="startSelectionMode(msg.id)"
-                              class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 cursor-pointer font-medium">
-                              Select
-                            </button>
-                            <button
-                              type="button"
-                              (click)="openDeleteModal(msg)"
-                              class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 cursor-pointer font-medium">
-                              Delete
-                            </button>
-                          </div>
-                        }
-                      </div>
-                    }
                   </div>
 
                   @if (msg.isDeletedForEveryone) {
@@ -361,6 +358,42 @@
                     }
                   </div>
                 </div>
+
+                @if (!msg.isFromAdmin && !msg.isDeletedForEveryone && !isSelectionMode()) {
+                  <div class="relative shrink-0 mb-1">
+                    <button
+                      type="button"
+                      (click)="toggleMessageMenu(msg.id, $event)"
+                      class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
+                      title="Options">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      </svg>
+                    </button>
+
+                    @if (activeMenuMessageId() === msg.id) {
+                      <div
+                        class="absolute right-0 z-30 w-32 bg-white rounded-xl shadow-xl border border-slate-200/80 py-1 text-xs text-slate-700 shadow-slate-900/10"
+                        [class.top-5]="!menuOpenUpwards()"
+                        [class.bottom-full]="menuOpenUpwards()"
+                        [class.mb-1]="menuOpenUpwards()"
+                        (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          (click)="startSelectionMode(msg.id)"
+                          class="w-full text-left px-3 py-1.5 hover:bg-slate-50 text-slate-700 cursor-pointer font-medium">
+                          Select
+                        </button>
+                        <button
+                          type="button"
+                          (click)="openDeleteModal(msg)"
+                          class="w-full text-left px-3 py-1.5 hover:bg-rose-50 text-rose-600 cursor-pointer font-medium">
+                          Delete
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
 
                 @if (isSelectionMode() && msg.isFromAdmin) {
                   <div class="shrink-0 mb-1 cursor-pointer" (click)="toggleSelectMessage(msg.id); $event.stopPropagation()">

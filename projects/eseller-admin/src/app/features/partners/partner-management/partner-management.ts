@@ -212,6 +212,23 @@ export class PartnerManagement implements OnInit {
     });
   }
 
+  activatePartner(partner: AdminPartnerDto): void {
+    if (!this.canAddPartner()) {
+      this.toast.show('Maximum limit of 3 active partners reached. Deactivate an existing partner first.', 'error');
+      return;
+    }
+    this.adminService.activatePartner(partner.id).subscribe({
+      next: () => {
+        this.toast.show(`Partner "${partner.email}" activated successfully.`, 'success');
+        this.loadPartners();
+      },
+      error: (err) => {
+        const msg = err?.error?.error || 'Failed to activate partner';
+        this.toast.show(msg, 'error');
+      }
+    });
+  }
+
   closeModal(): void {
     this.modalOpen.set(false);
     this.editingPartner.set(null);
@@ -243,7 +260,11 @@ export class PartnerManagement implements OnInit {
         },
         error: (err) => {
           this.isSaving.set(false);
-          this.toast.show(err?.error?.error || 'Failed to create partner account', 'error');
+          const errMsg = err?.error?.error 
+            || (err?.error?.errors ? Object.values(err.error.errors).flat().join(', ') : null)
+            || err?.message 
+            || 'Failed to create partner account';
+          this.toast.show(errMsg, 'error');
         }
       });
     } else {
@@ -251,16 +272,24 @@ export class PartnerManagement implements OnInit {
       if (!partner) return;
 
       this.isSaving.set(true);
-      this.adminService.updatePartner(partner.id, selectedPerms).subscribe({
+      const newPwd = this.formPassword().trim() || undefined;
+      this.adminService.updatePartner(partner.id, selectedPerms, newPwd).subscribe({
         next: () => {
           this.isSaving.set(false);
-          this.toast.show(`Permissions updated for "${partner.email}"`, 'success');
+          const msg = newPwd 
+            ? `Permissions and password updated for "${partner.email}"`
+            : `Permissions updated for "${partner.email}"`;
+          this.toast.show(msg, 'success');
           this.closeModal();
           this.loadPartners();
         },
         error: (err) => {
           this.isSaving.set(false);
-          this.toast.show(err?.error?.error || 'Failed to update partner permissions', 'error');
+          const errMsg = err?.error?.error 
+            || (err?.error?.errors ? Object.values(err.error.errors).flat().join(', ') : null)
+            || err?.message 
+            || 'Failed to update partner permissions';
+          this.toast.show(errMsg, 'error');
         }
       });
     }

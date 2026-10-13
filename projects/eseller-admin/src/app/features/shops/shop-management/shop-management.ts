@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
 import { AuthStore, ToastService, SignalRService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto, AdminShopTrafficItemDto, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
 
@@ -36,6 +37,7 @@ export interface TierUpgradeRequest {
 })
 export class ShopManagement implements OnInit, OnDestroy {
   private readonly adminService = inject(AdminService);
+  readonly permissionService = inject(AdminPermissionService);
   private readonly toast = inject(ToastService);
   private readonly router = inject(Router);
   private readonly route = inject(ActivatedRoute);
@@ -45,6 +47,8 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   /** Only Management can create / edit / delete tier packages. */
   readonly canManageTiers = computed(() => this.authStore.hasRole('SuperAdmin'));
+  readonly canManageTraffic = computed(() => this.permissionService.has('traffic:manage'));
+  readonly canManageShops = computed(() => this.permissionService.has('shops:manage'));
 
   readonly isLoading = signal<boolean>(true);
   readonly tiersLoading = signal<boolean>(true);
@@ -1295,6 +1299,10 @@ export class ShopManagement implements OnInit, OnDestroy {
   }
 
   openTrafficEditModal(shop: AdminShopTrafficItemDto): void {
+    if (!this.canManageTraffic()) {
+      this.toast.show('You do not have permission to adjust merchant traffic analytics.', 'warning');
+      return;
+    }
     this.openTrafficDetailModal(shop);
     this.overrideMode.set('range');
     setTimeout(() => {

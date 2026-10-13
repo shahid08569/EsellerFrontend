@@ -6,6 +6,7 @@ import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import {
   AdminCommissionDto,
   AdminWithdrawalDto,
@@ -33,8 +34,11 @@ interface SellerWalletRow extends AdminSellerWalletDto {
 })
 export class FinanceManager implements OnInit {
   private readonly adminService = inject(AdminService);
+  readonly permissionService = inject(AdminPermissionService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+
+  readonly canManageFinance = computed(() => this.permissionService.has('finance:manage'));
 
   readonly isLoading = signal<boolean>(true);
   readonly activeTab = signal<FinanceTab>('withdrawals');

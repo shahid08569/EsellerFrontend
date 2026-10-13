@@ -204,9 +204,9 @@
 
                       @if (activeMenuMessageId() === msg.id) {
                         <div
-                          class="absolute z-30 w-32 bg-white rounded-xl shadow-lg border border-gray-100 py-1 text-xs text-gray-700"
-                          [class.right-0]="msg.isMe"
-                          [class.left-0]="!msg.isMe"
+                          class="absolute z-30 w-32 bg-white rounded-xl shadow-xl border border-gray-200/80 py-1 text-xs text-gray-700 shadow-slate-900/10"
+                          [class.left-0]="msg.isMe"
+                          [class.right-0]="!msg.isMe"
                           [class.bottom-full]="menuOpenUpwards()"
                           [class.mb-1]="menuOpenUpwards()"
                           [class.top-5]="!menuOpenUpwards()"

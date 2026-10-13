@@ -896,14 +896,21 @@ export class AdminService {
     return this.api.post<any>('/admin/partners', payload);
   }
 
+  activatePartner(id: string): Observable<any> {
+    return this.api.put<any>(`/admin/partners/${id}/activate`, {});
+  }
+
   deactivatePartner(id: string): Observable<any> {
     return this.api.put<any>(`/admin/partners/${id}/deactivate`, {});
   }
 
-  updatePartner(id: string, permissions: string | string[]): Observable<any> {
-    const payload = {
+  updatePartner(id: string, permissions: string | string[], password?: string): Observable<any> {
+    const payload: any = {
       permissions: Array.isArray(permissions) ? permissions.join(',') : permissions
     };
+    if (password && password.trim()) {
+      payload.password = password.trim();
+    }
     return this.api.put<any>(`/admin/partners/${id}`, payload);
   }
 
