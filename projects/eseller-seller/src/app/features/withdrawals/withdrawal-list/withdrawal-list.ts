@@ -184,7 +184,7 @@ export class WithdrawalList implements OnInit {
         next: () => {
           this.isSubmittingWithdraw.set(false);
           this.requestPayoutModalOpen.set(false);
-          this.toast.show(`Withdrawal request of $ ${amount} submitted to Super Admin.`, 'success');
+          this.toast.show(`Withdrawal request of $ ${amount} submitted to Management.`, 'success');
           this.loadData();
         },
         error: (err) => {

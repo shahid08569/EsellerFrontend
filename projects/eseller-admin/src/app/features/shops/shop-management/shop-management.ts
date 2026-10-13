@@ -1362,7 +1362,7 @@ export class ShopManagement implements OnInit, OnDestroy {
     this.overrideMonth.set(m.month);
     this.overrideMonthVisits.set(Number(m.visits) || 0);
     this.overrideMonthUnique.set(Number(m.uniqueVisitors) || null);
-    this.overrideMonthNote.set(m.isManual ? 'Manual override by Admin' : '');
+    this.overrideMonthNote.set(m.isManual ? 'Management traffic adjustment' : '');
     this.monthDetailModalOpen.set(true);
   }
 
