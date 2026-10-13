@@ -305,8 +305,8 @@
     </div>
 
     <!-- Breakdown Table Section -->
-    <div class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+    <div class="p-5 sm:p-6 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-xs space-y-4">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h3 class="text-base font-black text-slate-900 dark:text-white">
             Visitor Records Breakdown
@@ -344,101 +344,240 @@
 
       <!-- Tab 1: Daily Timeline Table -->
       @if (activeTab() === 'daily') {
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider text-[10px] font-black border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="py-3 px-4">Date</th>
-                <th class="py-3 px-4">Storefront Visits</th>
-                <th class="py-3 px-4">Unique Visitors (Est.)</th>
-                <th class="py-3 px-4 text-right">Traffic Share</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-200">
-              @for (item of traffic()?.timeline || []; track item.date) {
-                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                  <td class="py-3 px-4 font-bold flex items-center gap-2">
-                    <span class="w-2 h-2 rounded-full" [class.bg-emerald-500]="item.visits > 0" [class.bg-slate-300]="item.visits === 0"></span>
-                    <span>{{ item.label }} ({{ item.date }})</span>
-                    @if (item.isManual) {
-                      <span class="px-1.5 py-0.5 rounded text-[9px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                        Manual Entry
-                      </span>
-                    }
-                  </td>
-                  <td class="py-3 px-4 font-black tabular-nums">
-                    {{ item.visits | number }}
-                  </td>
-                  <td class="py-3 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
-                    {{ item.uniqueVisitors | number }}
-                  </td>
-                  <td class="py-3 px-4 text-right tabular-nums">
-                    @if ((traffic()?.thisMonthVisits ?? 0) > 0) {
-                      <span class="font-bold text-emerald-600 dark:text-emerald-400">
-                        {{ ((item.visits / (traffic()?.thisMonthVisits || 1)) * 100) | number:'1.1-1' }}%
-                      </span>
-                    } @else {
-                      <span class="text-slate-400">0%</span>
-                    }
-                  </td>
-                </tr>
-              } @empty {
+        <div class="space-y-3">
+          <!-- Filters Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+            <!-- Sort Filter -->
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400 font-semibold text-[11px]">Sort:</span>
+              <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+                <button
+                  type="button"
+                  (click)="setTimelineSort('newest')"
+                  [class.bg-emerald-600]="timelineSort() === 'newest'"
+                  [class.text-white]="timelineSort() === 'newest'"
+                  [class.text-slate-300]="timelineSort() !== 'newest'"
+                  class="px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer">
+                  Newest First
+                </button>
+                <button
+                  type="button"
+                  (click)="setTimelineSort('oldest')"
+                  [class.bg-emerald-600]="timelineSort() === 'oldest'"
+                  [class.text-white]="timelineSort() === 'oldest'"
+                  [class.text-slate-300]="timelineSort() !== 'oldest'"
+                  class="px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer">
+                  Oldest First
+                </button>
+              </div>
+            </div>
+
+            <!-- Page Size -->
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400 font-semibold text-[11px]">Rows per page:</span>
+              <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+                @for (size of [10, 15, 25]; track size) {
+                  <button
+                    type="button"
+                    (click)="setTimelinePageSize(size)"
+                    [class.bg-emerald-600]="timelinePageSize() === size"
+                    [class.text-white]="timelinePageSize() === size"
+                    [class.text-slate-300]="timelinePageSize() !== size"
+                    class="px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer">
+                    {{ size }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Table with White Text on Professional Dark Container -->
+          <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 shadow-inner">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-900/90 text-slate-300 uppercase tracking-wider text-[11px] font-black border-b border-slate-800">
                 <tr>
-                  <td colspan="4" class="py-8 text-center text-slate-400 font-medium">
-                    No visit records found for this period.
-                  </td>
+                  <th class="py-3.5 px-4 text-white">Date</th>
+                  <th class="py-3.5 px-4 text-white">Storefront Visits</th>
+                  <th class="py-3.5 px-4 text-white">Unique Visitors (Est.)</th>
+                  <th class="py-3.5 px-4 text-right text-white">Traffic Share</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-slate-800/80">
+                @for (item of paginatedTimeline(); track item.date) {
+                  <tr class="hover:bg-slate-900/60 transition-colors">
+                    <td class="py-3.5 px-4 font-bold text-white flex items-center gap-2.5">
+                      <span class="w-2 h-2 rounded-full" [class.bg-emerald-400]="item.visits > 0" [class.bg-slate-600]="item.visits === 0"></span>
+                      <span class="text-white">{{ item.label }} ({{ item.date }})</span>
+                    </td>
+                    <td class="py-3.5 px-4 font-black tabular-nums text-white text-sm">
+                      {{ item.visits | number }}
+                    </td>
+                    <td class="py-3.5 px-4 text-white font-medium tabular-nums">
+                      {{ item.uniqueVisitors | number }}
+                    </td>
+                    <td class="py-3.5 px-4 text-right tabular-nums">
+                      @if ((traffic()?.thisMonthVisits ?? 0) > 0) {
+                        <span class="font-bold text-emerald-400">
+                          {{ ((item.visits / (traffic()?.thisMonthVisits || 1)) * 100) | number:'1.1-1' }}%
+                        </span>
+                      } @else {
+                        <span class="text-slate-400">0%</span>
+                      }
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="py-10 text-center text-slate-300 font-medium">
+                      No visit records found for this period.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="flex items-center justify-between px-2 pt-1 text-xs">
+            <span class="text-slate-500 dark:text-slate-400">
+              Showing {{ (timelinePage() - 1) * timelinePageSize() + 1 }} to {{ Math.min(timelinePage() * timelinePageSize(), sortedTimeline().length) }} of {{ sortedTimeline().length }} days
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="setTimelinePage(timelinePage() - 1)"
+                [disabled]="timelinePage() === 1"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                Previous
+              </button>
+              <span class="text-slate-700 dark:text-slate-300 font-bold px-1">
+                Page {{ timelinePage() }} of {{ timelineTotalPages() }}
+              </span>
+              <button
+                type="button"
+                (click)="setTimelinePage(timelinePage() + 1)"
+                [disabled]="timelinePage() >= timelineTotalPages()"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       }
 
       <!-- Tab 2: Monthly Breakdown Table -->
       @if (activeTab() === 'monthly') {
-        <div class="overflow-x-auto rounded-xl border border-slate-200 dark:border-slate-800">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-50 dark:bg-slate-800/60 text-slate-500 uppercase tracking-wider text-[10px] font-black border-b border-slate-200 dark:border-slate-800">
-              <tr>
-                <th class="py-3 px-4">Month &amp; Year</th>
-                <th class="py-3 px-4">Total Visitors</th>
-                <th class="py-3 px-4">Unique Visitors (Est.)</th>
-                <th class="py-3 px-4 text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-slate-100 dark:divide-slate-800/80 text-slate-700 dark:text-slate-200">
-              @for (m of traffic()?.monthlyBreakdown || []; track (m.year + '-' + m.month)) {
-                <tr class="hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors">
-                  <td class="py-3 px-4 font-bold">
-                    {{ m.monthName }}
-                  </td>
-                  <td class="py-3 px-4 font-black tabular-nums text-slate-900 dark:text-white">
-                    {{ m.visits | number }}
-                  </td>
-                  <td class="py-3 px-4 text-slate-500 dark:text-slate-400 tabular-nums">
-                    {{ m.uniqueVisitors | number }}
-                  </td>
-                  <td class="py-3 px-4 text-right">
-                    @if (m.isManual) {
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300 border border-amber-200 dark:border-amber-800">
-                        Admin Verified
-                      </span>
-                    } @else {
-                      <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-                        Auto Live
-                      </span>
-                    }
-                  </td>
-                </tr>
-              } @empty {
+        <div class="space-y-3">
+          <!-- Filters Toolbar -->
+          <div class="flex flex-wrap items-center justify-between gap-3 p-3 rounded-xl bg-slate-900 border border-slate-800 text-xs">
+            <!-- Sort Filter -->
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400 font-semibold text-[11px]">Sort:</span>
+              <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+                <button
+                  type="button"
+                  (click)="setMonthlySort('newest')"
+                  [class.bg-emerald-600]="monthlySort() === 'newest'"
+                  [class.text-white]="monthlySort() === 'newest'"
+                  [class.text-slate-300]="monthlySort() !== 'newest'"
+                  class="px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer">
+                  Newest First
+                </button>
+                <button
+                  type="button"
+                  (click)="setMonthlySort('oldest')"
+                  [class.bg-emerald-600]="monthlySort() === 'oldest'"
+                  [class.text-white]="monthlySort() === 'oldest'"
+                  [class.text-slate-300]="monthlySort() !== 'oldest'"
+                  class="px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer">
+                  Oldest First
+                </button>
+              </div>
+            </div>
+
+            <!-- Page Size -->
+            <div class="flex items-center gap-2">
+              <span class="text-slate-400 font-semibold text-[11px]">Rows per page:</span>
+              <div class="inline-flex rounded-lg bg-slate-800 p-0.5 border border-slate-700">
+                @for (size of [10, 15, 25]; track size) {
+                  <button
+                    type="button"
+                    (click)="setMonthlyPageSize(size)"
+                    [class.bg-emerald-600]="monthlyPageSize() === size"
+                    [class.text-white]="monthlyPageSize() === size"
+                    [class.text-slate-300]="monthlyPageSize() !== size"
+                    class="px-2.5 py-1 rounded-md text-[11px] font-bold transition cursor-pointer">
+                    {{ size }}
+                  </button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Table with White Text on Professional Dark Container -->
+          <div class="overflow-x-auto rounded-xl border border-slate-800 bg-slate-950 shadow-inner">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-900/90 text-slate-300 uppercase tracking-wider text-[11px] font-black border-b border-slate-800">
                 <tr>
-                  <td colspan="4" class="py-8 text-center text-slate-400 font-medium">
-                    No monthly records available.
-                  </td>
+                  <th class="py-3.5 px-4 text-white">Month &amp; Year</th>
+                  <th class="py-3.5 px-4 text-white">Total Visitors</th>
+                  <th class="py-3.5 px-4 text-white">Unique Visitors (Est.)</th>
+                  <th class="py-3.5 px-4 text-right text-white">Performance</th>
                 </tr>
-              }
-            </tbody>
-          </table>
+              </thead>
+              <tbody class="divide-y divide-slate-800/80">
+                @for (m of paginatedMonthly(); track (m.year + '-' + m.month)) {
+                  <tr class="hover:bg-slate-900/60 transition-colors">
+                    <td class="py-3.5 px-4 font-bold text-white">
+                      {{ m.monthName }}
+                    </td>
+                    <td class="py-3.5 px-4 font-black tabular-nums text-white text-sm">
+                      {{ m.visits | number }}
+                    </td>
+                    <td class="py-3.5 px-4 text-white font-medium tabular-nums">
+                      {{ m.uniqueVisitors | number }}
+                    </td>
+                    <td class="py-3.5 px-4 text-right">
+                      <span class="px-2.5 py-1 rounded-full text-[10px] font-black bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                        {{ ((m.visits / 30) | number:'1.0-0') }} visits / day
+                      </span>
+                    </td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="py-10 text-center text-slate-300 font-medium">
+                      No monthly records available.
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="flex items-center justify-between px-2 pt-1 text-xs">
+            <span class="text-slate-500 dark:text-slate-400">
+              Showing {{ (monthlyPage() - 1) * monthlyPageSize() + 1 }} to {{ Math.min(monthlyPage() * monthlyPageSize(), sortedMonthly().length) }} of {{ sortedMonthly().length }} months
+            </span>
+            <div class="flex items-center gap-2">
+              <button
+                type="button"
+                (click)="setMonthlyPage(monthlyPage() - 1)"
+                [disabled]="monthlyPage() === 1"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                Previous
+              </button>
+              <span class="text-slate-700 dark:text-slate-300 font-bold px-1">
+                Page {{ monthlyPage() }} of {{ monthlyTotalPages() }}
+              </span>
+              <button
+                type="button"
+                (click)="setMonthlyPage(monthlyPage() + 1)"
+                [disabled]="monthlyPage() >= monthlyTotalPages()"
+                class="px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-white font-bold disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-100 dark:hover:bg-slate-700 transition cursor-pointer">
+                Next
+              </button>
+            </div>
+          </div>
         </div>
       }
 

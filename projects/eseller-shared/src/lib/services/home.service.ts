@@ -436,4 +436,12 @@ export class HomeService {
       catchError(() => of({ success: false }))
     );
   }
+
+  /** Record a storefront visit to a seller's shop via product view/click */
+  recordProductVisit(productId: string): Observable<{ success: boolean }> {
+    if (!productId) return of({ success: false });
+    return this.api.post<{ success: boolean }>(`/shops/products/${encodeURIComponent(productId)}/visit`, {}).pipe(
+      catchError(() => of({ success: false }))
+    );
+  }
 }

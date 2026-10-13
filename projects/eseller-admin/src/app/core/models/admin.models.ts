@@ -481,12 +481,15 @@ export interface ShopTrafficMonthDto {
   monthName: string;
   visits: number;
   uniqueVisitors: number;
+  autoTrackedVisits?: number;
+  manualVisits?: number;
   isManual: boolean;
 }
 
 export interface ShopTrafficSummaryDto {
   shopId: string;
   shopName: string;
+  logoUrl?: string | null;
   totalVisits: number;
   todayVisits: number;
   thisMonthVisits: number;

@@ -86,6 +86,8 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly overrideDateUnique = signal<number | null>(null);
   readonly overrideDateNote = signal<string>('');
   readonly overrideMode = signal<'month' | 'date'>('month');
+  readonly monthDetailModalOpen = signal<boolean>(false);
+  readonly selectedMonthData = signal<ShopTrafficMonthDto | null>(null);
 
   readonly filteredShopTraffics = computed(() => {
     const q = (this.trafficSearch() || this.searchTerm()).trim().toLowerCase();
@@ -1258,7 +1260,16 @@ export class ShopManagement implements OnInit, OnDestroy {
     this.trafficLoading.set(true);
     this.adminService.getAllShopsTraffic().subscribe({
       next: (items) => {
-        this.shopTraffics.set(items || []);
+        const enriched = (items || []).map(item => {
+          if (!item.logoUrl) {
+            const match = this.activeShops().find(s => s.id === item.shopId);
+            if (match?.logoUrl) {
+              return { ...item, logoUrl: match.logoUrl };
+            }
+          }
+          return item;
+        });
+        this.shopTraffics.set(enriched);
         this.trafficLoading.set(false);
       },
       error: () => this.trafficLoading.set(false)
@@ -1298,13 +1309,50 @@ export class ShopManagement implements OnInit, OnDestroy {
     });
   }
 
-  quickEditMonth(m: ShopTrafficMonthDto): void {
-    this.overrideMode.set('month');
+  openMonthDetailModal(m: ShopTrafficMonthDto): void {
+    this.selectedMonthData.set(m);
     this.overrideYear.set(m.year);
     this.overrideMonth.set(m.month);
     this.overrideMonthVisits.set(Number(m.visits) || 0);
     this.overrideMonthUnique.set(Number(m.uniqueVisitors) || null);
     this.overrideMonthNote.set(m.isManual ? 'Manual override by Admin' : '');
+    this.monthDetailModalOpen.set(true);
+  }
+
+  closeMonthDetailModal(): void {
+    this.monthDetailModalOpen.set(false);
+    this.selectedMonthData.set(null);
+  }
+
+  saveMonthDetailOverride(): void {
+    const shop = this.selectedTrafficShop();
+    const m = this.selectedMonthData();
+    if (!shop || !m) return;
+    this.isSubmittingOverride.set(true);
+
+    this.adminService.overrideMonthlyTraffic(shop.shopId, {
+      year: Number(m.year),
+      month: Number(m.month),
+      totalVisits: Number(this.overrideMonthVisits()) || 0,
+      uniqueVisitors: this.overrideMonthUnique() ? Number(this.overrideMonthUnique()) : undefined,
+      note: this.overrideMonthNote() || undefined
+    }).subscribe({
+      next: (res) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(res?.message || `Monthly visitor count for ${m.monthName} updated successfully!`, 'success');
+        this.closeMonthDetailModal();
+        this.loadShopTrafficDetail(shop.shopId, this.trafficDetailRange());
+        this.loadAllShopsTraffic();
+      },
+      error: (err) => {
+        this.isSubmittingOverride.set(false);
+        this.toast.show(err?.error?.error || 'Failed to update monthly visitor count.', 'error');
+      }
+    });
+  }
+
+  quickEditMonth(m: ShopTrafficMonthDto): void {
+    this.openMonthDetailModal(m);
   }
 
   submitMonthlyOverride(): void {

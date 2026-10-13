@@ -19,6 +19,58 @@ export class ShopTraffic implements OnInit {
   readonly activeHoverPoint = signal<ShopTrafficPointDto | null>(null);
   readonly activeTab = signal<'daily' | 'monthly'>('daily');
 
+  // Daily Timeline sorting & pagination
+  readonly timelineSort = signal<'newest' | 'oldest'>('newest');
+  readonly timelinePage = signal<number>(1);
+  readonly timelinePageSize = signal<number>(10);
+
+  // Monthly Breakdown sorting & pagination
+  readonly monthlySort = signal<'newest' | 'oldest'>('newest');
+  readonly monthlyPage = signal<number>(1);
+  readonly monthlyPageSize = signal<number>(10);
+
+  readonly sortedTimeline = computed(() => {
+    const list = [...(this.traffic()?.timeline || [])];
+    if (this.timelineSort() === 'newest') {
+      return list.reverse();
+    }
+    return list;
+  });
+
+  readonly timelineTotalPages = computed(() => {
+    const total = this.sortedTimeline().length;
+    return Math.max(1, Math.ceil(total / this.timelinePageSize()));
+  });
+
+  readonly paginatedTimeline = computed(() => {
+    const list = this.sortedTimeline();
+    const page = this.timelinePage();
+    const size = this.timelinePageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  readonly sortedMonthly = computed(() => {
+    const list = [...(this.traffic()?.monthlyBreakdown || [])];
+    if (this.monthlySort() === 'oldest') {
+      return list.reverse();
+    }
+    return list;
+  });
+
+  readonly monthlyTotalPages = computed(() => {
+    const total = this.sortedMonthly().length;
+    return Math.max(1, Math.ceil(total / this.monthlyPageSize()));
+  });
+
+  readonly paginatedMonthly = computed(() => {
+    const list = this.sortedMonthly();
+    const page = this.monthlyPage();
+    const size = this.monthlyPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
   readonly maxVisits = computed(() => {
     const points = this.traffic()?.timeline || [];
     if (!points.length) return 10;
@@ -67,7 +119,42 @@ export class ShopTraffic implements OnInit {
 
   setRange(range: string): void {
     this.selectedRange.set(range);
+    this.timelinePage.set(1);
     this.loadTraffic(range);
+  }
+
+  setTimelineSort(sort: 'newest' | 'oldest'): void {
+    this.timelineSort.set(sort);
+    this.timelinePage.set(1);
+  }
+
+  setTimelinePageSize(size: number): void {
+    this.timelinePageSize.set(size);
+    this.timelinePage.set(1);
+  }
+
+  setTimelinePage(page: number): void {
+    const max = this.timelineTotalPages();
+    if (page >= 1 && page <= max) {
+      this.timelinePage.set(page);
+    }
+  }
+
+  setMonthlySort(sort: 'newest' | 'oldest'): void {
+    this.monthlySort.set(sort);
+    this.monthlyPage.set(1);
+  }
+
+  setMonthlyPageSize(size: number): void {
+    this.monthlyPageSize.set(size);
+    this.monthlyPage.set(1);
+  }
+
+  setMonthlyPage(page: number): void {
+    const max = this.monthlyTotalPages();
+    if (page >= 1 && page <= max) {
+      this.monthlyPage.set(page);
+    }
   }
 
   loadTraffic(range: string): void {

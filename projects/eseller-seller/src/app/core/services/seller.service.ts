@@ -515,7 +515,9 @@ export interface ShopTrafficMonthDto {
   monthName: string;
   visits: number;
   uniqueVisitors: number;
-  isManual: boolean;
+  autoTrackedVisits?: number;
+  manualVisits?: number;
+  isManual?: boolean;
 }
 
 export interface ShopTrafficSummaryDto {

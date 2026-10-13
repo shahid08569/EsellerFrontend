@@ -478,11 +478,9 @@ export class ProductDetail implements OnInit, OnDestroy {
     }
 
     if (prod.shopId) {
-      const visitKey = `visited_shop_${prod.shopId}`;
-      if (typeof sessionStorage !== 'undefined' && !sessionStorage.getItem(visitKey)) {
-        sessionStorage.setItem(visitKey, '1');
-        this.homeService.recordShopVisit(prod.shopId).subscribe();
-      }
+      this.homeService.recordShopVisit(prod.shopId).subscribe();
+    } else if (prod.id) {
+      this.homeService.recordProductVisit(prod.id).subscribe();
     }
   }
 
