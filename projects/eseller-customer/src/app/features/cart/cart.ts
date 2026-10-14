@@ -119,10 +119,93 @@ export class Cart implements OnInit {
   readonly savedAddresses = signal<AddressDto[]>([]);
   readonly selectedSavedAddressId = signal<string | null>(null);
 
+  // Item selection for selective checkout
+  readonly selectedItemIds = signal<Set<string>>(new Set());
+
+  readonly selectedItems = computed<CartItem[]>(() => {
+    const sel = this.selectedItemIds();
+    const all = this.cartService.items();
+    return all.filter((item) => sel.has(item.id));
+  });
+
+  readonly isAllSelected = computed(() => {
+    const all = this.cartService.items();
+    if (all.length === 0) return false;
+    return all.every((item) => this.selectedItemIds().has(item.id));
+  });
+
+  readonly selectedCount = computed(() => this.selectedItems().length);
+
+  readonly selectedSubtotal = computed(() =>
+    this.selectedItems().reduce((acc, item) => acc + item.price * item.quantity, 0)
+  );
+
+  readonly selectedShippingFee = computed(() => {
+    const sub = this.selectedSubtotal();
+    if (sub <= 0) return 0;
+    return sub >= 5000 ? 0 : 200;
+  });
+
+  readonly selectedTotalAmount = computed(() =>
+    this.selectedSubtotal() + this.selectedShippingFee()
+  );
+
+  readonly formattedSelectedSubtotal = computed(() =>
+    this.selectedSubtotal().toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    })
+  );
+
+  readonly formattedSelectedShipping = computed(() => {
+    const fee = this.selectedShippingFee();
+    if (fee === 0) return 'Free';
+    return `$ ${fee.toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    })}`;
+  });
+
+  readonly formattedSelectedTotal = computed(() =>
+    this.selectedTotalAmount().toLocaleString('en-US', {
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1
+    })
+  );
+
+  toggleSelectItem(itemId: string): void {
+    this.selectedItemIds.update((prev) => {
+      const next = new Set(prev);
+      if (next.has(itemId)) {
+        next.delete(itemId);
+      } else {
+        next.add(itemId);
+      }
+      return next;
+    });
+  }
+
+  toggleSelectAll(): void {
+    const all = this.cartService.items();
+    if (this.isAllSelected()) {
+      this.selectedItemIds.set(new Set());
+    } else {
+      this.selectedItemIds.set(new Set(all.map((i) => i.id)));
+    }
+  }
+
+  isItemSelected(itemId: string): boolean {
+    return this.selectedItemIds().has(itemId);
+  }
+
   ngOnInit(): void {
     if (typeof window !== 'undefined') {
       window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
+
+    // Default select all cart items
+    const all = this.cartService.items();
+    this.selectedItemIds.set(new Set(all.map((i) => i.id)));
 
     // Auto-populate customer info if logged in
     if (this.authStore.isAuthenticated()) {
@@ -261,9 +344,9 @@ export class Cart implements OnInit {
   finalizeOrderViaChat(): void {
     if (!this.authAction.requireLogin('checkout')) return;
 
-    const items = this.cartService.items();
+    const items = this.selectedItems();
     if (items.length === 0) {
-      this.orderError.set('Your cart is empty. Please add products to proceed.');
+      this.orderError.set('Please select at least one item from your cart to proceed with checkout.');
       return;
     }
 
@@ -371,9 +454,9 @@ export class Cart implements OnInit {
           notes: this.orderNotes().trim()
         },
         items: items.map((item) => ({ ...item })),
-        subtotal: this.cartService.subtotal(),
-        shippingFee: this.cartService.shippingFee(),
-        totalAmount: this.cartService.totalAmount(),
+        subtotal: this.selectedSubtotal(),
+        shippingFee: this.selectedShippingFee(),
+        totalAmount: this.selectedTotalAmount(),
         status: 'PENDING_SELLER_CONFIRMATION'
       };
 
@@ -389,7 +472,18 @@ export class Cart implements OnInit {
         } catch {}
       }
 
-      this.cartService.clearCart();
+      // Remove only the purchased items from cart
+      for (const item of items) {
+        this.cartService.removeItem(item.id);
+      }
+      this.selectedItemIds.update((prev) => {
+        const next = new Set(prev);
+        for (const item of items) {
+          next.delete(item.id);
+        }
+        return next;
+      });
+
       this.isSubmitting.set(false);
 
       const displayRef = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(finalOrderRef)

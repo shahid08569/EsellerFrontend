@@ -55,7 +55,7 @@
 
     <!-- Status Filter Tabs -->
     <div class="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none border-t border-gray-100 pt-3">
-      @for (flt of ['ALL', 'PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED']; track flt) {
+      @for (flt of ['ALL', 'PENDING', 'CONFIRMED', 'ON THE WAY', 'DELIVERED']; track flt) {
         <button
           type="button"
           (click)="setActiveTab(flt)"
@@ -66,7 +66,7 @@
           [class.text-text-secondary]="activeTab() !== flt"
           [class.hover:bg-gray-200]="activeTab() !== flt"
         >
-          {{ flt }}
+          {{ flt === 'ON THE WAY' ? 'On the Way' : (flt | titlecase) }}
           @if (flt === 'ALL') {
             <span>({{ allOrders().length }})</span>
           }
@@ -253,7 +253,7 @@
                 <p class="text-[11px] font-semibold text-text-secondary">Confirmed</p>
               </div>
 
-              <!-- Step 3: Dispatched -->
+              <!-- Step 3: On the Way -->
               <div class="space-y-1.5">
                 <div
                   class="w-8 h-8 rounded-full mx-auto flex items-center justify-center text-xs font-bold transition-colors"
@@ -264,7 +264,7 @@
                 >
                   3
                 </div>
-                <p class="text-[11px] font-semibold text-text-secondary">Dispatched</p>
+                <p class="text-[11px] font-semibold text-text-secondary">On the Way</p>
               </div>
 
               <!-- Step 4: Delivered -->
@@ -292,7 +292,7 @@
                   <div class="relative space-y-0.5">
                     <span class="absolute -left-6 top-1 w-2.5 h-2.5 rounded-full bg-emerald-600 ring-4 ring-white"></span>
                     <div class="flex items-center justify-between">
-                      <p class="text-xs font-bold text-text-primary">{{ ev.newStatus }}</p>
+                      <p class="text-xs font-bold text-text-primary">{{ getStatusDisplay(ev.newStatus) }}</p>
                       <span class="text-[10px] text-text-muted">{{ ev.changedAt | date:'medium' }}</span>
                     </div>
                     <p class="text-[11px] text-text-muted">Updated by {{ ev.changedByType || 'System' }}</p>

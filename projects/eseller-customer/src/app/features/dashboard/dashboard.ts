@@ -803,43 +803,47 @@ export class Dashboard implements OnInit {
   }
 
   getStatusBadgeClass(status: string): string {
-    const s = status.toUpperCase();
+    const s = String(status || '').toUpperCase();
     if (s.includes('PENDING')) {
       return 'bg-amber-50 text-amber-700 border-amber-200';
     }
-    if (s.includes('CONFIRM') || s.includes('PROCESS')) {
+    if (s.includes('CONFIRM')) {
       return 'bg-blue-50 text-blue-700 border-blue-200';
     }
-    if (s.includes('SHIP') || s.includes('DISPATCH')) {
+    if (s.includes('PROCESS')) {
+      return 'bg-indigo-50 text-indigo-700 border-indigo-200';
+    }
+    if (s.includes('ONTHEWAY') || s.includes('ON THE WAY') || s.includes('PACK') || s.includes('SHIP') || s.includes('DISPATCH') || s.includes('OUTFORDELIVERY') || s === '4' || s === '5' || s === '6') {
       return 'bg-purple-50 text-purple-700 border-purple-200';
     }
-    if (s.includes('DELIVER') || s.includes('COMPLETE')) {
+    if (s.includes('DELIVER') || s.includes('COMPLETE') || s === '7') {
       return 'bg-emerald-50 text-emerald-700 border-emerald-200';
     }
-    if (s.includes('CANCEL')) {
+    if (s.includes('CANCEL') || s === '8') {
       return 'bg-red-50 text-red-700 border-red-200';
     }
     return 'bg-gray-50 text-gray-700 border-gray-200';
   }
 
   getStatusDisplay(status: string): string {
-    const s = status.toUpperCase();
+    const s = String(status || '').toUpperCase();
     if (s.includes('PENDING')) return 'Pending Seller Confirmation';
     if (s.includes('CONFIRM')) return 'Confirmed by Seller';
-    if (s.includes('PROCESS')) return 'Processing / On the Way';
-    if (s.includes('ONTHEWAY') || s.includes('ON THE WAY') || s.includes('PACK')) return 'On the Way';
-    if (s.includes('SHIP') || s.includes('DISPATCH')) return 'Dispatched & On the Way';
-    if (s.includes('DELIVER') || s.includes('COMPLETE')) return 'Delivered';
-    if (s.includes('CANCEL')) return 'Cancelled';
+    if (s.includes('PROCESS')) return 'Processing';
+    if (s.includes('ONTHEWAY') || s.includes('ON THE WAY') || s.includes('PACK') || s.includes('SHIP') || s.includes('DISPATCH') || s.includes('OUTFORDELIVERY') || s === '4' || s === '5' || s === '6') {
+      return 'On the Way';
+    }
+    if (s.includes('DELIVER') || s.includes('COMPLETE') || s === '7') return 'Delivered';
+    if (s.includes('CANCEL') || s === '8') return 'Cancelled';
     return status;
   }
 
   getStepStatus(stepIndex: number, currentStatus: string): 'completed' | 'active' | 'pending' {
-    const s = currentStatus.toUpperCase();
+    const s = String(currentStatus || '').toUpperCase();
     let currentStep = 1;
-    if (s.includes('DELIVER') || s.includes('COMPLETE')) currentStep = 4;
-    else if (s.includes('SHIP') || s.includes('DISPATCH') || s.includes('ONTHEWAY') || s.includes('PACK')) currentStep = 3;
-    else if (s.includes('CONFIRM') || s.includes('PROCESS')) currentStep = 2;
+    if (s.includes('DELIVER') || s.includes('COMPLETE') || s === '7') currentStep = 4;
+    else if (s.includes('ONTHEWAY') || s.includes('ON THE WAY') || s.includes('PACK') || s.includes('SHIP') || s.includes('DISPATCH') || s.includes('OUTFORDELIVERY') || s === '4' || s === '5' || s === '6') currentStep = 3;
+    else if (s.includes('CONFIRM') || s.includes('PROCESS') || s === '2' || s === '3') currentStep = 2;
     else currentStep = 1;
 
     if (stepIndex < currentStep) return 'completed';

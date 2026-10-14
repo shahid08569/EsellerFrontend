@@ -84,15 +84,25 @@
       <div class="lg:col-span-8 space-y-4">
 
         <!-- Header Bar -->
-        <div class="bg-gradient-to-r from-[#f4f6ec] to-white rounded-2xl border border-[#d9e0c8] p-4 sm:p-5 flex items-center justify-between shadow-[0_12px_30px_-20px_rgba(74,88,32,0.35)]">
-          <div>
-            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f7c34] mb-1">Basket</p>
+        <div class="bg-gradient-to-r from-[#f4f6ec] to-white rounded-2xl border border-[#d9e0c8] p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-[0_12px_30px_-20px_rgba(74,88,32,0.35)]">
+          <div class="space-y-1">
+            <p class="text-[10px] font-black uppercase tracking-[0.18em] text-[#6f7c34]">Basket</p>
             <h1 class="text-lg sm:text-xl font-black text-slate-900 tracking-tight">
               Shopping Cart
             </h1>
-            <p class="text-xs text-slate-500 mt-0.5">
-              {{ cartService.totalItemsCount() }} item(s) ready for checkout
-            </p>
+            <div class="flex items-center gap-3 pt-1">
+              <label class="inline-flex items-center gap-2 cursor-pointer select-none bg-white px-2.5 py-1 rounded-lg border border-slate-200 hover:border-emerald-500 transition-colors shadow-2xs">
+                <input
+                  type="checkbox"
+                  [checked]="isAllSelected()"
+                  (change)="toggleSelectAll()"
+                  class="w-4 h-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                />
+                <span class="text-xs font-bold text-slate-800">
+                  Select All ({{ selectedCount() }}/{{ cartService.totalItemsCount() }})
+                </span>
+              </label>
+            </div>
           </div>
           <button
             type="button"
@@ -134,7 +144,23 @@
         <!-- Items Card List -->
         <div class="space-y-3">
           @for (item of cartService.items(); track item.id) {
-            <div class="bg-white rounded-2xl border border-slate-200/90 p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.35)] hover:shadow-[0_16px_36px_-16px_rgba(74,88,32,0.35)] flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 hover:border-[#8A9741]/40 ring-1 ring-black/[0.02]">
+            <div
+              class="bg-white rounded-2xl border p-4 sm:p-5 shadow-[0_10px_28px_-18px_rgba(15,23,42,0.35)] hover:shadow-[0_16px_36px_-16px_rgba(74,88,32,0.35)] flex flex-col sm:flex-row items-start sm:items-center gap-4 transition-all duration-300 ring-1 ring-black/[0.02]"
+              [class.border-emerald-500]="isItemSelected(item.id)"
+              [class.bg-emerald-50/20]="isItemSelected(item.id)"
+              [class.border-slate-200/90]="!isItemSelected(item.id)"
+            >
+
+              <!-- Item Selection Checkbox -->
+              <div class="flex items-center self-center sm:self-center pr-1 shrink-0">
+                <input
+                  type="checkbox"
+                  [checked]="isItemSelected(item.id)"
+                  (change)="toggleSelectItem(item.id)"
+                  class="w-5 h-5 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer accent-emerald-600"
+                  aria-label="Select item for purchase"
+                />
+              </div>
 
               <!-- Item Thumbnail -->
               <a [routerLink]="['/products', item.productSlug]" class="w-24 h-24 rounded-2xl bg-gradient-to-br from-slate-50 to-[#f4f6ec] border border-slate-100 p-2 flex-shrink-0 flex items-center justify-center overflow-hidden cursor-pointer group shadow-inner">
@@ -446,19 +472,19 @@
           <!-- Order Summary Details -->
           <div class="border-t border-gray-200 pt-4 space-y-2 text-xs">
             <div class="flex justify-between text-text-secondary">
-              <span>Subtotal ({{ cartService.totalItemsCount() }} items):</span>
-              <span class="font-semibold text-text-primary tabular-nums">$ {{ cartService.formattedSubtotal() }}</span>
+              <span>Subtotal ({{ selectedCount() }} of {{ cartService.totalItemsCount() }} items):</span>
+              <span class="font-semibold text-text-primary tabular-nums">$ {{ formattedSelectedSubtotal() }}</span>
             </div>
             <div class="flex justify-between text-text-secondary">
               <span>Estimated Shipping:</span>
-              <span class="font-semibold" [class.text-emerald-600]="cartService.shippingFee() === 0" [class.text-text-primary]="cartService.shippingFee() > 0">
-                {{ cartService.formattedShipping() }}
+              <span class="font-semibold" [class.text-emerald-600]="selectedShippingFee() === 0" [class.text-text-primary]="selectedShippingFee() > 0">
+                {{ formattedSelectedShipping() }}
               </span>
             </div>
             <div class="pt-2 border-t border-gray-200 flex justify-between items-baseline font-bold">
               <span class="text-sm text-text-primary">Order Total:</span>
               <span class="text-xl font-black text-primary tabular-nums">
-                $ {{ cartService.formattedTotal() }}
+                $ {{ formattedSelectedTotal() }}
               </span>
             </div>
           </div>

@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { WishlistService, CartService, ProductListDto, ToastService, AuthActionService, SkeletonLayout } from 'eseller-shared';
+import { WishlistService, CartService, ProductListDto, ToastService, AuthActionService, SkeletonLayout, AuthStore } from 'eseller-shared';
 
 @Component({
   selector: 'app-wishlist',
@@ -11,6 +11,7 @@ import { WishlistService, CartService, ProductListDto, ToastService, AuthActionS
 })
 export class Wishlist implements OnInit {
   readonly wishlistService = inject(WishlistService);
+  readonly authStore = inject(AuthStore);
   private readonly cartService = inject(CartService);
   private readonly toastService = inject(ToastService);
   private readonly authAction = inject(AuthActionService);
