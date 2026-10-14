@@ -478,12 +478,14 @@ export class ProductForm implements OnInit {
       : [{
           sku: this.slugSku(this.name() || 'SKU'),
           price: Number(this.basePrice()) || 0,
-          stockQty: 1,
+          stockQty: 10,
           lowStockThreshold: 2,
           attributes: [{ name: 'Option', value: 'Standard' }]
         }];
 
-    return source.map(v => {
+    const usedSkus = new Set<string>();
+
+    return source.map((v, idx) => {
       const validAttrs = (v.attributes || [])
         .filter(a => a.name?.trim() && a.value?.trim())
         .map(a => ({ attributeName: a.name.trim(), attributeValue: a.value.trim() }));
@@ -492,11 +494,17 @@ export class ProductForm implements OnInit {
         ? validAttrs
         : [{ attributeName: 'Option', attributeValue: 'Standard' }];
 
+      let candidateSku = (v.sku || `${this.slugSku(this.name())}-${idx + 1}`).trim();
+      if (usedSkus.has(candidateSku)) {
+        candidateSku = `${candidateSku}-${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
+      }
+      usedSkus.add(candidateSku);
+
       const req: CreateVariantRequest = {
-        sku: (v.sku || this.slugSku(this.name())).trim(),
-        price: Number(v.price) || Number(this.basePrice()) || 0,
-        stockQty: Number(v.stockQty) || 0,
-        lowStockThreshold: Number(v.lowStockThreshold) || 2,
+        sku: candidateSku,
+        price: Number(v.price) > 0 ? Number(v.price) : (Number(this.basePrice()) || 0),
+        stockQty: Number(v.stockQty) >= 0 ? Number(v.stockQty) : 10,
+        lowStockThreshold: Number(v.lowStockThreshold) >= 0 ? Number(v.lowStockThreshold) : 2,
         attributes: safeAttrs
       };
       return this.productService.createProductVariant(productId, req).pipe(
@@ -515,8 +523,8 @@ export class ProductForm implements OnInit {
   }
 
   private slugSku(name: string): string {
-    const base = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 20);
-    return `${base || 'SKU'}-${Date.now().toString(36).slice(-4)}`;
+    const base = name.trim().toUpperCase().replace(/[^A-Z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 16);
+    return `${base || 'SKU'}-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).slice(2, 5).toUpperCase()}`;
   }
 
   // Single-form submit (create/update + images + variants)
@@ -621,29 +629,60 @@ export class ProductForm implements OnInit {
           }
 
           const queued = this.queuedImages();
-          this.submittingStep.set(`2/3 Uploading ${queued.length} product photos...`);
+          const hasQueuedImages = queued.length > 0;
 
-          const afterImages = () => {
-            this.submittingStep.set('3/3 Creating inventory variants...');
+          const proceedToVariants = (imageWarning?: string) => {
+            this.submittingStep.set('3/3 Configuring inventory variants & stock...');
             const variantRequests$ = this.buildVariantRequests(newProductId);
+
+            if (variantRequests$.length === 0) {
+              this.finishCreation(newProductId, imageWarning);
+              return;
+            }
+
             forkJoin(variantRequests$).subscribe({
-              next: () => this.finishCreation(newProductId),
-              error: () => this.finishCreation(newProductId)
+              next: (results) => {
+                const createdCount = results.filter(r => !!r).length;
+                this.finishCreation(newProductId, imageWarning, createdCount);
+              },
+              error: () => {
+                this.finishCreation(newProductId, imageWarning, 0);
+              }
             });
           };
 
-          if (queued.length === 0) {
-            afterImages();
+          if (!hasQueuedImages) {
+            proceedToVariants();
             return;
           }
 
+          this.submittingStep.set(`2/3 Uploading ${queued.length} product photos...`);
           this.productService.uploadMultipleImages(newProductId, queued.map(q => q.file)).subscribe({
-            next: () => afterImages(),
-            error: (imgErr) => {
-              this.isSubmitting.set(false);
-              const msg = imgErr?.error || imgErr?.error?.error || imgErr?.message || 'Photo upload failed';
-              this.toast.show(`Product created but images failed: ${msg}. Open the product to re-upload photos.`, 'error');
-              this.finishCreation(newProductId);
+            next: () => {
+              proceedToVariants();
+            },
+            error: (bulkErr) => {
+              // Fallback to sequential uploads if bulk endpoint fails
+              const filesToUpload = queued.map(q => q.file);
+              const singleUploads$ = filesToUpload.map(f =>
+                this.productService.uploadImage(newProductId, f).pipe(
+                  catchError(() => of(null))
+                )
+              );
+
+              forkJoin(singleUploads$).subscribe({
+                next: (uploadRes) => {
+                  const successfulImages = uploadRes.filter(r => !!r).length;
+                  const warning = successfulImages > 0
+                    ? undefined
+                    : (bulkErr?.error?.error || bulkErr?.error?.message || bulkErr?.message || 'Photos could not be uploaded');
+                  proceedToVariants(warning);
+                },
+                error: () => {
+                  const warning = bulkErr?.error?.error || bulkErr?.error?.message || bulkErr?.message || 'Photos could not be uploaded';
+                  proceedToVariants(warning);
+                }
+              });
             }
           });
         },
@@ -656,14 +695,20 @@ export class ProductForm implements OnInit {
     }
   }
 
-  private finishCreation(newProductId: string) {
+  private finishCreation(newProductId: string, imageWarning?: string, createdVariantsCount?: number) {
     this.isSubmitting.set(false);
     for (const q of this.queuedImages()) {
       if (q.previewUrl) URL.revokeObjectURL(q.previewUrl);
     }
     this.queuedImages.set([]);
     this.savedProduct.set({ id: newProductId, name: this.name(), isEdit: false });
-    this.toast.show('Product submitted for Management approval.', 'success');
+
+    if (imageWarning) {
+      this.toast.show(`Product created with variants! Note: ${imageWarning}. You can re-upload photos anytime.`, 'warning');
+    } else {
+      const varMsg = createdVariantsCount ? ` with ${createdVariantsCount} variant(s)` : '';
+      this.toast.show(`Product submitted${varMsg} for Management approval.`, 'success');
+    }
   }
 
   closeSuccessModal() {

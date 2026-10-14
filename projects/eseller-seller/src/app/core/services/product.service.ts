@@ -107,16 +107,16 @@ export class SellerProductService {
     return this.api.get<ProductImageDto[]>(`/Products/${productId}/images`);
   }
 
-  uploadImage(id: string, file: File): Observable<{ id: string }> {
+  uploadImage(id: string, file: File): Observable<{ id: string; imageId?: string }> {
     const formData = new FormData();
-    formData.append('file', file);
-    return this.api.postForm<{ id: string }>(`/Products/${id}/images`, formData);
+    formData.append('file', file, file.name);
+    return this.api.postForm<{ id: string; imageId?: string }>(`/Products/${id}/images`, formData);
   }
 
   uploadMultipleImages(id: string, files: File[]): Observable<{ count: number; imageIds: string[]; message: string }> {
     const formData = new FormData();
     for (const f of files) {
-      formData.append('files', f);
+      formData.append('files', f, f.name);
     }
     return this.api.postForm<{ count: number; imageIds: string[]; message: string }>(`/Products/${id}/images/bulk`, formData);
   }
