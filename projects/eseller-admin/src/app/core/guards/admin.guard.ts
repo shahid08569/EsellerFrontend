@@ -26,6 +26,7 @@ export const adminGuard: CanActivateFn = () => {
             const r = payload.account?.roleType || payload.roleType;
             if (r === 'SuperAdmin' || r === 'Partner') {
               const exp = payload.accessTokenExpiresAt ? new Date(payload.accessTokenExpiresAt) : new Date(Date.now() + 15 * 60 * 1000);
+              const perms = payload.permissions || payload.account?.permissions || null;
               authStore.setAuth({
                 accessToken: payload.accessToken,
                 accessTokenExpiresAt: exp,
@@ -33,7 +34,8 @@ export const adminGuard: CanActivateFn = () => {
                   accountId: payload.accountId,
                   username: payload.username,
                   email: payload.email,
-                  roleType: r
+                  roleType: r,
+                  permissions: perms
                 }
               });
               window.sessionStorage?.setItem('eseller_auth_session', JSON.stringify({
@@ -43,7 +45,8 @@ export const adminGuard: CanActivateFn = () => {
                   accountId: payload.accountId,
                   username: payload.username,
                   email: payload.email,
-                  roleType: r
+                  roleType: r,
+                  permissions: perms
                 }
               }));
               return true;

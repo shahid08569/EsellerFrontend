@@ -110,7 +110,7 @@ export const routes: Routes = [
       {
         path: 'reports',
         canActivate: [partnerPermissionGuard],
-        data: { requiredPermission: ['traffic:view', 'traffic:manage'] },
+        data: { requiredPermission: ['traffic:view', 'traffic:manage', 'finance:view', 'finance:manage'] },
         loadComponent: () => import('./features/reports/reports-view/reports-view').then(m => m.ReportsView)
       },
       {

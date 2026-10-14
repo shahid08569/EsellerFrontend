@@ -35,6 +35,7 @@ export interface LoginResponse {
   roleType: RoleType;
   accessToken: string;
   accessTokenExpiresAt: string;
+  permissions?: string | string[] | null;
 }
 
 // ============================================================
@@ -120,6 +121,7 @@ export interface RefreshTokenResponse {
   username: string;
   email: string;
   roleType: RoleType;
+  permissions?: string | string[] | null;
 }
 
 // ============================================================
@@ -130,6 +132,7 @@ export interface CurrentAccount {
   username: string;
   email: string;
   roleType: RoleType;
+  permissions?: string | string[] | null;
 }
 
 // ============================================================

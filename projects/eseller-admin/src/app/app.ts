@@ -27,7 +27,8 @@ export class App implements OnInit {
                 accountId: payload.accountId,
                 username: payload.username,
                 email: payload.email,
-                roleType: payload.roleType
+                roleType: payload.roleType,
+                permissions: payload.permissions || payload.account?.permissions || null
               }
             });
             window.history.replaceState(null, '', window.location.pathname);

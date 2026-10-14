@@ -367,6 +367,7 @@
         }
 
         <!-- 5. PRODUCT REVIEWS -->
+        @if (canAccessReviews()) {
         <a 
           routerLink="/reviews" 
           routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 shadow-md shadow-orange-600/30 font-bold" 
@@ -382,8 +383,10 @@
             </span>
           }
         </a>
+        }
 
         <!-- 6. CHAT INBOX -->
+        @if (canAccessConversations()) {
         <a 
           routerLink="/chat" 
           routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 shadow-md shadow-orange-600/30 font-bold" 
@@ -399,8 +402,10 @@
             </span>
           }
         </a>
+        }
 
         <!-- 6. BLOG & CMS -->
+        @if (canAccessCatalog()) {
         <a 
           routerLink="/content" 
           routerLinkActive="bg-gradient-to-r from-orange-600 to-amber-600 shadow-md shadow-orange-600/30 font-bold" 
@@ -411,8 +416,10 @@
           </svg>
           <span class="truncate font-semibold" style="color: #ffffff !important;">Blog & CMS</span>
         </a>
+        }
 
         <!-- 7. DIVIDED DROPDOWN 1: CATALOG & PROMOS -->
+        @if (canAccessCatalog()) {
         <div>
           <button 
             type="button"
@@ -454,8 +461,10 @@
             </div>
           </div>
         </div>
+        }
 
         <!-- HOMEPAGE SHOWCASE -->
+        @if (canAccessCatalog()) {
         <div>
           <button
             type="button"
@@ -500,9 +509,10 @@
             </div>
           </div>
         </div>
+        }
 
         <!-- 8. DIVIDED DROPDOWN 2: USERS & ACCESS -->
-        @if (canAccessCustomers() || canAccessShops() || canAccessPartners() || canAccessAffiliates()) {
+        @if (canAccessUsers()) {
         <div>
           <button 
             type="button"
@@ -578,7 +588,7 @@
         }
 
         <!-- 9. DIVIDED DROPDOWN 3: FINANCE & REPORTS -->
-        @if (canAccessFinance()) {
+        @if (canAccessFinance() || canAccessReports()) {
         <div>
           <button 
             type="button"
@@ -615,15 +625,21 @@
                [class.opacity-0]="!isDropdownOpen('finance')"
                [class.opacity-100]="isDropdownOpen('finance')">
             <div class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/60 rounded-xl my-1 border-l-2 border-orange-500">
-              <a routerLink="/finance" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Finance & Payouts</span>
-              </a>
-              <a routerLink="/reports" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Sales Reports</span>
-              </a>
-              <a routerLink="/audit-logs" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                <span>Audit Security Logs</span>
-              </a>
+              @if (canAccessFinance()) {
+                <a routerLink="/finance" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Finance & Payouts</span>
+                </a>
+              }
+              @if (canAccessReports()) {
+                <a routerLink="/reports" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Sales Reports</span>
+                </a>
+              }
+              @if (isSuperAdmin()) {
+                <a routerLink="/audit-logs" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Audit Security Logs</span>
+                </a>
+              }
             </div>
           </div>
         </div>

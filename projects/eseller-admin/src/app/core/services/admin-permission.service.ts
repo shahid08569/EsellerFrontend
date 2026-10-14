@@ -1,5 +1,6 @@
 import { Injectable, inject, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable, of, tap, map, catchError, shareReplay } from 'rxjs';
 import { AuthStore } from 'eseller-shared';
 import { environment } from '../../../environments/environment';
 
@@ -132,37 +133,119 @@ export class AdminPermissionService {
 
   readonly permissions = signal<string[]>([]);
   readonly isLoaded = signal<boolean>(false);
+  private inFlightRequest$: Observable<string[]> | null = null;
 
   readonly isSuperAdmin = computed(() => {
     const role = this.authStore.currentAccount()?.roleType;
     return role === 'SuperAdmin';
   });
 
-  loadPermissions(): void {
+  constructor() {
+    this.hydrateFromCache();
+  }
+
+  private hydrateFromCache(): void {
     if (this.isSuperAdmin()) {
       this.permissions.set(['*']);
       this.isLoaded.set(true);
       return;
     }
 
-    this.http.get<any>(`${environment.apiUrl}/api/v1/auth/me`).subscribe({
-      next: (res) => {
-        let perms: string[] = [];
-        if (res?.permissions) {
-          try {
-            const parsed = typeof res.permissions === 'string' ? JSON.parse(res.permissions) : res.permissions;
-            perms = Array.isArray(parsed) ? parsed : (typeof res.permissions === 'string' ? res.permissions.split(',') : []);
-          } catch {
-            perms = typeof res.permissions === 'string' ? res.permissions.split(',') : [];
+    // 1. Try from CurrentAccount in AuthStore
+    const account = this.authStore.currentAccount();
+    if (account?.permissions) {
+      const parsed = this.parseRawPermissions(account.permissions);
+      if (parsed.length > 0) {
+        this.permissions.set(parsed);
+        this.isLoaded.set(true);
+        return;
+      }
+    }
+
+    // 2. Try from sessionStorage
+    if (typeof window !== 'undefined' && window.sessionStorage) {
+      try {
+        const cached = window.sessionStorage.getItem('eseller_partner_permissions');
+        if (cached) {
+          const parsed = JSON.parse(cached);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            this.permissions.set(parsed);
+            this.isLoaded.set(true);
           }
         }
-        this.permissions.set(perms.map(p => p.trim()).filter(Boolean));
+      } catch {}
+    }
+  }
+
+  private getMeUrl(): string {
+    const base = (environment.apiUrl || '').replace(/\/api\/v1\/?$/, '');
+    return `${base}/api/v1/auth/me`;
+  }
+
+  ensureLoaded(): Observable<string[]> {
+    if (this.isSuperAdmin()) {
+      this.permissions.set(['*']);
+      this.isLoaded.set(true);
+      return of(['*']);
+    }
+
+    if (this.isLoaded() && this.permissions().length > 0) {
+      return of(this.permissions());
+    }
+
+    if (this.inFlightRequest$) {
+      return this.inFlightRequest$;
+    }
+
+    this.inFlightRequest$ = this.http.get<any>(this.getMeUrl()).pipe(
+      map(res => {
+        let perms: string[] = [];
+        if (res?.permissions) {
+          perms = this.parseRawPermissions(res.permissions);
+        }
+        return perms;
+      }),
+      tap(perms => {
+        this.permissions.set(perms);
         this.isLoaded.set(true);
-      },
-      error: () => {
+        this.inFlightRequest$ = null;
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          try {
+            window.sessionStorage.setItem('eseller_partner_permissions', JSON.stringify(perms));
+          } catch {}
+        }
+      }),
+      catchError(() => {
         this.isLoaded.set(true);
+        this.inFlightRequest$ = null;
+        return of(this.permissions());
+      }),
+      shareReplay(1)
+    );
+
+    return this.inFlightRequest$;
+  }
+
+  loadPermissions(): void {
+    this.ensureLoaded().subscribe();
+  }
+
+  parseRawPermissions(raw: any): string[] {
+    if (!raw) return [];
+    if (Array.isArray(raw)) return raw.map(p => String(p).trim()).filter(Boolean);
+    if (typeof raw === 'string') {
+      const trimmed = raw.trim();
+      if (trimmed.startsWith('[')) {
+        try {
+          const parsed = JSON.parse(trimmed);
+          if (Array.isArray(parsed)) {
+            return parsed.map(p => String(p).trim()).filter(Boolean);
+          }
+        } catch {}
       }
-    });
+      return trimmed.split(',').map(p => p.trim()).filter(Boolean);
+    }
+    return [];
   }
 
   has(permission: string): boolean {

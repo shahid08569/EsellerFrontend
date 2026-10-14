@@ -6,6 +6,7 @@ import { forkJoin, of } from 'rxjs';
 import { switchMap, catchError, map } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
+import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import { AdminProductDto, AdminShopDto, AdminCategoryDto, AdminBrandDto } from '../../../core/models/admin.models';
 import { SearchableSelect, AdminSelectOption } from '../../../shared/components/searchable-select/searchable-select';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
@@ -42,6 +43,9 @@ export class ProductApproval implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  readonly permissionService = inject(AdminPermissionService);
+
+  readonly canManageProducts = computed(() => this.permissionService.has('products:manage'));
 
   readonly isLoading = signal<boolean>(true);
   readonly shopsList = signal<AdminShopDto[]>([]);
@@ -1443,6 +1447,10 @@ export class ProductApproval implements OnInit {
   }
 
   confirmBatchApprove(): void {
+    if (!this.canManageProducts()) {
+      this.toast.show('You do not have permission to moderate products.', 'warning');
+      return;
+    }
     if (this.isBatchApproving()) return;
     const ids = Array.from(this.selectedProductIds());
     if (ids.length === 0) {
@@ -1487,6 +1495,10 @@ export class ProductApproval implements OnInit {
   }
 
   approveProduct(product: AdminProductDto): void {
+    if (!this.canManageProducts()) {
+      this.toast.show('You do not have permission to moderate products.', 'warning');
+      return;
+    }
     this.actionInProgress.set(product.id);
     this.adminService.approveProduct(product.id).subscribe({
       next: () => {
@@ -1541,6 +1553,10 @@ export class ProductApproval implements OnInit {
   }
 
   confirmReject(): void {
+    if (!this.canManageProducts()) {
+      this.toast.show('You do not have permission to moderate products.', 'warning');
+      return;
+    }
     const product = this.selectedProduct();
     const reason = this.rejectionReason().trim();
 

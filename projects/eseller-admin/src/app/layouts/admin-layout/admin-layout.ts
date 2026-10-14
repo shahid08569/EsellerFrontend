@@ -43,6 +43,11 @@ export class AdminLayout implements OnInit {
   readonly canAccessAffiliates = computed(() => this.permissionService.has('affiliates:manage'));
   readonly canAccessPartners = computed(() => this.isSuperAdmin());
   readonly canAccessSettings = computed(() => this.permissionService.has('settings:manage'));
+  readonly canAccessReviews = computed(() => this.permissionService.has('customers:manage'));
+  readonly canAccessConversations = computed(() => this.isSuperAdmin() || this.permissionService.has('customers:manage'));
+  readonly canAccessCatalog = computed(() => this.isSuperAdmin() || this.permissionService.has('catalog:manage'));
+  readonly canAccessReports = computed(() => this.permissionService.has('traffic:view') || this.permissionService.has('traffic:manage') || this.permissionService.has('finance:view'));
+  readonly canAccessUsers = computed(() => this.canAccessCustomers() || this.canAccessShops() || this.canAccessPartners() || this.canAccessAffiliates());
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
