@@ -110,8 +110,19 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       this.route.snapshot.queryParamMap.get('support') ||
       this.route.snapshot.queryParamMap.get('c');
     const productId = this.route.snapshot.queryParamMap.get('productId');
-    if (supportId) {
-      this.selectedRoomId.set(supportId);
+    const cached = typeof window !== 'undefined'
+      ? (window.sessionStorage?.getItem(SELLER_SUPPORT_ROOM_KEY) || window.localStorage?.getItem(SELLER_SUPPORT_ROOM_KEY))
+      : null;
+    const initialRoom = supportId || cached;
+    if (initialRoom) {
+      this.selectedRoomId.set(initialRoom);
+      this.conversations.set([{
+        roomId: initialRoom,
+        title: 'Customer Service',
+        lastMessage: 'Connecting…',
+        lastMessageTime: undefined
+      }]);
+      this.selectConversation(initialRoom);
     }
     this.loadConversations(productId);
     this.initSignalR();
@@ -204,9 +215,10 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private persistRoomId(roomId: string): void {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
+    if (typeof window !== 'undefined') {
       try {
-        window.sessionStorage.setItem(SELLER_SUPPORT_ROOM_KEY, roomId);
+        window.sessionStorage?.setItem(SELLER_SUPPORT_ROOM_KEY, roomId);
+        window.localStorage?.setItem(SELLER_SUPPORT_ROOM_KEY, roomId);
       } catch { /* ignore */ }
     }
   }
@@ -355,9 +367,11 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
 
     this.cancelEdit();
     this.exitSelectionMode();
+    if (this.selectedRoomId() !== roomId || this.messages().length === 0) {
+      this.messages.set([]);
+    }
     this.selectedRoomId.set(roomId);
     this.persistRoomId(roomId);
-    this.messages.set([]);
     this.pendingAttachment.set(null);
 
     this.signalR.joinOrderRoom(roomId).catch(() => {});

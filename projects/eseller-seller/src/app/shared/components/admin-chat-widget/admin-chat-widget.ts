@@ -100,6 +100,15 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
     this.attachRealtimeHooks();
 
+    // Check cached roomId for immediate instant load
+    const cachedRoom = typeof window !== 'undefined'
+      ? (window.sessionStorage?.getItem(WIDGET_SUPPORT_ROOM_KEY) || window.localStorage?.getItem(WIDGET_SUPPORT_ROOM_KEY))
+      : null;
+    if (cachedRoom) {
+      this.supportRoomId = cachedRoom;
+      this.fetchMessages(cachedRoom, false);
+    }
+
     this.chatService.getShopSupportSession().subscribe({
       next: (session) => {
         const roomId = session.orderRequestId || session.conversationId;
@@ -108,13 +117,10 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.persistRoomId(roomId);
         this.signalR.joinOrderRoom(roomId).catch(() => {});
         this.joinedRoomId = roomId;
-        if (this.isOpen()) {
-          this.joinAndLoad(roomId);
-        }
+        // Always preload latest messages on login/init
+        this.fetchMessages(roomId, this.isOpen() && this.messages().length === 0);
       },
-      error: () => {
-        this.toast.show('Could not connect to Customer Support chat.', 'error');
-      }
+      error: () => {}
     });
 
     this.pollTimer = setInterval(() => {
@@ -126,9 +132,10 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private persistRoomId(roomId: string): void {
-    if (typeof window !== 'undefined' && window.sessionStorage) {
+    if (typeof window !== 'undefined') {
       try {
-        window.sessionStorage.setItem(WIDGET_SUPPORT_ROOM_KEY, roomId);
+        window.sessionStorage?.setItem(WIDGET_SUPPORT_ROOM_KEY, roomId);
+        window.localStorage?.setItem(WIDGET_SUPPORT_ROOM_KEY, roomId);
       } catch { /* ignore */ }
     }
   }
@@ -276,7 +283,16 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen.set(nextState);
     if (nextState) {
       this.unreadCount.set(0);
-      this.ensureSupportRoom((roomId) => this.joinAndLoad(roomId));
+      if (this.supportRoomId) {
+        const hasMessages = this.messages().length > 0;
+        this.fetchMessages(this.supportRoomId, !hasMessages);
+        this.chatService.markConversationAsRead(this.supportRoomId).subscribe({
+          next: () => this.refreshUnreadBadge(),
+          error: () => {}
+        });
+      } else {
+        this.ensureSupportRoom((roomId) => this.joinAndLoad(roomId));
+      }
       this.queueScrollToLatest();
     }
   }
