@@ -61,21 +61,9 @@ export class AuthStore {
     } catch {}
 
     try {
-      // 1. Check secure sessionStorage first
-      let saved = window.sessionStorage?.getItem('eseller_auth_session');
-
-      // 2. Backward compatibility: if in localStorage, migrate and immediately purge from localStorage
-      if (!saved && window.localStorage) {
-        const legacy = window.localStorage.getItem('eseller_auth_session');
-        if (legacy) {
-          saved = legacy;
-          window.sessionStorage?.setItem('eseller_auth_session', legacy);
-          window.localStorage.removeItem('eseller_auth_session');
-        }
-      } else if (window.localStorage) {
-        // Guarantee localStorage has zero residual tokens
-        window.localStorage.removeItem('eseller_auth_session');
-      }
+      // 1. Check sessionStorage or localStorage
+      let saved = window.sessionStorage?.getItem('eseller_auth_session')
+               || window.localStorage?.getItem('eseller_auth_session');
 
       if (!saved) return;
       const data = JSON.parse(saved);
@@ -85,7 +73,7 @@ export class AuthStore {
         return;
       }
       const expiresAt = data.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null;
-      // Never restore an expired JWT from storage (XSS surface + stale auth)
+      // Never restore an expired JWT from storage
       if (expiresAt && expiresAt.getTime() <= Date.now()) {
         window.sessionStorage?.removeItem('eseller_auth_session');
         window.localStorage?.removeItem('eseller_auth_session');
@@ -94,6 +82,12 @@ export class AuthStore {
       this._accessToken.set(data.accessToken);
       this._currentAccount.set(data.account);
       this._accessTokenExpiresAt.set(expiresAt);
+
+      // Keep both storages synchronized
+      if (window.sessionStorage && window.localStorage) {
+        window.sessionStorage.setItem('eseller_auth_session', saved);
+        window.localStorage.setItem('eseller_auth_session', saved);
+      }
     } catch {
       window.sessionStorage?.removeItem('eseller_auth_session');
       window.localStorage?.removeItem('eseller_auth_session');
@@ -121,21 +115,13 @@ export class AuthStore {
     this._accessTokenExpiresAt.set(expiresAt);
 
     if (typeof window !== 'undefined') {
-      // Save strictly to tab-scoped sessionStorage, never permanent localStorage
-      if (window.sessionStorage) {
-        window.sessionStorage.setItem(
-          'eseller_auth_session',
-          JSON.stringify({
-            accessToken: payload.accessToken,
-            accessTokenExpiresAt: expiresAt.toISOString(),
-            account: payload.account
-          })
-        );
-      }
-      // Guarantee localStorage is purged
-      if (window.localStorage) {
-        window.localStorage.removeItem('eseller_auth_session');
-      }
+      const serialized = JSON.stringify({
+        accessToken: payload.accessToken,
+        accessTokenExpiresAt: expiresAt.toISOString(),
+        account: payload.account
+      });
+      window.sessionStorage?.setItem('eseller_auth_session', serialized);
+      window.localStorage?.setItem('eseller_auth_session', serialized);
     }
   }
 
@@ -152,19 +138,17 @@ export class AuthStore {
     this._accessTokenExpiresAt.set(expiresAt);
 
     if (typeof window !== 'undefined') {
-      if (window.sessionStorage) {
-        const saved = window.sessionStorage.getItem('eseller_auth_session');
+      for (const storage of [window.sessionStorage, window.localStorage]) {
+        if (!storage) continue;
+        const saved = storage.getItem('eseller_auth_session');
         if (saved) {
           try {
             const data = JSON.parse(saved);
             data.accessToken = accessToken;
             data.accessTokenExpiresAt = expiresAt.toISOString();
-            window.sessionStorage.setItem('eseller_auth_session', JSON.stringify(data));
+            storage.setItem('eseller_auth_session', JSON.stringify(data));
           } catch {}
         }
-      }
-      if (window.localStorage) {
-        window.localStorage.removeItem('eseller_auth_session');
       }
     }
   }

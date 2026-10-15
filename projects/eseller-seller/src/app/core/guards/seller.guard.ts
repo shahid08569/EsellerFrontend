@@ -36,8 +36,6 @@ export const sellerGuard: CanActivateFn = () => {
             accessTokenExpiresAt: savedExpires || new Date(Date.now() + 15 * 60 * 1000),
             account: data.account
           });
-          // Purge localStorage
-          window.localStorage?.removeItem('eseller_auth_session');
           return true;
         }
         if (savedExpired) {

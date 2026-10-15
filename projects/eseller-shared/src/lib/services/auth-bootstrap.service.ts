@@ -116,7 +116,12 @@ export class AuthBootstrapService {
       }
     }
 
-    // ── Strategy 2: cookie-based silent refresh (hard timeout so app never stays blank) ──
+    // ── Strategy 2: If already authenticated with valid token from storage, skip cookie refresh ──
+    if (this.authStore.isAuthenticated() && !this.authStore.isAccessTokenExpiringSoon(60)) {
+      return;
+    }
+
+    // ── Strategy 3: cookie-based silent refresh (hard timeout so app never stays blank) ──
     try {
       const response = await Promise.race([
         firstValueFrom(this.authService.refreshToken()),

@@ -38,7 +38,7 @@ export const adminGuard: CanActivateFn = () => {
                   permissions: perms
                 }
               });
-              window.sessionStorage?.setItem('eseller_auth_session', JSON.stringify({
+              const serializedSession = JSON.stringify({
                 accessToken: payload.accessToken,
                 accessTokenExpiresAt: exp.toISOString(),
                 account: payload.account || {
@@ -48,7 +48,9 @@ export const adminGuard: CanActivateFn = () => {
                   roleType: r,
                   permissions: perms
                 }
-              }));
+              });
+              window.sessionStorage?.setItem('eseller_auth_session', serializedSession);
+              window.localStorage?.setItem('eseller_auth_session', serializedSession);
               return true;
             }
           }
@@ -71,7 +73,6 @@ export const adminGuard: CanActivateFn = () => {
             accessTokenExpiresAt: savedExpires || new Date(Date.now() + 15 * 60 * 1000),
             account: data.account
           });
-          window.localStorage?.removeItem('eseller_auth_session');
           return true;
         }
         if (savedExpired) {
