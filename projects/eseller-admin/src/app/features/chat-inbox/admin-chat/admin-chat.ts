@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, 
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
@@ -40,8 +41,11 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
   private shouldScrollToBottom = false;
+  private activeMessageRequestId: string | null = null;
+  private messagesSub?: Subscription;
 
   readonly isLoading = signal<boolean>(true);
+  readonly isLoadingMessages = signal<boolean>(false);
   readonly conversations = signal<any[]>([]);
   readonly activeConversation = signal<any | null>(null);
   readonly messages = signal<AdminDisplayMessage[]>([]);
@@ -137,6 +141,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    this.messagesSub?.unsubscribe();
     const convo = this.activeConversation();
     if (convo) {
       const orderId = convo.orderRequestId || convo.id;
@@ -377,10 +382,20 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectConversation(convo: any): void {
+    const targetId = convo.orderRequestId || convo.id;
+    if (!targetId) return;
+
+    const normalizedTargetId = String(targetId).toLowerCase();
+
+    // Cancel any inflight message request
+    this.messagesSub?.unsubscribe();
+    this.activeMessageRequestId = normalizedTargetId;
+    this.isLoadingMessages.set(true);
+
     const prevConvo = this.activeConversation();
     if (prevConvo) {
       const prevId = prevConvo.orderRequestId || prevConvo.id;
-      if (prevId) {
+      if (prevId && String(prevId).toLowerCase() !== normalizedTargetId) {
         this.signalRService.leaveOrderRoom(prevId).catch(() => {});
       }
     }
@@ -391,54 +406,56 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     this.messages.set([]);
 
     // Mark as read immediately in the sidebar (WhatsApp-style — opening a thread clears its unread badge).
-    const convoId = convo.orderRequestId || convo.id;
     this.conversations.update(list => list.map(c => {
       const id = c.orderRequestId || c.id;
-      return id && convoId && String(id).toLowerCase() === String(convoId).toLowerCase()
+      return id && String(id).toLowerCase() === normalizedTargetId
         ? { ...c, unreadCount: 0 }
         : c;
     }));
-    if (convoId) {
-      this.chatUnread.markConversationRead(convoId);
-    }
+    this.chatUnread.markConversationRead(targetId);
 
-    const targetId = convo.orderRequestId || convo.id;
-    if (targetId) {
-      this.signalRService.joinOrderRoom(targetId).catch(() => {});
-      this.adminService.getConversationMessages(targetId).subscribe({
-        next: (msgs: any) => {
-          const list = Array.isArray(msgs) ? msgs : (msgs?.items || msgs?.messages || []);
-          this.messages.set(list.map((m: any) => {
-            const roleLower = String(m.senderRole || '').toLowerCase();
-            const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
-            const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
-            const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
-            const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
-            return {
-              id: m.id || m.Id,
-              senderName: senderDisplayName,
-              content: isDel ? 'This message was deleted' : (m.message || m.content || m.Message || m.Content || ''),
-              createdAt: m.sentAt || m.createdAt || m.SentAt || m.CreatedAt || new Date().toISOString(),
-              isFromAdmin: isFromAdmin,
-              attachmentUrl: isDel ? null : (m.attachmentUrl || m.AttachmentUrl || null),
-              attachmentFileName: isDel ? null : (m.attachmentFileName || m.AttachmentFileName || null),
-              attachmentContentType: isDel ? null : (m.attachmentContentType || m.AttachmentContentType || null),
-              isEdited: !!(m.isEdited ?? m.IsEdited),
-              editedAt: m.editedAt || m.EditedAt || null,
-              isDeletedForEveryone: isDel,
-              isRead: !!(m.isRead ?? m.IsRead),
-              readAt: m.readAt || m.ReadAt || null,
-              isDelivered: !!(m.deliveredAt || m.DeliveredAt || m.isRead || m.IsRead),
-              deliveredAt: m.deliveredAt || m.DeliveredAt || null
-            };
-          }));
-          this.queueScrollToLatest();
-        },
-        error: () => {
+    this.signalRService.joinOrderRoom(targetId).catch(() => {});
+    this.messagesSub = this.adminService.getConversationMessages(targetId).subscribe({
+      next: (msgs: any) => {
+        // Race condition guard: ignore if user switched conversations
+        if (this.activeMessageRequestId !== normalizedTargetId) {
+          return;
+        }
+        this.isLoadingMessages.set(false);
+        const list = Array.isArray(msgs) ? msgs : (msgs?.items || msgs?.messages || []);
+        this.messages.set(list.map((m: any) => {
+          const roleLower = String(m.senderRole || '').toLowerCase();
+          const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
+          const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
+          const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+          const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
+          return {
+            id: m.id || m.Id,
+            senderName: senderDisplayName,
+            content: isDel ? 'This message was deleted' : (m.message || m.content || m.Message || m.Content || ''),
+            createdAt: m.sentAt || m.createdAt || m.SentAt || m.CreatedAt || new Date().toISOString(),
+            isFromAdmin: isFromAdmin,
+            attachmentUrl: isDel ? null : (m.attachmentUrl || m.AttachmentUrl || null),
+            attachmentFileName: isDel ? null : (m.attachmentFileName || m.AttachmentFileName || null),
+            attachmentContentType: isDel ? null : (m.attachmentContentType || m.AttachmentContentType || null),
+            isEdited: !!(m.isEdited ?? m.IsEdited),
+            editedAt: m.editedAt || m.EditedAt || null,
+            isDeletedForEveryone: isDel,
+            isRead: !!(m.isRead ?? m.IsRead),
+            readAt: m.readAt || m.ReadAt || null,
+            isDelivered: !!(m.deliveredAt || m.DeliveredAt || m.isRead || m.IsRead),
+            deliveredAt: m.deliveredAt || m.DeliveredAt || null
+          };
+        }));
+        this.queueScrollToLatest();
+      },
+      error: () => {
+        if (this.activeMessageRequestId === normalizedTargetId) {
+          this.isLoadingMessages.set(false);
           this.messages.set([]);
         }
-      });
-    }
+      }
+    });
   }
 
   onFileSelected(event: Event): void {

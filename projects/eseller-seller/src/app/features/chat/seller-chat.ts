@@ -2,6 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
+import { Subscription } from 'rxjs';
 import { SellerService } from '../../core/services/seller.service';
 import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout } from 'eseller-shared';
 
@@ -56,8 +57,11 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   private messageReadUnsubscribe: (() => void) | null = null;
   private messageEditedUnsubscribe: (() => void) | null = null;
   private messageDeletedUnsubscribe: (() => void) | null = null;
+  private activeMessageSub?: Subscription;
+  private activeLoadingRoomId: string | null = null;
 
   readonly isLoading = signal<boolean>(true);
+  readonly isLoadingMessages = signal<boolean>(false);
   readonly conversations = signal<ChatConversation[]>([]);
   readonly selectedRoomId = signal<string | null>(null);
   readonly messages = signal<ChatMessage[]>([]);
@@ -114,6 +118,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   ngOnDestroy(): void {
+    this.activeMessageSub?.unsubscribe();
     const id = this.selectedRoomId();
     if (id) {
       this.signalR.leaveOrderRoom(id).catch(() => {});
@@ -308,11 +313,11 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         this.conversations.set([supportConvo]);
         this.isLoading.set(false);
 
-        const preferred =
-          this.selectedRoomId() ||
-          (typeof window !== 'undefined' ? window.sessionStorage.getItem(SELLER_SUPPORT_ROOM_KEY) : null) ||
-          roomId;
-        this.selectConversation(preferred);
+        // Always prioritize fresh authoritative roomId from server
+        const preferred = roomId || this.selectedRoomId();
+        if (preferred) {
+          this.selectConversation(preferred);
+        }
       },
       error: () => {
         this.isLoading.set(false);
@@ -335,8 +340,16 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectConversation(roomId: string): void {
+    if (!roomId) return;
+    const normalizedRoomId = String(roomId).toLowerCase();
+
+    // Cancel any inflight message fetch
+    this.activeMessageSub?.unsubscribe();
+    this.activeLoadingRoomId = normalizedRoomId;
+    this.isLoadingMessages.set(true);
+
     const prev = this.selectedRoomId();
-    if (prev && prev !== roomId) {
+    if (prev && prev.toLowerCase() !== normalizedRoomId) {
       this.signalR.leaveOrderRoom(prev).catch(() => {});
     }
 
@@ -350,8 +363,10 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     this.signalR.joinOrderRoom(roomId).catch(() => {});
     this.chatService.markConversationAsRead(roomId).subscribe({ error: () => {} });
 
-    this.chatService.getMessages(roomId, 1, 100).subscribe({
+    this.activeMessageSub = this.chatService.getMessages(roomId, 1, 100).subscribe({
       next: (page) => {
+        if (this.activeLoadingRoomId !== normalizedRoomId) return;
+        this.isLoadingMessages.set(false);
         const list = page?.items ?? [];
         const mapped = list.map(m => this.mapApiMessage(m));
         this.messages.set(mapped);
@@ -366,7 +381,10 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         }
       },
       error: () => {
-        this.toast.show('Could not load chat history.', 'error');
+        if (this.activeLoadingRoomId === normalizedRoomId) {
+          this.isLoadingMessages.set(false);
+          this.toast.show('Could not load chat history.', 'error');
+        }
       }
     });
   }
