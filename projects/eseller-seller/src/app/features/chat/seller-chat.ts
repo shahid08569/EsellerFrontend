@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SellerService } from '../../core/services/seller.service';
-import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout } from 'eseller-shared';
+import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
 
 interface ChatMessage {
   id?: string;
@@ -71,6 +71,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly pendingAttachment = signal<PendingAttachment | null>(null);
   readonly searchTerm = signal<string>('');
   readonly editingMessage = signal<ChatMessage | null>(null);
+  readonly replyingTo = signal<ParsedReply | null>(null);
   readonly deleteModalMessage = signal<ChatMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
   readonly menuOpenUpwards = signal<boolean>(false);
@@ -436,10 +437,51 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  getReplyInfo(raw: string | null | undefined): ParsedReply | null {
+    return parseMessageReply(raw).reply;
+  }
+
+  getCleanMessage(raw: string | null | undefined): string {
+    return parseMessageReply(raw).cleanText;
+  }
+
+  startReply(msg: ChatMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    const clean = this.getCleanMessage(msg.message);
+    const sName = msg.isMe ? 'You' : 'Customer Service';
+    this.replyingTo.set({
+      id: msg.id || '',
+      senderName: sName,
+      text: clean || (msg.attachmentFileName ? `📎 ${msg.attachmentFileName}` : 'Message')
+    });
+    this.activeMenuMessageId.set(null);
+    setTimeout(() => {
+      const inp = document.getElementById('seller-chat-page-input') as HTMLInputElement | null;
+      if (inp) inp.focus();
+    }, 50);
+  }
+
+  cancelReply(): void {
+    this.replyingTo.set(null);
+  }
+
+  scrollToMessage(targetId: string): void {
+    if (!targetId) return;
+    const el = document.getElementById(`msg-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('reply-highlight');
+      setTimeout(() => {
+        el.classList.remove('reply-highlight');
+      }, 1500);
+    }
+  }
+
   startEditMessage(msg: ChatMessage): void {
     if (msg.isDeletedForEveryone) return;
     this.editingMessage.set(msg);
-    this.messageText.set(msg.message);
+    this.messageText.set(this.getCleanMessage(msg.message));
+    this.cancelReply();
     this.activeMenuMessageId.set(null);
   }
 
@@ -617,12 +659,15 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     const roomId = this.selectedRoomId();
     if ((!text && !attachment) || !roomId || this.isSending()) return;
 
+    const reply = this.replyingTo();
+    const payloadText = reply ? buildReplyMessage(reply, text) : text;
+
     this.isSending.set(true);
     const tempId = `tmp-${Date.now()}`;
     const preview = text || (attachment ? `📎 ${attachment.fileName}` : '');
     const optimisticMsg: ChatMessage = {
       id: tempId,
-      message: text,
+      message: payloadText,
       createdAt: new Date().toISOString(),
       isMe: true,
       isRead: false,
@@ -635,9 +680,10 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     this.messages.update(m => [...m, optimisticMsg]);
     this.messageText.set('');
     this.pendingAttachment.set(null);
+    this.cancelReply();
     this.queueScrollToLatest();
 
-    this.chatService.sendMessage(roomId, text, attachment ? {
+    this.chatService.sendMessage(roomId, payloadText, attachment ? {
       attachmentUrl: attachment.url,
       attachmentFileName: attachment.fileName,
       attachmentContentType: attachment.contentType,

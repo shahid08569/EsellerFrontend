@@ -305,3 +305,18 @@ a.bg-primary:hover {
   background: #f8fafc;
   border-color: #cbd5e1;
 }
+
+.reply-highlight {
+  animation: pulse-highlight 1.5s ease-out;
+}
+
+@keyframes pulse-highlight {
+  0% {
+    box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.6);
+    background-color: rgba(254, 243, 199, 0.5);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+    background-color: transparent;
+  }
+}

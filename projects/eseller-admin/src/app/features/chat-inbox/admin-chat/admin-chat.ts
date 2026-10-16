@@ -3,7 +3,7 @@ import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -62,6 +62,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     sizeBytes: number;
   } | null>(null);
   readonly editingMessage = signal<AdminDisplayMessage | null>(null);
+  readonly replyingTo = signal<ParsedReply | null>(null);
   readonly deleteModalMessage = signal<AdminDisplayMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
   readonly menuOpenUpwards = signal<boolean>(false);
@@ -402,6 +403,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
 
     this.exitSelectionMode();
     this.cancelEdit();
+    this.cancelReply();
     this.activeConversation.set(convo);
     this.messages.set([]);
 
@@ -485,10 +487,51 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  getReplyInfo(raw: string | null | undefined): ParsedReply | null {
+    return parseMessageReply(raw).reply;
+  }
+
+  getCleanMessage(raw: string | null | undefined): string {
+    return parseMessageReply(raw).cleanText;
+  }
+
+  startReply(msg: AdminDisplayMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    const clean = this.getCleanMessage(msg.content);
+    const sName = msg.isFromAdmin ? 'Management' : (msg.senderName || 'Customer');
+    this.replyingTo.set({
+      id: msg.id,
+      senderName: sName,
+      text: clean || (msg.attachmentFileName ? `📎 ${msg.attachmentFileName}` : 'Message')
+    });
+    this.activeMenuMessageId.set(null);
+    setTimeout(() => {
+      const inp = document.getElementById('admin-chat-inbox-input') as HTMLInputElement | null;
+      if (inp) inp.focus();
+    }, 50);
+  }
+
+  cancelReply(): void {
+    this.replyingTo.set(null);
+  }
+
+  scrollToMessage(targetId: string): void {
+    if (!targetId) return;
+    const el = document.getElementById(`msg-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('reply-highlight');
+      setTimeout(() => {
+        el.classList.remove('reply-highlight');
+      }, 1500);
+    }
+  }
+
   startEditMessage(msg: AdminDisplayMessage): void {
     if (msg.isDeletedForEveryone) return;
     this.editingMessage.set(msg);
-    this.newMessage.set(msg.content);
+    this.newMessage.set(this.getCleanMessage(msg.content));
+    this.cancelReply();
     this.activeMenuMessageId.set(null);
   }
 
@@ -661,7 +704,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
-    const text = this.newMessage().trim();
+    const rawText = this.newMessage().trim();
+    const reply = this.replyingTo();
+    const text = buildReplyMessage(reply, rawText);
     const attachment = this.pendingAttachment();
     const convo = this.activeConversation();
     if ((!text && !attachment) || !convo) return;
@@ -670,8 +715,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     if (!targetId) return;
 
     this.sendingMessage.set(true);
+    this.cancelReply();
     const tempId = `tmp-${Date.now()}`;
-    const preview = text || (attachment ? `📎 ${attachment.fileName}` : '');
+    const preview = rawText || (attachment ? `📎 ${attachment.fileName}` : '');
     this.messages.update(prev => [...prev, {
       id: tempId,
       senderName: 'Management',

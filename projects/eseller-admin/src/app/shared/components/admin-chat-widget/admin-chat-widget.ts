@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthStore, ToastService, SignalRService, ChatService, SkeletonLayout } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -82,6 +82,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly isLoadingCustomers = signal<boolean>(false);
   readonly customerConvos = signal<any[]>([]);
   readonly editingMessage = signal<AdminToSellerMessage | null>(null);
+  readonly replyingTo = signal<ParsedReply | null>(null);
   readonly deleteModalMessage = signal<AdminToSellerMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
   readonly menuOpenUpwards = signal<boolean>(false);
@@ -421,6 +422,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     this.cancelEdit();
+    this.cancelReply();
     this.exitSelectionMode();
     this.selectedShop.set(shop);
     this.currentView.set('chat');
@@ -489,6 +491,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
   backToDirectory(): void {
     this.cancelEdit();
+    this.cancelReply();
     this.exitSelectionMode();
     this.currentView.set('directory');
     this.chatUnread.refresh();
@@ -610,10 +613,51 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  getReplyInfo(raw: string | null | undefined): ParsedReply | null {
+    return parseMessageReply(raw).reply;
+  }
+
+  getCleanMessage(raw: string | null | undefined): string {
+    return parseMessageReply(raw).cleanText;
+  }
+
+  startReply(msg: AdminToSellerMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    const clean = this.getCleanMessage(msg.message);
+    const sName = msg.sender === 'admin' ? 'Management' : (this.selectedShop()?.name || 'Merchant');
+    this.replyingTo.set({
+      id: msg.id,
+      senderName: sName,
+      text: clean || (msg.attachmentFileName ? `📎 ${msg.attachmentFileName}` : 'Message')
+    });
+    this.activeMenuMessageId.set(null);
+    setTimeout(() => {
+      const inp = document.getElementById('admin-chat-widget-input') as HTMLInputElement | null;
+      if (inp) inp.focus();
+    }, 50);
+  }
+
+  cancelReply(): void {
+    this.replyingTo.set(null);
+  }
+
+  scrollToMessage(targetId: string): void {
+    if (!targetId) return;
+    const el = document.getElementById(`msg-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('reply-highlight');
+      setTimeout(() => {
+        el.classList.remove('reply-highlight');
+      }, 1500);
+    }
+  }
+
   startEditMessage(msg: AdminToSellerMessage): void {
     if (msg.isDeletedForEveryone) return;
     this.editingMessage.set(msg);
-    this.messageText.set(msg.message);
+    this.messageText.set(this.getCleanMessage(msg.message));
+    this.cancelReply();
     this.activeMenuMessageId.set(null);
   }
 
@@ -809,9 +853,12 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     const shop = this.selectedShop();
     if ((!text && !attachment) || !shop || this.isSending()) return;
 
+    const reply = this.replyingTo();
+    const payloadText = reply ? buildReplyMessage(reply, text) : text;
+
     this.isSending.set(true);
     const tempId = `tmp-${Date.now()}`;
-    const preview = text || (attachment ? `📎 ${attachment.fileName}` : '');
+    const preview = payloadText || (attachment ? `📎 ${attachment.fileName}` : '');
     const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
     this.messagesMap.update(map => ({
@@ -835,6 +882,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     }));
     this.messageText.set('');
     this.pendingAttachment.set(null);
+    this.cancelReply();
     this.queueScrollToLatest();
 
     this.shops.update(currentList => currentList.map(s => {
@@ -848,7 +896,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       return s;
     }));
 
-    this.adminService.sendChatMessage(shop.id, text, attachment ? {
+    this.adminService.sendChatMessage(shop.id, payloadText, attachment ? {
       attachmentUrl: attachment.url,
       attachmentFileName: attachment.fileName,
       attachmentContentType: attachment.contentType,

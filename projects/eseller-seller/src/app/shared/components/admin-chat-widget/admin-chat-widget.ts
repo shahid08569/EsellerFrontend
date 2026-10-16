@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
 
 export interface AdminChatMessage {
@@ -56,6 +56,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly messages = signal<AdminChatMessage[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly editingMessage = signal<AdminChatMessage | null>(null);
+  readonly replyingTo = signal<ParsedReply | null>(null);
   readonly deleteModalMessage = signal<AdminChatMessage | null>(null);
   readonly activeMenuMessageId = signal<string | null>(null);
   readonly menuOpenUpwards = signal<boolean>(false);
@@ -253,7 +254,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private refreshUnreadBadge(): void {
     this.chatService.getUnreadCount().subscribe({
       next: (res) => {
-        if (!this.isOpen()) {
+        if (this.isOpen()) {
+          this.unreadCount.set(0);
+        } else {
           this.unreadCount.set(Number(res?.unreadCount || 0));
         }
       },
@@ -299,8 +302,16 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
   closeChat(): void {
     this.cancelEdit();
+    this.cancelReply();
     this.exitSelectionMode();
     this.isOpen.set(false);
+    this.unreadCount.set(0);
+    if (this.supportRoomId) {
+      this.chatService.markConversationAsRead(this.supportRoomId).subscribe({
+        next: () => this.refreshUnreadBadge(),
+        error: () => {}
+      });
+    }
   }
 
   sendQuickAction(actionType: 'gold' | 'diamond' | 'payment' | 'limit'): void {
@@ -351,10 +362,51 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.pendingAttachment.set(null);
   }
 
+  getReplyInfo(raw: string | null | undefined): ParsedReply | null {
+    return parseMessageReply(raw).reply;
+  }
+
+  getCleanMessage(raw: string | null | undefined): string {
+    return parseMessageReply(raw).cleanText;
+  }
+
+  startReply(msg: AdminChatMessage): void {
+    if (msg.isDeletedForEveryone) return;
+    const clean = this.getCleanMessage(msg.message);
+    const sName = msg.sender === 'seller' ? (this.shop()?.name || 'You') : 'Customer Service';
+    this.replyingTo.set({
+      id: msg.id,
+      senderName: sName,
+      text: clean || (msg.attachmentFileName ? `📎 ${msg.attachmentFileName}` : 'Message')
+    });
+    this.activeMenuMessageId.set(null);
+    setTimeout(() => {
+      const inp = document.getElementById('seller-chat-input') as HTMLInputElement | null;
+      if (inp) inp.focus();
+    }, 50);
+  }
+
+  cancelReply(): void {
+    this.replyingTo.set(null);
+  }
+
+  scrollToMessage(targetId: string): void {
+    if (!targetId) return;
+    const el = document.getElementById(`msg-${targetId}`);
+    if (el) {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.classList.add('reply-highlight');
+      setTimeout(() => {
+        el.classList.remove('reply-highlight');
+      }, 1500);
+    }
+  }
+
   startEditMessage(msg: AdminChatMessage): void {
     if (msg.isDeletedForEveryone) return;
     this.editingMessage.set(msg);
-    this.messageText.set(msg.message);
+    this.messageText.set(this.getCleanMessage(msg.message));
+    this.cancelReply();
     this.activeMenuMessageId.set(null);
   }
 
@@ -530,9 +582,14 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     const text = this.messageText().trim();
     const attachment = this.pendingAttachment();
     if ((!text && !attachment) || this.isSending()) return;
-    this.sendMessageDirect(text, attachment);
+
+    const reply = this.replyingTo();
+    const payloadText = reply ? buildReplyMessage(reply, text) : text;
+
+    this.sendMessageDirect(payloadText, attachment);
     this.messageText.set('');
     this.pendingAttachment.set(null);
+    this.cancelReply();
   }
 
   private joinAndLoad(roomId: string): void {

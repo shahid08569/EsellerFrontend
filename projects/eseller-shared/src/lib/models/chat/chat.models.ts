@@ -71,3 +71,32 @@ export interface SignalRMessageDeleted {
   orderRequestId: string;
   isDeletedForEveryone: boolean;
 }
+
+export interface ParsedReply {
+  id: string;
+  senderName: string;
+  text: string;
+}
+
+export function parseMessageReply(rawMessage: string | null | undefined): { reply: ParsedReply | null; cleanText: string } {
+  if (!rawMessage) return { reply: null, cleanText: '' };
+  const match = rawMessage.match(/^\[reply:([^:]+):([^\]]+)\]([\s\S]*?)\[\/reply\]\s*([\s\S]*)$/);
+  if (match) {
+    return {
+      reply: {
+        id: match[1].trim(),
+        senderName: match[2].trim(),
+        text: match[3].trim()
+      },
+      cleanText: match[4]
+    };
+  }
+  return { reply: null, cleanText: rawMessage };
+}
+
+export function buildReplyMessage(reply: ParsedReply | null | undefined, messageText: string): string {
+  if (!reply) return (messageText || '').trim();
+  const cleanSender = (reply.senderName || 'Message').replace(/[:\]\n]/g, ' ').slice(0, 50);
+  const cleanSnippet = (reply.text || '').replace(/\r?\n/g, ' ').slice(0, 150);
+  return `[reply:${reply.id}:${cleanSender}]${cleanSnippet}[/reply]\n${(messageText || '').trim()}`;
+}

@@ -243,7 +243,8 @@
 
           @for (msg of getCurrentMessages(); track msg.id) {
             <div
-              class="group relative flex flex-col"
+              [id]="'msg-' + msg.id"
+              class="group relative flex flex-col transition-colors rounded-xl p-0.5"
               [class.items-end]="msg.sender === 'admin'"
               [class.items-start]="msg.sender !== 'admin'"
               (click)="isSelectionMode() ? toggleSelectMessage(msg.id) : null"
@@ -278,8 +279,32 @@
                       This message was deleted
                     </div>
                   } @else {
-                    @if (msg.message) {
-                      <p class="text-[12px] leading-relaxed whitespace-pre-wrap font-normal">{{ msg.message }}</p>
+                    @if (getReplyInfo(msg.message); as rInfo) {
+                      <div
+                        (click)="scrollToMessage(rInfo.id); $event.stopPropagation()"
+                        class="mb-1.5 p-1.5 rounded-lg border-l-4 cursor-pointer transition-opacity hover:opacity-90 select-none text-[11px]"
+                        [class.bg-white/10]="msg.sender === 'admin'"
+                        [class.border-white/70]="msg.sender === 'admin'"
+                        [class.bg-orange-50]="msg.sender !== 'admin'"
+                        [class.border-orange-500]="msg.sender !== 'admin'">
+                        <div class="font-bold flex items-center gap-1"
+                             [class.text-white]="msg.sender === 'admin'"
+                             [class.text-orange-800]="msg.sender !== 'admin'">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 inline shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                          </svg>
+                          <span>{{ rInfo.senderName }}</span>
+                        </div>
+                        <div class="truncate opacity-80 mt-0.5"
+                             [class.text-white/90]="msg.sender === 'admin'"
+                             [class.text-slate-600]="msg.sender !== 'admin'">
+                          {{ rInfo.text }}
+                        </div>
+                      </div>
+                    }
+
+                    @if (getCleanMessage(msg.message)) {
+                      <p class="text-[12px] leading-relaxed whitespace-pre-wrap font-normal">{{ getCleanMessage(msg.message) }}</p>
                     }
                     @if (msg.attachmentUrl) {
                       <div class="mt-1.5">
@@ -320,48 +345,69 @@
                 </div>
 
                 @if (!msg.isDeletedForEveryone && !isSelectionMode()) {
-                  <div class="relative">
+                  <div class="flex items-center gap-0.5">
                     <button
                       type="button"
-                      (click)="toggleMessageMenu(msg.id, $event)"
+                      (click)="startReply(msg); $event.stopPropagation()"
                       class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
-                      title="Options">
-                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
-                        <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                      title="Reply">
+                      <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
                       </svg>
                     </button>
 
-                    @if (activeMenuMessageId() === msg.id) {
-                      <div
-                        class="absolute z-30 w-32 bg-white rounded-xl shadow-xl border border-slate-200/80 py-1 text-xs text-slate-700 shadow-slate-900/10"
-                        [class.left-0]="msg.sender === 'admin'"
-                        [class.right-0]="msg.sender !== 'admin'"
-                        [class.bottom-full]="menuOpenUpwards()"
-                        [class.mb-1]="menuOpenUpwards()"
-                        [class.top-5]="!menuOpenUpwards()"
-                        (click)="$event.stopPropagation()">
-                        @if (msg.sender === 'admin') {
+                    <div class="relative">
+                      <button
+                        type="button"
+                        (click)="toggleMessageMenu(msg.id, $event)"
+                        class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
+                        title="Options">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />
+                        </svg>
+                      </button>
+
+                      @if (activeMenuMessageId() === msg.id) {
+                        <div
+                          class="absolute z-30 w-32 bg-white rounded-xl shadow-xl border border-slate-200/80 py-1 text-xs text-slate-700 shadow-slate-900/10"
+                          [class.left-0]="msg.sender === 'admin'"
+                          [class.right-0]="msg.sender !== 'admin'"
+                          [class.bottom-full]="menuOpenUpwards()"
+                          [class.mb-1]="menuOpenUpwards()"
+                          [class.top-5]="!menuOpenUpwards()"
+                          (click)="$event.stopPropagation()">
                           <button
                             type="button"
-                            (click)="startEditMessage(msg)"
+                            (click)="startReply(msg)"
                             class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 cursor-pointer">
-                            Edit
+                            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-slate-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                            </svg>
+                            Reply
                           </button>
-                        }
-                        <button
-                          type="button"
-                          (click)="openDeleteModal(msg)"
-                          class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-rose-50 text-rose-600 cursor-pointer">
-                          Delete
-                        </button>
-                        <button
-                          type="button"
-                          (click)="startSelectionMode(msg.id)"
-                          class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-orange-50 text-slate-700 cursor-pointer">
-                          Select
-                        </button>
-                      </div>
-                    }
+                          @if (msg.sender === 'admin') {
+                            <button
+                              type="button"
+                              (click)="startEditMessage(msg)"
+                              class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-orange-50 hover:text-orange-600 cursor-pointer">
+                              Edit
+                            </button>
+                          }
+                          <button
+                            type="button"
+                            (click)="openDeleteModal(msg)"
+                            class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-rose-50 text-rose-600 cursor-pointer">
+                            Delete
+                          </button>
+                          <button
+                            type="button"
+                            (click)="startSelectionMode(msg.id)"
+                            class="w-full text-left px-3 py-1.5 flex items-center gap-2 hover:bg-orange-50 text-slate-700 cursor-pointer">
+                            Select
+                          </button>
+                        </div>
+                      }
+                    </div>
                   </div>
                 }
               </div>
@@ -370,6 +416,22 @@
         </div>
 
         <div class="bg-orange-50/80 px-3 py-2 border-t border-orange-100 shrink-0 space-y-1.5">
+          @if (replyingTo(); as reply) {
+            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-white border-l-4 border-orange-600 text-xs shadow-2xs">
+              <div class="min-w-0 pr-2">
+                <div class="flex items-center gap-1.5 text-[11px] font-bold text-slate-800">
+                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
+                  </svg>
+                  <span>Replying to {{ reply.senderName }}</span>
+                </div>
+                <p class="truncate text-slate-600 text-[11px] italic mt-0.5">{{ reply.text }}</p>
+              </div>
+              <button type="button" (click)="cancelReply()" class="text-slate-500 hover:text-slate-800 font-bold cursor-pointer text-xs shrink-0 p-1" title="Cancel reply">
+                ✕
+              </button>
+            </div>
+          }
           @if (editingMessage(); as editMsg) {
             <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
               <div class="flex items-center gap-2 min-w-0">
@@ -397,6 +459,7 @@
             </label>
 
             <input
+              id="admin-chat-widget-input"
               type="text"
               [ngModel]="messageText()"
               (ngModelChange)="messageText.set($event)"
