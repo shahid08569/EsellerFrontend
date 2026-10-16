@@ -79,8 +79,9 @@ export interface ParsedReply {
 }
 
 export function parseMessageReply(rawMessage: string | null | undefined): { reply: ParsedReply | null; cleanText: string } {
-  if (!rawMessage) return { reply: null, cleanText: '' };
-  const match = rawMessage.match(/^\[reply:([^:]+):([^\]]+)\]([\s\S]*?)\[\/reply\]\s*([\s\S]*)$/);
+  if (!rawMessage || typeof rawMessage !== 'string') return { reply: null, cleanText: '' };
+  const trimmed = rawMessage.trim();
+  const match = trimmed.match(/^\[reply:([^:]+):([^\]]+)\]([\s\S]*?)\[\/reply\]\s*([\s\S]*)$/i);
   if (match) {
     return {
       reply: {
@@ -88,7 +89,19 @@ export function parseMessageReply(rawMessage: string | null | undefined): { repl
         senderName: match[2].trim(),
         text: match[3].trim()
       },
-      cleanText: match[4]
+      cleanText: (match[4] || '').trim()
+    };
+  }
+  const altMatch = rawMessage.match(/\[reply:([^:]+):([^\]]+)\]([\s\S]*?)\[\/reply\]/i);
+  if (altMatch && altMatch.index !== undefined && altMatch.index < 10) {
+    const after = rawMessage.substring(altMatch.index + altMatch[0].length).trim();
+    return {
+      reply: {
+        id: altMatch[1].trim(),
+        senderName: altMatch[2].trim(),
+        text: altMatch[3].trim()
+      },
+      cleanText: after
     };
   }
   return { reply: null, cleanText: rawMessage };

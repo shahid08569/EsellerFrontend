@@ -262,6 +262,9 @@
                   </div>
                 }
                 <div
+                  (dblclick)="startReply(msg)"
+                  title="Double click or click ↩ to reply"
+                  class="cursor-pointer select-text"
                   [class]="msg.sender === 'admin'
                     ? 'bg-orange-600 text-white rounded-2xl rounded-tr-xs shadow-xs max-w-[85%] p-2.5 relative break-words'
                     : 'bg-white text-slate-900 rounded-2xl rounded-tl-xs shadow-xs max-w-[85%] p-2.5 border border-orange-100 relative break-words'">
@@ -349,7 +352,7 @@
                     <button
                       type="button"
                       (click)="startReply(msg); $event.stopPropagation()"
-                      class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
+                      class="opacity-70 group-hover:opacity-100 hover:text-orange-600 transition-opacity p-1.5 rounded-full text-slate-400 hover:bg-orange-50 cursor-pointer"
                       title="Reply">
                       <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -360,7 +363,7 @@
                       <button
                         type="button"
                         (click)="toggleMessageMenu(msg.id, $event)"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
+                        class="opacity-70 group-hover:opacity-100 transition-opacity p-1.5 rounded-full text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 cursor-pointer"
                         title="Options">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                           <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />

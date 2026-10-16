@@ -153,7 +153,9 @@
                     </div>
                   }
                   <div
-                    class="max-w-[75vw] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed space-y-1.5"
+                    (dblclick)="startReply(msg)"
+                    title="Double click or click ↩ to reply"
+                    class="max-w-[75vw] sm:max-w-md px-4 py-2.5 rounded-2xl text-xs shadow-2xs leading-relaxed space-y-1.5 select-text cursor-pointer"
                     [class.bg-primary]="msg.isMe"
                     [class.text-white]="msg.isMe"
                     [class.rounded-tr-xs]="msg.isMe"
@@ -230,7 +232,7 @@
                       <button
                         type="button"
                         (click)="startReply(msg); $event.stopPropagation()"
-                        class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+                        class="opacity-70 group-hover:opacity-100 hover:text-gray-900 transition-opacity p-1.5 rounded-full text-gray-400 hover:bg-gray-100 cursor-pointer"
                         title="Reply">
                         <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6" />
@@ -241,7 +243,7 @@
                         <button
                           type="button"
                           (click)="toggleMessageMenu(msg.id || '', $event)"
-                          class="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
+                          class="opacity-70 group-hover:opacity-100 transition-opacity p-1.5 rounded-full text-gray-400 hover:text-gray-700 hover:bg-gray-100 cursor-pointer"
                           title="Options">
                           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" viewBox="0 0 20 20" fill="currentColor">
                             <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z" />

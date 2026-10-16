@@ -843,15 +843,33 @@ export class OrderManagement implements OnInit {
   loadPlaceOrderCatalog(): void {
     this.placeLoadingProducts.set(true);
     forkJoin({
-      products: this.adminService.getApprovedSellerProducts(1, 500),
+      products: this.adminService.getApprovedSellerProducts(1, 100).pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
       categories: this.adminService.getCategories().pipe(catchError(() => of([] as AdminCategoryDto[]))),
       brands: this.adminService.getBrands().pipe(catchError(() => of([] as AdminBrandDto[])))
     }).subscribe({
       next: ({ products, categories, brands }) => {
-        this.placeCatalogProducts.set(products?.items || []);
+        const approvedList = products?.items || [];
         this.placeCategories.set(categories || []);
         this.placeBrands.set(brands || []);
-        this.placeLoadingProducts.set(false);
+
+        if (approvedList.length > 0) {
+          this.placeCatalogProducts.set(approvedList);
+          this.placeLoadingProducts.set(false);
+        } else {
+          // If no approved seller listings exist yet, fall back to master warehouse catalog
+          this.adminService.getProducts(undefined, undefined, 1, 100).pipe(
+            catchError(() => of({ items: [], totalCount: 0 } as any))
+          ).subscribe({
+            next: (catRes) => {
+              this.placeCatalogProducts.set(catRes?.items || []);
+              this.placeLoadingProducts.set(false);
+            },
+            error: () => {
+              this.placeCatalogProducts.set([]);
+              this.placeLoadingProducts.set(false);
+            }
+          });
+        }
       },
       error: () => {
         this.placeLoadingProducts.set(false);
