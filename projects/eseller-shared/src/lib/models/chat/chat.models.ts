@@ -113,3 +113,15 @@ export function buildReplyMessage(reply: ParsedReply | null | undefined, message
   const cleanSnippet = (reply.text || '').replace(/\r?\n/g, ' ').slice(0, 150);
   return `[reply:${reply.id}:${cleanSender}]${cleanSnippet}[/reply]\n${(messageText || '').trim()}`;
 }
+
+export function cleanMessagePreview(rawMessage: string | null | undefined): string {
+  if (!rawMessage || typeof rawMessage !== 'string') return '';
+  const parsed = parseMessageReply(rawMessage);
+  if (parsed.reply) {
+    if (parsed.cleanText) {
+      return parsed.cleanText;
+    }
+    return parsed.reply.senderName ? `Replied to ${parsed.reply.senderName}` : 'Reply';
+  }
+  return rawMessage.trim();
+}

@@ -54,7 +54,7 @@
                       <span class="font-bold text-xs text-gray-900 truncate">Customer Service</span>
                     </div>
                     <p class="text-[11px] text-gray-500 mt-0.5 truncate">
-                      {{ c.lastMessage || 'Chat with Customer Service' }}
+                      {{ cleanMessagePreview(c.lastMessage) || 'Chat with Customer Service' }}
                     </p>
                   </div>
                 </div>

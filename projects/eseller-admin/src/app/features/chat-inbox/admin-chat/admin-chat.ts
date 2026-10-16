@@ -3,7 +3,7 @@ import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
+import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage, cleanMessagePreview } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -38,6 +38,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   private readonly chatService = inject(ChatService);
   private readonly chatUnread = inject(AdminChatUnreadService);
   private readonly toast = inject(ToastService);
+  readonly cleanMessagePreview = cleanMessagePreview;
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
   private shouldScrollToBottom = false;

@@ -135,7 +135,7 @@
               </div>
 
               @if (t.lastMessage) {
-                <p class="text-[11px] text-slate-500 mt-2 line-clamp-1 pl-13">{{ t.lastMessage }}</p>
+                <p class="text-[11px] text-slate-500 mt-2 line-clamp-1 pl-13">{{ cleanMessagePreview(t.lastMessage) }}</p>
               }
             </button>
           }

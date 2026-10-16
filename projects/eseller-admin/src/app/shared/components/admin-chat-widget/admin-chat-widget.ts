@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthStore, ToastService, SignalRService, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage, cleanMessagePreview } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -52,6 +52,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private readonly signalR = inject(SignalRService);
   private readonly chatService = inject(ChatService);
   readonly chatUnread = inject(AdminChatUnreadService);
+  readonly cleanMessagePreview = cleanMessagePreview;
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
 

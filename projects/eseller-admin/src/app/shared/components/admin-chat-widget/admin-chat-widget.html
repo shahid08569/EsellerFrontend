@@ -140,7 +140,7 @@
                       }
                       <div class="min-w-0">
                         <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ s.name }}</span>
-                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ s.lastMessage || 'Direct support channel' }}</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(s.lastMessage) || 'Direct support channel' }}</p>
                       </div>
                     </div>
                     <div class="flex items-center gap-2 shrink-0">
@@ -179,7 +179,7 @@
                       }
                       <div class="min-w-0">
                         <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ customerDisplayName(c) }}</span>
-                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ c.lastMessage || 'No messages yet' }}</p>
+                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(c.lastMessage) || 'No messages yet' }}</p>
                       </div>
                     </div>
                     @if ((c.unreadCount || 0) > 0) {

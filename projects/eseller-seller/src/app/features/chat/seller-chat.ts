@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
 import { SellerService } from '../../core/services/seller.service';
-import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
+import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage, cleanMessagePreview } from 'eseller-shared';
 
 interface ChatMessage {
   id?: string;
@@ -50,6 +50,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   private readonly route = inject(ActivatedRoute);
   readonly authStore = inject(AuthStore);
   private readonly toast = inject(ToastService);
+  readonly cleanMessagePreview = cleanMessagePreview;
 
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
   private shouldScrollToBottom = false;

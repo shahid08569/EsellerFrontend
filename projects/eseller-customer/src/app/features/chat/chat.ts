@@ -21,7 +21,8 @@ import {
   SignalRIncomingMessage,
   SignalRMessageEdited,
   SignalRMessageDeleted,
-  SkeletonLayout
+  SkeletonLayout,
+  cleanMessagePreview
 } from 'eseller-shared';
 import { HubConnectionState } from '@microsoft/signalr';
 
@@ -93,6 +94,7 @@ export class Chat implements OnInit, OnDestroy, AfterViewChecked {
   readonly signalRService = inject(SignalRService);
   readonly chatService = inject(ChatService);
   readonly orderService = inject(OrderService);
+  readonly cleanMessagePreview = cleanMessagePreview;
 
   @ViewChild('chatFeedContainer') private chatFeedContainer?: ElementRef<HTMLDivElement>;
   @ViewChild('chatTextarea') chatTextarea?: ElementRef<HTMLTextAreaElement>;
