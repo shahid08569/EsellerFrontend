@@ -1,11 +1,11 @@
 <div class="relative w-full">
-  <!-- Skeletons in the background, strongly blurred when loading -->
+  <!-- Skeletons in the background, subtly blurred and shimmering when loading -->
   <div class="transition-all duration-300"
-       [style.filter]="showLoader() ? 'blur(16px)' : 'none'"
-       [style.opacity]="showLoader() ? '0.45' : '1'"
+       [style.filter]="showLoader() ? 'blur(1.5px)' : 'none'"
+       [style.opacity]="showLoader() ? '0.85' : '1'"
        [style.pointer-events]="showLoader() ? 'none' : 'auto'"
        [style.user-select]="showLoader() ? 'none' : 'auto'"
-       [style.transform]="showLoader() ? 'scale(0.995)' : 'none'">
+       [style.transform]="showLoader() ? 'scale(0.998)' : 'none'">
     @if (variant() === 'product-card') {
       <div class="rounded-2xl border border-gray-200/80 bg-white overflow-hidden" aria-busy="true" aria-label="Loading">
         <div class="aspect-square">
@@ -175,12 +175,12 @@
     }
   </div>
 
-  <!-- Cool Professional Floating Dual-Orbit Loader Badge with Strong Frosted Blur -->
+  <!-- Cool Professional Floating Dual-Orbit Loader Badge with Subtle Frosted Blur -->
   @if (showLoader()) {
-    <div class="absolute inset-0 z-30 flex items-center justify-center p-4 rounded-2xl transition-all duration-300"
-         style="backdrop-filter: blur(16px) !important; -webkit-backdrop-filter: blur(16px) !important; background: rgba(255, 255, 255, 0.7) !important;"
+    <div class="absolute inset-0 z-30 flex items-start justify-center pt-10 sm:pt-16 p-4 rounded-2xl pointer-events-none transition-all duration-300"
+         style="backdrop-filter: blur(2px) !important; -webkit-backdrop-filter: blur(2px) !important; background: rgba(255, 255, 255, 0.4) !important;"
          role="status" aria-live="polite">
-      <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl shadow-2xl transition-all duration-200"
+      <div class="sticky top-24 sm:top-28 z-40 inline-flex items-center gap-3.5 px-6 py-4 rounded-2xl shadow-2xl pointer-events-auto transition-all duration-200"
            style="background: #ffffff !important; border: 1.5px solid rgba(244, 63, 94, 0.3) !important; box-shadow: 0 20px 45px -10px rgba(244, 63, 94, 0.25), 0 0 0 1px rgba(249, 115, 22, 0.18) !important;">
         <!-- Dual orbit modern spinner in Rose & Orange -->
         <div class="relative w-9 h-9 shrink-0 flex items-center justify-center">

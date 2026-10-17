@@ -1,0 +1,483 @@
+<div class="space-y-6">
+
+  <!-- ============================================================
+       TOP HEADER BANNER
+       ============================================================ -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 bg-white p-6 rounded-2xl border border-gray-100 shadow-xs">
+    <div>
+      <div class="flex items-center gap-2.5 mb-1">
+        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 border border-rose-200">
+          Exclusive Referral Network
+        </span>
+        @if (isPartner()) {
+          <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+            Partner Scoped
+          </span>
+        }
+      </div>
+      <h1 class="text-xl sm:text-2xl font-black text-slate-900 tracking-tight">Partner Referrals & Merchant Network</h1>
+      <p class="text-xs text-slate-500 mt-1 max-w-2xl">
+        Every shop joining through your dedicated referral code is automatically and permanently linked to your partner workspace.
+      </p>
+    </div>
+
+    <div class="flex items-center gap-2">
+      <button
+        type="button"
+        (click)="loadReferrals()"
+        class="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-slate-700 bg-slate-100 hover:bg-slate-200 rounded-xl transition-all cursor-pointer">
+        <svg class="w-3.5 h-3.5" [class.animate-spin]="isLoading()" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+        </svg>
+        <span>Refresh</span>
+      </button>
+
+      <button
+        type="button"
+        (click)="copyReferralLink()"
+        class="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-xs font-bold shadow-md shadow-rose-500/20 transition-all cursor-pointer active:scale-95">
+        <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+        </svg>
+        <span>{{ isCopiedLink() ? 'Link Copied!' : 'Copy Share Link' }}</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       DEDICATED REFERRAL LINK & CODE HERO CARD
+       ============================================================ -->
+  <div class="relative overflow-hidden rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-slate-800 p-6 sm:p-8 text-white shadow-xl">
+    <!-- Ambient glowing blur backdrop -->
+    <div class="absolute -top-24 -right-24 w-80 h-80 rounded-full bg-rose-500/15 blur-3xl pointer-events-none"></div>
+    <div class="absolute -bottom-24 -left-24 w-80 h-80 rounded-full bg-orange-500/15 blur-3xl pointer-events-none"></div>
+
+    <div class="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-6 items-center">
+      <!-- Left info & code badge -->
+      <div class="lg:col-span-5 space-y-4">
+        <div>
+          <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold bg-white/10 text-rose-300 border border-white/10 mb-2">
+            <span class="w-2 h-2 rounded-full bg-rose-400 animate-pulse"></span>
+            Your Unique Partner Identification
+          </span>
+          <h2 class="text-lg font-black text-white">Merchant Invitation Portal</h2>
+          <p class="text-xs text-slate-300 mt-1">
+            Share this link or code with prospective store owners. Once registered, their shops will be exclusively managed from your portal.
+          </p>
+        </div>
+
+        <!-- Referral Code Display -->
+        <div class="inline-flex items-center gap-3 p-2 pl-4 bg-slate-800/90 border border-slate-700 rounded-2xl">
+          <div class="flex flex-col">
+            <span class="text-[10px] uppercase font-bold text-slate-400 tracking-wider">Referral Code</span>
+            <span class="font-mono font-black text-xl text-rose-400 tracking-wider">
+              {{ data()?.referralCode || 'LOADING...' }}
+            </span>
+          </div>
+          <button
+            type="button"
+            (click)="copyReferralCode()"
+            class="px-3 py-2 bg-slate-700 hover:bg-slate-600 text-slate-100 rounded-xl text-xs font-bold transition-all cursor-pointer">
+            {{ isCopiedCode() ? 'Copied' : 'Copy Code' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Right URL input & buttons -->
+      <div class="lg:col-span-7 space-y-3">
+        <label class="block text-xs font-bold text-slate-300">
+          Dedicated Merchant Registration URL
+        </label>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <div class="relative flex-1">
+            <input
+              type="text"
+              readonly
+              [value]="data()?.referralLink || 'Generating your exclusive link...'"
+              class="w-full bg-slate-900/90 border border-slate-700 text-slate-100 px-4 py-3 rounded-xl text-xs font-mono select-all focus:outline-none focus:border-rose-400" />
+          </div>
+
+          <div class="flex gap-2">
+            <button
+              type="button"
+              (click)="copyReferralLink()"
+              class="px-5 py-3 bg-gradient-to-r from-rose-500 to-orange-500 hover:from-rose-600 hover:to-orange-600 text-white rounded-xl text-xs font-black shadow-md transition-all cursor-pointer whitespace-nowrap active:scale-95">
+              {{ isCopiedLink() ? 'Copied!' : 'Copy Link' }}
+            </button>
+
+            <button
+              type="button"
+              (click)="toggleQrModal()"
+              title="View QR Code"
+              class="px-3.5 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-xl text-xs font-bold transition-all cursor-pointer">
+              <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+              </svg>
+            </button>
+          </div>
+        </div>
+
+        <p class="text-[11px] text-slate-400 flex items-center gap-1.5">
+          <svg class="w-3.5 h-3.5 text-emerald-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+          Zero Leakage Guarantee: Other partners and unreferred merchants are 100% isolated and cannot see your stores.
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       STATISTICS OVERVIEW (5 CARDS)
+       ============================================================ -->
+  <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5">
+    <!-- 1. Total Stores -->
+    <div class="bg-white p-4 rounded-2xl border border-gray-100 shadow-xs space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-slate-500 uppercase tracking-wider">Total Stores</span>
+        <div class="w-7 h-7 rounded-xl bg-slate-100 flex items-center justify-center text-slate-700">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-slate-900">{{ data()?.totalShops || 0 }}</div>
+      <p class="text-[10px] text-slate-400">Registered via your link</p>
+    </div>
+
+    <!-- 2. Active Stores -->
+    <div class="bg-white p-4 rounded-2xl border border-emerald-100 shadow-xs space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-emerald-600 uppercase tracking-wider">Active Stores</span>
+        <div class="w-7 h-7 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-emerald-600">{{ data()?.activeShops || 0 }}</div>
+      <p class="text-[10px] text-emerald-500/80">Approved & selling</p>
+    </div>
+
+    <!-- 3. Pending Approvals -->
+    <div class="bg-white p-4 rounded-2xl border border-amber-100 shadow-xs space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-amber-600 uppercase tracking-wider">Pending</span>
+        <div class="w-7 h-7 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-amber-600">{{ data()?.pendingShops || 0 }}</div>
+      <p class="text-[10px] text-amber-500/80">Awaiting merchant review</p>
+    </div>
+
+    <!-- 4. Total Orders -->
+    <div class="bg-white p-4 rounded-2xl border border-blue-100 shadow-xs space-y-1">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-blue-600 uppercase tracking-wider">Total Orders</span>
+        <div class="w-7 h-7 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-blue-600">{{ data()?.totalOrders || 0 }}</div>
+      <p class="text-[10px] text-blue-500/80">Customer & injected orders</p>
+    </div>
+
+    <!-- 5. Gross Sales -->
+    <div class="bg-white p-4 rounded-2xl border border-purple-100 shadow-xs space-y-1 col-span-2 sm:col-span-1">
+      <div class="flex items-center justify-between">
+        <span class="text-[11px] font-bold text-purple-600 uppercase tracking-wider">Gross Sales</span>
+        <div class="w-7 h-7 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+      </div>
+      <div class="text-2xl font-black text-purple-600">
+        {{ (data()?.totalSales || 0) | currency:'USD':'symbol':'1.0-0' }}
+      </div>
+      <p class="text-[10px] text-purple-500/80">Combined merchant revenue</p>
+    </div>
+  </div>
+
+  <!-- ============================================================
+       REFERRED SHOPS TABLE & FILTERS
+       ============================================================ -->
+  <div class="bg-white rounded-2xl border border-gray-100 shadow-xs overflow-hidden">
+    
+    <!-- Table Toolbar -->
+    <div class="p-4 sm:p-5 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+      <!-- Search -->
+      <div class="relative flex-1 max-w-md">
+        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-400">
+          <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+          </svg>
+        </div>
+        <input
+          type="text"
+          [ngModel]="searchQuery()"
+          (ngModelChange)="searchQuery.set($event)"
+          placeholder="Search stores by name, merchant owner, phone or email..."
+          class="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-rose-400 focus:bg-white transition-all" />
+      </div>
+
+      <!-- Filter Pills -->
+      <div class="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+        <button
+          type="button"
+          (click)="statusFilter.set('all')"
+          [class.bg-slate-900]="statusFilter() === 'all'"
+          [class.text-white]="statusFilter() === 'all'"
+          [class.bg-slate-100]="statusFilter() !== 'all'"
+          [class.text-slate-600]="statusFilter() !== 'all'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
+          All ({{ data()?.shops?.length || 0 }})
+        </button>
+
+        <button
+          type="button"
+          (click)="statusFilter.set('Approved')"
+          [class.bg-emerald-600]="statusFilter() === 'Approved'"
+          [class.text-white]="statusFilter() === 'Approved'"
+          [class.bg-emerald-50]="statusFilter() !== 'Approved'"
+          [class.text-emerald-700]="statusFilter() !== 'Approved'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
+          Active ({{ data()?.activeShops || 0 }})
+        </button>
+
+        <button
+          type="button"
+          (click)="statusFilter.set('Pending')"
+          [class.bg-amber-600]="statusFilter() === 'Pending'"
+          [class.text-white]="statusFilter() === 'Pending'"
+          [class.bg-amber-50]="statusFilter() !== 'Pending'"
+          [class.text-amber-700]="statusFilter() !== 'Pending'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
+          Pending ({{ data()?.pendingShops || 0 }})
+        </button>
+
+        <button
+          type="button"
+          (click)="statusFilter.set('Suspended')"
+          [class.bg-rose-600]="statusFilter() === 'Suspended'"
+          [class.text-white]="statusFilter() === 'Suspended'"
+          [class.bg-rose-50]="statusFilter() !== 'Suspended'"
+          [class.text-rose-700]="statusFilter() !== 'Suspended'"
+          class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
+          Suspended ({{ data()?.suspendedShops || 0 }})
+        </button>
+      </div>
+    </div>
+
+    <!-- SKELETON LOADER -->
+    @if (isLoading()) {
+      <div class="p-4">
+        <es-skeleton-layout variant="table" [count]="6" [columns]="6" label="Loading referred stores" sublabel="Syncing partner-linked merchants..." />
+      </div>
+    }
+
+    <!-- EMPTY STATE -->
+    @else if (filteredShops().length === 0) {
+      <div class="p-12 text-center space-y-3">
+        <div class="w-12 h-12 rounded-2xl bg-rose-50 text-rose-500 mx-auto flex items-center justify-center">
+          <svg class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        </div>
+        <h3 class="text-sm font-bold text-slate-800">No referred shops found</h3>
+        <p class="text-xs text-slate-400 max-w-sm mx-auto">
+          @if (searchQuery()) {
+            No shops match your query "{{ searchQuery() }}". Try clearing the search.
+          } @else {
+            Share your exclusive referral code or link with store owners to onboard them to your network.
+          }
+        </p>
+        <button
+          type="button"
+          (click)="copyReferralLink()"
+          class="inline-flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer">
+          <span>Copy Invitation Link</span>
+        </button>
+      </div>
+    }
+
+    <!-- STORES TABLE -->
+    @else {
+      <div class="overflow-x-auto">
+        <table class="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr class="bg-slate-50/80 border-b border-gray-100 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
+              <th class="py-3 px-4">Store Name</th>
+              <th class="py-3 px-4">Merchant Owner</th>
+              <th class="py-3 px-4">Catalog & Rating</th>
+              <th class="py-3 px-4">Orders & Revenue</th>
+              <th class="py-3 px-4">Status</th>
+              <th class="py-3 px-4">Joined Date</th>
+              <th class="py-3 px-4 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            @for (shop of filteredShops(); track shop.id) {
+              <tr class="hover:bg-slate-50/60 transition-colors">
+                <!-- Store Name & Logo -->
+                <td class="py-3.5 px-4">
+                  <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-slate-100 border border-slate-200 overflow-hidden shrink-0 flex items-center justify-center font-bold text-slate-500">
+                      @if (shop.logoUrl) {
+                        <img [src]="shop.logoUrl" [alt]="shop.name" class="w-full h-full object-cover" />
+                      } @else {
+                        <span>{{ shop.name[0] }}</span>
+                      }
+                    </div>
+                    <div class="flex flex-col min-w-0">
+                      <span class="font-bold text-slate-900 truncate max-w-[180px]">{{ shop.name }}</span>
+                      <span class="text-[10px] text-slate-400 font-mono">/shop/{{ shop.slug }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Owner & Contact -->
+                <td class="py-3.5 px-4">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-slate-800">{{ shop.ownerName }}</span>
+                    <span class="text-[10px] text-slate-400">{{ shop.ownerEmail }}</span>
+                    @if (shop.phone) {
+                      <span class="text-[10px] text-slate-400 font-mono">{{ shop.phone }}</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Catalog & Rating -->
+                <td class="py-3.5 px-4">
+                  <div class="flex flex-col gap-0.5">
+                    <span class="font-bold text-slate-800">{{ shop.totalProducts }} Products</span>
+                    <div class="flex items-center gap-1 text-[11px] text-amber-500">
+                      <span>★</span>
+                      <span class="font-bold text-slate-700">{{ shop.rating || '5.0' }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Orders & Revenue -->
+                <td class="py-3.5 px-4">
+                  <div class="flex flex-col">
+                    <span class="font-bold text-slate-900">{{ shop.ordersCount }} Orders</span>
+                    <span class="text-[11px] font-black text-emerald-600">
+                      {{ shop.totalSales | currency:'USD':'symbol':'1.0-0' }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Status Badge -->
+                <td class="py-3.5 px-4">
+                  @if (shop.status === 'Approved' && shop.isActive) {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                      Active
+                    </span>
+                  } @else if (shop.status === 'Pending') {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse"></span>
+                      Pending Review
+                    </span>
+                  } @else {
+                    <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200">
+                      <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span>
+                      Suspended
+                    </span>
+                  }
+                </td>
+
+                <!-- Joined Date -->
+                <td class="py-3.5 px-4 text-slate-500 text-[11px]">
+                  {{ shop.joinedAt | date:'mediumDate' }}
+                </td>
+
+                <!-- Actions -->
+                <td class="py-3.5 px-4 text-right">
+                  <div class="inline-flex items-center gap-1.5">
+                    <!-- Chat with Seller -->
+                    <button
+                      type="button"
+                      (click)="openShopChat(shop)"
+                      title="Chat with Merchant"
+                      class="p-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors cursor-pointer">
+                      <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                      </svg>
+                    </button>
+
+                    <!-- Place Order (if permitted) -->
+                    @if (canPlaceOrders()) {
+                      <button
+                        type="button"
+                        (click)="openPlaceOrder(shop)"
+                        title="Place Order to Shop"
+                        class="p-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-600 transition-colors cursor-pointer">
+                        <svg class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
+                        </svg>
+                      </button>
+                    }
+
+                    <!-- View Store Management -->
+                    <a
+                      [routerLink]="['/shops']"
+                      [queryParams]="{ search: shop.name }"
+                      title="Manage Store"
+                      class="px-2.5 py-1.5 rounded-xl bg-slate-900 hover:bg-black text-white text-[11px] font-bold transition-all">
+                      Manage
+                    </a>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+
+  <!-- ============================================================
+       QR CODE MODAL
+       ============================================================ -->
+  @if (showQrModal()) {
+    <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-200">
+      <div class="bg-white rounded-3xl p-6 sm:p-8 max-w-sm w-full shadow-2xl border border-gray-100 text-center space-y-4">
+        <div class="flex items-center justify-between">
+          <h3 class="text-sm font-black text-slate-900">Merchant QR Invite</h3>
+          <button
+            type="button"
+            (click)="toggleQrModal()"
+            class="w-7 h-7 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-600 flex items-center justify-center cursor-pointer">
+            ✕
+          </button>
+        </div>
+
+        <div class="p-4 bg-slate-50 rounded-2xl inline-block border border-slate-200 shadow-inner">
+          <img [src]="getQrCodeUrl()" alt="Merchant Referral QR" class="w-48 h-48 mx-auto" />
+        </div>
+
+        <div>
+          <span class="text-xs font-mono font-bold text-rose-600 block">{{ data()?.referralCode }}</span>
+          <p class="text-[11px] text-slate-400 mt-1">
+            Scan to directly open merchant registration with your referral code auto-filled.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          (click)="copyReferralLink(); toggleQrModal()"
+          class="w-full py-2.5 bg-gradient-to-r from-rose-500 to-orange-500 text-white rounded-xl text-xs font-bold shadow-md cursor-pointer">
+          Copy Link & Close
+        </button>
+      </div>
+    </div>
+  }
+
+</div>

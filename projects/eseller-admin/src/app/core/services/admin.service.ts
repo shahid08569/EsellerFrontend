@@ -15,6 +15,7 @@ import {
   AdminOrderDto,
   AdminCustomerDto,
   AdminPartnerDto,
+  PartnerReferralsDto,
   AdminCommissionDto,
   AdminWithdrawalDto,
   AdminCouponDto,
@@ -972,6 +973,14 @@ export class AdminService {
       payload.password = password.trim();
     }
     return this.api.put<any>(`/admin/partners/${id}`, payload);
+  }
+
+  getMyReferrals(): Observable<PartnerReferralsDto> {
+    return this.api.get<PartnerReferralsDto>('/admin/partners/referrals');
+  }
+
+  getPartnerReferrals(partnerId: string): Observable<PartnerReferralsDto> {
+    return this.api.get<PartnerReferralsDto>(`/admin/partners/${partnerId}/referrals`);
   }
 
   // ═══════════════════════════════════════════════════════════

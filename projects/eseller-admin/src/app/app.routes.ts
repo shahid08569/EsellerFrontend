@@ -88,6 +88,11 @@ export const routes: Routes = [
         loadComponent: () => import('./features/partners/partner-management/partner-management').then(m => m.PartnerManagement)
       },
       {
+        path: 'partner-referrals',
+        canActivate: [partnerPermissionGuard],
+        loadComponent: () => import('./features/partners/partner-referrals/partner-referrals').then(m => m.PartnerReferrals)
+      },
+      {
         path: 'finance',
         canActivate: [partnerPermissionGuard],
         data: { requiredPermission: ['finance:view', 'finance:manage'] },

@@ -74,6 +74,15 @@ export class PartnerManagement implements OnInit {
     return this.allPermissions.filter(p => p.category === category);
   }
 
+  copyCode(code: string | undefined): void {
+    if (!code) return;
+    navigator.clipboard.writeText(code).then(() => {
+      this.toast.show(`Referral Code "${code}" copied to clipboard!`, 'success');
+    }).catch(() => {
+      this.toast.show('Failed to copy code.', 'error');
+    });
+  }
+
   openAddModal(): void {
     if (!this.canAddPartner()) {
       this.toast.show('Maximum limit of 3 partners reached. You cannot add more partners.', 'error');

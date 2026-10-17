@@ -232,6 +232,41 @@ export interface AdminPartnerDto {
   permissions?: string | string[];
   isActive: boolean;
   createdAt: string;
+  referralCode?: string;
+  referredShopsCount?: number;
+}
+
+export interface PartnerReferralsDto {
+  partnerId: string;
+  email: string;
+  referralCode: string;
+  referralLink: string;
+  alternateLink: string;
+  totalShops: number;
+  activeShops: number;
+  pendingShops: number;
+  suspendedShops: number;
+  totalOrders: number;
+  totalSales: number;
+  shops: PartnerReferredShopDto[];
+}
+
+export interface PartnerReferredShopDto {
+  id: string;
+  shopkeeperId: string;
+  name: string;
+  slug: string;
+  logoUrl?: string;
+  phone?: string;
+  ownerName: string;
+  ownerEmail: string;
+  status: string;
+  isActive: boolean;
+  totalProducts: number;
+  rating: number;
+  ordersCount: number;
+  totalSales: number;
+  joinedAt: string;
 }
 
 export interface AdminCommissionDto {
