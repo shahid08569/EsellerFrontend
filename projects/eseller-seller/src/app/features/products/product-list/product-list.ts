@@ -8,6 +8,7 @@ import { ProductListDto, PagedList, ToastService, HomeService, CategoryTreeDto, 
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
+import { GroupProductImportModal } from '../../../shared/components/group-product-import-modal/group-product-import-modal';
 
 export type SortOption = 'newest' | 'oldest' | 'price-asc' | 'price-desc' | 'name-asc' | 'name-desc';
 export type ProductOriginTab = 'own' | 'warehouse';
@@ -15,7 +16,7 @@ export type ProductOriginTab = 'own' | 'warehouse';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ConfirmModal, TablePagination, ImageUrlPipe, SkeletonLayout],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModal, TablePagination, ImageUrlPipe, GroupProductImportModal, SkeletonLayout],
   templateUrl: './product-list.html'
 })
 export class ProductList implements OnInit {
@@ -296,5 +297,22 @@ export class ProductList implements OnInit {
         this.toast.show(msg, 'error');
       }
     });
+  }
+
+  readonly showGroupImportModal = signal<boolean>(false);
+  readonly productLimit = computed(() => this.shop()?.maxProductLimit || 200);
+  readonly usedSlots = computed(() => this.products().length);
+
+  openGroupImportModal(): void {
+    const shop = this.shop();
+    if (!shop) {
+      this.toast.show('Store profile loading. Please wait...', 'warning');
+      return;
+    }
+    this.showGroupImportModal.set(true);
+  }
+
+  onGroupImported(res: any): void {
+    this.loadProducts();
   }
 }

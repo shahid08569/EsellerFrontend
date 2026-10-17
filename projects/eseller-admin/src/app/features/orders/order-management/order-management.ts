@@ -66,6 +66,11 @@ export class OrderManagement implements OnInit {
   readonly orderToDelete = signal<AdminOrderDto | null>(null);
   readonly isDeleting = signal<boolean>(false);
 
+  // Batch Status Update Modal
+  readonly batchStatusModalOpen = signal<boolean>(false);
+  readonly selectedBatchStatus = signal<number>(2);
+  readonly isUpdatingBatchStatus = signal<boolean>(false);
+
   // Filters & Sorting
   readonly activeTab = signal<OrderTab>('all');
   readonly selectedShopId = signal<string>('all');
@@ -618,6 +623,52 @@ export class OrderManagement implements OnInit {
         }
       });
     }
+  }
+
+  openBatchStatusModal(): void {
+    if (!this.canManageOrders()) {
+      this.toast.show('You do not have permission to manage orders', 'error');
+      return;
+    }
+    if (this.selectedOrderIds().size === 0) return;
+    this.batchStatusModalOpen.set(true);
+  }
+
+  closeBatchStatusModal(): void {
+    if (this.isUpdatingBatchStatus()) return;
+    this.batchStatusModalOpen.set(false);
+  }
+
+  confirmBatchStatusUpdate(): void {
+    if (this.isUpdatingBatchStatus()) return;
+    const ids = Array.from(this.selectedOrderIds());
+    if (ids.length === 0) {
+      this.closeBatchStatusModal();
+      return;
+    }
+
+    const newStatus = Number(this.selectedBatchStatus());
+    this.isUpdatingBatchStatus.set(true);
+
+    this.adminService.batchUpdateOrderStatus(ids, newStatus).subscribe({
+      next: (res) => {
+        this.isUpdatingBatchStatus.set(false);
+        this.batchStatusModalOpen.set(false);
+        const successCount = res?.successCount ?? ids.length;
+        this.toast.show(
+          `Batch update complete! ${successCount} order(s) updated to ${this.getStatusLabel(newStatus)}.`,
+          'success'
+        );
+        this.clearSelection();
+        this.loadOrders();
+      },
+      error: (err) => {
+        this.isUpdatingBatchStatus.set(false);
+        const msg = err?.error?.error || err?.error?.message || 'Failed to update selected orders.';
+        this.toast.show(msg, 'error');
+        this.loadOrders();
+      }
+    });
   }
 
   goToPage(page: number): void {

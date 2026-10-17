@@ -29,8 +29,17 @@
       @if (selectedCount() > 0) {
         <button 
           type="button" 
+          (click)="openBatchStatusModal()" 
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-orange-600/30">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+          Update Status ({{ selectedCount() }})
+        </button>
+        <button 
+          type="button" 
           (click)="openBatchDeleteModal()" 
-          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-rose-600/30 animate-pulse">
+          class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-xs font-extrabold text-white transition-all cursor-pointer shadow-lg shadow-rose-600/30">
           <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
           </svg>
@@ -572,6 +581,114 @@
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
             </svg>
             <span>Yes, Delete Permanently</span>
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}
+
+<!-- BATCH ORDER STATUS UPDATE MODAL -->
+@if (batchStatusModalOpen()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200">
+    <div class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-100 overflow-hidden transform animate-in zoom-in-95 duration-200">
+      
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-orange-100 bg-orange-50/70 flex items-center gap-3 text-orange-950">
+        <div class="w-10 h-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold text-lg shrink-0">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </div>
+        <div>
+          <h3 class="text-sm font-black text-orange-950">
+            Batch Update Order Status
+          </h3>
+          <p class="text-[11px] text-orange-800 font-medium">
+            Update {{ selectedCount() }} selected order(s) simultaneously.
+          </p>
+        </div>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-5 text-xs text-gray-700 space-y-4">
+        
+        <!-- Target Status Select -->
+        <div class="space-y-1.5">
+          <label class="block text-xs font-black text-gray-900 tracking-tight">
+            Select New Status:
+          </label>
+          <select
+            [ngModel]="selectedBatchStatus()"
+            (ngModelChange)="selectedBatchStatus.set($event)"
+            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
+            <option [value]="2">Confirmed</option>
+            <option [value]="3">Processing</option>
+            <option [value]="4">Packed</option>
+            <option [value]="5">On the Way (Shipped)</option>
+            <option [value]="6">Out For Delivery</option>
+            <option [value]="7">Delivered (Fulfill & Credit Seller)</option>
+            <option [value]="8">Cancelled</option>
+          </select>
+        </div>
+
+        <!-- Orders Preview -->
+        <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-800">
+          <p class="font-bold text-xs mb-1.5 text-slate-900">
+            Affected Orders (<span class="font-extrabold text-orange-600">{{ selectedCount() }}</span>):
+          </p>
+          <div class="max-h-36 overflow-y-auto space-y-1.5 pr-1 text-[11px] scrollbar-thin">
+            @for (ord of getSelectedOrders(); track ord.id) {
+              <div class="flex items-center justify-between py-1 px-2 rounded-lg bg-white border border-slate-200">
+                <div class="min-w-0 pr-2">
+                  <span class="font-bold text-gray-900">#{{ ord.orderNumber || ord.id.slice(0, 8) }}</span>
+                  <span class="text-gray-500 text-[10px] ml-1.5">({{ ord.customerName || 'Customer' }})</span>
+                </div>
+                <div class="flex items-center gap-2 shrink-0">
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold" [class]="getStatusColorClass(ord.status)">
+                    {{ getStatusLabel(ord.status) }}
+                  </span>
+                  <span class="text-orange-500 font-bold">→</span>
+                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
+                    {{ getStatusLabel(selectedBatchStatus()) }}
+                  </span>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <p class="text-[11px] text-gray-500 leading-relaxed bg-amber-50 p-2.5 rounded-xl border border-amber-200 text-amber-800">
+          <strong>Note:</strong> Status changes will automatically update order history, linked seller vendor items, and trigger seller notifications. Moving to "Delivered" will credit vendor wallets.
+        </p>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-gray-100 bg-gray-50 flex items-center justify-end gap-2.5">
+        <button 
+          type="button" 
+          [disabled]="isUpdatingBatchStatus()"
+          (click)="closeBatchStatusModal()"
+          class="px-4 py-2 rounded-xl text-xs font-bold text-gray-600 hover:bg-gray-200 transition-colors cursor-pointer disabled:opacity-50">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          [disabled]="isUpdatingBatchStatus()"
+          (click)="confirmBatchStatusUpdate()"
+          class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md shadow-orange-600/30 transition-all cursor-pointer disabled:opacity-50">
+          @if (isUpdatingBatchStatus()) {
+            <svg class="animate-spin w-3.5 h-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+            </svg>
+            <span>Updating...</span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+            </svg>
+            <span>Apply Status to All ({{ selectedCount() }})</span>
           }
         </button>
       </div>

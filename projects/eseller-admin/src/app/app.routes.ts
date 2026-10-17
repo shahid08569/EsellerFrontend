@@ -25,6 +25,12 @@ export const routes: Routes = [
         loadComponent: () => import('./features/shops/shop-management/shop-management').then(m => m.ShopManagement)
       },
       {
+        path: 'products/groups',
+        canActivate: [partnerPermissionGuard],
+        data: { requiredPermission: ['products:view', 'products:manage'] },
+        loadComponent: () => import('./features/products/product-groups/product-groups').then(m => m.ProductGroups)
+      },
+      {
         path: 'products',
         canActivate: [partnerPermissionGuard],
         data: { requiredPermission: ['products:view', 'products:manage'] },

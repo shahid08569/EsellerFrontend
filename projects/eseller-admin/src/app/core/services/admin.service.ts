@@ -685,6 +685,47 @@ export class AdminService {
     return this.api.delete<any>(`/admin/orders/${id}`);
   }
 
+  batchUpdateOrderStatus(orderIds: string[], newStatus: number): Observable<{ successCount: number; failureCount: number; message: string }> {
+    return this.api.put<{ successCount: number; failureCount: number; message: string }>('/admin/orders/batch-status', {
+      orderIds,
+      newStatus
+    });
+  }
+
+  // ═══════════════════════════════════════════════════════════
+  // 6c. PRODUCT GROUPS (Warehouse Batch Imports)
+  // ═══════════════════════════════════════════════════════════
+  getProductGroups(pageNumber: number = 1, pageSize: number = 50, shopId?: string): Observable<any> {
+    let url = `/admin/product-groups?pageNumber=${pageNumber}&pageSize=${pageSize}`;
+    if (shopId && shopId !== 'all') url += `&shopId=${shopId}`;
+    return this.api.get<any>(url);
+  }
+
+  getProductGroupById(id: string): Observable<any> {
+    return this.api.get<any>(`/admin/product-groups/${id}`);
+  }
+
+  removeProductFromGroup(groupId: string, productId: string): Observable<any> {
+    return this.api.delete<any>(`/admin/product-groups/${groupId}/products/${productId}`);
+  }
+
+  replaceProductInGroup(groupId: string, oldProductId: string, newWarehouseProductId: string): Observable<any> {
+    return this.api.post<any>(`/admin/product-groups/${groupId}/products/${oldProductId}/replace`, {
+      newWarehouseProductId
+    });
+  }
+
+  addProductsToGroup(groupId: string, additionalCount?: number, specificWarehouseProductIds?: string[]): Observable<any> {
+    return this.api.post<any>(`/admin/product-groups/${groupId}/products/add`, {
+      additionalCount,
+      specificWarehouseProductIds
+    });
+  }
+
+  deleteProductGroup(groupId: string): Observable<any> {
+    return this.api.delete<any>(`/admin/product-groups/${groupId}`);
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 6b. PRODUCT REVIEWS (moderation)
   // ═══════════════════════════════════════════════════════════

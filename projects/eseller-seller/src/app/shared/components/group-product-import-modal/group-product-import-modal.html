@@ -1,0 +1,285 @@
+@if (isOpen) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-fadeIn overflow-y-auto">
+    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 w-full max-w-2xl my-8 overflow-hidden flex flex-col max-h-[90vh]">
+      
+      <!-- MODAL HEADER -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-950 to-slate-900 text-white p-5 sm:p-6 border-b border-slate-800 shrink-0">
+        <div class="flex items-start justify-between gap-4">
+          <div class="space-y-1">
+            <div class="flex items-center gap-2">
+              <span class="p-1.5 rounded-xl bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+              </span>
+              <h3 class="text-lg font-black text-white tracking-tight">
+                Add Products in Group
+              </h3>
+            </div>
+            <p class="text-xs text-slate-300">
+              Bulk import warehouse products at random based on your target count, categories, and price rules.
+            </p>
+          </div>
+
+          <button
+            type="button"
+            (click)="close()"
+            [disabled]="isSubmitting()"
+            class="text-slate-400 hover:text-white p-1.5 rounded-xl hover:bg-slate-800 transition-colors cursor-pointer shrink-0 disabled:opacity-50">
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+        </div>
+
+        <!-- Capacity Indicator Badge -->
+        <div class="mt-4 pt-3 border-t border-slate-800/80 flex items-center justify-between text-xs">
+          <span class="text-slate-400 font-medium">Store Capacity:</span>
+          <span class="px-2.5 py-0.5 rounded-full bg-slate-800 text-slate-200 border border-slate-700 font-bold">
+            {{ usedSlots }} / {{ productLimit }} used · <strong class="text-emerald-400">{{ availableSlots() }} slots free</strong>
+          </span>
+        </div>
+      </div>
+
+      <!-- MODAL BODY (Scrollable) -->
+      <div class="p-5 sm:p-6 space-y-6 overflow-y-auto flex-1 text-slate-800">
+        
+        <!-- 1. PRODUCT COUNT (1 - 200) -->
+        <div class="space-y-2.5 bg-slate-50 p-4 rounded-2xl border border-slate-200/80">
+          <div class="flex items-center justify-between">
+            <label class="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+              <span>Target Product Count</span>
+              <span class="text-rose-500 font-bold">*</span>
+            </label>
+            <div class="flex items-center gap-1">
+              <input
+                type="number"
+                min="1"
+                [max]="maxAllowed()"
+                [ngModel]="count()"
+                (ngModelChange)="setCountValue($event)"
+                class="w-20 px-2.5 py-1 text-right text-sm font-black bg-white border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-900 text-slate-900"
+              />
+              <span class="text-xs font-semibold text-slate-500">items</span>
+            </div>
+          </div>
+
+          <!-- Slider -->
+          <div class="px-1">
+            <input
+              type="range"
+              min="1"
+              [max]="maxAllowed()"
+              [ngModel]="count()"
+              (ngModelChange)="setCountValue($event)"
+              class="w-full accent-slate-900 cursor-pointer h-2 bg-slate-200 rounded-lg"
+            />
+            <div class="flex justify-between text-[11px] font-semibold text-slate-400 mt-1">
+              <span>1</span>
+              <span>50</span>
+              <span>100</span>
+              <span>150</span>
+              <span>{{ maxAllowed() }} Max</span>
+            </div>
+          </div>
+
+          <!-- Quick Pills -->
+          <div class="flex items-center gap-1.5 pt-1 flex-wrap">
+            <span class="text-[11px] font-bold text-slate-500 mr-1">Quick Select:</span>
+            @for (pill of [10, 25, 50, 100]; track pill) {
+              @if (pill <= maxAllowed()) {
+                <button
+                  type="button"
+                  (click)="setQuickCount(pill)"
+                  [class]="count() === pill
+                    ? 'px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-extrabold shadow-xs cursor-pointer'
+                    : 'px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-100 cursor-pointer transition-colors'">
+                  {{ pill }}
+                </button>
+              }
+            }
+            <button
+              type="button"
+              (click)="setQuickCount(maxAllowed())"
+              [class]="count() === maxAllowed()
+                ? 'px-2.5 py-1 rounded-lg bg-slate-900 text-white text-[11px] font-extrabold shadow-xs cursor-pointer'
+                : 'px-2.5 py-1 rounded-lg bg-white border border-slate-200 text-slate-700 text-[11px] font-bold hover:bg-slate-100 cursor-pointer transition-colors'">
+              Max ({{ maxAllowed() }})
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. CATEGORIES MULTI-SELECT -->
+        <div class="space-y-2">
+          <div class="flex items-center justify-between flex-wrap gap-2">
+            <label class="text-xs font-black text-slate-900 tracking-tight flex items-center gap-1.5">
+              <span>Filter Categories (Optional)</span>
+              <span class="text-[11px] font-semibold text-slate-400">
+                ({{ selectedCategoryIds().size }} selected · all if none checked)
+              </span>
+            </label>
+
+            <div class="flex items-center gap-2 text-xs">
+              <button
+                type="button"
+                (click)="toggleSelectAllCategories()"
+                class="font-extrabold text-blue-600 hover:text-blue-800 cursor-pointer hover:underline">
+                {{ isAllCategoriesSelected() ? 'Deselect All' : 'Select All' }}
+              </button>
+              @if (selectedCategoryIds().size > 0 && !isAllCategoriesSelected()) {
+                <span class="text-slate-300">|</span>
+                <button
+                  type="button"
+                  (click)="clearCategories()"
+                  class="font-bold text-slate-500 hover:text-slate-700 cursor-pointer hover:underline">
+                  Clear
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Category search & scroll box -->
+          <div class="border border-slate-200 rounded-2xl p-3 bg-white space-y-2.5 shadow-2xs">
+            <input
+              type="text"
+              [ngModel]="categorySearch()"
+              (ngModelChange)="categorySearch.set($event)"
+              placeholder="Search categories..."
+              class="w-full px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs placeholder:text-slate-400 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+            />
+
+            <div class="max-h-40 overflow-y-auto space-y-1 pr-1 scrollbar-thin">
+              @if (isLoadingMeta()) {
+                <div class="p-3 text-center text-xs text-slate-400">Loading categories...</div>
+              } @else if (filteredCategories().length === 0) {
+                <div class="p-3 text-center text-xs text-slate-400">No categories found matching query.</div>
+              } @else {
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                  @for (cat of filteredCategories(); track cat.id) {
+                    <label
+                      class="flex items-center gap-2 p-2 rounded-xl text-xs cursor-pointer border transition-all"
+                      [class.bg-slate-900]="selectedCategoryIds().has(cat.id)"
+                      [class.text-white]="selectedCategoryIds().has(cat.id)"
+                      [class.border-slate-900]="selectedCategoryIds().has(cat.id)"
+                      [class.bg-slate-50]="!selectedCategoryIds().has(cat.id)"
+                      [class.text-slate-700]="!selectedCategoryIds().has(cat.id)"
+                      [class.border-slate-200]="!selectedCategoryIds().has(cat.id)"
+                      [class.hover:bg-slate-100]="!selectedCategoryIds().has(cat.id)">
+                      <input
+                        type="checkbox"
+                        [checked]="selectedCategoryIds().has(cat.id)"
+                        (change)="toggleCategory(cat.id)"
+                        class="accent-emerald-500 rounded cursor-pointer"
+                      />
+                      <span class="truncate font-semibold">{{ cat.name }}</span>
+                    </label>
+                  }
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. BRAND & PRICE RULES (OPTIONAL) -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <!-- Brand Selector -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-black text-slate-900 tracking-tight">
+              Brand (Optional)
+            </label>
+            <select
+              [ngModel]="selectedBrandId()"
+              (ngModelChange)="selectedBrandId.set($event)"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer">
+              <option value="">Any Brand (All)</option>
+              @for (brand of brands(); track brand.id) {
+                <option [value]="brand.id">{{ brand.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Custom Batch Name -->
+          <div class="space-y-1.5">
+            <label class="text-xs font-black text-slate-900 tracking-tight">
+              Batch Group Name (Optional)
+            </label>
+            <input
+              type="text"
+              [ngModel]="customBatchName()"
+              (ngModelChange)="customBatchName.set($event)"
+              placeholder="e.g. Summer Trending Drop"
+              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+            />
+          </div>
+        </div>
+
+        <!-- Price Range Filter (Optional) -->
+        <div class="space-y-1.5">
+          <label class="text-xs font-black text-slate-900 tracking-tight">
+            Price Range Filter (Optional Rs.)
+          </label>
+          <div class="flex items-center gap-3">
+            <div class="relative flex-1">
+              <span class="absolute left-3 top-2 text-xs font-bold text-slate-400">Rs.</span>
+              <input
+                type="number"
+                min="0"
+                [ngModel]="minPrice()"
+                (ngModelChange)="minPrice.set($event)"
+                placeholder="Min Price"
+                class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+              />
+            </div>
+            <span class="text-xs font-bold text-slate-400">to</span>
+            <div class="relative flex-1">
+              <span class="absolute left-3 top-2 text-xs font-bold text-slate-400">Rs.</span>
+              <input
+                type="number"
+                min="0"
+                [ngModel]="maxPrice()"
+                (ngModelChange)="maxPrice.set($event)"
+                placeholder="Max Price"
+                class="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900"
+              />
+            </div>
+          </div>
+          <p class="text-[11px] text-slate-400">
+            Leave blank to import warehouse products across all price tiers.
+          </p>
+        </div>
+
+      </div>
+
+      <!-- MODAL FOOTER -->
+      <div class="bg-slate-50 px-6 py-4 border-t border-slate-200/80 flex items-center justify-between gap-3 shrink-0">
+        <button
+          type="button"
+          (click)="close()"
+          [disabled]="isSubmitting()"
+          class="px-4 py-2.5 rounded-xl border border-slate-200 bg-white hover:bg-slate-100 text-xs font-bold text-slate-700 transition-colors cursor-pointer disabled:opacity-50">
+          Cancel
+        </button>
+
+        <button
+          type="button"
+          (click)="submitImport()"
+          [disabled]="isSubmitting() || availableSlots() <= 0"
+          class="px-5 py-2.5 rounded-xl bg-slate-950 hover:bg-black text-white text-xs font-extrabold shadow-md hover:shadow-lg transition-all cursor-pointer flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed">
+          @if (isSubmitting()) {
+            <svg class="animate-spin w-4 h-4 text-white" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+            </svg>
+            <span>Importing {{ count() }} Products...</span>
+          } @else {
+            <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            <span>Import {{ count() }} Products to Store</span>
+          }
+        </button>
+      </div>
+
+    </div>
+  </div>
+}

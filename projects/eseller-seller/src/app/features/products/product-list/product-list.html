@@ -24,6 +24,15 @@
     </div>
 
     <div class="flex items-center gap-2 shrink-0 flex-wrap">
+      <button 
+        type="button"
+        (click)="openGroupImportModal()" 
+        class="inline-flex items-center gap-2 px-4 py-2.5 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 text-xs font-black rounded-xl shadow-md transition-all cursor-pointer">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span>⚡ Add in Group (1-200)</span>
+      </button>
       <a routerLink="/products/new" class="inline-flex items-center gap-2 px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-xl shadow-sm shadow-emerald-600/25 transition-all cursor-pointer">
         <span>+ Add Own Product</span>
       </a>
@@ -235,5 +244,14 @@
     (confirmed)="confirmDelete()"
     (cancelled)="cancelDelete()">
   </app-confirm-modal>
+
+  <app-group-product-import-modal
+    [isOpen]="showGroupImportModal()"
+    [shopId]="shop()?.id || ''"
+    [productLimit]="productLimit()"
+    [usedSlots]="usedSlots()"
+    (closed)="showGroupImportModal.set(false)"
+    (imported)="onGroupImported($event)">
+  </app-group-product-import-modal>
 
 </div>

@@ -17,7 +17,17 @@
       </p>
     </div>
 
-    <div class="flex items-center gap-2 shrink-0">
+    <div class="flex items-center gap-2 shrink-0 flex-wrap">
+      <button 
+        type="button"
+        (click)="openGroupImportModal()" 
+        class="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-slate-950 font-black text-xs rounded-xl shadow-md transition-all cursor-pointer flex items-center gap-1.5">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-950" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z" />
+        </svg>
+        <span>⚡ Add Products in Group (1-200)</span>
+      </button>
+
       <a routerLink="/products" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs rounded-xl border border-slate-700 transition-colors cursor-pointer">
         View All My Products ({{ usedSlots() }})
       </a>
@@ -306,3 +316,13 @@
     (requestList)="onDetailRequestList($event)">
   </app-warehouse-product-detail-modal>
 }
+
+<app-group-product-import-modal
+  [isOpen]="showGroupImportModal()"
+  [shopId]="shop()?.id || ''"
+  [productLimit]="productLimit()"
+  [usedSlots]="usedSlots()"
+  (closed)="showGroupImportModal.set(false)"
+  (imported)="onGroupImported($event)">
+</app-group-product-import-modal>
+

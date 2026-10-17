@@ -155,4 +155,27 @@ export class SellerProductService {
   deleteVariantImage(productId: string, id: string): Observable<{ message: string }> {
     return this.api.delete<{ message: string }>(`/products/${productId}/variants/${id}/image`);
   }
+
+  // Group / Bulk Warehouse Import (1..200 products)
+  addGroupToStore(data: AddGroupToStoreRequest): Observable<AddGroupToStoreResponse> {
+    return this.api.post<AddGroupToStoreResponse>('/Products/add-group-to-store', data);
+  }
+}
+
+export interface AddGroupToStoreRequest {
+  shopId: string;
+  count: number;
+  categoryIds?: string[];
+  brandId?: string | null;
+  minPrice?: number | null;
+  maxPrice?: number | null;
+  customBatchName?: string | null;
+}
+
+export interface AddGroupToStoreResponse {
+  batchId: string;
+  batchName: string;
+  addedCount: number;
+  totalRequested: number;
+  message: string;
 }

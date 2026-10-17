@@ -297,6 +297,13 @@
                 [class.bg-slate-800/80]="isProductNav('rejected')">
                 Rejected products
               </a>
+              <a [routerLink]="['/products/groups']"
+                class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                style="color: #f1f5f9 !important;"
+                routerLinkActive="text-orange-400 font-bold bg-slate-800/80">
+                <span>Group products (batches)</span>
+                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">New</span>
+              </a>
             </div>
           </div>
         </div>

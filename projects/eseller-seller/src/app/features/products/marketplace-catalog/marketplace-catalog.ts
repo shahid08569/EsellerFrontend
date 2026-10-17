@@ -8,11 +8,12 @@ import { SellerProductService } from '../../../core/services/product.service';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 import { WarehouseProductDetailModal } from '../../../shared/components/warehouse-product-detail-modal/warehouse-product-detail-modal';
+import { GroupProductImportModal } from '../../../shared/components/group-product-import-modal/group-product-import-modal';
 
 @Component({
   selector: 'app-marketplace-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal, SkeletonLayout],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal, GroupProductImportModal, SkeletonLayout],
   templateUrl: './marketplace-catalog.html'
 })
 export class MarketplaceCatalog implements OnInit {
@@ -324,5 +325,24 @@ export class MarketplaceCatalog implements OnInit {
   contactSupport(): void {
     this.showPendingVerificationModal.set(false);
     this.router.navigateByUrl('/chat');
+  }
+
+  readonly showGroupImportModal = signal<boolean>(false);
+
+  openGroupImportModal(): void {
+    const shop = this.shop();
+    if (!shop) {
+      this.toast.show('Store profile loading. Please wait...', 'warning');
+      return;
+    }
+    if (!shop.isApproved) {
+      this.showPendingVerificationModal.set(true);
+      return;
+    }
+    this.showGroupImportModal.set(true);
+  }
+
+  onGroupImported(res: any): void {
+    this.loadInitialData();
   }
 }
