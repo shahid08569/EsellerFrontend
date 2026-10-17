@@ -1,10 +1,36 @@
 <!-- Document scroll + fixed sidebar + sticky top header (matches SuperAdmin) -->
 <div class="min-h-screen font-sans relative max-w-[100vw]" [class.bg-slate-950]="isDarkMode()" [class.bg-slate-50]="!isDarkMode()">
 
-  <!-- Top Navigation Progress Loader Bar -->
+  <!-- Top Navigation Progress Loader Bar & Frosted Blur Overlay -->
   @if (isNavigating()) {
     <div class="fixed top-0 left-0 right-0 z-[100] h-1 bg-gradient-to-r from-indigo-500 via-sky-400 to-indigo-600 shadow-sm shadow-indigo-500/50 overflow-hidden">
       <div class="h-full w-full bg-white/40 animate-route-progress"></div>
+    </div>
+    <!-- Fullscreen frosted blur backdrop over entire screen with Rose & Orange dual-orbit loader -->
+    <div class="fixed inset-0 z-[95] flex items-center justify-center p-4 transition-all duration-300 animate-in fade-in"
+         style="backdrop-filter: blur(14px) !important; -webkit-backdrop-filter: blur(14px) !important; background: rgba(255, 255, 255, 0.65) !important;">
+      <div class="inline-flex items-center gap-3.5 px-6 py-4 rounded-2xl shadow-2xl transition-all"
+           style="background: #ffffff !important; border: 1.5px solid rgba(244, 63, 94, 0.3) !important; box-shadow: 0 20px 45px -10px rgba(244, 63, 94, 0.25), 0 0 0 1px rgba(249, 115, 22, 0.18) !important;">
+        <div class="relative w-9 h-9 shrink-0 flex items-center justify-center">
+          <div class="absolute inset-0 rounded-full es-cool-orbit"
+               style="border: 2.5px solid transparent !important; border-top-color: #f43f5e !important; border-right-color: #f97316 !important;"></div>
+          <div class="absolute inset-1 rounded-full es-cool-orbit-rev"
+               style="border: 1.5px dashed #fb923c !important;"></div>
+          <div class="w-2.5 h-2.5 rounded-full es-cool-core"
+               style="background: linear-gradient(135deg, #f43f5e 0%, #f97316 60%, #fbbf24 100%) !important; box-shadow: 0 0 10px rgba(244, 63, 94, 0.9) !important;"></div>
+        </div>
+        <div class="flex flex-col text-left">
+          <div class="flex items-center gap-0.5 text-xs font-black tracking-wide" style="color: #0f172a !important;">
+            <span>Loading section</span>
+            <span class="inline-flex tracking-tighter ml-0.5 font-bold" style="color: #f43f5e !important;">
+              <span class="es-dot-1">.</span>
+              <span class="es-dot-2">.</span>
+              <span class="es-dot-3">.</span>
+            </span>
+          </div>
+          <span class="text-[10px] font-medium tracking-tight mt-0.5" style="color: #64748b !important;">Syncing data…</span>
+        </div>
+      </div>
     </div>
   }
 

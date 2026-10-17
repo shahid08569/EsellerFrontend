@@ -443,9 +443,22 @@ export class ProductGroups implements OnInit {
           if (!g) return null;
           return {
             ...g,
-            products: g.products.filter(p => p.id !== prod.id)
+            deliveredCount: Math.max(0, g.deliveredCount - 1),
+            products: g.products.filter(p => p.id !== prod.id && p.sourceProductId !== prod.id)
           };
         });
+
+        // Update outer groups list
+        this.groups.update(list => list.map(item => {
+          if (item.id === group.id) {
+            return {
+              ...item,
+              deliveredCount: Math.max(0, item.deliveredCount - 1),
+              activeProductsCount: Math.max(0, item.activeProductsCount - 1)
+            };
+          }
+          return item;
+        }));
       },
       error: (err) => {
         this.isRemovingProduct.set(false);

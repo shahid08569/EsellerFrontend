@@ -1,13 +1,4 @@
 <!-- FLOATING CHAT — seller sidebar slate (slightly lighter than bg-slate-950) -->
-@if (isOpen()) {
-  <!-- Fullscreen frosted blur backdrop over entire screen -->
-  <div
-    (click)="closeChat()"
-    class="fixed inset-0 z-[110] transition-all duration-300 animate-in fade-in cursor-pointer"
-    style="backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; background: rgba(15, 23, 42, 0.6) !important;">
-  </div>
-}
-
 <div class="fixed bottom-6 right-6 z-[120] select-none">
 
   <button
