@@ -4,6 +4,7 @@ import { RouterLink } from '@angular/router';
 import { SellerService, ShopDto, OrderDto } from '../../core/services/seller.service';
 import { forkJoin, of, catchError } from 'rxjs';
 import { SkeletonLayout } from 'eseller-shared';
+import { TablePagination } from '../../shared/components/table-pagination/table-pagination';
 
 interface TransactionRecord {
   id: string;
@@ -17,7 +18,7 @@ interface TransactionRecord {
 @Component({
   selector: 'app-earnings-overview',
   standalone: true,
-  imports: [CommonModule, RouterLink, SkeletonLayout],
+  imports: [CommonModule, RouterLink, SkeletonLayout, TablePagination],
   templateUrl: './earnings-overview.html'
 })
 export class EarningsOverview implements OnInit {
@@ -31,6 +32,17 @@ export class EarningsOverview implements OnInit {
   readonly walletAvailableEarnings = signal<number>(0);
   readonly walletBalance = signal<number>(0);
   readonly walletLoaded = signal<boolean>(false);
+
+  // Pagination for Commission Transactions
+  readonly txPage = signal<number>(1);
+  readonly txPageSize = signal<number>(10);
+  readonly pagedTransactions = computed(() => {
+    const list = this.transactions();
+    const page = this.txPage();
+    const size = this.txPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
 
   ngOnInit(): void {
     this.loadEarnings();

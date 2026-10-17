@@ -96,7 +96,7 @@
               </tr>
             </thead>
             <tbody>
-              @for (w of withdrawalHistory(); track w.id) {
+              @for (w of pagedWithdrawalHistory(); track w.id) {
                 <tr>
                   <td>
                     <p class="cell-mono">{{ w.id }}</p>
@@ -119,6 +119,18 @@
             </tbody>
           </table>
         </div>
+
+        @if (withdrawalHistory().length > 0) {
+          <app-table-pagination
+            [page]="historyPage()"
+            [pageSize]="historyPageSize()"
+            [total]="withdrawalHistory().length"
+            [pageSizeOptions]="[10, 25, 50]"
+            label="transfers"
+            (pageChange)="historyPage.set($event)"
+            (pageSizeChange)="historyPageSize.set($event); historyPage.set(1)">
+          </app-table-pagination>
+        }
       }
     </div>
   }

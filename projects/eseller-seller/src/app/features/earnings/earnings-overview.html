@@ -76,7 +76,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (tx of transactions(); track tx.id) {
+            @for (tx of pagedTransactions(); track tx.id) {
               <tr>
                 <td>
                   <p class="cell-mono">#{{ tx.orderId.toUpperCase() }}</p>
@@ -90,6 +90,18 @@
           </tbody>
         </table>
       </div>
+
+      @if (transactions().length > 0) {
+        <app-table-pagination
+          [page]="txPage()"
+          [pageSize]="txPageSize()"
+          [total]="transactions().length"
+          [pageSizeOptions]="[10, 25, 50]"
+          label="transactions"
+          (pageChange)="txPage.set($event)"
+          (pageSizeChange)="txPageSize.set($event); txPage.set(1)">
+        </app-table-pagination>
+      }
     }
   </div>
 

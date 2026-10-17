@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 
 interface WithdrawalRequest {
   id: string;
@@ -17,7 +18,7 @@ interface WithdrawalRequest {
 @Component({
   selector: 'app-withdrawal-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout, TablePagination],
   templateUrl: './withdrawal-list.html'
 })
 export class WithdrawalList implements OnInit {
@@ -30,6 +31,17 @@ export class WithdrawalList implements OnInit {
   readonly pendingEarnings = signal<number>(0);
   readonly withdrawalHistory = signal<WithdrawalRequest[]>([]);
   readonly minimumWithdrawal = signal<number>(100);
+
+  // Pagination for Withdrawal History
+  readonly historyPage = signal<number>(1);
+  readonly historyPageSize = signal<number>(10);
+  readonly pagedWithdrawalHistory = computed(() => {
+    const list = this.withdrawalHistory();
+    const page = this.historyPage();
+    const size = this.historyPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
 
   readonly bankModalOpen = signal<boolean>(false);
   readonly requestPayoutModalOpen = signal<boolean>(false);

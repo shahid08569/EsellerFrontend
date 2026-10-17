@@ -4,22 +4,22 @@
     : 'absolute inset-0 z-20 flex items-center justify-center bg-white/75 dark:bg-slate-900/75 backdrop-blur-xs rounded-2xl p-4 animate-in fade-in duration-200'"
   role="status"
   aria-live="polite">
-  <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-slate-900/10 backdrop-blur-md">
+  <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-orange-100/90 dark:border-slate-800 shadow-2xl shadow-orange-950/10 backdrop-blur-md">
     <!-- Dual-orbit spinner -->
     <div class="relative w-9 h-9 shrink-0 flex items-center justify-center">
       <!-- Outer gradient arc -->
-      <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-600 border-r-violet-500 es-cool-orbit"></div>
+      <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-orange-600 border-r-amber-500 es-cool-orbit"></div>
       <!-- Inner dashed counter-spinning ring -->
-      <div class="absolute inset-1 rounded-full border border-dashed border-cyan-400/80 es-cool-orbit-rev"></div>
+      <div class="absolute inset-1 rounded-full border border-dashed border-amber-400/80 es-cool-orbit-rev"></div>
       <!-- Core pulsing dot -->
-      <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 es-cool-core"></div>
+      <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-orange-600 via-amber-500 to-amber-400 es-cool-core"></div>
     </div>
 
     <!-- Typography & Animated Dots -->
     <div class="flex flex-col text-left">
       <div class="flex items-center gap-0.5 text-xs font-black tracking-wide text-slate-800 dark:text-slate-100">
         <span>{{ text() }}</span>
-        <span class="inline-flex tracking-tighter ml-0.5 font-bold text-indigo-600 dark:text-indigo-400">
+        <span class="inline-flex tracking-tighter ml-0.5 font-bold text-orange-600 dark:text-orange-400">
           <span class="es-dot-1">.</span>
           <span class="es-dot-2">.</span>
           <span class="es-dot-3">.</span>

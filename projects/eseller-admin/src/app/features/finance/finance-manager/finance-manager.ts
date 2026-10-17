@@ -14,6 +14,7 @@ import {
   AdminWithdrawalPaymentMethodDto
 } from '../../../core/models/admin.models';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
+import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 
 type FinanceTab = 'commissions' | 'withdrawals' | 'seller-earnings' | 'payout-methods';
 
@@ -29,7 +30,7 @@ interface SellerWalletRow extends AdminSellerWalletDto {
 @Component({
   selector: 'app-finance-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout, ConfirmModal],
+  imports: [CommonModule, FormsModule, SkeletonLayout, ConfirmModal, TablePagination],
   templateUrl: './finance-manager.html'
 })
 export class FinanceManager implements OnInit {
@@ -45,6 +46,28 @@ export class FinanceManager implements OnInit {
   readonly commissions = signal<AdminCommissionDto[]>([]);
   readonly withdrawals = signal<AdminWithdrawalDto[]>([]);
   readonly actionInProgress = signal<string | null>(null);
+
+  // Pagination for Withdrawals
+  readonly withdrawalsPage = signal<number>(1);
+  readonly withdrawalsPageSize = signal<number>(10);
+  readonly pagedWithdrawals = computed(() => {
+    const list = this.withdrawals();
+    const page = this.withdrawalsPage();
+    const size = this.withdrawalsPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  // Pagination for Commissions
+  readonly commissionsPage = signal<number>(1);
+  readonly commissionsPageSize = signal<number>(10);
+  readonly pagedCommissions = computed(() => {
+    const list = this.commissions();
+    const page = this.commissionsPage();
+    const size = this.commissionsPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
 
   readonly deleteConfirmOpen = signal(false);
   readonly methodToDelete = signal<AdminWithdrawalPaymentMethodDto | null>(null);
@@ -167,6 +190,26 @@ export class FinanceManager implements OnInit {
       (r.shopName || '').toLowerCase().includes(term) ||
       (r.shopkeeperName || '').toLowerCase().includes(term)
     );
+  });
+
+  readonly sellerWalletsPage = signal<number>(1);
+  readonly sellerWalletsPageSize = signal<number>(10);
+  readonly pagedSellerWallets = computed(() => {
+    const list = this.filteredSellerWallets();
+    const page = this.sellerWalletsPage();
+    const size = this.sellerWalletsPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
+  });
+
+  readonly payoutMethodsPage = signal<number>(1);
+  readonly payoutMethodsPageSize = signal<number>(10);
+  readonly pagedPayoutMethods = computed(() => {
+    const list = this.payoutMethods();
+    const page = this.payoutMethodsPage();
+    const size = this.payoutMethodsPageSize();
+    const start = (page - 1) * size;
+    return list.slice(start, start + size);
   });
 
   updateWalletBalanceDraft(accountId: string, value: number): void {
