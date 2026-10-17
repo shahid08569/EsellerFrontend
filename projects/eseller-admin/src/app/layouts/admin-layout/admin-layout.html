@@ -1,6 +1,13 @@
 <!-- overflow-x not on root — it breaks position:sticky for the top nav -->
 <div class="min-h-screen bg-slate-100 flex flex-col antialiased max-w-[100vw]">
   
+  <!-- TOP ROUTE NAVIGATION PROGRESS BAR (Active during route transitions) -->
+  @if (isNavigating()) {
+    <div class="fixed top-0 left-0 right-0 z-[100] h-1 bg-gradient-to-r from-orange-500 via-amber-400 to-orange-600 shadow-sm shadow-orange-500/50 overflow-hidden">
+      <div class="h-full w-full bg-white/40 animate-route-progress"></div>
+    </div>
+  }
+
   <!-- DESKTOP SIDEBAR -->
   <aside 
     class="hidden lg:flex flex-col bg-[#0a0f1d] border-r border-slate-800 fixed inset-y-0 z-30 shadow-2xl transition-all duration-300 ease-in-out overflow-hidden"

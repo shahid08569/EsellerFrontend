@@ -341,4 +341,20 @@ a.bg-primary:hover {
     box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
     background-color: transparent;
   }
+}
+
+@keyframes route-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-route-progress {
+  animation: route-progress 1.2s ease-in-out infinite;
 }

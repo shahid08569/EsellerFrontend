@@ -1,7 +1,8 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminShopDto, AdminProductDto, AdminCategoryDto } from '../../../core/models/admin.models';
@@ -70,6 +71,7 @@ export class ProductGroups implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly isLoading = signal<boolean>(true);
   readonly groups = signal<ProductGroupListItemDto[]>([]);
@@ -172,7 +174,7 @@ export class ProductGroups implements OnInit {
     this.loadCategories();
     this.loadGroups();
 
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(params => {
       const gid = params['groupId'];
       if (gid) {
         this.openGroupDetail(gid);
@@ -181,14 +183,14 @@ export class ProductGroups implements OnInit {
   }
 
   loadShops(): void {
-    this.adminService.getShops(1, 200).subscribe({
+    this.adminService.getShops(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.shops.set(res?.items || []),
       error: () => {}
     });
   }
 
   loadCategories(): void {
-    this.adminService.getCategories().subscribe({
+    this.adminService.getCategories().pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => this.categories.set(res || []),
       error: () => {}
     });
@@ -199,7 +201,7 @@ export class ProductGroups implements OnInit {
 
   loadGroups(): void {
     this.isLoading.set(true);
-    this.adminService.getProductGroups(1, 100).subscribe({
+    this.adminService.getProductGroups(1, 100).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         const rawList = Array.isArray(res) ? res : (res?.items || res?.value || res?.data || []);
         const list: ProductGroupListItemDto[] = rawList.map((g: any) => {
@@ -240,7 +242,7 @@ export class ProductGroups implements OnInit {
 
   openGroupDetail(groupId: string): void {
     this.isLoadingGroupDetail.set(true);
-    this.adminService.getProductGroupById(groupId).subscribe({
+    this.adminService.getProductGroupById(groupId).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (rawDetail: any) => {
         const detail = rawDetail?.value || rawDetail;
         if (detail) {
@@ -301,7 +303,7 @@ export class ProductGroups implements OnInit {
     if (this.isApprovingBatch()) return;
 
     this.isApprovingBatch.set(group.id);
-    this.adminService.approveProductGroup(group.id).subscribe({
+    this.adminService.approveProductGroup(group.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isApprovingBatch.set(null);
         this.toast.show(res?.message || `Batch "${group.batchName}" approved successfully! All items are now live.`, 'success');
@@ -330,7 +332,7 @@ export class ProductGroups implements OnInit {
     if (!grp || this.isApprovingBatch()) return;
 
     this.isApprovingBatch.set(grp.id);
-    this.adminService.approveProductGroup(grp.id).subscribe({
+    this.adminService.approveProductGroup(grp.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isApprovingBatch.set(null);
         this.toast.show(res?.message || `All products in "${grp.batchName}" approved!`, 'success');
@@ -369,7 +371,7 @@ export class ProductGroups implements OnInit {
     const grp = this.selectedGroup();
     if (!grp) return;
 
-    this.adminService.approveGroupProduct(grp.id, prod.id).subscribe({
+    this.adminService.approveGroupProduct(grp.id, prod.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.toast.show(`"${prod.name}" approved successfully!`, 'success');
 
@@ -417,7 +419,7 @@ export class ProductGroups implements OnInit {
     if (!prod || !group) return;
 
     this.isRemovingProduct.set(true);
-    this.adminService.removeProductFromGroup(group.id, prod.id).subscribe({
+    this.adminService.removeProductFromGroup(group.id, prod.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isRemovingProduct.set(false);
         this.removeProductModalOpen.set(false);
@@ -456,7 +458,7 @@ export class ProductGroups implements OnInit {
 
   loadWarehouseCatalogForReplace(): void {
     this.isLoadingWarehouse.set(true);
-    this.adminService.getProducts(undefined, undefined, 1, 200).subscribe({
+    this.adminService.getProducts(undefined, undefined, 1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.warehouseProducts.set(res?.items || []);
         this.isLoadingWarehouse.set(false);
@@ -471,7 +473,7 @@ export class ProductGroups implements OnInit {
     if (!group || !oldProd) return;
 
     this.isReplacing.set(true);
-    this.adminService.replaceProductInGroup(group.id, oldProd.id, newWarehouseProd.id).subscribe({
+    this.adminService.replaceProductInGroup(group.id, oldProd.id, newWarehouseProd.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isReplacing.set(false);
         this.replaceModalOpen.set(false);
@@ -507,7 +509,7 @@ export class ProductGroups implements OnInit {
     const count = Math.max(1, Math.min(50, Number(this.addMoreCount()) || 10));
     this.isAddingMore.set(true);
 
-    this.adminService.addProductsToGroup(group.id, count).subscribe({
+    this.adminService.addProductsToGroup(group.id, count).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         this.isAddingMore.set(false);
         this.addMoreModalOpen.set(false);
@@ -540,7 +542,7 @@ export class ProductGroups implements OnInit {
     if (!group) return;
 
     this.isDeletingGroup.set(true);
-    this.adminService.deleteProductGroup(group.id).subscribe({
+    this.adminService.deleteProductGroup(group.id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: () => {
         this.isDeletingGroup.set(false);
         this.deleteGroupModalOpen.set(false);

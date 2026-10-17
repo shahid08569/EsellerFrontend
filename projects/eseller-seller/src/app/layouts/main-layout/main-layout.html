@@ -1,6 +1,13 @@
 <!-- Document scroll + fixed sidebar + sticky top header (matches SuperAdmin) -->
 <div class="min-h-screen font-sans relative max-w-[100vw]" [class.bg-slate-950]="isDarkMode()" [class.bg-slate-50]="!isDarkMode()">
 
+  <!-- Top Navigation Progress Loader Bar -->
+  @if (isNavigating()) {
+    <div class="fixed top-0 left-0 right-0 z-[100] h-1 bg-gradient-to-r from-indigo-500 via-sky-400 to-indigo-600 shadow-sm shadow-indigo-500/50 overflow-hidden">
+      <div class="h-full w-full bg-white/40 animate-route-progress"></div>
+    </div>
+  }
+
   <!-- Mobile Backdrop Overlay -->
   @if (isMobile() && isSidebarOpen()) {
     <div 

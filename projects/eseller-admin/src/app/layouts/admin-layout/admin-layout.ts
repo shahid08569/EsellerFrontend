@@ -1,6 +1,6 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { AuthStore, AuthService, ToastService } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import { filter } from 'rxjs/operators';
@@ -51,6 +51,9 @@ export class AdminLayout implements OnInit {
 
   readonly mobileMenuOpen = signal<boolean>(false);
   readonly desktopSidebarCollapsed = signal<boolean>(false);
+
+  /** Top Navigation Progress Bar loader */
+  readonly isNavigating = signal<boolean>(false);
 
   /** NEW / unread-style counts only — used for nav badges */
   readonly pendingShopsCount = signal<number>(0);
@@ -106,13 +109,22 @@ export class AdminLayout implements OnInit {
 
     this.permissionService.loadPermissions();
 
-    this.router.events.pipe(
-      filter(e => e instanceof NavigationEnd)
-    ).subscribe((e: any) => {
-      const url = e.urlAfterRedirects || e.url || '';
-      this.currentUrl.set(url);
-      this.autoExpandActiveDropdown(url);
-      this.mobileMenuOpen.set(false);
+    this.router.events.subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.isNavigating.set(true);
+      } else if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.isNavigating.set(false);
+        if (event instanceof NavigationEnd) {
+          const url = event.urlAfterRedirects || event.url || '';
+          this.currentUrl.set(url);
+          this.autoExpandActiveDropdown(url);
+          this.mobileMenuOpen.set(false);
+        }
+      }
     });
   }
 

@@ -1,4 +1,5 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, DestroyRef } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
@@ -47,6 +48,7 @@ export class OrderManagement implements OnInit {
   private readonly toast = inject(ToastService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly destroyRef = inject(DestroyRef);
   readonly permissionService = inject(AdminPermissionService);
 
   readonly canPlaceOrder = computed(() => this.permissionService.has('orders:place'));
@@ -324,7 +326,9 @@ export class OrderManagement implements OnInit {
     }
     this.loadShops();
     this.loadOrders();
-    this.route.queryParams.subscribe(params => {
+    this.route.queryParams.pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe(params => {
       if (params['action'] === 'create') {
         if (!this.canPlaceOrder()) {
           this.toast.show('You do not have permission to place orders', 'error');
@@ -341,7 +345,9 @@ export class OrderManagement implements OnInit {
   }
 
   loadShops(): void {
-    this.adminService.getShops(1, 200).subscribe({
+    this.adminService.getShops(1, 200).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => {
         this.shops.set(res?.items || []);
       },
@@ -352,7 +358,9 @@ export class OrderManagement implements OnInit {
   loadOrders(): void {
     this.isLoading.set(true);
     const shopId = this.selectedShopId() !== 'all' ? this.selectedShopId() : undefined;
-    this.adminService.getOrders(1, 500, undefined, shopId).subscribe({
+    this.adminService.getOrders(1, 500, undefined, shopId).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => {
         const items = res?.items || [];
         this.orders.set(items);
@@ -580,7 +588,9 @@ export class OrderManagement implements OnInit {
       this.isDeleting.set(true);
       const requests = ids.map(id => this.adminService.deleteOrder(id));
 
-      forkJoin(requests).subscribe({
+      forkJoin(requests).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: () => {
           this.isDeleting.set(false);
           this.deleteModalOpen.set(false);
@@ -604,7 +614,9 @@ export class OrderManagement implements OnInit {
       }
 
       this.isDeleting.set(true);
-      this.adminService.deleteOrder(order.id).subscribe({
+      this.adminService.deleteOrder(order.id).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: () => {
           this.isDeleting.set(false);
           this.deleteModalOpen.set(false);
@@ -688,7 +700,9 @@ export class OrderManagement implements OnInit {
 
     this.isUpdatingBatchStatus.set(true);
 
-    this.adminService.batchUpdateOrderStatus(ids, newStatus).subscribe({
+    this.adminService.batchUpdateOrderStatus(ids, newStatus).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (res) => {
         this.isUpdatingBatchStatus.set(false);
         this.batchStatusModalOpen.set(false);
@@ -801,7 +815,9 @@ export class OrderManagement implements OnInit {
     }
 
     this.actionInProgress.set(order.id);
-    this.adminService.updateOrderStatus(order.id, newStatus).subscribe({
+    this.adminService.updateOrderStatus(order.id, newStatus).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.actionInProgress.set(null);
         if (selectEl) selectEl.value = '';
@@ -829,7 +845,9 @@ export class OrderManagement implements OnInit {
   markPaid(order: AdminOrderDto): void {
     if (this.isPaymentPaid(order)) return;
     this.actionInProgress.set(order.id);
-    this.adminService.updateOrderPaymentStatus(order.id, 2).subscribe({
+    this.adminService.updateOrderPaymentStatus(order.id, 2).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: () => {
         this.actionInProgress.set(null);
         this.toast.show('Payment marked Paid', 'success');
@@ -857,7 +875,9 @@ export class OrderManagement implements OnInit {
     this.detailsModalOpen.set(true);
     this.isLoadingHistory.set(true);
     this.orderHistory.set([]);
-    this.adminService.getOrderStatusHistory(order.id).subscribe({
+    this.adminService.getOrderStatusHistory(order.id).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: (history) => {
         this.orderHistory.set(history || []);
         this.isLoadingHistory.set(false);
@@ -969,7 +989,9 @@ export class OrderManagement implements OnInit {
       products: this.adminService.getApprovedSellerProducts(1, 100).pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
       categories: this.adminService.getCategories().pipe(catchError(() => of([] as AdminCategoryDto[]))),
       brands: this.adminService.getBrands().pipe(catchError(() => of([] as AdminBrandDto[])))
-    }).subscribe({
+    }).pipe(
+      takeUntilDestroyed(this.destroyRef)
+    ).subscribe({
       next: ({ products, categories, brands }) => {
         const approvedList = products?.items || [];
         this.placeCategories.set(categories || []);
@@ -981,7 +1003,8 @@ export class OrderManagement implements OnInit {
         } else {
           // If no approved seller listings exist yet, fall back to master warehouse catalog
           this.adminService.getProducts(undefined, undefined, 1, 100).pipe(
-            catchError(() => of({ items: [], totalCount: 0 } as any))
+            catchError(() => of({ items: [], totalCount: 0 } as any)),
+            takeUntilDestroyed(this.destroyRef)
           ).subscribe({
             next: (catRes) => {
               this.placeCatalogProducts.set(catRes?.items || []);
@@ -1030,7 +1053,8 @@ export class OrderManagement implements OnInit {
     this.placeLoadingVariants.set(true);
     this.adminService.getProductVariants(product.id).pipe(
       retry({ count: 2, delay: 500 }),
-      catchError(() => of([]))
+      catchError(() => of([])),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (variants) => {
         const mapped = (variants || []).map((v: any) => ({
@@ -1063,7 +1087,7 @@ export class OrderManagement implements OnInit {
   }
 
   toggleOrAddMultiProduct(product: AdminProductDto): void {
-    const items = [...this.multiOrderItems()];
+    const items = this.multiOrderItems();
     const existingIndex = items.findIndex(item => item.productId === product.id);
 
     if (existingIndex > -1) {
@@ -1078,8 +1102,13 @@ export class OrderManagement implements OnInit {
       }
       const maxStock = item.stockQty > 0 ? item.stockQty : 9999;
       if (item.quantity < maxStock) {
-        items[existingIndex] = { ...item, quantity: item.quantity + 1 };
-        this.multiOrderItems.set(items);
+        this.multiOrderItems.update(list => {
+          const idx = list.findIndex(i => i.productId === product.id);
+          if (idx === -1) return list;
+          const copy = [...list];
+          copy[idx] = { ...copy[idx], quantity: copy[idx].quantity + 1 };
+          return copy;
+        });
         this.toast.show(`Increased "${product.name}" qty to ${item.quantity + 1}`, 'info');
       } else {
         this.toast.show(`Max stock reached for this variant (${item.stockQty}).`, 'warning');
@@ -1105,14 +1134,15 @@ export class OrderManagement implements OnInit {
       hasVariantError: false
     };
 
-    this.multiOrderItems.set([...items, newItem]);
+    this.multiOrderItems.update(list => [...list, newItem]);
     this.fetchVariantsForMultiItem(product.id, product.name, Number(product.basePrice) || 0);
   }
 
   fetchVariantsForMultiItem(productId: string, productName: string, basePrice: number): void {
     this.adminService.getProductVariants(productId).pipe(
       retry({ count: 2, delay: 600 }),
-      catchError(() => of([]))
+      catchError(() => of([])),
+      takeUntilDestroyed(this.destroyRef)
     ).subscribe({
       next: (variants) => {
         const mapped = (variants || []).map((v: any) => ({
@@ -1122,53 +1152,60 @@ export class OrderManagement implements OnInit {
           stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
         }));
 
-        const currentItems = [...this.multiOrderItems()];
-        const idx = currentItems.findIndex(i => i.productId === productId);
-        if (idx > -1) {
+        this.multiOrderItems.update(currentItems => {
+          const idx = currentItems.findIndex(i => i.productId === productId);
+          if (idx === -1) return currentItems;
+          const updated = [...currentItems];
           const first = mapped[0];
-          currentItems[idx] = {
-            ...currentItems[idx],
+          updated[idx] = {
+            ...updated[idx],
             variants: mapped,
             loadingVariants: false,
             hasVariantError: mapped.length === 0,
             variantId: first ? first.id : '',
             variantSku: first ? first.sku : 'Default',
-            price: first ? first.price : currentItems[idx].price,
+            price: first ? first.price : updated[idx].price,
             stockQty: first ? first.stockQty : 0
           };
-          this.multiOrderItems.set(currentItems);
-          if (mapped.length === 0) {
-            this.toast.show(`No variants found for "${productName}". Click Retry or check catalog.`, 'warning');
-          }
+          return updated;
+        });
+
+        if (mapped.length === 0) {
+          this.toast.show(`No variants found for "${productName}". Click Retry or check catalog.`, 'warning');
         }
       },
       error: () => {
-        const currentItems = [...this.multiOrderItems()];
-        const idx = currentItems.findIndex(i => i.productId === productId);
-        if (idx > -1) {
-          currentItems[idx] = {
-            ...currentItems[idx],
+        this.multiOrderItems.update(currentItems => {
+          const idx = currentItems.findIndex(i => i.productId === productId);
+          if (idx === -1) return currentItems;
+          const updated = [...currentItems];
+          updated[idx] = {
+            ...updated[idx],
             loadingVariants: false,
             hasVariantError: true
           };
-          this.multiOrderItems.set(currentItems);
-        }
+          return updated;
+        });
         this.toast.show(`Failed to load variants for "${productName}". Click Retry to fetch again.`, 'error');
       }
     });
   }
 
   retryLoadVariants(index: number): void {
-    const items = [...this.multiOrderItems()];
+    const items = this.multiOrderItems();
     const item = items[index];
     if (!item) return;
 
-    items[index] = {
-      ...item,
-      loadingVariants: true,
-      hasVariantError: false
-    };
-    this.multiOrderItems.set(items);
+    this.multiOrderItems.update(list => {
+      if (!list[index]) return list;
+      const copy = [...list];
+      copy[index] = {
+        ...copy[index],
+        loadingVariants: true,
+        hasVariantError: false
+      };
+      return copy;
+    });
 
     this.fetchVariantsForMultiItem(item.productId, item.productName, item.price);
   }
@@ -1260,7 +1297,9 @@ export class OrderManagement implements OnInit {
         shippingAddress: this.placeAddress().trim() || undefined,
         city: this.placeCity().trim() || undefined,
         orderNotes: this.placeOrderNotes().trim() || 'Placed by Management'
-      }).subscribe({
+      }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: (res) => {
           this.isPlacingOrder.set(false);
           const wasPage = this.placeOrderMode() === 'page';
@@ -1309,7 +1348,9 @@ export class OrderManagement implements OnInit {
         shippingAddress: this.placeAddress().trim() || undefined,
         city: this.placeCity().trim() || undefined,
         orderNotes: this.placeOrderNotes().trim() || 'Placed by Management'
-      }).subscribe({
+      }).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
         next: (res) => {
           this.isPlacingOrder.set(false);
           const wasPage = this.placeOrderMode() === 'page';

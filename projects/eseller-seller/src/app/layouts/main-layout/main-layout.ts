@@ -1,6 +1,7 @@
-import { Component, inject, signal, computed, HostListener, OnInit, OnDestroy } from '@angular/core';
+import { Component, inject, signal, computed, HostListener, OnInit, OnDestroy, DestroyRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationEnd } from '@angular/router';
+import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthStore, AuthService, ToastService } from 'eseller-shared';
 import { ConfirmModal } from '../../shared/components/confirm-modal/confirm-modal';
 import { TierModal } from '../../shared/components/tier-modal/tier-modal';
@@ -23,7 +24,9 @@ export class MainLayout implements OnInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly sellerService = inject(SellerService);
   private readonly toast = inject(ToastService);
+  private readonly destroyRef = inject(DestroyRef);
 
+  readonly isNavigating = signal<boolean>(false);
   readonly shop = signal<ShopDto | null>(null);
   readonly isSidebarOpen = signal<boolean>(true);
   readonly isMobile = signal<boolean>(false);
@@ -109,18 +112,25 @@ export class MainLayout implements OnInit, OnDestroy {
       }
     }
 
-    // Auto close sidebar on mobile when navigating to another route
-    this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      if (this.isMobile()) {
-        this.isSidebarOpen.set(false);
+    // Route navigation loading bar & auto close sidebar on mobile
+    this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
+      if (event instanceof NavigationStart) {
+        this.isNavigating.set(true);
+      } else if (
+        event instanceof NavigationEnd ||
+        event instanceof NavigationCancel ||
+        event instanceof NavigationError
+      ) {
+        this.isNavigating.set(false);
+        if (this.isMobile()) {
+          this.isSidebarOpen.set(false);
+        }
       }
     });
   }
 
   refreshNavCounts(): void {
-    this.sellerService.getMyProducts(1, 200).subscribe({
+    this.sellerService.getMyProducts(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         const items = res?.items || [];
         this.productsCount.set(res?.totalCount ?? items.length);
@@ -131,7 +141,7 @@ export class MainLayout implements OnInit, OnDestroy {
       },
       error: () => {}
     });
-    this.sellerService.getSellerOrders(1, 200).subscribe({
+    this.sellerService.getSellerOrders(1, 200).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
       next: (res) => {
         const items = res?.items || [];
         this.ordersCount.set(res?.totalCount ?? items.length);

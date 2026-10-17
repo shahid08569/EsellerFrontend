@@ -88,3 +88,20 @@ aside nav a[class*="from-orange-600"] span:not(.admin-nav-count) {
   animation: pulse-highlight 1.5s ease-out;
   border-radius: 0.75rem;
 }
+
+/* Route Navigation Top Progress Bar Animation */
+@keyframes route-progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  50% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-route-progress {
+  animation: route-progress 1.2s ease-in-out infinite;
+}
