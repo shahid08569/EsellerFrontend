@@ -1,6 +1,6 @@
 <div class="relative w-full">
-  <!-- Skeletons in the background, subtly dimmed and blurred for high-tech glassmorphism effect -->
-  <div class="transition-opacity duration-300" [class.opacity-45]="showLoader()" [class.pointer-events-none]="showLoader()" [class.select-none]="showLoader()">
+  <!-- Skeletons in the background, strongly blurred when loading -->
+  <div class="transition-all duration-300" [class.es-loading-blur]="showLoader()" [class.pointer-events-none]="showLoader()" [class.select-none]="showLoader()">
     @if (variant() === 'product-card') {
       <div class="rounded-2xl border border-gray-200/80 bg-white overflow-hidden" aria-busy="true" aria-label="Loading">
         <div class="aspect-square">
@@ -170,25 +170,25 @@
     }
   </div>
 
-  <!-- Cool Professional Floating Dual-Orbit Loader Badge -->
+  <!-- Cool Professional Floating Dual-Orbit Loader Badge with Strong Frosted Blur -->
   @if (showLoader()) {
-    <div class="absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none" role="status" aria-live="polite">
-      <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-slate-900/10 backdrop-blur-md transform transition-all animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
-        <!-- Dual orbit modern spinner -->
+    <div class="absolute inset-0 z-20 flex items-center justify-center p-4 es-loading-backdrop rounded-2xl transition-all duration-300 animate-in fade-in" role="status" aria-live="polite">
+      <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-rose-100/90 dark:border-rose-950/60 shadow-2xl shadow-rose-950/20 backdrop-blur-md transform transition-all animate-in fade-in zoom-in-95 duration-200">
+        <!-- Dual orbit modern spinner in Rose & Orange -->
         <div class="relative w-9 h-9 shrink-0 flex items-center justify-center">
-          <!-- Outer gradient arc -->
-          <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-600 border-r-violet-500 es-cool-orbit"></div>
-          <!-- Inner dashed counter-spinning ring -->
-          <div class="absolute inset-1 rounded-full border border-dashed border-cyan-400/80 es-cool-orbit-rev"></div>
-          <!-- Core pulsing dot -->
-          <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 es-cool-core"></div>
+          <!-- Outer gradient arc (Rose to Orange) -->
+          <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-rose-500 border-r-orange-500 es-cool-orbit"></div>
+          <!-- Inner dashed counter-spinning ring (Orange) -->
+          <div class="absolute inset-1 rounded-full border border-dashed border-orange-400/80 es-cool-orbit-rev"></div>
+          <!-- Core pulsing dot (Rose & Orange) -->
+          <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-rose-500 via-orange-500 to-amber-400 es-cool-core"></div>
         </div>
 
         <!-- Typography & Dots -->
         <div class="flex flex-col text-left">
           <div class="flex items-center gap-0.5 text-xs font-black tracking-wide text-slate-800 dark:text-slate-100">
             <span>{{ label() }}</span>
-            <span class="inline-flex tracking-tighter ml-0.5 font-bold text-indigo-600 dark:text-indigo-400">
+            <span class="inline-flex tracking-tighter ml-0.5 font-bold text-rose-500 dark:text-rose-400">
               <span class="es-dot-1">.</span>
               <span class="es-dot-2">.</span>
               <span class="es-dot-3">.</span>
