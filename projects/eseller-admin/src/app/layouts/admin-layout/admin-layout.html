@@ -195,7 +195,7 @@
                   [class.font-bold]="isShopNav('traffic')"
                   [class.bg-slate-800/80]="isShopNav('traffic')">
                   <span>Shop Traffic &amp; Visitors</span>
-                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 font-bold">Live</span>
+                  <span class="text-[10px] text-emerald-400 font-normal">Live</span>
                 </a>
               }
               @if (canAccessShops()) {
@@ -302,7 +302,9 @@
                 style="color: #f1f5f9 !important;"
                 routerLinkActive="text-orange-400 font-bold bg-slate-800/80">
                 <span>Group products (batches)</span>
-                <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-amber-500/20 text-amber-300 font-bold">New</span>
+                @if (productGroupsCount() > 0) {
+                  <span class="admin-nav-count">{{ formatNavBadge(productGroupsCount()) }}</span>
+                }
               </a>
             </div>
           </div>
@@ -586,7 +588,7 @@
               @if (canAccessAffiliates()) {
                 <a routerLink="/affiliates" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                   <span>Affiliates &amp; Referrals</span>
-                  <span class="text-[9px] px-1.5 py-0.5 rounded-full bg-orange-500/20 text-orange-400 font-bold">New</span>
+                  <span class="text-[10px] text-orange-400 font-normal">New</span>
                 </a>
               }
             </div>

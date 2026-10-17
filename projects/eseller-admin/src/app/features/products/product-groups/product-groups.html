@@ -121,7 +121,7 @@
                   </div>
                 </div>
 
-                <span class="px-2.5 py-1 rounded-xl bg-orange-50 text-orange-800 border border-orange-200 text-xs font-black shrink-0">
+                <span class="text-xs font-medium text-slate-600 shrink-0">
                   {{ grp.deliveredCount }} Items
                 </span>
               </div>
@@ -231,15 +231,15 @@
             
             <!-- Image & Badges -->
             <div class="relative aspect-square bg-slate-100 overflow-hidden">
-              @if (prod.imageUrl) {
+              @if (prod.imageUrl || prod.primaryImageUrl) {
                 <img
-                  [src]="formatImageUrl(prod.imageUrl)"
+                  [src]="formatImageUrl(prod.imageUrl || prod.primaryImageUrl)"
                   [alt]="prod.name"
                   class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                   (error)="onImgError($event)"
                 />
               } @else {
-                <div class="w-full h-full flex items-center justify-center text-xs font-bold text-slate-400">
+                <div class="w-full h-full flex items-center justify-center text-xs font-medium text-slate-400">
                   No Image
                 </div>
               }
@@ -247,14 +247,14 @@
               <!-- Badges -->
               <div class="absolute top-2 left-2 flex flex-col gap-1">
                 @if (prod.categoryName) {
-                  <span class="px-2 py-0.5 rounded-md bg-slate-950/80 text-white text-[10px] font-extrabold backdrop-blur-xs max-w-[120px] truncate shadow-xs">
+                  <span class="text-white text-[11px] font-medium max-w-[120px] truncate drop-shadow-md">
                     {{ prod.categoryName }}
                   </span>
                 }
               </div>
 
               <div class="absolute bottom-2 right-2">
-                <span class="px-2 py-0.5 rounded-md bg-emerald-600 text-white text-[10px] font-extrabold shadow-xs">
+                <span class="text-emerald-400 text-[11px] font-medium drop-shadow-md">
                   Active
                 </span>
               </div>
@@ -263,17 +263,17 @@
             <!-- Content -->
             <div class="p-3.5 space-y-2 flex-1 flex flex-col justify-between">
               <div>
-                <span class="text-[10px] font-bold text-slate-400 block truncate">
+                <span class="text-[10px] font-normal text-slate-400 block truncate">
                   {{ prod.brandName || 'Brand' }}
                 </span>
-                <h4 class="text-xs font-bold text-slate-900 line-clamp-2 leading-tight group-hover:text-orange-600 transition-colors" [title]="prod.name">
+                <h4 class="text-xs font-medium text-slate-900 line-clamp-2 leading-tight group-hover:text-orange-600 transition-colors" [title]="prod.name">
                   {{ prod.name }}
                 </h4>
               </div>
 
               <div class="flex items-baseline justify-between pt-1 border-t border-slate-100">
-                <span class="text-sm font-black text-slate-900">Rs. {{ prod.basePrice | number:'1.0-0' }}</span>
-                <span class="text-[10px] font-extrabold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded">
+                <span class="text-sm font-semibold text-slate-900">Rs. {{ prod.basePrice | number:'1.0-0' }}</span>
+                <span class="text-[11px] font-normal text-emerald-600">
                   20% comm.
                 </span>
               </div>

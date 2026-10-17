@@ -26,24 +26,21 @@ aside nav a[class*="from-orange-600"] span:not(.admin-nav-count) {
   color: #ffffff !important;
 }
 
-/* Nav NEW-count badges — high contrast on dark sidebar */
+/* Nav NEW-count badges — clean, subtle text, no background, no bold */
 .admin-nav-count {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 1.35rem;
-  height: 1.35rem;
-  padding: 0 0.4rem;
-  border-radius: 9999px;
-  font-size: 10px;
-  font-weight: 800;
+  font-size: 11px;
+  font-weight: 500;
   line-height: 1;
-  letter-spacing: 0.02em;
-  background: linear-gradient(135deg, #fb923c 0%, #ea580c 100%);
   color: #ffffff !important;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: 0 1px 3px rgba(234, 88, 12, 0.45);
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 0.2rem;
+  margin-left: 0.25rem;
 }
 
 @keyframes pulse-highlight {

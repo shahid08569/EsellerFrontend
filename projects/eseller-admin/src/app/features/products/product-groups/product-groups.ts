@@ -10,15 +10,17 @@ export interface ProductGroupListItemDto {
   id: string;
   shopId: string;
   shopName: string;
+  shopSlug?: string;
   batchName: string;
   requestedCount: number;
   deliveredCount: number;
+  currentProductCount?: number;
+  activeProductsCount: number;
   categoryFilter?: string | null;
   brandFilter?: string | null;
   minPrice?: number | null;
   maxPrice?: number | null;
   createdAt: string;
-  activeProductsCount: number;
 }
 
 export interface GroupProductCardDto {
@@ -30,6 +32,7 @@ export interface GroupProductCardDto {
   categoryName?: string | null;
   brandName?: string | null;
   imageUrl?: string | null;
+  primaryImageUrl?: string | null;
   isActive: boolean;
   isApproved: boolean;
   createdAt: string;
@@ -189,7 +192,24 @@ export class ProductGroups implements OnInit {
     this.isLoading.set(true);
     this.adminService.getProductGroups(1, 100).subscribe({
       next: (res) => {
-        this.groups.set(res?.items || []);
+        const rawList = Array.isArray(res) ? res : (res?.items || res?.value || res?.data || []);
+        const list: ProductGroupListItemDto[] = rawList.map((g: any) => ({
+          id: g.id || g.Id,
+          shopId: g.shopId || g.ShopId,
+          shopName: g.shopName || g.ShopName || 'Store',
+          shopSlug: g.shopSlug || g.ShopSlug || '',
+          batchName: g.batchName || g.BatchName || 'Batch',
+          requestedCount: g.requestedCount ?? g.RequestedCount ?? 0,
+          deliveredCount: g.deliveredCount ?? g.DeliveredCount ?? 0,
+          currentProductCount: g.currentProductCount ?? g.CurrentProductCount ?? 0,
+          activeProductsCount: g.currentProductCount ?? g.CurrentProductCount ?? g.activeProductsCount ?? g.deliveredCount ?? 0,
+          categoryFilter: g.categoryFilter || g.CategoryFilter,
+          brandFilter: g.brandFilter || g.BrandFilter,
+          minPrice: g.minPrice ?? g.MinPrice,
+          maxPrice: g.maxPrice ?? g.MaxPrice,
+          createdAt: g.createdAt || g.CreatedAt
+        }));
+        this.groups.set(list);
         this.isLoading.set(false);
       },
       error: (err) => {
@@ -202,8 +222,44 @@ export class ProductGroups implements OnInit {
   openGroupDetail(groupId: string): void {
     this.isLoadingGroupDetail.set(true);
     this.adminService.getProductGroupById(groupId).subscribe({
-      next: (detail) => {
-        this.selectedGroup.set(detail);
+      next: (rawDetail: any) => {
+        const detail = rawDetail?.value || rawDetail;
+        if (detail) {
+          const rawProducts = detail.products || detail.Products || [];
+          const products: GroupProductCardDto[] = rawProducts.map((p: any) => {
+            const img = p.primaryImageUrl || p.imageUrl || p.PrimaryImageUrl || p.ImageUrl || '';
+            return {
+              id: p.id || p.Id,
+              sourceProductId: p.sourceProductId || p.SourceProductId,
+              name: p.name || p.Name,
+              slug: p.slug || p.Slug,
+              basePrice: p.basePrice ?? p.BasePrice ?? 0,
+              categoryName: p.categoryName || p.CategoryName,
+              brandName: p.brandName || p.BrandName,
+              imageUrl: img,
+              primaryImageUrl: img,
+              isActive: p.isActive ?? p.IsActive ?? true,
+              isApproved: p.isApproved ?? p.IsApproved ?? true,
+              createdAt: p.createdAt || p.CreatedAt,
+              variantsCount: p.variantsCount ?? p.VariantsCount ?? 0
+            };
+          });
+
+          this.selectedGroup.set({
+            id: detail.id || detail.Id,
+            shopId: detail.shopId || detail.ShopId,
+            shopName: detail.shopName || detail.ShopName || 'Store',
+            batchName: detail.batchName || detail.BatchName || 'Batch',
+            requestedCount: detail.requestedCount ?? detail.RequestedCount ?? 0,
+            deliveredCount: detail.deliveredCount ?? detail.DeliveredCount ?? 0,
+            categoryFilter: detail.categoryFilter || detail.CategoryFilter,
+            brandFilter: detail.brandFilter || detail.BrandFilter,
+            minPrice: detail.minPrice ?? detail.MinPrice,
+            maxPrice: detail.maxPrice ?? detail.MaxPrice,
+            createdAt: detail.createdAt || detail.CreatedAt,
+            products
+          });
+        }
         this.isLoadingGroupDetail.set(false);
       },
       error: (err) => {

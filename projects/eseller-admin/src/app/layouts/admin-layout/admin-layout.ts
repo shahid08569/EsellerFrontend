@@ -63,6 +63,7 @@ export class AdminLayout implements OnInit {
   readonly pendingCustomersCount = signal<number>(0);
   readonly pendingSellersCount = signal<number>(0);
   readonly pendingWithdrawalsCount = signal<number>(0);
+  readonly productGroupsCount = signal<number>(0);
 
   /** Full totals for pages / reference (not shown as nav badges) */
   readonly totalShopsCount = signal<number>(0);
@@ -287,6 +288,14 @@ export class AdminLayout implements OnInit {
         const items = res?.items || (Array.isArray(res) ? res : []);
         const pending = items.filter((c: any) => String(c.status || '').toLowerCase() === 'pending');
         this.pendingCustomersCount.set(pending.length);
+      },
+      error: () => {}
+    });
+
+    this.adminService.getProductGroups(1, 1).subscribe({
+      next: (res) => {
+        const count = res?.totalCount ?? (Array.isArray(res) ? res.length : (res?.items?.length || 0));
+        this.productGroupsCount.set(count);
       },
       error: () => {}
     });

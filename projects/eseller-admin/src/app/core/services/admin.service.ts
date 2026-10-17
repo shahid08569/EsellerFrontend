@@ -710,15 +710,16 @@ export class AdminService {
   }
 
   replaceProductInGroup(groupId: string, oldProductId: string, newWarehouseProductId: string): Observable<any> {
-    return this.api.post<any>(`/admin/product-groups/${groupId}/products/${oldProductId}/replace`, {
+    return this.api.post<any>(`/admin/product-groups/${groupId}/replace-product`, {
+      oldProductId,
       newWarehouseProductId
     });
   }
 
   addProductsToGroup(groupId: string, additionalCount?: number, specificWarehouseProductIds?: string[]): Observable<any> {
-    return this.api.post<any>(`/admin/product-groups/${groupId}/products/add`, {
-      additionalCount,
-      specificWarehouseProductIds
+    return this.api.post<any>(`/admin/product-groups/${groupId}/add-products`, {
+      additionalCount: additionalCount || 0,
+      specificWarehouseProductIds: specificWarehouseProductIds || []
     });
   }
 
