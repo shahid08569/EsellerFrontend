@@ -1,167 +1,204 @@
-@if (variant() === 'product-card') {
-  <div class="rounded-2xl border border-gray-200/80 bg-white overflow-hidden" aria-busy="true" aria-label="Loading">
-    <div class="aspect-square">
-      <es-skeleton width="100%" height="100%" radius="0" />
-    </div>
-    <div class="p-3 md:p-4 space-y-2.5">
-      <es-skeleton width="40%" height="0.65rem" shape="pill" />
-      <es-skeleton width="90%" height="0.8rem" />
-      <es-skeleton width="70%" height="0.8rem" />
-      <div class="pt-1">
-        <es-skeleton width="35%" height="1rem" />
-      </div>
-    </div>
-  </div>
-}
-
-@else if (variant() === 'product-grid') {
-  <div [class]="gridClass()" aria-busy="true" aria-label="Loading products">
-    @for (i of items(); track i) {
-      <div class="rounded-2xl border border-gray-200/80 bg-white overflow-hidden">
-        <div class="aspect-square bg-gray-50">
+<div class="relative w-full">
+  <!-- Skeletons in the background, subtly dimmed and blurred for high-tech glassmorphism effect -->
+  <div class="transition-opacity duration-300" [class.opacity-45]="showLoader()" [class.pointer-events-none]="showLoader()" [class.select-none]="showLoader()">
+    @if (variant() === 'product-card') {
+      <div class="rounded-2xl border border-gray-200/80 bg-white overflow-hidden" aria-busy="true" aria-label="Loading">
+        <div class="aspect-square">
           <es-skeleton width="100%" height="100%" radius="0" />
         </div>
         <div class="p-3 md:p-4 space-y-2.5">
-          <es-skeleton width="42%" height="0.6rem" shape="pill" />
-          <es-skeleton width="88%" height="0.75rem" />
-          <es-skeleton width="65%" height="0.75rem" />
-          <div class="flex items-center justify-between pt-1">
-            <es-skeleton width="36%" height="1rem" />
-            <es-skeleton width="2rem" height="2rem" shape="circle" />
+          <es-skeleton width="40%" height="0.65rem" shape="pill" />
+          <es-skeleton width="90%" height="0.8rem" />
+          <es-skeleton width="70%" height="0.8rem" />
+          <div class="pt-1">
+            <es-skeleton width="35%" height="1rem" />
           </div>
         </div>
       </div>
     }
-  </div>
-}
 
-@else if (variant() === 'table') {
-  <div class="w-full overflow-hidden rounded-2xl border border-gray-200/80 bg-white" aria-busy="true" aria-label="Loading table">
-    <div class="flex gap-3 px-4 py-3.5 border-b border-gray-100 bg-slate-50/80">
-      @for (c of cols(); track c) {
-        <es-skeleton [width]="c === 1 ? '28%' : '14%'" height="0.65rem" shape="pill" />
-      }
-    </div>
-    <div class="divide-y divide-gray-100">
-      @for (i of items(); track i) {
-        <div class="flex items-center gap-3 px-4 py-3.5">
-          @for (c of cols(); track c) {
-            @if (c === 1) {
-              <div class="flex items-center gap-3 flex-1 min-w-0">
-                <es-skeleton width="2.5rem" height="2.5rem" shape="circle" />
-                <div class="flex-1 space-y-2 min-w-0">
-                  <es-skeleton width="70%" height="0.7rem" />
-                  <es-skeleton width="45%" height="0.55rem" />
-                </div>
+    @else if (variant() === 'product-grid') {
+      <div [class]="gridClass()" aria-busy="true" aria-label="Loading products">
+        @for (i of items(); track i) {
+          <div class="rounded-2xl border border-gray-200/80 bg-white overflow-hidden">
+            <div class="aspect-square bg-gray-50">
+              <es-skeleton width="100%" height="100%" radius="0" />
+            </div>
+            <div class="p-3 md:p-4 space-y-2.5">
+              <es-skeleton width="42%" height="0.6rem" shape="pill" />
+              <es-skeleton width="88%" height="0.75rem" />
+              <es-skeleton width="65%" height="0.75rem" />
+              <div class="flex items-center justify-between pt-1">
+                <es-skeleton width="36%" height="1rem" />
+                <es-skeleton width="2rem" height="2rem" shape="circle" />
               </div>
-            } @else {
-              <es-skeleton width="12%" height="0.7rem" shape="pill" />
-            }
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @else if (variant() === 'table') {
+      <div class="w-full overflow-hidden rounded-2xl border border-gray-200/80 bg-white" aria-busy="true" aria-label="Loading table">
+        <div class="flex gap-3 px-4 py-3.5 border-b border-gray-100 bg-slate-50/80">
+          @for (c of cols(); track c) {
+            <es-skeleton [width]="c === 1 ? '28%' : '14%'" height="0.65rem" shape="pill" />
           }
         </div>
-      }
-    </div>
-  </div>
-}
-
-@else if (variant() === 'stats') {
-  <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" aria-busy="true" aria-label="Loading stats">
-    @for (i of items(); track i) {
-      <div class="rounded-2xl border border-gray-200/80 bg-white p-4 md:p-5 space-y-3">
-        <es-skeleton width="40%" height="0.6rem" shape="pill" />
-        <es-skeleton width="55%" height="1.5rem" />
-        <es-skeleton width="70%" height="0.55rem" />
-      </div>
-    }
-  </div>
-}
-
-@else if (variant() === 'list') {
-  <div class="space-y-3" aria-busy="true" aria-label="Loading list">
-    @for (i of items(); track i) {
-      <div class="flex items-center gap-3 rounded-2xl border border-gray-200/80 bg-white p-3.5">
-        <es-skeleton width="3rem" height="3rem" shape="circle" />
-        <div class="flex-1 space-y-2 min-w-0">
-          <es-skeleton width="55%" height="0.75rem" />
-          <es-skeleton width="80%" height="0.6rem" />
+        <div class="divide-y divide-gray-100">
+          @for (i of items(); track i) {
+            <div class="flex items-center gap-3 px-4 py-3.5">
+              @for (c of cols(); track c) {
+                @if (c === 1) {
+                  <div class="flex items-center gap-3 flex-1 min-w-0">
+                    <es-skeleton width="2.5rem" height="2.5rem" shape="circle" />
+                    <div class="flex-1 space-y-2 min-w-0">
+                      <es-skeleton width="70%" height="0.7rem" />
+                      <es-skeleton width="45%" height="0.55rem" />
+                    </div>
+                  </div>
+                } @else {
+                  <es-skeleton width="12%" height="0.7rem" shape="pill" />
+                }
+              }
+            </div>
+          }
         </div>
-        <es-skeleton width="4.5rem" height="1.75rem" shape="pill" />
       </div>
     }
-  </div>
-}
 
-@else if (variant() === 'detail') {
-  <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8" aria-busy="true" aria-label="Loading details">
-    <div class="lg:col-span-5 space-y-3">
-      <div class="aspect-square rounded-2xl overflow-hidden border border-gray-200/80">
-        <es-skeleton width="100%" height="100%" radius="0" />
-      </div>
-      <div class="grid grid-cols-4 gap-2">
-        @for (i of [1,2,3,4]; track i) {
-          <div class="aspect-square rounded-xl overflow-hidden border border-gray-200/80">
-            <es-skeleton width="100%" height="100%" radius="0" />
+    @else if (variant() === 'stats') {
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4" aria-busy="true" aria-label="Loading stats">
+        @for (i of items(); track i) {
+          <div class="rounded-2xl border border-gray-200/80 bg-white p-4 md:p-5 space-y-3">
+            <es-skeleton width="40%" height="0.6rem" shape="pill" />
+            <es-skeleton width="55%" height="1.5rem" />
+            <es-skeleton width="70%" height="0.55rem" />
           </div>
         }
       </div>
-    </div>
-    <div class="lg:col-span-7 space-y-4">
-      <es-skeleton width="30%" height="0.65rem" shape="pill" />
-      <es-skeleton width="85%" height="1.4rem" />
-      <es-skeleton width="60%" height="1rem" />
-      <es-skeleton width="40%" height="1.75rem" />
-      <div class="space-y-2 pt-2">
-        <es-skeleton width="100%" height="0.7rem" />
-        <es-skeleton width="95%" height="0.7rem" />
-        <es-skeleton width="88%" height="0.7rem" />
-        <es-skeleton width="70%" height="0.7rem" />
-      </div>
-      <div class="flex gap-3 pt-4">
-        <es-skeleton width="9rem" height="2.75rem" shape="pill" />
-        <es-skeleton width="9rem" height="2.75rem" shape="pill" />
-      </div>
-    </div>
-  </div>
-}
+    }
 
-@else if (variant() === 'chat') {
-  <div class="space-y-3 p-3" aria-busy="true" aria-label="Loading chat">
-    @for (i of items(); track i) {
-      <div class="flex" [class.justify-end]="i % 2 === 0" [class.justify-start]="i % 2 !== 0">
-        <div class="max-w-[75%] space-y-1.5">
-          <es-skeleton [width]="i % 2 === 0 ? '12rem' : '14rem'" height="2.75rem" radius="1rem" />
+    @else if (variant() === 'list') {
+      <div class="space-y-3" aria-busy="true" aria-label="Loading list">
+        @for (i of items(); track i) {
+          <div class="flex items-center gap-3 rounded-2xl border border-gray-200/80 bg-white p-3.5">
+            <es-skeleton width="3rem" height="3rem" shape="circle" />
+            <div class="flex-1 space-y-2 min-w-0">
+              <es-skeleton width="55%" height="0.75rem" />
+              <es-skeleton width="80%" height="0.6rem" />
+            </div>
+            <es-skeleton width="4.5rem" height="1.75rem" shape="pill" />
+          </div>
+        }
+      </div>
+    }
+
+    @else if (variant() === 'detail') {
+      <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 md:gap-8" aria-busy="true" aria-label="Loading details">
+        <div class="lg:col-span-5 space-y-3">
+          <div class="aspect-square rounded-2xl overflow-hidden border border-gray-200/80">
+            <es-skeleton width="100%" height="100%" radius="0" />
+          </div>
+          <div class="grid grid-cols-4 gap-2">
+            @for (i of [1,2,3,4]; track i) {
+              <div class="aspect-square rounded-xl overflow-hidden border border-gray-200/80">
+                <es-skeleton width="100%" height="100%" radius="0" />
+              </div>
+            }
+          </div>
+        </div>
+        <div class="lg:col-span-7 space-y-4">
+          <es-skeleton width="30%" height="0.65rem" shape="pill" />
+          <es-skeleton width="85%" height="1.4rem" />
+          <es-skeleton width="60%" height="1rem" />
+          <es-skeleton width="40%" height="1.75rem" />
+          <div class="space-y-2 pt-2">
+            <es-skeleton width="100%" height="0.7rem" />
+            <es-skeleton width="95%" height="0.7rem" />
+            <es-skeleton width="88%" height="0.7rem" />
+            <es-skeleton width="70%" height="0.7rem" />
+          </div>
+          <div class="flex gap-3 pt-4">
+            <es-skeleton width="9rem" height="2.75rem" shape="pill" />
+            <es-skeleton width="9rem" height="2.75rem" shape="pill" />
+          </div>
+        </div>
+      </div>
+    }
+
+    @else if (variant() === 'chat') {
+      <div class="space-y-3 p-3" aria-busy="true" aria-label="Loading chat">
+        @for (i of items(); track i) {
+          <div class="flex" [class.justify-end]="i % 2 === 0" [class.justify-start]="i % 2 !== 0">
+            <div class="max-w-[75%] space-y-1.5">
+              <es-skeleton [width]="i % 2 === 0 ? '12rem' : '14rem'" height="2.75rem" radius="1rem" />
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    @else {
+      <!-- page: stats + table -->
+      <div class="space-y-5" aria-busy="true" aria-label="Loading page">
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
+          @for (i of [1,2,3,4]; track i) {
+            <div class="rounded-2xl border border-gray-200/80 bg-white p-4 space-y-3">
+              <es-skeleton width="40%" height="0.6rem" shape="pill" />
+              <es-skeleton width="55%" height="1.4rem" />
+            </div>
+          }
+        </div>
+        <div class="w-full overflow-hidden rounded-2xl border border-gray-200/80 bg-white">
+          <div class="flex gap-3 px-4 py-3.5 border-b border-gray-100 bg-slate-50/80">
+            @for (c of [1,2,3,4,5]; track c) {
+              <es-skeleton width="14%" height="0.65rem" shape="pill" />
+            }
+          </div>
+          @for (i of items(); track i) {
+            <div class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 last:border-0">
+              <es-skeleton width="2.25rem" height="2.25rem" shape="circle" />
+              <es-skeleton width="28%" height="0.7rem" />
+              <es-skeleton width="12%" height="0.7rem" shape="pill" />
+              <es-skeleton width="12%" height="0.7rem" shape="pill" />
+              <es-skeleton width="10%" height="0.7rem" shape="pill" />
+            </div>
+          }
         </div>
       </div>
     }
   </div>
-}
 
-@else {
-  <!-- page: stats + table -->
-  <div class="space-y-5" aria-busy="true" aria-label="Loading page">
-    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 md:gap-4">
-      @for (i of [1,2,3,4]; track i) {
-        <div class="rounded-2xl border border-gray-200/80 bg-white p-4 space-y-3">
-          <es-skeleton width="40%" height="0.6rem" shape="pill" />
-          <es-skeleton width="55%" height="1.4rem" />
+  <!-- Cool Professional Floating Dual-Orbit Loader Badge -->
+  @if (showLoader()) {
+    <div class="absolute inset-0 z-10 flex items-center justify-center p-4 pointer-events-none" role="status" aria-live="polite">
+      <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl bg-white/95 dark:bg-slate-900/95 border border-slate-200/90 dark:border-slate-800 shadow-2xl shadow-slate-900/10 backdrop-blur-md transform transition-all animate-in fade-in zoom-in-95 duration-200 pointer-events-auto">
+        <!-- Dual orbit modern spinner -->
+        <div class="relative w-9 h-9 shrink-0 flex items-center justify-center">
+          <!-- Outer gradient arc -->
+          <div class="absolute inset-0 rounded-full border-2 border-transparent border-t-indigo-600 border-r-violet-500 es-cool-orbit"></div>
+          <!-- Inner dashed counter-spinning ring -->
+          <div class="absolute inset-1 rounded-full border border-dashed border-cyan-400/80 es-cool-orbit-rev"></div>
+          <!-- Core pulsing dot -->
+          <div class="w-2.5 h-2.5 rounded-full bg-gradient-to-tr from-indigo-600 to-violet-500 es-cool-core"></div>
         </div>
-      }
-    </div>
-    <div class="w-full overflow-hidden rounded-2xl border border-gray-200/80 bg-white">
-      <div class="flex gap-3 px-4 py-3.5 border-b border-gray-100 bg-slate-50/80">
-        @for (c of [1,2,3,4,5]; track c) {
-          <es-skeleton width="14%" height="0.65rem" shape="pill" />
-        }
+
+        <!-- Typography & Dots -->
+        <div class="flex flex-col text-left">
+          <div class="flex items-center gap-0.5 text-xs font-black tracking-wide text-slate-800 dark:text-slate-100">
+            <span>{{ label() }}</span>
+            <span class="inline-flex tracking-tighter ml-0.5 font-bold text-indigo-600 dark:text-indigo-400">
+              <span class="es-dot-1">.</span>
+              <span class="es-dot-2">.</span>
+              <span class="es-dot-3">.</span>
+            </span>
+          </div>
+          @if (sublabel()) {
+            <span class="text-[10px] text-slate-400 font-medium tracking-tight mt-0.5">{{ sublabel() }}</span>
+          }
+        </div>
       </div>
-      @for (i of items(); track i) {
-        <div class="flex items-center gap-3 px-4 py-3.5 border-b border-gray-100 last:border-0">
-          <es-skeleton width="2.25rem" height="2.25rem" shape="circle" />
-          <es-skeleton width="28%" height="0.7rem" />
-          <es-skeleton width="12%" height="0.7rem" shape="pill" />
-          <es-skeleton width="12%" height="0.7rem" shape="pill" />
-          <es-skeleton width="10%" height="0.7rem" shape="pill" />
-        </div>
-      }
     </div>
-  </div>
-}
+  }
+</div>

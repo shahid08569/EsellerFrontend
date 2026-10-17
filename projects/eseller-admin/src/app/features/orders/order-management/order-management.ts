@@ -732,6 +732,8 @@ export class OrderManagement implements OnInit {
   onFilterTabChange(tab: OrderTab): void {
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   onShopChange(shopId: string): void {
@@ -743,6 +745,8 @@ export class OrderManagement implements OnInit {
   onSortChange(sort: 'newest' | 'oldest'): void {
     this.sortOrder.set(sort);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   onSearchChange(term: string): void {
@@ -987,6 +991,20 @@ export class OrderManagement implements OnInit {
     this.placeFilterShopId.set(shopId);
     this.placeCurrentPage.set(1);
     this.loadPlaceOrderCatalog();
+  }
+
+  onPlaceCategoryFilterChange(catId: string): void {
+    this.placeFilterCategoryId.set(catId);
+    this.placeCurrentPage.set(1);
+    this.placeLoadingProducts.set(true);
+    setTimeout(() => this.placeLoadingProducts.set(false), 150);
+  }
+
+  onPlaceBrandFilterChange(brandId: string): void {
+    this.placeFilterBrandId.set(brandId);
+    this.placeCurrentPage.set(1);
+    this.placeLoadingProducts.set(true);
+    setTimeout(() => this.placeLoadingProducts.set(false), 150);
   }
 
   loadPlaceOrderCatalog(): void {

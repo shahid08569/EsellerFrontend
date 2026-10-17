@@ -75,11 +75,15 @@ export class SellerManagement implements OnInit {
   onSearch(term: string): void {
     this.searchTerm.set(term);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   onFilterStatus(status: 'ALL' | 'Approved' | 'Pending' | 'Rejected'): void {
     this.statusFilter.set(status);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   readonly filteredSellers = computed(() => {

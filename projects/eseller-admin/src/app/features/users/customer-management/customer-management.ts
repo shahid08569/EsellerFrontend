@@ -71,11 +71,15 @@ export class CustomerManagement implements OnInit {
   onSearch(term: string): void {
     this.searchTerm.set(term);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   onFilterStatus(status: 'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'ACTIVE' | 'SUSPENDED'): void {
     this.statusFilter.set(status);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   readonly filteredCustomers = computed(() => {

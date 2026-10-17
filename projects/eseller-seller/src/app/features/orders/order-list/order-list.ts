@@ -116,6 +116,8 @@ export class OrderList implements OnInit {
   onFilterTabChange(tab: OrderTab): void {
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.loading.set(true);
+    setTimeout(() => this.loading.set(false), 180);
   }
 
   ngOnInit(): void {

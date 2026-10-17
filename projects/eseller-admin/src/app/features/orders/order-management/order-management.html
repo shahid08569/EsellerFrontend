@@ -827,7 +827,7 @@
         </select>
         <select
           [ngModel]="placeFilterCategoryId()"
-          (ngModelChange)="placeFilterCategoryId.set($event); placeCurrentPage.set(1)"
+          (ngModelChange)="onPlaceCategoryFilterChange($event)"
           class="col-span-1 w-full px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
           <option value="all">All Categories</option>
           @for (cat of placeCategories(); track cat.id) {
@@ -837,7 +837,7 @@
         <div class="col-span-2 lg:col-span-1 flex items-center gap-2">
           <select
             [ngModel]="placeFilterBrandId()"
-            (ngModelChange)="placeFilterBrandId.set($event); placeCurrentPage.set(1)"
+            (ngModelChange)="onPlaceBrandFilterChange($event)"
             class="flex-1 px-2.5 py-2 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-900 outline-hidden focus:border-orange-500 cursor-pointer">
             <option value="all">All Brands</option>
             @for (b of placeBrands(); track b.id) {

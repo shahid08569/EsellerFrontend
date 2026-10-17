@@ -684,6 +684,8 @@ export class ShopManagement implements OnInit, OnDestroy {
   switchViewMode(mode: ViewMode): void {
     this.viewMode.set(mode);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
     // Replace query so leftover tab=pending doesn't stick on stores/tiers
     this.router.navigate([], {
       queryParams: mode === 'applications'
@@ -701,12 +703,16 @@ export class ShopManagement implements OnInit, OnDestroy {
   switchTab(tab: FilterTab): void {
     this.activeTab.set(tab);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
     this.router.navigate([], { queryParams: { tab: tab }, queryParamsHandling: 'merge' });
   }
 
   onSearch(term: string): void {
     this.searchTerm.set(term);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   openApproveModal(shop: AdminShopkeeperDto): void {

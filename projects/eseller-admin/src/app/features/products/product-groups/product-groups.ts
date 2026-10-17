@@ -86,6 +86,18 @@ export class ProductGroups implements OnInit {
   readonly searchTerm = signal<string>('');
   readonly selectedShopId = signal<string>('all');
 
+  onSearchChange(term: string): void {
+    this.searchTerm.set(term);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
+  onShopFilterChange(shopId: string): void {
+    this.selectedShopId.set(shopId);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
   // Search within selected group cards
   readonly cardSearchTerm = signal<string>('');
 

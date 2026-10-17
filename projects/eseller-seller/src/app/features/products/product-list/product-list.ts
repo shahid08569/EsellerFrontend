@@ -261,10 +261,14 @@ export class ProductList implements OnInit {
   onOriginTabChange(tab: ProductOriginTab) {
     this.originTab.set(tab);
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   onFilterChange() {
     this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   isOwnProduct(p: ProductListDto): boolean {

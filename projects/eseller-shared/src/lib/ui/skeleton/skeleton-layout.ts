@@ -29,6 +29,13 @@ export class SkeletonLayout {
     'grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3 md:gap-4'
   );
 
+  /** Whether to show the floating cool professional loader card over the skeleton */
+  readonly showLoader = input<boolean>(true);
+  /** Primary label on the cool loader */
+  readonly label = input<string>('Loading data');
+  /** Optional secondary sublabel */
+  readonly sublabel = input<string>('Please wait a moment…');
+
   readonly items = computed(() => Array.from({ length: Math.max(1, this.count()) }, (_, i) => i + 1));
   readonly cols = computed(() => Array.from({ length: Math.max(2, this.columns()) }, (_, i) => i + 1));
 }

@@ -120,6 +120,8 @@ export class MarketplaceCatalog implements OnInit {
 
   onFilterChange(): void {
     this.currentPage.set(1);
+    this.loading.set(true);
+    setTimeout(() => this.loading.set(false), 180);
   }
 
   ngOnInit(): void {
