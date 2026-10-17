@@ -16,6 +16,9 @@ export interface ProductGroupListItemDto {
   deliveredCount: number;
   currentProductCount?: number;
   activeProductsCount: number;
+  approvedProductsCount?: number;
+  pendingProductsCount?: number;
+  isApproved?: boolean;
   categoryFilter?: string | null;
   brandFilter?: string | null;
   minPrice?: number | null;
@@ -46,6 +49,9 @@ export interface ProductGroupDetailDto {
   batchName: string;
   requestedCount: number;
   deliveredCount: number;
+  approvedProductsCount?: number;
+  pendingProductsCount?: number;
+  isApproved?: boolean;
   categoryFilter?: string | null;
   brandFilter?: string | null;
   minPrice?: number | null;
@@ -188,27 +194,40 @@ export class ProductGroups implements OnInit {
     });
   }
 
+  // Approving state
+  readonly isApprovingBatch = signal<string | null>(null);
+
   loadGroups(): void {
     this.isLoading.set(true);
     this.adminService.getProductGroups(1, 100).subscribe({
       next: (res) => {
         const rawList = Array.isArray(res) ? res : (res?.items || res?.value || res?.data || []);
-        const list: ProductGroupListItemDto[] = rawList.map((g: any) => ({
-          id: g.id || g.Id,
-          shopId: g.shopId || g.ShopId,
-          shopName: g.shopName || g.ShopName || 'Store',
-          shopSlug: g.shopSlug || g.ShopSlug || '',
-          batchName: g.batchName || g.BatchName || 'Batch',
-          requestedCount: g.requestedCount ?? g.RequestedCount ?? 0,
-          deliveredCount: g.deliveredCount ?? g.DeliveredCount ?? 0,
-          currentProductCount: g.currentProductCount ?? g.CurrentProductCount ?? 0,
-          activeProductsCount: g.currentProductCount ?? g.CurrentProductCount ?? g.activeProductsCount ?? g.deliveredCount ?? 0,
-          categoryFilter: g.categoryFilter || g.CategoryFilter,
-          brandFilter: g.brandFilter || g.BrandFilter,
-          minPrice: g.minPrice ?? g.MinPrice,
-          maxPrice: g.maxPrice ?? g.MaxPrice,
-          createdAt: g.createdAt || g.CreatedAt
-        }));
+        const list: ProductGroupListItemDto[] = rawList.map((g: any) => {
+          const total = g.currentProductCount ?? g.CurrentProductCount ?? g.activeProductsCount ?? g.deliveredCount ?? 0;
+          const approved = g.approvedProductsCount ?? g.ApprovedProductsCount ?? 0;
+          const pending = g.pendingProductsCount ?? g.PendingProductsCount ?? (g.isApproved ? 0 : total);
+          const isApproved = g.isApproved ?? g.IsApproved ?? (pending === 0 && total > 0);
+
+          return {
+            id: g.id || g.Id,
+            shopId: g.shopId || g.ShopId,
+            shopName: g.shopName || g.ShopName || 'Store',
+            shopSlug: g.shopSlug || g.ShopSlug || '',
+            batchName: g.batchName || g.BatchName || 'Batch',
+            requestedCount: g.requestedCount ?? g.RequestedCount ?? 0,
+            deliveredCount: g.deliveredCount ?? g.DeliveredCount ?? 0,
+            currentProductCount: total,
+            activeProductsCount: total,
+            approvedProductsCount: approved,
+            pendingProductsCount: pending,
+            isApproved: isApproved,
+            categoryFilter: g.categoryFilter || g.CategoryFilter,
+            brandFilter: g.brandFilter || g.BrandFilter,
+            minPrice: g.minPrice ?? g.MinPrice,
+            maxPrice: g.maxPrice ?? g.MaxPrice,
+            createdAt: g.createdAt || g.CreatedAt
+          };
+        });
         this.groups.set(list);
         this.isLoading.set(false);
       },
@@ -239,11 +258,15 @@ export class ProductGroups implements OnInit {
               imageUrl: img,
               primaryImageUrl: img,
               isActive: p.isActive ?? p.IsActive ?? true,
-              isApproved: p.isApproved ?? p.IsApproved ?? true,
+              isApproved: p.isApproved ?? p.IsApproved ?? false,
               createdAt: p.createdAt || p.CreatedAt,
               variantsCount: p.variantsCount ?? p.VariantsCount ?? 0
             };
           });
+
+          const approved = products.filter(p => p.isApproved).length;
+          const pending = products.filter(p => !p.isApproved).length;
+          const isApproved = products.length > 0 && pending === 0;
 
           this.selectedGroup.set({
             id: detail.id || detail.Id,
@@ -252,6 +275,9 @@ export class ProductGroups implements OnInit {
             batchName: detail.batchName || detail.BatchName || 'Batch',
             requestedCount: detail.requestedCount ?? detail.RequestedCount ?? 0,
             deliveredCount: detail.deliveredCount ?? detail.DeliveredCount ?? 0,
+            approvedProductsCount: approved,
+            pendingProductsCount: pending,
+            isApproved: isApproved,
             categoryFilter: detail.categoryFilter || detail.CategoryFilter,
             brandFilter: detail.brandFilter || detail.BrandFilter,
             minPrice: detail.minPrice ?? detail.MinPrice,
@@ -265,6 +291,104 @@ export class ProductGroups implements OnInit {
       error: (err) => {
         this.isLoadingGroupDetail.set(false);
         this.toast.show(err?.error?.error || 'Failed to load group details.', 'error');
+      }
+    });
+  }
+
+  // ─── APPROVE BATCH DIRECTLY ─────────────────────────────────
+  approveBatch(group: ProductGroupListItemDto, event?: Event): void {
+    if (event) event.stopPropagation();
+    if (this.isApprovingBatch()) return;
+
+    this.isApprovingBatch.set(group.id);
+    this.adminService.approveProductGroup(group.id).subscribe({
+      next: (res) => {
+        this.isApprovingBatch.set(null);
+        this.toast.show(res?.message || `Batch "${group.batchName}" approved successfully! All items are now live.`, 'success');
+
+        this.groups.update(list => list.map(g => {
+          if (g.id === group.id) {
+            return {
+              ...g,
+              isApproved: true,
+              approvedProductsCount: g.deliveredCount,
+              pendingProductsCount: 0
+            };
+          }
+          return g;
+        }));
+      },
+      error: (err) => {
+        this.isApprovingBatch.set(null);
+        this.toast.show(err?.error?.error || err?.error?.message || 'Failed to approve batch.', 'error');
+      }
+    });
+  }
+
+  approveCurrentBatch(): void {
+    const grp = this.selectedGroup();
+    if (!grp || this.isApprovingBatch()) return;
+
+    this.isApprovingBatch.set(grp.id);
+    this.adminService.approveProductGroup(grp.id).subscribe({
+      next: (res) => {
+        this.isApprovingBatch.set(null);
+        this.toast.show(res?.message || `All products in "${grp.batchName}" approved!`, 'success');
+
+        this.selectedGroup.update(g => {
+          if (!g) return null;
+          return {
+            ...g,
+            isApproved: true,
+            approvedProductsCount: g.products.length,
+            pendingProductsCount: 0,
+            products: g.products.map(p => ({ ...p, isApproved: true }))
+          };
+        });
+
+        this.groups.update(list => list.map(g => {
+          if (g.id === grp.id) {
+            return {
+              ...g,
+              isApproved: true,
+              approvedProductsCount: g.deliveredCount,
+              pendingProductsCount: 0
+            };
+          }
+          return g;
+        }));
+      },
+      error: (err) => {
+        this.isApprovingBatch.set(null);
+        this.toast.show(err?.error?.error || 'Failed to approve batch.', 'error');
+      }
+    });
+  }
+
+  approveSingleProduct(prod: GroupProductCardDto): void {
+    const grp = this.selectedGroup();
+    if (!grp) return;
+
+    this.adminService.approveGroupProduct(grp.id, prod.id).subscribe({
+      next: () => {
+        this.toast.show(`"${prod.name}" approved successfully!`, 'success');
+
+        this.selectedGroup.update(g => {
+          if (!g) return null;
+          const updated = g.products.map(p => p.id === prod.id ? { ...p, isApproved: true } : p);
+          const approved = updated.filter(p => p.isApproved).length;
+          const pending = updated.filter(p => !p.isApproved).length;
+          return {
+            ...g,
+            isApproved: pending === 0 && updated.length > 0,
+            approvedProductsCount: approved,
+            pendingProductsCount: pending,
+            products: updated
+          };
+        });
+      },
+      error: (err) => {
+        this.toast.show(err?.error?.error || 'Failed to approve product.', 'error');
       }
     });
   }

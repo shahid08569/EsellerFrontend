@@ -727,6 +727,14 @@ export class AdminService {
     return this.api.delete<any>(`/admin/product-groups/${groupId}`);
   }
 
+  approveProductGroup(groupId: string): Observable<any> {
+    return this.api.post<any>(`/admin/product-groups/${groupId}/approve`, {});
+  }
+
+  approveGroupProduct(groupId: string, productId: string): Observable<any> {
+    return this.api.post<any>(`/admin/product-groups/${groupId}/products/${productId}/approve`, {});
+  }
+
   // ═══════════════════════════════════════════════════════════
   // 6b. PRODUCT REVIEWS (moderation)
   // ═══════════════════════════════════════════════════════════
