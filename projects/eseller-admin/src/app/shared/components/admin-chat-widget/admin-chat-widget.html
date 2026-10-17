@@ -47,9 +47,9 @@
             </h4>
             <p class="text-[11px] text-orange-100 flex items-center gap-1 font-medium truncate">
               @if (currentView() === 'chat') {
-                <span>{{ directoryTab() === 'customers' ? 'Customer chat' : 'Seller support' }}</span>
+                <span>{{ directoryTab() === 'customers' ? 'Customer chat' : (isPartner() ? 'Partner Store Support' : 'Seller support') }}</span>
               } @else {
-                <span>Support &amp; Customers</span>
+                <span>{{ isPartner() ? 'Partner Store Support' : 'Support & Customers' }}</span>
               }
             </p>
           </div>
@@ -70,34 +70,36 @@
         <div class="flex-1 flex flex-col bg-white overflow-hidden">
 
           <!-- Tabs like chat UI -->
-          <div class="flex border-b border-slate-100 shrink-0">
-            <button
-              type="button"
-              (click)="setDirectoryTab('support')"
-              class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
-              [class.border-orange-600]="directoryTab() === 'support'"
-              [class.text-orange-700]="directoryTab() === 'support'"
-              [class.border-transparent]="directoryTab() !== 'support'"
-              [class.text-slate-400]="directoryTab() !== 'support'">
-              Support
-              @if (supportUnreadTotal() > 0) {
-                <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ supportUnreadTotal() > 99 ? '99+' : supportUnreadTotal() }}</span>
-              }
-            </button>
-            <button
-              type="button"
-              (click)="setDirectoryTab('customers')"
-              class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
-              [class.border-orange-600]="directoryTab() === 'customers'"
-              [class.text-orange-700]="directoryTab() === 'customers'"
-              [class.border-transparent]="directoryTab() !== 'customers'"
-              [class.text-slate-400]="directoryTab() !== 'customers'">
-              Customers
-              @if (customerUnreadTotal() > 0) {
-                <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ customerUnreadTotal() > 99 ? '99+' : customerUnreadTotal() }}</span>
-              }
-            </button>
-          </div>
+          @if (!isPartner()) {
+            <div class="flex border-b border-slate-100 shrink-0">
+              <button
+                type="button"
+                (click)="setDirectoryTab('support')"
+                class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+                [class.border-orange-600]="directoryTab() === 'support'"
+                [class.text-orange-700]="directoryTab() === 'support'"
+                [class.border-transparent]="directoryTab() !== 'support'"
+                [class.text-slate-400]="directoryTab() !== 'support'">
+                Support
+                @if (supportUnreadTotal() > 0) {
+                  <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ supportUnreadTotal() > 99 ? '99+' : supportUnreadTotal() }}</span>
+                }
+              </button>
+              <button
+                type="button"
+                (click)="setDirectoryTab('customers')"
+                class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+                [class.border-orange-600]="directoryTab() === 'customers'"
+                [class.text-orange-700]="directoryTab() === 'customers'"
+                [class.border-transparent]="directoryTab() !== 'customers'"
+                [class.text-slate-400]="directoryTab() !== 'customers'">
+                Customers
+                @if (customerUnreadTotal() > 0) {
+                  <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ customerUnreadTotal() > 99 ? '99+' : customerUnreadTotal() }}</span>
+                }
+              </button>
+            </div>
+          }
 
           <div class="p-3 bg-orange-50/40 border-b border-orange-100/80">
             <div class="relative">
@@ -105,7 +107,7 @@
                 type="text"
                 [ngModel]="sellerSearchTerm()"
                 (ngModelChange)="sellerSearchTerm.set($event)"
-                [placeholder]="directoryTab() === 'customers' ? 'Search customer…' : 'Search shop…'"
+                [placeholder]="(!isPartner() && directoryTab() === 'customers') ? 'Search customer…' : 'Search shop…'"
                 class="w-full bg-white border border-orange-100 rounded-xl pl-9 pr-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

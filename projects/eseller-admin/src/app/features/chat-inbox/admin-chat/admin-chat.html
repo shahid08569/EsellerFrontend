@@ -9,7 +9,7 @@
       </div>
       <div>
         <h1 class="text-sm sm:text-base font-black text-white tracking-tight">Conversations</h1>
-        <p class="text-orange-100 text-xs font-medium">Seller support and customer chats — live SignalR delivery.</p>
+        <p class="text-orange-100 text-xs font-medium">{{ isPartner() ? 'Referred store support — live SignalR delivery.' : 'Seller support and customer chats — live SignalR delivery.' }}</p>
       </div>
     </div>
     <button
@@ -64,25 +64,27 @@
               </span>
             }
           </button>
-          <button type="button" (click)="setFilterTab('customers')"
-            class="px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5"
-            [class.bg-orange-600]="filterTab() === 'customers'"
-            [class.text-white]="filterTab() === 'customers'"
-            [class.border-orange-600]="filterTab() === 'customers'"
-            [class.bg-slate-100]="filterTab() !== 'customers'"
-            [class.text-slate-700]="filterTab() !== 'customers'"
-            [class.border-slate-200]="filterTab() !== 'customers'">
-            Customers
-            @if (customerTabCount() > 0) {
-              <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
-                    [class.bg-white/25]="filterTab() === 'customers'"
-                    [class.text-white]="filterTab() === 'customers'"
-                    [class.bg-slate-200]="filterTab() !== 'customers'"
-                    [class.text-slate-700]="filterTab() !== 'customers'">
-                {{ customerTabCount() }}
-              </span>
-            }
-          </button>
+          @if (!isPartner()) {
+            <button type="button" (click)="setFilterTab('customers')"
+              class="px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5"
+              [class.bg-orange-600]="filterTab() === 'customers'"
+              [class.text-white]="filterTab() === 'customers'"
+              [class.border-orange-600]="filterTab() === 'customers'"
+              [class.bg-slate-100]="filterTab() !== 'customers'"
+              [class.text-slate-700]="filterTab() !== 'customers'"
+              [class.border-slate-200]="filterTab() !== 'customers'">
+              Customers
+              @if (customerTabCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'customers'"
+                      [class.text-white]="filterTab() === 'customers'"
+                      [class.bg-slate-200]="filterTab() !== 'customers'"
+                      [class.text-slate-700]="filterTab() !== 'customers'">
+                  {{ customerTabCount() }}
+                </span>
+              }
+            </button>
+          }
         </div>
       </div>
 

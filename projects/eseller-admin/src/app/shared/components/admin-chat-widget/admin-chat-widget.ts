@@ -54,6 +54,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly chatUnread = inject(AdminChatUnreadService);
   readonly cleanMessagePreview = cleanMessagePreview;
 
+  readonly isPartner = computed(() => this.authStore.role() === 'Partner');
+  readonly isSuperAdmin = computed(() => this.authStore.role() === 'SuperAdmin');
+
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef;
 
   private unsubscribeSignalR?: () => void;
@@ -154,7 +157,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   ngOnInit(): void {
     this.chatUnread.start();
     this.loadShops();
-    this.loadCustomerConvos();
+    if (!this.isPartner()) {
+      this.loadCustomerConvos();
+    }
 
     this.signalR.startChatConnection().then(() => {
       this.unsubscribeSignalR = this.signalR.onReceiveMessage((incoming) => {
@@ -335,6 +340,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.shops.set(mapped);
         this.isLoadingShops.set(false);
 
+        if (this.isPartner()) {
+          this.syncShopConversations();
+          return;
+        }
+
         this.adminService.getShops(1, 100).subscribe({
           next: (res) => {
             const items = res?.items || [];
@@ -368,6 +378,13 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         });
       },
       error: () => {
+        if (this.isPartner()) {
+          this.shops.set([]);
+          this.isLoadingShops.set(false);
+          this.syncShopConversations();
+          return;
+        }
+
         this.adminService.getShops(1, 100).subscribe({
           next: (res) => {
             this.shops.set((res?.items || []).map(shop => ({
@@ -394,6 +411,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   setDirectoryTab(tab: 'support' | 'customers'): void {
+    if (this.isPartner() && tab === 'customers') return;
     this.directoryTab.set(tab);
     this.sellerSearchTerm.set('');
     if (tab === 'customers' && !this.customerConvos().length) {
@@ -438,10 +456,15 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   syncShopConversations(): void {
+    if (this.isPartner()) {
+      this.customerConvos.set([]);
+      this.isLoadingCustomers.set(false);
+    }
+
     this.adminService.getConversations(1, 500).subscribe({
       next: (list) => {
         const convos = list || [];
-        const customers = convos.filter((c: any) => !this.isSellerSupportConvo(c));
+        const customers = this.isPartner() ? [] : convos.filter((c: any) => !this.isSellerSupportConvo(c));
         this.customerConvos.set(customers);
         this.isLoadingCustomers.set(false);
 
@@ -468,6 +491,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   loadCustomerConvos(): void {
+    if (this.isPartner()) {
+      this.customerConvos.set([]);
+      this.isLoadingCustomers.set(false);
+      return;
+    }
     this.isLoadingCustomers.set(true);
     this.syncShopConversations();
   }
@@ -498,7 +526,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.exitSelectionMode();
     this.currentView.set('directory');
     this.chatUnread.refresh();
-    if (this.directoryTab() === 'customers') this.loadCustomerConvos();
+    if (!this.isPartner() && this.directoryTab() === 'customers') this.loadCustomerConvos();
   }
 
   toggleChat(): void {
@@ -508,7 +536,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       this.currentView.set('directory');
       this.chatUnread.refresh();
       if (!this.shops().length) this.loadShops();
-      this.loadCustomerConvos();
+      if (!this.isPartner()) {
+        this.loadCustomerConvos();
+      }
     }
   }
 

@@ -3,7 +3,7 @@ import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
 import { Subscription } from 'rxjs';
-import { ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage, cleanMessagePreview } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatService, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage, cleanMessagePreview } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread.service';
 
@@ -34,6 +34,9 @@ export interface AdminDisplayMessage {
 export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   private readonly route = inject(ActivatedRoute);
   private readonly adminService = inject(AdminService);
+  private readonly authStore = inject(AuthStore);
+  readonly isPartner = computed(() => this.authStore.role() === 'Partner');
+  readonly isSuperAdmin = computed(() => this.authStore.role() === 'SuperAdmin');
   private readonly signalRService = inject(SignalRService);
   private readonly chatService = inject(ChatService);
   private readonly chatUnread = inject(AdminChatUnreadService);
@@ -117,6 +120,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   readonly filteredConversations = computed(() => {
+    if (this.isPartner()) {
+      return this.enrichedConversations().filter(c => this.isSellerSupport(c));
+    }
     const tab = this.filterTab();
     const list = this.enrichedConversations();
     if (tab === 'customers') return list.filter(c => !this.isSellerSupport(c));
@@ -128,7 +134,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   );
 
   readonly customerTabCount = computed(() =>
-    this.enrichedConversations().filter(c => !this.isSellerSupport(c)).length
+    this.isPartner() ? 0 : this.enrichedConversations().filter(c => !this.isSellerSupport(c)).length
   );
 
   private unsubscribeSignalR?: () => void;
@@ -856,6 +862,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   setFilterTab(tab: 'support' | 'customers'): void {
+    if (this.isPartner() && tab === 'customers') return;
     this.filterTab.set(tab);
   }
 
