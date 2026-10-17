@@ -201,10 +201,12 @@ export class OrderManagement implements OnInit {
       list = list.filter(p => String(p.shopId || '').toLowerCase() === sid);
     }
     if (categoryId && categoryId !== 'all') {
-      list = list.filter(p => p.categoryId === categoryId);
+      const cid = categoryId.toLowerCase();
+      list = list.filter(p => String(p.categoryId || '').toLowerCase() === cid);
     }
     if (brandId && brandId !== 'all') {
-      list = list.filter(p => p.brandId === brandId);
+      const bid = brandId.toLowerCase();
+      list = list.filter(p => String(p.brandId || '').toLowerCase() === bid);
     }
     if (term) {
       list = list.filter(p =>
@@ -329,14 +331,19 @@ export class OrderManagement implements OnInit {
     this.route.queryParams.pipe(
       takeUntilDestroyed(this.destroyRef)
     ).subscribe(params => {
-      if (params['action'] === 'create') {
+      const action = params['action'];
+      const shopId = params['shopId'];
+      if (action === 'create' || action === 'place') {
         if (!this.canPlaceOrder()) {
           this.toast.show('You do not have permission to place orders', 'error');
           this.router.navigate(['/orders']);
           return;
         }
         if (this.placeOrderMode() !== 'page') {
-          this.openPlaceOrder('page');
+          this.openPlaceOrder('page', shopId);
+        } else if (shopId && this.placeFilterShopId() !== shopId) {
+          this.placeFilterShopId.set(shopId);
+          this.loadPlaceOrderCatalog();
         }
       } else if (this.placeOrderMode() === 'page') {
         this.placeOrderMode.set(null);
@@ -898,7 +905,7 @@ export class OrderManagement implements OnInit {
     this.orderHistory.set([]);
   }
 
-  openPlaceOrder(mode: PlaceOrderMode = 'modal'): void {
+  openPlaceOrder(mode: PlaceOrderMode = 'modal', initialShopId?: string): void {
     if (!this.canPlaceOrder()) {
       this.toast.show('You do not have permission to place orders', 'error');
       return;
@@ -916,10 +923,8 @@ export class OrderManagement implements OnInit {
     this.multiOrderItems.set([]);
     this.placeShopId.set('');
     this.placeCatalogProducts.set([]);
-    this.placeCategories.set([]);
-    this.placeBrands.set([]);
     this.placeFilterSearch.set('');
-    this.placeFilterShopId.set('all');
+    this.placeFilterShopId.set(initialShopId || 'all');
     this.placeFilterCategoryId.set('all');
     this.placeFilterBrandId.set('all');
     this.placeSelectedProduct.set(null);
@@ -996,34 +1001,48 @@ export class OrderManagement implements OnInit {
   onPlaceCategoryFilterChange(catId: string): void {
     this.placeFilterCategoryId.set(catId);
     this.placeCurrentPage.set(1);
-    this.placeLoadingProducts.set(true);
-    setTimeout(() => this.placeLoadingProducts.set(false), 150);
   }
 
   onPlaceBrandFilterChange(brandId: string): void {
     this.placeFilterBrandId.set(brandId);
     this.placeCurrentPage.set(1);
-    this.placeLoadingProducts.set(true);
-    setTimeout(() => this.placeLoadingProducts.set(false), 150);
   }
 
   loadPlaceOrderCatalog(): void {
     this.placeLoadingProducts.set(true);
     const shopId = this.placeFilterShopId() !== 'all' ? this.placeFilterShopId() : undefined;
 
-    forkJoin({
-      products: this.adminService.getApprovedSellerProducts(1, 1000, undefined, shopId).pipe(
-        catchError(() => of({ items: [], totalCount: 0 } as any))
-      ),
-      categories: this.adminService.getCategories().pipe(catchError(() => of([] as AdminCategoryDto[]))),
-      brands: this.adminService.getBrands().pipe(catchError(() => of([] as AdminBrandDto[])))
-    }).pipe(
+    // Load categories independently in parallel if not yet cached
+    if (this.placeCategories().length === 0) {
+      this.adminService.getCategories().pipe(
+        catchError(() => of([] as AdminCategoryDto[])),
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(cats => this.placeCategories.set(cats || []));
+    }
+
+    // Load brands independently in parallel if not yet cached
+    if (this.placeBrands().length === 0) {
+      this.adminService.getBrands().pipe(
+        catchError(() => of([] as AdminBrandDto[])),
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe(brands => this.placeBrands.set(brands || []));
+    }
+
+    // Directly fetch catalog products without blocking behind categories/brands
+    this.adminService.getApprovedSellerProducts(1, 500, undefined, shopId).pipe(
+      catchError(() => of({ items: [], totalCount: 0 } as any)),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({
-      next: ({ products, categories, brands }) => {
-        const approvedList = products?.items || [];
-        this.placeCategories.set(categories || []);
-        this.placeBrands.set(brands || []);
+      next: (res) => {
+        const approvedList = Array.isArray(res?.items)
+          ? res.items
+          : Array.isArray((res as any)?.Items)
+            ? (res as any).Items
+            : Array.isArray((res as any)?.$values)
+              ? (res as any).$values
+              : Array.isArray(res)
+                ? res
+                : [];
 
         if (approvedList.length > 0) {
           this.placeCatalogProducts.set(approvedList);
@@ -1035,7 +1054,16 @@ export class OrderManagement implements OnInit {
             takeUntilDestroyed(this.destroyRef)
           ).subscribe({
             next: (catRes) => {
-              this.placeCatalogProducts.set(catRes?.items || []);
+              const catList = Array.isArray(catRes?.items)
+                ? catRes.items
+                : Array.isArray((catRes as any)?.Items)
+                  ? (catRes as any).Items
+                  : Array.isArray((catRes as any)?.$values)
+                    ? (catRes as any).$values
+                    : Array.isArray(catRes)
+                      ? catRes
+                      : [];
+              this.placeCatalogProducts.set(catList);
               this.placeLoadingProducts.set(false);
             },
             error: () => {
@@ -1050,6 +1078,7 @@ export class OrderManagement implements OnInit {
         }
       },
       error: () => {
+        this.placeCatalogProducts.set([]);
         this.placeLoadingProducts.set(false);
         this.toast.show('Failed to load products for ordering.', 'error');
       }
