@@ -284,28 +284,33 @@
 
               <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 @for (perm of getCategoryPermissions(category); track perm.key) {
-                  <label 
-                    class="flex items-start gap-2.5 p-2.5 bg-white rounded-xl border transition-all cursor-pointer hover:border-orange-300"
-                    [class.border-orange-500]="formPermissions()[perm.key]"
-                    [class.bg-orange-50/20]="formPermissions()[perm.key]"
-                    [class.border-gray-200]="!formPermissions()[perm.key]">
+                  <div 
+                    (click)="togglePermission(perm.key)"
+                    role="button"
+                    tabindex="0"
+                    class="flex items-start gap-2.5 p-2.5 bg-white rounded-xl border transition-all cursor-pointer hover:border-orange-400 select-none"
+                    [class.border-orange-500]="isPermissionChecked(perm.key)"
+                    [class.bg-orange-50/30]="isPermissionChecked(perm.key)"
+                    [class.shadow-xs]="isPermissionChecked(perm.key)"
+                    [class.border-gray-200]="!isPermissionChecked(perm.key)">
                     <input 
                       type="checkbox" 
-                      [checked]="formPermissions()[perm.key]" 
+                      [checked]="isPermissionChecked(perm.key)" 
+                      (click)="$event.stopPropagation()"
                       (change)="togglePermission(perm.key)" 
-                      class="rounded text-orange-600 focus:ring-orange-500 mt-0.5 cursor-pointer">
-                    <div class="flex-1 min-w-0">
+                      class="rounded text-orange-600 focus:ring-orange-500 mt-0.5 cursor-pointer accent-orange-600">
+                    <div class="flex-1 min-w-0 pointer-events-none">
                       <div class="flex items-center gap-1.5 flex-wrap">
                         <span class="font-bold text-xs text-gray-900">{{ perm.label }}</span>
                         @if (perm.isConfidential) {
-                          <span class="px-1.5 py-0.2 rounded text-[9px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-200">
+                          <span class="px-1.5 py-0.5 rounded text-[9px] font-black uppercase bg-amber-100 text-amber-800 border border-amber-200">
                             Confidential
                           </span>
                         }
                       </div>
                       <p class="text-[11px] text-gray-500 leading-snug mt-0.5">{{ perm.description }}</p>
                     </div>
-                  </label>
+                  </div>
                 }
               </div>
             </div>

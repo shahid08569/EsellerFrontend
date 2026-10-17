@@ -51,7 +51,7 @@ export const routes: Routes = [
       {
         path: 'orders',
         canActivate: [partnerPermissionGuard],
-        data: { requiredPermission: ['orders:view', 'orders:manage'] },
+        data: { requiredPermission: ['orders:view', 'orders:manage', 'orders:place'] },
         loadComponent: () => import('./features/orders/order-management/order-management').then(m => m.OrderManagement)
       },
       {
@@ -62,6 +62,8 @@ export const routes: Routes = [
       },
       {
         path: 'chat',
+        canActivate: [partnerPermissionGuard],
+        data: { requiredPermission: 'customers:manage' },
         loadComponent: () => import('./features/chat-inbox/admin-chat/admin-chat').then(m => m.AdminChat)
       },
       {

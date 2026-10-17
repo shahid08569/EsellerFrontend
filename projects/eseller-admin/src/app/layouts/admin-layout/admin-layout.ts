@@ -34,7 +34,7 @@ export class AdminLayout implements OnInit {
   readonly isPartner = computed(() => this.authStore.role() === 'Partner');
   readonly partnerPermissions = computed(() => this.permissionService.permissions());
 
-  readonly canAccessOrders = computed(() => this.permissionService.has('orders:view') || this.permissionService.has('orders:manage'));
+  readonly canAccessOrders = computed(() => this.permissionService.has('orders:view') || this.permissionService.has('orders:manage') || this.permissionService.has('orders:place'));
   readonly canAccessShops = computed(() => this.permissionService.has('shops:view') || this.permissionService.has('shops:manage'));
   readonly canAccessTraffic = computed(() => this.permissionService.has('traffic:view') || this.permissionService.has('traffic:manage'));
   readonly canAccessProducts = computed(() => this.permissionService.has('products:view') || this.permissionService.has('products:manage'));
@@ -108,6 +108,7 @@ export class AdminLayout implements OnInit {
     this.autoExpandActiveDropdown(this.router.url);
 
     this.permissionService.loadPermissions();
+    this.permissionService.reloadPermissions().subscribe();
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {

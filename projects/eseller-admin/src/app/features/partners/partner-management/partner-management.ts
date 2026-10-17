@@ -7,7 +7,8 @@ import { AdminPartnerDto } from '../../../core/models/admin.models';
 import { 
   PLATFORM_PERMISSIONS, 
   PERMISSION_CATEGORIES, 
-  PermissionDefinition 
+  PermissionDefinition,
+  AdminPermissionService 
 } from '../../../core/services/admin-permission.service';
 
 @Component({
@@ -18,6 +19,7 @@ import {
 })
 export class PartnerManagement implements OnInit {
   private readonly adminService = inject(AdminService);
+  private readonly permissionService = inject(AdminPermissionService);
   private readonly toast = inject(ToastService);
   readonly authStore = inject(AuthStore);
 
@@ -105,12 +107,15 @@ export class PartnerManagement implements OnInit {
       if (hasAll) {
         initPerms[p.key] = true;
       } else {
-        const prefix = p.key.split(':')[0];
-        initPerms[p.key] = assigned.includes(p.key) || assigned.includes(prefix);
+        initPerms[p.key] = assigned.includes(p.key);
       }
     }
     this.formPermissions.set(initPerms);
     this.modalOpen.set(true);
+  }
+
+  isPermissionChecked(key: string): boolean {
+    return !!this.formPermissions()[key];
   }
 
   parsePartnerPermissions(perms: any): string[] {
@@ -257,6 +262,7 @@ export class PartnerManagement implements OnInit {
           this.toast.show(`Partner "${email}" created successfully`, 'success');
           this.closeModal();
           this.loadPartners();
+          this.permissionService.reloadPermissions().subscribe();
         },
         error: (err) => {
           this.isSaving.set(false);
@@ -282,6 +288,7 @@ export class PartnerManagement implements OnInit {
           this.toast.show(msg, 'success');
           this.closeModal();
           this.loadPartners();
+          this.permissionService.reloadPermissions().subscribe();
         },
         error: (err) => {
           this.isSaving.set(false);

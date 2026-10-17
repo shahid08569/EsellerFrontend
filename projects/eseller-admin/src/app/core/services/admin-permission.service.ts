@@ -226,6 +226,31 @@ export class AdminPermissionService {
     return this.inFlightRequest$;
   }
 
+  reloadPermissions(): Observable<string[]> {
+    this.inFlightRequest$ = null;
+    return this.http.get<any>(this.getMeUrl()).pipe(
+      map(res => {
+        let perms: string[] = [];
+        if (res?.permissions) {
+          perms = this.parseRawPermissions(res.permissions);
+        }
+        return perms;
+      }),
+      tap(perms => {
+        this.permissions.set(perms);
+        this.isLoaded.set(true);
+        if (typeof window !== 'undefined' && window.sessionStorage) {
+          try {
+            window.sessionStorage.setItem('eseller_partner_permissions', JSON.stringify(perms));
+          } catch {}
+        }
+      }),
+      catchError(() => {
+        return of(this.permissions());
+      })
+    );
+  }
+
   loadPermissions(): void {
     this.ensureLoaded().subscribe();
   }
@@ -252,13 +277,7 @@ export class AdminPermissionService {
     if (this.isSuperAdmin()) return true;
     const list = this.permissions();
     if (list.includes('*') || list.includes('all')) return true;
-    if (list.includes(permission)) return true;
-
-    // Check prefix match (e.g. 'orders' grants 'orders:view' and 'orders:manage')
-    const prefix = permission.split(':')[0];
-    if (list.includes(prefix)) return true;
-
-    return false;
+    return list.includes(permission);
   }
 
   hasAny(perms: string[]): boolean {
