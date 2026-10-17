@@ -1,4 +1,13 @@
 <!-- FLOATING CHAT LAUNCHER (Sticky Bottom-Right) -->
+@if (isOpen()) {
+  <!-- Fullscreen frosted blur backdrop over entire screen -->
+  <div
+    (click)="closeChat()"
+    class="fixed inset-0 z-[110] transition-all duration-300 animate-in fade-in cursor-pointer"
+    style="backdrop-filter: blur(12px) !important; -webkit-backdrop-filter: blur(12px) !important; background: rgba(15, 23, 42, 0.6) !important;">
+  </div>
+}
+
 <div class="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-[120] flex flex-col items-end pointer-events-auto">
 
   <!-- CHAT WINDOW -->

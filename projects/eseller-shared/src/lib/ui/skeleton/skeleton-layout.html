@@ -1,8 +1,8 @@
 <div class="relative w-full">
   <!-- Skeletons in the background, strongly blurred when loading -->
   <div class="transition-all duration-300"
-       [style.filter]="showLoader() ? 'blur(14px)' : 'none'"
-       [style.opacity]="showLoader() ? '0.18' : '1'"
+       [style.filter]="showLoader() ? 'blur(10px)' : 'none'"
+       [style.opacity]="showLoader() ? '0.7' : '1'"
        [style.pointer-events]="showLoader() ? 'none' : 'auto'"
        [style.user-select]="showLoader() ? 'none' : 'auto'"
        [style.transform]="showLoader() ? 'scale(0.995)' : 'none'">
@@ -178,7 +178,7 @@
   <!-- Cool Professional Floating Dual-Orbit Loader Badge with Strong Frosted Blur -->
   @if (showLoader()) {
     <div class="absolute inset-0 z-30 flex items-center justify-center p-4 rounded-2xl transition-all duration-300"
-         style="backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); background: rgba(255, 255, 255, 0.65);"
+         style="backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); background: rgba(255, 255, 255, 0.55);"
          role="status" aria-live="polite">
       <div class="inline-flex items-center gap-3.5 px-5 py-3.5 rounded-2xl shadow-2xl transition-all duration-200"
            style="background: #ffffff !important; border: 1.5px solid rgba(244, 63, 94, 0.3) !important; box-shadow: 0 20px 45px -10px rgba(244, 63, 94, 0.25), 0 0 0 1px rgba(249, 115, 22, 0.18) !important;">

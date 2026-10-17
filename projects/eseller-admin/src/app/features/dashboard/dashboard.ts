@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of, catchError } from 'rxjs';
 import { ToastService, AuthStore, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import {
@@ -159,34 +159,24 @@ export class Dashboard implements OnInit {
   loadData(): void {
     this.isLoading.set(true);
 
-    // Fetch complete platform dashboard statistics
-    this.adminService.getPlatformDashboard().subscribe({
-      next: (stats) => {
+    forkJoin({
+      stats: this.adminService.getPlatformDashboard().pipe(catchError(() => of(null as PlatformDashboardDto | null))),
+      shopkeepers: this.adminService.getShopkeepers().pipe(catchError(() => of([] as AdminShopkeeperDto[]))),
+      globalProducts: this.adminService.getPendingProducts(1, 20, 'global').pipe(catchError(() => of({ items: [] } as any))),
+      ownProducts: this.adminService.getPendingProducts(1, 20, 'own').pipe(catchError(() => of({ items: [] } as any)))
+    }).subscribe({
+      next: ({ stats, shopkeepers, globalProducts, ownProducts }) => {
         this.platformStats.set(stats);
         this.totalShops.set(stats?.activeShops ?? stats?.totalShops ?? 0);
         this.totalProducts.set(stats?.totalProducts ?? 0);
-      },
-      error: () => {}
-    });
 
-    // Fetch pending shopkeepers
-    this.adminService.getShopkeepers().subscribe({
-      next: (list) => {
-        const pending = (list || []).filter(s => s.status === 'Pending');
+        const pending = (shopkeepers || []).filter(s => s.status === 'Pending');
         this.pendingShops.set(pending);
-      },
-      error: () => {}
-    });
 
-    // Fetch pending products — split global listing vs seller-own
-    forkJoin({
-      global: this.adminService.getPendingProducts(1, 20, 'global'),
-      own: this.adminService.getPendingProducts(1, 20, 'own')
-    }).subscribe({
-      next: ({ global, own }) => {
-        this.pendingGlobalProducts.set(global?.items || []);
-        this.pendingOwnProducts.set(own?.items || []);
-        this.pendingProducts.set([...(global?.items || []), ...(own?.items || [])]);
+        this.pendingGlobalProducts.set(globalProducts?.items || []);
+        this.pendingOwnProducts.set(ownProducts?.items || []);
+        this.pendingProducts.set([...(globalProducts?.items || []), ...(ownProducts?.items || [])]);
+
         this.isLoading.set(false);
       },
       error: () => {

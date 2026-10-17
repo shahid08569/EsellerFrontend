@@ -286,9 +286,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen.set(nextState);
     if (nextState) {
       this.unreadCount.set(0);
+      this.isLoading.set(true);
       if (this.supportRoomId) {
-        const hasMessages = this.messages().length > 0;
-        this.fetchMessages(this.supportRoomId, !hasMessages);
+        this.fetchMessages(this.supportRoomId, true);
         this.chatService.markConversationAsRead(this.supportRoomId).subscribe({
           next: () => this.refreshUnreadBadge(),
           error: () => {}

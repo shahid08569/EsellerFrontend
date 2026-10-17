@@ -1,6 +1,7 @@
 import { Component, inject, signal, OnInit, OnDestroy, computed, ElementRef, ViewChild } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink, Router } from '@angular/router';
+import { forkJoin, of, catchError, switchMap, map } from 'rxjs';
 import { SellerService, ShopDto, LowStockVariantDto, OrderDto } from '../../core/services/seller.service';
 import { SellerProductService } from '../../core/services/product.service';
 import { TierModal } from '../../shared/components/tier-modal/tier-modal';
@@ -128,53 +129,53 @@ export class Dashboard implements OnInit, OnDestroy {
 
   loadDashboardData(): void {
     this.loading.set(true);
+    this.warehouseCatalogLoading.set(true);
 
-    this.sellerSvc.getMyShop(true).subscribe({
-      next: (shop) => {
+    const shop$ = this.sellerSvc.getMyShop(true).pipe(
+      catchError(() => of(null as ShopDto | null)),
+      switchMap((shop) => {
+        if (!shop?.id) {
+          return of({ shop, myProducts: [] as any[] });
+        }
+        return this.productService.getSellerProducts(shop.id, 1, 500).pipe(
+          catchError(() => of({ items: [] } as any)),
+          map((res) => ({ shop, myProducts: res?.items || [] }))
+        );
+      })
+    );
+
+    const categories$ = this.homeService.getCategories(true).pipe(catchError(() => of([] as CategoryTreeDto[])));
+    const catalog$ = this.api.get<PagedList<ProductListDto>>('/Products/catalog?pageNumber=1&pageSize=10').pipe(
+      catchError(() => of({ items: [] } as any))
+    );
+    const orders$ = this.sellerSvc.getSellerOrders(1, 50).pipe(catchError(() => of([] as any)));
+
+    forkJoin({
+      shopData: shop$,
+      categories: categories$,
+      catalog: catalog$,
+      orders: orders$
+    }).subscribe({
+      next: ({ shopData, categories, catalog, orders }) => {
+        const shop = shopData?.shop;
         this.shop.set(shop);
-        this.loading.set(false);
         if (shop?.maxProductLimit) this.maxProductLimit.set(shop.maxProductLimit);
         if (shop?.tierName || shop?.badgeText) {
           this.currentTier.set(shop.tierName || shop.badgeText || 'Bronze (Free)');
         }
 
-        if (shop?.id) {
-          // Load my products for category breakdown and store matching
-          this.productService.getSellerProducts(shop.id, 1, 500).subscribe({
-            next: (res) => {
-              const items = res.items || [];
-              this.mySellerProducts.set(items);
-              // Live store inventory = products that are approved or listed without rejection
-              const active = items.filter(p => p.isApproved || !p.rejectionReason);
-              this.myProducts.set(active.length > 0 ? active : items);
-              this.syncWarehouseButtonState();
-            },
-            error: () => {}
-          });
-        }
-      },
-      error: () => this.loading.set(false)
-    });
+        const items = shopData?.myProducts || [];
+        this.mySellerProducts.set(items);
+        const active = items.filter((p: any) => p.isApproved || !p.rejectionReason);
+        this.myProducts.set(active.length > 0 ? active : items);
 
-    this.homeService.getCategories(true).subscribe({
-      next: (cats) => this.categories.set(cats || []),
-      error: () => {}
-    });
+        this.categories.set(categories || []);
 
-    // Load Top 10 Warehouse Catalog Products for the Slider
-    this.warehouseCatalogLoading.set(true);
-    this.api.get<PagedList<ProductListDto>>('/Products/catalog?pageNumber=1&pageSize=10').subscribe({
-      next: (res) => {
-        this.topWarehouseProducts.set(res.items || []);
+        this.topWarehouseProducts.set(catalog?.items || []);
         this.syncWarehouseButtonState();
         this.warehouseCatalogLoading.set(false);
-      },
-      error: () => this.warehouseCatalogLoading.set(false)
-    });
 
-    this.sellerSvc.getSellerOrders(1, 50).subscribe({
-      next: (res: any) => {
-        const orders: OrderDto[] = (Array.isArray(res) ? res : (res?.items ?? [])).map((o: any) => ({
+        const ordersList: OrderDto[] = (Array.isArray(orders) ? orders : (orders?.items ?? [])).map((o: any) => ({
           ...o,
           id: o.id,
           orderRequestId: o.orderRequestId,
@@ -186,9 +187,9 @@ export class Dashboard implements OnInit, OnDestroy {
           items: o.items || [],
           createdAt: o.createdAt
         }));
-        this.recentOrders.set(orders.slice(0, 6));
+        this.recentOrders.set(ordersList.slice(0, 6));
 
-        const pendingCount = orders.filter((o: any) =>
+        const pendingCount = ordersList.filter((o: any) =>
           String(o.status || '').toLowerCase() === 'pending'
         ).length;
         this.pendingOrders.set(pendingCount);
@@ -204,7 +205,7 @@ export class Dashboard implements OnInit, OnDestroy {
         let weekSum = 0;
         let monthSum = 0;
 
-        orders.forEach(o => {
+        ordersList.forEach(o => {
           if (String(o.status || '').toLowerCase() !== 'cancelled') {
             const orderDate = new Date(o.createdAt);
             const amount = Number(o.totalAmount) || 0;
@@ -227,8 +228,13 @@ export class Dashboard implements OnInit, OnDestroy {
         this.todayCommission.set(Math.round(todaySum * 0.20));
         this.weeklySales.set(weekSum);
         this.monthlySales.set(monthSum);
+
+        this.loading.set(false);
       },
-      error: () => {}
+      error: () => {
+        this.warehouseCatalogLoading.set(false);
+        this.loading.set(false);
+      }
     });
   }
 
