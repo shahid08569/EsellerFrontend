@@ -386,9 +386,7 @@ export class AdminService {
   }
 
   getProductVariants(productId: string): Observable<any[]> {
-    return this.api.get<any[]>(`/products/${productId}/variants`).pipe(
-      catchError(() => of([]))
-    );
+    return this.api.get<any[]>(`/products/${productId}/variants`);
   }
 
   createProductVariant(productId: string, data: {

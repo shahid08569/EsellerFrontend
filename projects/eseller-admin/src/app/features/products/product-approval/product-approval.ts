@@ -991,6 +991,9 @@ export class ProductApproval implements OnInit {
             imageUrl: v.imageUrl || null
           })));
         }
+      },
+      error: () => {
+        // Silently preserve base variants
       }
     });
   }

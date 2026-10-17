@@ -3,7 +3,7 @@ import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, retry } from 'rxjs/operators';
 import { ToastService, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPermissionService } from '../../../core/services/admin-permission.service';
@@ -33,6 +33,7 @@ export interface PlaceOrderMultiItem {
   quantity: number;
   variants: { id: string; sku: string; price: number; stockQty: number }[];
   loadingVariants: boolean;
+  hasVariantError?: boolean;
 }
 
 @Component({
@@ -132,6 +133,34 @@ export class OrderManagement implements OnInit {
       ? this.multiGrandTotalAmount()
       : this.singleProductTotalAmount();
   });
+
+  readonly isAnyItemLoadingVariants = computed(() => {
+    if (this.orderPlacementType() === 'single') {
+      return this.placeLoadingVariants();
+    }
+    return this.multiOrderItems().some(i => i.loadingVariants);
+  });
+
+  readonly hasAnyVariantError = computed(() => {
+    if (this.orderPlacementType() === 'single') {
+      return !this.placeLoadingVariants() && !!this.placeProductId() && !this.placeVariantId();
+    }
+    return this.multiOrderItems().some(i => !i.loadingVariants && (!i.variantId || i.hasVariantError));
+  });
+
+  isProductLoadingVariants(productId: string): boolean {
+    if (this.orderPlacementType() === 'single') {
+      return this.placeProductId() === productId && this.placeLoadingVariants();
+    }
+    return this.multiOrderItems().some(i => i.productId === productId && i.loadingVariants);
+  }
+
+  isProductVariantFailed(productId: string): boolean {
+    if (this.orderPlacementType() === 'single') {
+      return this.placeProductId() === productId && !this.placeLoadingVariants() && !this.placeVariantId() && this.placeVariants().length === 0;
+    }
+    return this.multiOrderItems().some(i => i.productId === productId && !i.loadingVariants && (!i.variantId || i.hasVariantError));
+  }
 
   readonly placeShopId = signal<string>('');
   readonly placeCatalogProducts = signal<AdminProductDto[]>([]);
@@ -803,6 +832,11 @@ export class OrderManagement implements OnInit {
   }
 
   proceedToDelivery(): void {
+    if (this.isAnyItemLoadingVariants()) {
+      this.toast.show('Please wait, variants are still being retrieved.', 'info');
+      return;
+    }
+
     if (this.orderPlacementType() === 'single') {
       if (!this.placeProductId()) {
         this.toast.show('Please select a product from the catalog.', 'warning');
@@ -822,9 +856,9 @@ export class OrderManagement implements OnInit {
         this.toast.show('Please add at least one product to the order.', 'warning');
         return;
       }
-      const invalid = items.find(i => !i.variantId);
+      const invalid = items.find(i => !i.variantId || i.hasVariantError);
       if (invalid) {
-        this.toast.show(`Please select a valid variant for "${invalid.productName}".`, 'warning');
+        this.toast.show(`Please select or retry variant for "${invalid.productName}".`, 'warning');
         return;
       }
     }
@@ -905,16 +939,19 @@ export class OrderManagement implements OnInit {
     if (!product.id) return;
 
     this.placeLoadingVariants.set(true);
-    this.adminService.getProductVariants(product.id).subscribe({
+    this.adminService.getProductVariants(product.id).pipe(
+      retry({ count: 2, delay: 500 }),
+      catchError(() => of([]))
+    ).subscribe({
       next: (variants) => {
         const mapped = (variants || []).map((v: any) => ({
           id: v.id || v.variantId,
           sku: v.sku || 'SKU',
-          price: Number(v.price) || 0,
+          price: Number(v.price) || Number(product.basePrice) || 0,
           stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
         }));
         this.placeVariants.set(mapped);
-        if (mapped.length === 1) {
+        if (mapped.length > 0) {
           this.placeVariantId.set(mapped[0].id);
         }
         this.placeLoadingVariants.set(false);
@@ -942,6 +979,14 @@ export class OrderManagement implements OnInit {
 
     if (existingIndex > -1) {
       const item = items[existingIndex];
+      if (item.loadingVariants) {
+        this.toast.show(`Variants for "${product.name}" are still loading...`, 'info');
+        return;
+      }
+      if (item.hasVariantError || !item.variantId) {
+        this.retryLoadVariants(existingIndex);
+        return;
+      }
       const maxStock = item.stockQty > 0 ? item.stockQty : 9999;
       if (item.quantity < maxStock) {
         items[existingIndex] = { ...item, quantity: item.quantity + 1 };
@@ -967,46 +1012,76 @@ export class OrderManagement implements OnInit {
       stockQty: 0,
       quantity: 1,
       variants: [],
-      loadingVariants: true
+      loadingVariants: true,
+      hasVariantError: false
     };
 
     this.multiOrderItems.set([...items, newItem]);
+    this.fetchVariantsForMultiItem(product.id, product.name, Number(product.basePrice) || 0);
+  }
 
-    this.adminService.getProductVariants(product.id).subscribe({
+  fetchVariantsForMultiItem(productId: string, productName: string, basePrice: number): void {
+    this.adminService.getProductVariants(productId).pipe(
+      retry({ count: 2, delay: 600 }),
+      catchError(() => of([]))
+    ).subscribe({
       next: (variants) => {
         const mapped = (variants || []).map((v: any) => ({
           id: v.id || v.variantId,
           sku: v.sku || 'SKU',
-          price: Number(v.price) || Number(product.basePrice) || 0,
+          price: Number(v.price) || basePrice || 0,
           stockQty: Number(v.stockQty ?? v.stockQuantity) || 0
         }));
 
         const currentItems = [...this.multiOrderItems()];
-        const idx = currentItems.findIndex(i => i.productId === product.id);
+        const idx = currentItems.findIndex(i => i.productId === productId);
         if (idx > -1) {
           const first = mapped[0];
           currentItems[idx] = {
             ...currentItems[idx],
             variants: mapped,
             loadingVariants: false,
+            hasVariantError: mapped.length === 0,
             variantId: first ? first.id : '',
             variantSku: first ? first.sku : 'Default',
             price: first ? first.price : currentItems[idx].price,
             stockQty: first ? first.stockQty : 0
           };
           this.multiOrderItems.set(currentItems);
+          if (mapped.length === 0) {
+            this.toast.show(`No variants found for "${productName}". Click Retry or check catalog.`, 'warning');
+          }
         }
       },
       error: () => {
         const currentItems = [...this.multiOrderItems()];
-        const idx = currentItems.findIndex(i => i.productId === product.id);
+        const idx = currentItems.findIndex(i => i.productId === productId);
         if (idx > -1) {
-          currentItems[idx] = { ...currentItems[idx], loadingVariants: false };
+          currentItems[idx] = {
+            ...currentItems[idx],
+            loadingVariants: false,
+            hasVariantError: true
+          };
           this.multiOrderItems.set(currentItems);
         }
-        this.toast.show(`Failed to load variants for ${product.name}`, 'warning');
+        this.toast.show(`Failed to load variants for "${productName}". Click Retry to fetch again.`, 'error');
       }
     });
+  }
+
+  retryLoadVariants(index: number): void {
+    const items = [...this.multiOrderItems()];
+    const item = items[index];
+    if (!item) return;
+
+    items[index] = {
+      ...item,
+      loadingVariants: true,
+      hasVariantError: false
+    };
+    this.multiOrderItems.set(items);
+
+    this.fetchVariantsForMultiItem(item.productId, item.productName, item.price);
   }
 
   removeMultiItem(index: number): void {
@@ -1121,9 +1196,14 @@ export class OrderManagement implements OnInit {
         return;
       }
 
-      const invalidItem = items.find(i => !i.variantId);
+      if (this.isAnyItemLoadingVariants()) {
+        this.toast.show('Please wait, product variants are still being retrieved.', 'info');
+        return;
+      }
+
+      const invalidItem = items.find(i => !i.variantId || i.hasVariantError);
       if (invalidItem) {
-        this.toast.show(`Please select a valid variant for "${invalidItem.productName}".`, 'warning');
+        this.toast.show(`Please select or retry variant for "${invalidItem.productName}".`, 'warning');
         return;
       }
 
