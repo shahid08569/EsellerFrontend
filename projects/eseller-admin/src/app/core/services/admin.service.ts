@@ -289,9 +289,21 @@ export class AdminService {
     );
   }
 
-  getApprovedSellerProducts(pageNumber: number = 1, pageSize: number = 50, kind?: string): Observable<PagedResult<AdminProductDto>> {
+  getApprovedSellerProducts(
+    pageNumber: number = 1,
+    pageSize: number = 50,
+    kind?: string,
+    shopId?: string,
+    categoryId?: string,
+    brandId?: string,
+    search?: string
+  ): Observable<PagedResult<AdminProductDto>> {
     let url = `/admin/products/approved?pageNumber=${pageNumber}&pageSize=${pageSize}`;
     if (kind) url += `&kind=${encodeURIComponent(kind)}`;
+    if (shopId && shopId !== 'all') url += `&shopId=${encodeURIComponent(shopId)}`;
+    if (categoryId && categoryId !== 'all') url += `&categoryId=${encodeURIComponent(categoryId)}`;
+    if (brandId && brandId !== 'all') url += `&brandId=${encodeURIComponent(brandId)}`;
+    if (search && search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
     return this.api.get<PagedResult<AdminProductDto>>(url).pipe(
       catchError(() => of({ items: [], totalCount: 0, pageNumber: 1, pageSize: pageSize, totalPages: 0, hasPreviousPage: false, hasNextPage: false }))
     );

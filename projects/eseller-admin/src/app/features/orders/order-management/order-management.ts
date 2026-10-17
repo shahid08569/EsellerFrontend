@@ -983,10 +983,20 @@ export class OrderManagement implements OnInit {
     this.orderStep.set('select');
   }
 
+  onPlaceShopFilterChange(shopId: string): void {
+    this.placeFilterShopId.set(shopId);
+    this.placeCurrentPage.set(1);
+    this.loadPlaceOrderCatalog();
+  }
+
   loadPlaceOrderCatalog(): void {
     this.placeLoadingProducts.set(true);
+    const shopId = this.placeFilterShopId() !== 'all' ? this.placeFilterShopId() : undefined;
+
     forkJoin({
-      products: this.adminService.getApprovedSellerProducts(1, 100).pipe(catchError(() => of({ items: [], totalCount: 0 } as any))),
+      products: this.adminService.getApprovedSellerProducts(1, 1000, undefined, shopId).pipe(
+        catchError(() => of({ items: [], totalCount: 0 } as any))
+      ),
       categories: this.adminService.getCategories().pipe(catchError(() => of([] as AdminCategoryDto[]))),
       brands: this.adminService.getBrands().pipe(catchError(() => of([] as AdminBrandDto[])))
     }).pipe(
@@ -1000,9 +1010,9 @@ export class OrderManagement implements OnInit {
         if (approvedList.length > 0) {
           this.placeCatalogProducts.set(approvedList);
           this.placeLoadingProducts.set(false);
-        } else {
+        } else if (!shopId) {
           // If no approved seller listings exist yet, fall back to master warehouse catalog
-          this.adminService.getProducts(undefined, undefined, 1, 100).pipe(
+          this.adminService.getProducts(undefined, undefined, 1, 200).pipe(
             catchError(() => of({ items: [], totalCount: 0 } as any)),
             takeUntilDestroyed(this.destroyRef)
           ).subscribe({
@@ -1015,6 +1025,10 @@ export class OrderManagement implements OnInit {
               this.placeLoadingProducts.set(false);
             }
           });
+        } else {
+          // Specific shop was selected and has no products
+          this.placeCatalogProducts.set([]);
+          this.placeLoadingProducts.set(false);
         }
       },
       error: () => {
@@ -1030,6 +1044,7 @@ export class OrderManagement implements OnInit {
     this.placeFilterCategoryId.set('all');
     this.placeFilterBrandId.set('all');
     this.placeCurrentPage.set(1);
+    this.loadPlaceOrderCatalog();
   }
 
   getPlaceProductImage(product: AdminProductDto): string {
