@@ -1,7 +1,7 @@
 import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ParsedReply, parseMessageReply, buildReplyMessage } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ParsedReply, parseMessageReply, buildReplyMessage, SkeletonLayout } from 'eseller-shared';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
 
 export interface AdminChatMessage {
@@ -32,7 +32,7 @@ const WIDGET_SUPPORT_ROOM_KEY = 'eseller_seller_support_room';
 @Component({
   selector: 'app-admin-chat-widget',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SkeletonLayout],
   templateUrl: './admin-chat-widget.html',
   styleUrls: ['./admin-chat-widget.css']
 })

@@ -81,6 +81,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly messagesMap = signal<Record<string, AdminToSellerMessage[]>>({});
   readonly isLoadingShops = signal<boolean>(false);
   readonly isLoadingCustomers = signal<boolean>(false);
+  readonly isLoadingMessages = signal<boolean>(false);
   readonly customerConvos = signal<any[]>([]);
   readonly editingMessage = signal<AdminToSellerMessage | null>(null);
   readonly replyingTo = signal<ParsedReply | null>(null);
@@ -427,6 +428,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.exitSelectionMode();
     this.selectedShop.set(shop);
     this.currentView.set('chat');
+    this.isLoadingMessages.set(true);
     this.signalR.joinOrderRoom(shop.id).then(() => {
       this.joinedRoomId = shop.id;
     }).catch(() => {});
@@ -527,6 +529,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   fetchLiveMessages(shopId: string): void {
     this.adminService.getOrderMessages(shopId, 1, 50).subscribe({
       next: (msgs: any[]) => {
+        this.isLoadingMessages.set(false);
         if (!msgs || !msgs.length) {
           if (!(this.messagesMap()[shopId]?.length)) {
             const shop = this.shops().find(s => s.id === shopId);
@@ -577,7 +580,9 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }));
         this.queueScrollToLatest();
       },
-      error: () => {}
+      error: () => {
+        this.isLoadingMessages.set(false);
+      }
     });
   }
 

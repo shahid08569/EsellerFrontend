@@ -54,6 +54,12 @@
     </button>
   </div>
 
+  @if (isLoading()) {
+    <div class="py-2">
+      <es-skeleton-layout variant="page" label="Loading dashboard telemetry" sublabel="Syncing platform metrics, revenue & operations..." />
+    </div>
+  } @else {
+
   <!-- ════════════════════════════════════════════════════════════════════════════ -->
   <!-- TAB 1: WELCOME + 4 METRIC CARDS + 3 FILTERABLE LIST PANELS -->
   <!-- ════════════════════════════════════════════════════════════════════════════ -->
@@ -484,6 +490,8 @@
       </div>
 
     </div>
+  }
+
   }
 
 </div>

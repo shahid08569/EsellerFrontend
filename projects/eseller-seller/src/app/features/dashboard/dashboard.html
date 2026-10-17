@@ -1,3 +1,8 @@
+@if (loading()) {
+  <div class="py-2">
+    <es-skeleton-layout variant="page" label="Loading merchant dashboard" sublabel="Syncing store sales, commissions & catalog..." />
+  </div>
+} @else {
 <div class="space-y-6">
 
   <!-- ============================================================ -->
@@ -398,6 +403,7 @@
   </div>
 
 </div>
+}
 
 <!-- ============================================================ -->
 <!-- STORE VERIFICATION PENDING MODAL POPUP -->

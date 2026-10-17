@@ -29,7 +29,7 @@
       <div class="flex-1 overflow-y-auto divide-y divide-gray-100 scrollbar-thin">
         @if (isLoading()) {
           <div class="p-2">
-            <es-skeleton-layout variant="chat" [count]="5" />
+            <es-skeleton-layout variant="list" [count]="5" label="Loading conversations" sublabel="Syncing support channels..." />
           </div>
         } @else if (filteredConversations().length === 0) {
           <div class="p-8 text-center text-xs text-gray-400">No customer support channel yet. Retry or refresh.</div>
@@ -116,9 +116,8 @@
 
         <div #messagesContainer class="flex-1 overflow-y-auto overflow-x-hidden p-4 bg-gray-50/30 scrollbar-thin flex flex-col">
           @if (isLoadingMessages()) {
-            <div class="h-full flex flex-col items-center justify-center gap-2 text-gray-400 my-auto">
-              <div class="w-6 h-6 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <span class="text-xs font-medium">Loading chat history...</span>
+            <div class="p-6">
+              <es-skeleton-layout variant="chat" [count]="6" label="Fetching chat history" sublabel="Loading conversation with Support..." />
             </div>
           } @else if (messages().length === 0) {
             <div class="h-full flex items-center justify-center text-xs text-gray-400 my-auto">

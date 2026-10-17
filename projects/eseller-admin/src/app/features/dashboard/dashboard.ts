@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { ToastService, AuthStore } from 'eseller-shared';
+import { ToastService, AuthStore, SkeletonLayout } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import {
   AdminShopkeeperDto,
@@ -15,7 +15,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule],
+  imports: [CommonModule, RouterLink, FormsModule, SkeletonLayout],
   templateUrl: './dashboard.html'
 })
 export class Dashboard implements OnInit {

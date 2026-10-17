@@ -101,13 +101,18 @@
         #messagesContainer
         class="flex-1 overflow-y-auto overflow-x-hidden p-3.5 space-y-3 chat-bg">
 
-        <div class="text-center my-1">
-          <span class="bg-white text-slate-600 text-[10px] font-semibold px-3 py-1 rounded-lg shadow-2xs inline-block max-w-[90%] border border-slate-200">
-            🔒 Official Customer Service channel
-          </span>
-        </div>
+        @if (isLoading()) {
+          <div class="p-2 py-4">
+            <es-skeleton-layout variant="chat" [count]="5" label="Fetching chat history" sublabel="Loading conversation with Support..." />
+          </div>
+        } @else {
+          <div class="text-center my-1">
+            <span class="bg-white text-slate-600 text-[10px] font-semibold px-3 py-1 rounded-lg shadow-2xs inline-block max-w-[90%] border border-slate-200">
+              🔒 Official Customer Service channel
+            </span>
+          </div>
 
-        @for (msg of messages(); track msg.id) {
+          @for (msg of messages(); track msg.id) {
           <div
             [id]="'msg-' + msg.id"
             class="group relative flex flex-col transition-colors rounded-xl p-0.5 w-full max-w-full"
@@ -282,6 +287,7 @@
               }
             </div>
           </div>
+        }
         }
 
         @if (isTyping()) {

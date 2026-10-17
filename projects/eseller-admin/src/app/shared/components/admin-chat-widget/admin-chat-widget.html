@@ -235,13 +235,18 @@
         }
 
         <div #messagesContainer class="flex-1 p-3.5 space-y-3 overflow-y-auto overflow-x-hidden chat-bg text-xs">
-          <div class="text-center my-2">
-            <span class="inline-block bg-orange-50 text-orange-900 border border-orange-200 text-[10px] px-3 py-1 rounded-lg font-semibold shadow-2xs max-w-[90%]">
-              🔒 Chat with {{ selectedShop()?.name }} — Eseller Authority
-            </span>
-          </div>
+          @if (isLoadingMessages()) {
+            <div class="p-2 py-4">
+              <es-skeleton-layout variant="chat" [count]="5" label="Fetching chat history" sublabel="Loading conversation..." />
+            </div>
+          } @else {
+            <div class="text-center my-2">
+              <span class="inline-block bg-orange-50 text-orange-900 border border-orange-200 text-[10px] px-3 py-1 rounded-lg font-semibold shadow-2xs max-w-[90%]">
+                🔒 Chat with {{ selectedShop()?.name }} — Eseller Authority
+              </span>
+            </div>
 
-          @for (msg of getCurrentMessages(); track msg.id) {
+            @for (msg of getCurrentMessages(); track msg.id) {
             <div
               [id]="'msg-' + msg.id"
               class="group relative flex flex-col transition-colors rounded-xl p-0.5 w-full max-w-full"
@@ -415,6 +420,7 @@
                 }
               </div>
             </div>
+          }
           }
         </div>
 

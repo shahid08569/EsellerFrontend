@@ -89,7 +89,7 @@
       <div class="flex-1 overflow-y-auto">
         @if (isLoading()) {
           <div class="p-2">
-            <es-skeleton-layout variant="chat" [count]="5" />
+            <es-skeleton-layout variant="list" [count]="6" label="Loading conversations" sublabel="Syncing active channels..." />
           </div>
         } @else if (filteredConversations().length === 0) {
           <div class="p-8 text-center text-slate-400 text-xs">No conversations found</div>
@@ -235,9 +235,8 @@
 
         <div #messagesContainer class="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 bg-orange-50/20">
           @if (isLoadingMessages()) {
-            <div class="h-full flex flex-col items-center justify-center gap-2 text-slate-400">
-              <div class="w-6 h-6 border-2 border-orange-500 border-t-transparent rounded-full animate-spin"></div>
-              <span class="text-xs font-medium">Loading chat history...</span>
+            <div class="p-6">
+              <es-skeleton-layout variant="chat" [count]="6" label="Fetching chat history" sublabel="Syncing conversation with seller..." />
             </div>
           } @else if (messages().length === 0) {
             <div class="h-full flex items-center justify-center text-xs text-slate-400">
