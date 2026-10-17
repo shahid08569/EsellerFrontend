@@ -625,12 +625,44 @@ export class OrderManagement implements OnInit {
     }
   }
 
+  /**
+   * Common progressive next statuses across ALL selected orders.
+   * Matches single order getNextStatusOptions(status).
+   * Already completed steps (e.g. Pending, Confirmed if currently in Processing) are HIDDEN.
+   */
+  readonly batchNextStatusOptions = computed(() => {
+    const selected = this.getSelectedOrders();
+    if (selected.length === 0) return [];
+
+    // Map each selected order to its allowed progressive next status values
+    const allowedSets = selected.map(order => 
+      new Set(this.getNextStatusOptions(order.status).map(opt => opt.value))
+    );
+
+    if (allowedSets.length === 0) return [];
+
+    // Common intersection across all selected orders
+    let commonValues = Array.from(allowedSets[0]);
+    for (let i = 1; i < allowedSets.length; i++) {
+      commonValues = commonValues.filter(val => allowedSets[i].has(val));
+    }
+
+    return this.statusOptions.filter(o => commonValues.includes(o.value));
+  });
+
   openBatchStatusModal(): void {
     if (!this.canManageOrders()) {
       this.toast.show('You do not have permission to manage orders', 'error');
       return;
     }
     if (this.selectedOrderIds().size === 0) return;
+
+    const options = this.batchNextStatusOptions();
+    if (options.length > 0) {
+      this.selectedBatchStatus.set(options[0].value);
+    } else {
+      this.selectedBatchStatus.set(0);
+    }
     this.batchStatusModalOpen.set(true);
   }
 
@@ -648,6 +680,12 @@ export class OrderManagement implements OnInit {
     }
 
     const newStatus = Number(this.selectedBatchStatus());
+    const validOptions = this.batchNextStatusOptions();
+    if (!newStatus || !validOptions.some(o => o.value === newStatus)) {
+      this.toast.show('Please select a valid progressive next status.', 'warning');
+      return;
+    }
+
     this.isUpdatingBatchStatus.set(true);
 
     this.adminService.batchUpdateOrderStatus(ids, newStatus).subscribe({

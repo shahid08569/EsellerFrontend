@@ -617,20 +617,25 @@
         <!-- Target Status Select -->
         <div class="space-y-1.5">
           <label class="block text-xs font-black text-gray-900 tracking-tight">
-            Select New Status:
+            Select Next Status:
           </label>
-          <select
-            [ngModel]="selectedBatchStatus()"
-            (ngModelChange)="selectedBatchStatus.set($event)"
-            class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
-            <option [value]="2">Confirmed</option>
-            <option [value]="3">Processing</option>
-            <option [value]="4">Packed</option>
-            <option [value]="5">On the Way (Shipped)</option>
-            <option [value]="6">Out For Delivery</option>
-            <option [value]="7">Delivered (Fulfill & Credit Seller)</option>
-            <option [value]="8">Cancelled</option>
-          </select>
+          @if (batchNextStatusOptions().length > 0) {
+            <select
+              [ngModel]="selectedBatchStatus()"
+              (ngModelChange)="selectedBatchStatus.set(+$event)"
+              class="w-full px-3 py-2.5 bg-gray-50 border border-gray-300 rounded-xl text-xs font-bold text-gray-900 focus:bg-white focus:outline-none focus:ring-2 focus:ring-orange-500 cursor-pointer">
+              @for (opt of batchNextStatusOptions(); track opt.value) {
+                <option [value]="opt.value">{{ opt.label }}</option>
+              }
+            </select>
+          } @else {
+            <div class="p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-800 text-xs space-y-1">
+              <p class="font-extrabold text-amber-900">No Common Next Status Available</p>
+              <p class="text-[11px] leading-relaxed">
+                The selected orders are at different or completed stages. Only progressive next steps can be selected. Please select orders at the same stage.
+              </p>
+            </div>
+          }
         </div>
 
         <!-- Orders Preview -->
@@ -649,10 +654,12 @@
                   <span class="px-2 py-0.5 rounded text-[10px] font-bold" [class]="getStatusColorClass(ord.status)">
                     {{ getStatusLabel(ord.status) }}
                   </span>
-                  <span class="text-orange-500 font-bold">→</span>
-                  <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
-                    {{ getStatusLabel(selectedBatchStatus()) }}
-                  </span>
+                  @if (selectedBatchStatus() > 0) {
+                    <span class="text-orange-500 font-bold">→</span>
+                    <span class="px-2 py-0.5 rounded text-[10px] font-bold bg-orange-100 text-orange-800">
+                      {{ getStatusLabel(selectedBatchStatus()) }}
+                    </span>
+                  }
                 </div>
               </div>
             }
@@ -675,9 +682,9 @@
         </button>
         <button 
           type="button" 
-          [disabled]="isUpdatingBatchStatus()"
+          [disabled]="isUpdatingBatchStatus() || batchNextStatusOptions().length === 0 || !selectedBatchStatus()"
           (click)="confirmBatchStatusUpdate()"
-          class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md shadow-orange-600/30 transition-all cursor-pointer disabled:opacity-50">
+          class="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-extrabold text-xs shadow-md shadow-orange-600/30 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed">
           @if (isUpdatingBatchStatus()) {
             <svg class="animate-spin w-3.5 h-3.5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
               <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
