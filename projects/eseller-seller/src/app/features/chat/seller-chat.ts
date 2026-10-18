@@ -343,23 +343,23 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         const convos: ChatConversation[] = [];
 
         if (partner && partner.conversationId) {
-          // 1. Referred Seller -> Customer Service (Partner)
+          // 1. Referred Seller -> Customer Service
           convos.push({
             roomId: partner.conversationId,
-            title: partner.partnerName ? `Customer Service (${partner.partnerName})` : 'Customer Service (Partner)',
+            title: 'Customer Service',
             type: 'partner',
             partnerName: partner.partnerName,
             lastMessage: 'Direct Partner Support',
             lastMessageTime: undefined
           });
 
-          // 2. Referred Seller -> Management Support (Super Admin)
+          // 2. Referred Seller -> Management Service
           if (support) {
             const roomId = support.orderRequestId || support.conversationId;
             if (roomId) {
               convos.push({
                 roomId,
-                title: 'Management Support (Super Admin)',
+                title: 'Management Service',
                 type: 'support',
                 lastMessage: 'Official Platform Support',
                 lastMessageTime: undefined
@@ -367,13 +367,13 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
             }
           }
         } else {
-          // Normal Seller -> Customer Service (Super Admin) ONLY
+          // Normal Seller -> Customer Service ONLY
           if (support) {
             const roomId = support.orderRequestId || support.conversationId;
             if (roomId) {
               convos.push({
                 roomId,
-                title: 'Customer Service (Super Admin)',
+                title: 'Customer Service',
                 type: 'support',
                 lastMessage: 'Official Platform Support',
                 lastMessageTime: undefined

@@ -80,12 +80,14 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly selectedShop = signal<AdminChatShop | null>(null);
   readonly sellerSearchTerm = signal<string>('');
   readonly currentView = signal<'directory' | 'chat'>('directory');
-  readonly directoryTab = signal<'support' | 'customers'>('support');
+  readonly directoryTab = signal<'support' | 'customers' | 'partners' | 'stores' | 'partner-service'>('support');
   readonly messagesMap = signal<Record<string, AdminToSellerMessage[]>>({});
   readonly isLoadingShops = signal<boolean>(false);
   readonly isLoadingCustomers = signal<boolean>(false);
   readonly isLoadingMessages = signal<boolean>(false);
   readonly customerConvos = signal<any[]>([]);
+  readonly partnerConvos = signal<any[]>([]);
+  readonly partnerServiceShop = signal<AdminChatShop | null>(null);
   readonly editingMessage = signal<AdminToSellerMessage | null>(null);
   readonly replyingTo = signal<ParsedReply | null>(null);
   readonly deleteModalMessage = signal<AdminToSellerMessage | null>(null);
@@ -106,7 +108,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   readonly filteredShops = computed(() => {
-    const list = this.shops();
+    const partnerId = this.partnerServiceShop()?.id;
+    let list = this.shops();
+    if (this.isPartner() && partnerId) {
+      list = list.filter(s => s.id !== partnerId);
+    }
     const term = this.sellerSearchTerm().trim().toLowerCase();
     let filtered = list;
     if (term) {
@@ -135,8 +141,27 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         || String(c.lastMessage || '').toLowerCase().includes(term));
     }
     return [...list].sort((a, b) => {
-      const au = (a.unreadCount || 0) > 0 ? 1 : 0;
-      const bu = (b.unreadCount || 0) > 0 ? 1 : 0;
+      const aId = String(a.orderRequestId || a.id || '');
+      const bId = String(b.orderRequestId || b.id || '');
+      const au = (this.chatUnread.unreadFor(aId) || a.unreadCount || 0) > 0 ? 1 : 0;
+      const bu = (this.chatUnread.unreadFor(bId) || b.unreadCount || 0) > 0 ? 1 : 0;
+      if (au !== bu) return bu - au;
+      return new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime();
+    });
+  });
+
+  readonly filteredPartnerConvos = computed(() => {
+    const term = this.sellerSearchTerm().trim().toLowerCase();
+    let list = this.partnerConvos();
+    if (term) {
+      list = list.filter(c => this.customerDisplayName(c).toLowerCase().includes(term)
+        || String(c.lastMessage || '').toLowerCase().includes(term));
+    }
+    return [...list].sort((a, b) => {
+      const aId = String(a.orderRequestId || a.id || '');
+      const bId = String(b.orderRequestId || b.id || '');
+      const au = (this.chatUnread.unreadFor(aId) || a.unreadCount || 0) > 0 ? 1 : 0;
+      const bu = (this.chatUnread.unreadFor(bId) || b.unreadCount || 0) > 0 ? 1 : 0;
       if (au !== bu) return bu - au;
       return new Date(b.lastMessageAt || 0).getTime() - new Date(a.lastMessageAt || 0).getTime();
     });
@@ -147,26 +172,46 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   );
 
   readonly customerUnreadTotal = computed(() =>
-    this.customerConvos().reduce((sum, c) => sum + Number(c.unreadCount || 0), 0)
+    this.customerConvos().reduce((sum, c) => {
+      const id = String(c.orderRequestId || c.id || '');
+      return sum + Math.max(Number(c.unreadCount || 0), id ? this.chatUnread.unreadFor(id) : 0);
+    }, 0)
   );
+
+  readonly partnersUnreadTotal = computed(() =>
+    this.partnerConvos().reduce((sum, c) => {
+      const id = String(c.orderRequestId || c.id || '');
+      return sum + Math.max(Number(c.unreadCount || 0), id ? this.chatUnread.unreadFor(id) : 0);
+    }, 0)
+  );
+
+  readonly storesUnreadTotal = computed(() => {
+    const pId = this.partnerServiceShop()?.id;
+    return this.shops().filter(s => s.id !== pId).reduce((sum, s) => sum + this.chatUnread.unreadFor(s.id), 0);
+  });
+
+  readonly partnerServiceUnreadTotal = computed(() => {
+    const shop = this.partnerServiceShop();
+    return shop ? this.chatUnread.unreadFor(shop.id) : 0;
+  });
 
   private shouldScrollToBottom = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private joinedRoomId: string | null = null;
-  private partnerSuperAdminShop: AdminChatShop | null = null;
 
   ngOnInit(): void {
     this.chatUnread.start();
     if (this.isPartner()) {
+      this.directoryTab.set('stores');
       this.chatService.getPartnerSupportSession().subscribe({
         next: (session) => {
           const roomId = session.conversationId || session.orderRequestId;
-          this.partnerSuperAdminShop = {
+          this.partnerServiceShop.set({
             id: roomId,
-            name: 'Platform Management (Super Admin)',
+            name: 'Partner Service',
             merchantStatus: 'Official Support',
-            tierLabel: 'Super Admin'
-          };
+            tierLabel: 'Partner Service'
+          });
           this.loadShops();
         },
         error: () => {
@@ -174,14 +219,16 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
       });
     } else {
+      this.directoryTab.set('support');
       this.loadShops();
       this.loadCustomerConvos();
     }
 
     this.signalR.startChatConnection().then(() => {
       this.unsubscribeSignalR = this.signalR.onReceiveMessage((incoming) => {
-        if (!this.isShopkeeperRole(String(incoming.senderRole || ''))
-          && !this.isCustomerRole(String(incoming.senderRole || ''))) {
+        const myAccId = this.authStore.currentAccount()?.accountId?.toLowerCase();
+        const msgSenderAccId = String((incoming as any).senderAccountId || '').toLowerCase();
+        if (myAccId && msgSenderAccId && myAccId === msgSenderAccId) {
           return;
         }
 
@@ -193,7 +240,24 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         );
         if (exists) return;
 
-        const shopName = this.shops().find(s => s.id?.toLowerCase() === shopId.toLowerCase())?.name || 'Merchant';
+        let shopName = this.shops().find(s => s.id?.toLowerCase() === shopId.toLowerCase())?.name;
+        if (!shopName && this.partnerServiceShop()?.id?.toLowerCase() === shopId.toLowerCase()) {
+          shopName = 'Partner Service';
+        }
+        if (!shopName) {
+          const p = this.partnerConvos().find(c => String(c.orderRequestId || c.id || '').toLowerCase() === shopId.toLowerCase());
+          if (p) shopName = this.customerDisplayName(p);
+        }
+        if (!shopName) {
+          const cust = this.customerConvos().find(c => String(c.orderRequestId || c.id || '').toLowerCase() === shopId.toLowerCase());
+          if (cust) shopName = this.customerDisplayName(cust);
+        }
+        if (!shopName) shopName = 'Contact';
+
+        const roleLower = String(incoming.senderRole || '').toLowerCase();
+        const isFromAdmin = this.isPartner()
+          ? roleLower.includes('partner')
+          : (roleLower.includes('superadmin') || roleLower.includes('admin'));
 
         this.messagesMap.update(map => {
           const list = (map[shopId] || []).filter(m =>
@@ -207,8 +271,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               ...list,
               {
                 id: incoming.messageId || `m-${Date.now()}`,
-                sender: 'seller' as const,
-                senderName: (incoming as any).senderName || shopName,
+                sender: isFromAdmin ? ('admin' as const) : ('seller' as const),
+                senderName: isFromAdmin ? 'Management' : ((incoming as any).senderName || shopName),
                 message: incoming.message,
                 timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -232,6 +296,28 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
             };
           }
           return s;
+        }));
+
+        if (this.partnerServiceShop()?.id?.toLowerCase() === shopId.toLowerCase()) {
+          const current = this.partnerServiceShop();
+          if (current) {
+            this.partnerServiceShop.set({
+              ...current,
+              lastMessage: previewText,
+              lastMessageTime: incoming.sentAt || new Date().toISOString()
+            });
+          }
+        }
+
+        this.partnerConvos.update(currentList => currentList.map(c => {
+          if (String(c.orderRequestId || c.id || '').toLowerCase() === shopId.toLowerCase()) {
+            return {
+              ...c,
+              lastMessage: previewText,
+              lastMessageAt: incoming.sentAt || new Date().toISOString()
+            };
+          }
+          return c;
         }));
 
         const isActiveOpen =
@@ -427,8 +513,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     });
   }
 
-  setDirectoryTab(tab: 'support' | 'customers'): void {
-    if (this.isPartner() && tab === 'customers') return;
+  setDirectoryTab(tab: 'support' | 'customers' | 'partners' | 'stores' | 'partner-service'): void {
     this.directoryTab.set(tab);
     this.sellerSearchTerm.set('');
     if (tab === 'customers' && !this.customerConvos().length) {
@@ -437,7 +522,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   selectShop(shop: AdminChatShop): void {
-    this.directoryTab.set('support');
+    this.directoryTab.set(this.isPartner() ? 'stores' : 'support');
     this.openThread(shop);
   }
 
@@ -450,6 +535,18 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       name: this.customerDisplayName(convo),
       merchantStatus: 'Approved',
       tierLabel: 'Customer'
+    });
+  }
+
+  selectPartnerConvo(convo: any): void {
+    const id = String(convo?.orderRequestId || convo?.id || '');
+    if (!id) return;
+    this.directoryTab.set('partners');
+    this.openThread({
+      id,
+      name: this.customerDisplayName(convo),
+      merchantStatus: 'Partner',
+      tierLabel: 'Partner'
     });
   }
 
@@ -475,15 +572,34 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   syncShopConversations(): void {
     if (this.isPartner()) {
       this.customerConvos.set([]);
+      this.partnerConvos.set([]);
       this.isLoadingCustomers.set(false);
     }
 
     this.adminService.getConversations(1, 500).subscribe({
       next: (list) => {
         const convos = list || [];
-        const customers = this.isPartner() ? [] : convos.filter((c: any) => !this.isSellerSupportConvo(c));
-        this.customerConvos.set(customers);
-        this.isLoadingCustomers.set(false);
+        if (this.isPartner()) {
+          const saConvo = convos.find((c: any) => String(c.participantType || '').toLowerCase() === 'partner');
+          if (saConvo) {
+            const current = this.partnerServiceShop();
+            this.partnerServiceShop.set({
+              id: saConvo.orderRequestId || saConvo.id || current?.id || '',
+              name: 'Partner Service',
+              merchantStatus: 'Official Support',
+              tierLabel: 'Partner Service',
+              lastMessage: saConvo.lastMessage || null,
+              lastMessageTime: saConvo.lastMessageAt || null
+            });
+          }
+        } else {
+          const customers = convos.filter((c: any) => String(c.participantType || '').toLowerCase() === 'customer');
+          this.customerConvos.set(customers);
+
+          const partners = convos.filter((c: any) => String(c.participantType || '').toLowerCase() === 'partner');
+          this.partnerConvos.set(partners);
+          this.isLoadingCustomers.set(false);
+        }
 
         // Update seller shops with lastMessage, lastMessageTime, and logoUrl
         this.shops.update(currentList => currentList.map(shop => {
@@ -500,22 +616,6 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           }
           return shop;
         }));
-
-        if (this.isPartner() && this.partnerSuperAdminShop) {
-          const saConvo = convos.find((c: any) => String(c.participantType || '').toLowerCase() === 'partner');
-          if (saConvo) {
-            this.partnerSuperAdminShop = {
-              ...this.partnerSuperAdminShop,
-              id: saConvo.orderRequestId || saConvo.id || this.partnerSuperAdminShop.id,
-              lastMessage: saConvo.lastMessage || null,
-              lastMessageTime: saConvo.lastMessageAt || null
-            };
-          }
-          this.shops.update(currentList => {
-            const rest = currentList.filter(s => s.id !== this.partnerSuperAdminShop!.id);
-            return [this.partnerSuperAdminShop!, ...rest];
-          });
-        }
       },
       error: () => {
         this.isLoadingCustomers.set(false);
@@ -543,7 +643,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   customerDisplayName(convo: any): string {
-    return convo?.customerName || convo?.participantName || convo?.shopName || 'Customer';
+    return convo?.customerName || convo?.participantName || convo?.shopName || 'Contact';
   }
 
   customerInitials(convo: any): string {
@@ -562,9 +662,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     if (!this.isPartner() && this.directoryTab() === 'customers') this.loadCustomerConvos();
   }
 
-  openPartnerSuperAdminChat(): void {
-    if (this.partnerSuperAdminShop) {
-      this.openThread(this.partnerSuperAdminShop);
+  openPartnerServiceChat(): void {
+    const pShop = this.partnerServiceShop();
+    if (pShop) {
+      this.directoryTab.set('partner-service');
+      this.openThread(pShop);
       return;
     }
 
@@ -572,13 +674,15 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.chatService.getPartnerSupportSession().subscribe({
       next: (session) => {
         const roomId = session.conversationId || session.orderRequestId;
-        this.partnerSuperAdminShop = {
+        const shop: AdminChatShop = {
           id: roomId,
-          name: 'Platform Management (Super Admin)',
+          name: 'Partner Service',
           merchantStatus: 'Official Support',
-          tierLabel: 'Super Admin'
+          tierLabel: 'Partner Service'
         };
-        this.openThread(this.partnerSuperAdminShop);
+        this.partnerServiceShop.set(shop);
+        this.directoryTab.set('partner-service');
+        this.openThread(shop);
       },
       error: () => {
         this.isLoadingMessages.set(false);
@@ -593,10 +697,12 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.isOpen.set(nextState);
     if (nextState) {
       this.chatUnread.refresh();
+      this.currentView.set('directory');
       if (this.isPartner()) {
-        this.openPartnerSuperAdminChat();
+        this.directoryTab.set('stores');
+        if (!this.shops().length) this.loadShops();
       } else {
-        this.currentView.set('directory');
+        this.directoryTab.set('support');
         if (!this.shops().length) this.loadShops();
         this.loadCustomerConvos();
       }

@@ -37,7 +37,7 @@
           </div>
           <div class="min-w-0">
             <h3 class="font-extrabold text-sm tracking-tight leading-none text-white truncate">
-              Customer Service
+              {{ activeChannel()?.title || 'Customer Service' }}
             </h3>
             <p class="text-[11px] text-slate-400 mt-0.5 flex items-center gap-1 font-medium">
               <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
@@ -53,6 +53,23 @@
           ✕
         </button>
       </div>
+
+      @if (channels().length > 1) {
+        <div class="flex border-b border-slate-700 bg-slate-950 shrink-0 px-2 pt-1 gap-1">
+          @for (ch of channels(); track ch.id) {
+            <button
+              type="button"
+              (click)="switchChannel(ch)"
+              class="flex-1 py-1.5 text-xs font-bold transition-colors cursor-pointer border-b-2 text-center"
+              [class.border-emerald-400]="activeChannel()?.id === ch.id"
+              [class.text-emerald-400]="activeChannel()?.id === ch.id"
+              [class.border-transparent]="activeChannel()?.id !== ch.id"
+              [class.text-slate-400]="activeChannel()?.id !== ch.id">
+              {{ ch.title }}
+            </button>
+          }
+        </div>
+      }
 
       <div class="bg-slate-100 px-3 py-2 flex items-center gap-1.5 overflow-x-auto scrollbar-none shrink-0 border-b border-slate-200">
         <button

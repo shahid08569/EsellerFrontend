@@ -60,7 +60,7 @@
                     [class.bg-indigo-500/20]="!isSuperAdmin()"
                     [class.text-indigo-400]="!isSuperAdmin()"
                     [class.border-indigo-500/30]="!isSuperAdmin()">
-                {{ isSuperAdmin() ? 'SuperAdmin' : 'Partner' }}
+                {{ isSuperAdmin() ? 'Management' : 'Partner' }}
               </span>
             </div>
             <p class="text-[10px] text-slate-400 font-medium truncate">
@@ -762,7 +762,7 @@
             {{ (authStore.currentAccount()?.username || 'A')[0].toUpperCase() }}
           </div>
           <div class="truncate">
-            <p class="text-xs font-bold truncate" style="color: #ffffff !important;">{{ authStore.currentAccount()?.username || 'Management' }}</p>
+            <p class="text-xs font-bold truncate" style="color: #ffffff !important;">{{ (authStore.currentAccount()?.username?.toLowerCase() === 'superadmin' ? 'Administrator' : authStore.currentAccount()?.username) || 'Management' }}</p>
             <p class="text-[10px] text-slate-300 truncate">
               {{ isSuperAdmin() ? 'Platform Authority' : 'Operations Partner' }} &bull; {{ authStore.currentAccount()?.email || 'admin@eseller.com' }}
             </p>

@@ -47,9 +47,9 @@
             </h4>
             <p class="text-[11px] text-orange-100 flex items-center gap-1 font-medium truncate">
               @if (currentView() === 'chat') {
-                <span>{{ directoryTab() === 'customers' ? 'Customer chat' : (isPartner() ? 'Partner Store Support' : 'Seller support') }}</span>
+                <span>{{ directoryTab() === 'customers' ? 'Customer chat' : (directoryTab() === 'partners' ? 'Partner chat' : (directoryTab() === 'partner-service' ? 'Official Support' : (isPartner() ? 'Store Support' : 'Seller support'))) }}</span>
               } @else {
-                <span>{{ isPartner() ? 'Partner Store Support' : 'Support & Customers' }}</span>
+                <span>{{ isPartner() ? 'Stores & Partner Service' : 'Support, Customers & Partners' }}</span>
               }
             </p>
           </div>
@@ -65,12 +65,43 @@
         </button>
       </div>
 
-      <!-- VIEW 1: DIRECTORY — Support | Customers -->
+      <!-- VIEW 1: DIRECTORY -->
       @if (currentView() === 'directory') {
         <div class="flex-1 flex flex-col bg-white overflow-hidden">
 
-          <!-- Tabs like chat UI -->
-          @if (!isPartner()) {
+          <!-- Tabs -->
+          @if (isPartner()) {
+            <!-- Partner Tabs: Stores | Partner Service -->
+            <div class="flex border-b border-slate-100 shrink-0">
+              <button
+                type="button"
+                (click)="setDirectoryTab('stores')"
+                class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+                [class.border-orange-600]="directoryTab() === 'stores'"
+                [class.text-orange-700]="directoryTab() === 'stores'"
+                [class.border-transparent]="directoryTab() !== 'stores'"
+                [class.text-slate-400]="directoryTab() !== 'stores'">
+                Stores
+                @if (storesUnreadTotal() > 0) {
+                  <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ storesUnreadTotal() > 99 ? '99+' : storesUnreadTotal() }}</span>
+                }
+              </button>
+              <button
+                type="button"
+                (click)="setDirectoryTab('partner-service')"
+                class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+                [class.border-orange-600]="directoryTab() === 'partner-service'"
+                [class.text-orange-700]="directoryTab() === 'partner-service'"
+                [class.border-transparent]="directoryTab() !== 'partner-service'"
+                [class.text-slate-400]="directoryTab() !== 'partner-service'">
+                Partner Service
+                @if (partnerServiceUnreadTotal() > 0) {
+                  <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ partnerServiceUnreadTotal() > 99 ? '99+' : partnerServiceUnreadTotal() }}</span>
+                }
+              </button>
+            </div>
+          } @else {
+            <!-- SuperAdmin Tabs: Support | Customers | Partners -->
             <div class="flex border-b border-slate-100 shrink-0">
               <button
                 type="button"
@@ -98,6 +129,19 @@
                   <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ customerUnreadTotal() > 99 ? '99+' : customerUnreadTotal() }}</span>
                 }
               </button>
+              <button
+                type="button"
+                (click)="setDirectoryTab('partners')"
+                class="flex-1 py-2.5 text-xs font-bold transition-colors cursor-pointer border-b-2"
+                [class.border-orange-600]="directoryTab() === 'partners'"
+                [class.text-orange-700]="directoryTab() === 'partners'"
+                [class.border-transparent]="directoryTab() !== 'partners'"
+                [class.text-slate-400]="directoryTab() !== 'partners'">
+                Partners
+                @if (partnersUnreadTotal() > 0) {
+                  <span class="ml-1 inline-flex min-w-[16px] h-4 px-1 rounded-full bg-orange-500 text-white text-[9px] font-black items-center justify-center">{{ partnersUnreadTotal() > 99 ? '99+' : partnersUnreadTotal() }}</span>
+                }
+              </button>
             </div>
           }
 
@@ -107,7 +151,7 @@
                 type="text"
                 [ngModel]="sellerSearchTerm()"
                 (ngModelChange)="sellerSearchTerm.set($event)"
-                [placeholder]="(!isPartner() && directoryTab() === 'customers') ? 'Search customer…' : 'Search shop…'"
+                [placeholder]="isPartner() ? (directoryTab() === 'partner-service' ? 'Search service…' : 'Search store…') : (directoryTab() === 'customers' ? 'Search customer…' : (directoryTab() === 'partners' ? 'Search partner…' : 'Search shop…'))"
                 class="w-full bg-white border border-orange-100 rounded-xl pl-9 pr-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-gray-400 absolute left-3 top-2.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
@@ -116,80 +160,193 @@
           </div>
 
           <div class="flex-1 overflow-y-auto divide-y divide-slate-100">
-            @if (directoryTab() === 'support') {
-              @if (isLoadingShops()) {
-                <es-skeleton-layout variant="list" [count]="6" />
-              } @else if (filteredShops().length === 0) {
-                <div class="p-8 text-center text-xs text-gray-400">
-                  <p class="font-bold text-gray-600">No shops found</p>
-                </div>
-              } @else {
-                @for (s of filteredShops(); track s.id) {
-                  <div
-                    (click)="selectShop(s)"
-                    class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
-                    <div class="flex items-center gap-3 min-w-0">
-                      @if (formatImageUrl(s.logoUrl)) {
-                        <img
-                          [src]="formatImageUrl(s.logoUrl)"
-                          (error)="onImgError($event, s.name)"
-                          [alt]="s.name"
-                          class="w-10 h-10 rounded-full object-cover shrink-0 border border-orange-200" />
-                      } @else {
-                        <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
-                          {{ s.name.charAt(0).toUpperCase() }}
+            @if (isPartner()) {
+              @if (directoryTab() === 'stores') {
+                @if (isLoadingShops()) {
+                  <es-skeleton-layout variant="list" [count]="6" />
+                } @else if (filteredShops().length === 0) {
+                  <div class="p-8 text-center text-xs text-gray-400">
+                    <p class="font-bold text-gray-600">No referred stores found</p>
+                  </div>
+                } @else {
+                  @for (s of filteredShops(); track s.id) {
+                    <div
+                      (click)="selectShop(s)"
+                      class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                      <div class="flex items-center gap-3 min-w-0">
+                        @if (formatImageUrl(s.logoUrl)) {
+                          <img
+                            [src]="formatImageUrl(s.logoUrl)"
+                            (error)="onImgError($event, s.name)"
+                            [alt]="s.name"
+                            class="w-10 h-10 rounded-full object-cover shrink-0 border border-orange-200" />
+                        } @else {
+                          <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
+                            {{ s.name.charAt(0).toUpperCase() }}
+                          </div>
+                        }
+                        <div class="min-w-0">
+                          <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ s.name }}</span>
+                          <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(s.lastMessage) || 'Store support channel' }}</p>
                         </div>
-                      }
-                      <div class="min-w-0">
-                        <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ s.name }}</span>
-                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(s.lastMessage) || 'Direct support channel' }}</p>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        @if (shopUnread(s.id) > 0) {
+                          <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs">
+                            {{ shopUnread(s.id) > 99 ? '99+' : shopUnread(s.id) }}
+                          </span>
+                        }
                       </div>
                     </div>
-                    <div class="flex items-center gap-2 shrink-0">
-                      @if (shopUnread(s.id) > 0) {
-                        <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs">
-                          {{ shopUnread(s.id) > 99 ? '99+' : shopUnread(s.id) }}
+                  }
+                }
+              } @else if (directoryTab() === 'partner-service') {
+                <div class="p-4">
+                  @if (partnerServiceShop(); as ps) {
+                    <div
+                      (click)="openPartnerServiceChat()"
+                      class="p-4 rounded-2xl border border-orange-200 bg-orange-50/60 hover:bg-orange-100/70 flex items-center justify-between cursor-pointer transition-all shadow-xs group">
+                      <div class="flex items-center gap-3 min-w-0">
+                        <div class="w-11 h-11 rounded-full bg-gradient-to-tr from-orange-600 to-rose-600 text-white font-bold flex items-center justify-center text-base shrink-0 shadow-sm">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-5 0a4 4 0 11-8 0 4 4 0 018 0z" />
+                          </svg>
+                        </div>
+                        <div class="min-w-0">
+                          <span class="font-bold text-sm text-gray-900 truncate block group-hover:text-orange-800">Partner Service</span>
+                          <p class="text-xs text-slate-500 truncate mt-0.5">{{ cleanMessagePreview(ps.lastMessage) || 'Official platform management support' }}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        @if (partnerServiceUnreadTotal() > 0) {
+                          <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs">
+                            {{ partnerServiceUnreadTotal() > 99 ? '99+' : partnerServiceUnreadTotal() }}
+                          </span>
+                        }
+                        <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400 group-hover:translate-x-0.5 transition-transform" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2.5">
+                          <path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7" />
+                        </svg>
+                      </div>
+                    </div>
+                  } @else {
+                    <div class="p-8 text-center text-xs text-gray-400">
+                      <p class="font-bold text-gray-600">Connecting to Partner Service...</p>
+                    </div>
+                  }
+                </div>
+              }
+            } @else {
+              <!-- SuperAdmin views: support | customers | partners -->
+              @if (directoryTab() === 'support') {
+                @if (isLoadingShops()) {
+                  <es-skeleton-layout variant="list" [count]="6" />
+                } @else if (filteredShops().length === 0) {
+                  <div class="p-8 text-center text-xs text-gray-400">
+                    <p class="font-bold text-gray-600">No shops found</p>
+                  </div>
+                } @else {
+                  @for (s of filteredShops(); track s.id) {
+                    <div
+                      (click)="selectShop(s)"
+                      class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                      <div class="flex items-center gap-3 min-w-0">
+                        @if (formatImageUrl(s.logoUrl)) {
+                          <img
+                            [src]="formatImageUrl(s.logoUrl)"
+                            (error)="onImgError($event, s.name)"
+                            [alt]="s.name"
+                            class="w-10 h-10 rounded-full object-cover shrink-0 border border-orange-200" />
+                        } @else {
+                          <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
+                            {{ s.name.charAt(0).toUpperCase() }}
+                          </div>
+                        }
+                        <div class="min-w-0">
+                          <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ s.name }}</span>
+                          <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(s.lastMessage) || 'Direct support channel' }}</p>
+                        </div>
+                      </div>
+                      <div class="flex items-center gap-2 shrink-0">
+                        @if (shopUnread(s.id) > 0) {
+                          <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs">
+                            {{ shopUnread(s.id) > 99 ? '99+' : shopUnread(s.id) }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+                }
+              } @else if (directoryTab() === 'customers') {
+                @if (isLoadingCustomers()) {
+                  <es-skeleton-layout variant="list" [count]="6" />
+                } @else if (filteredCustomerConvos().length === 0) {
+                  <div class="p-8 text-center text-xs text-gray-400">
+                    <p class="font-bold text-gray-600">No customer chats</p>
+                  </div>
+                } @else {
+                  @for (c of filteredCustomerConvos(); track (c.orderRequestId || c.id)) {
+                    <div
+                      (click)="selectCustomerConvo(c)"
+                      class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                      <div class="flex items-center gap-3 min-w-0">
+                        @if (formatImageUrl(c.logoUrl)) {
+                          <img
+                            [src]="formatImageUrl(c.logoUrl)"
+                            (error)="onImgError($event, customerDisplayName(c))"
+                            [alt]="customerDisplayName(c)"
+                            class="w-10 h-10 rounded-full object-cover shrink-0 border border-rose-200" />
+                        } @else {
+                          <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-sm shrink-0 border border-rose-200">
+                            {{ customerInitials(c) }}
+                          </div>
+                        }
+                        <div class="min-w-0">
+                          <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ customerDisplayName(c) }}</span>
+                          <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(c.lastMessage) || 'No messages yet' }}</p>
+                        </div>
+                      </div>
+                      @if ((c.unreadCount || 0) > 0) {
+                        <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs shrink-0">
+                          {{ c.unreadCount > 99 ? '99+' : c.unreadCount }}
                         </span>
                       }
                     </div>
-                  </div>
+                  }
                 }
-              }
-            } @else {
-              @if (isLoadingCustomers()) {
-                <es-skeleton-layout variant="list" [count]="6" />
-              } @else if (filteredCustomerConvos().length === 0) {
-                <div class="p-8 text-center text-xs text-gray-400">
-                  <p class="font-bold text-gray-600">No customer chats</p>
-                </div>
-              } @else {
-                @for (c of filteredCustomerConvos(); track (c.orderRequestId || c.id)) {
-                  <div
-                    (click)="selectCustomerConvo(c)"
-                    class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
-                    <div class="flex items-center gap-3 min-w-0">
-                      @if (formatImageUrl(c.logoUrl)) {
-                        <img
-                          [src]="formatImageUrl(c.logoUrl)"
-                          (error)="onImgError($event, customerDisplayName(c))"
-                          [alt]="customerDisplayName(c)"
-                          class="w-10 h-10 rounded-full object-cover shrink-0 border border-rose-200" />
-                      } @else {
-                        <div class="w-10 h-10 rounded-full bg-rose-100 text-rose-800 font-bold flex items-center justify-center text-sm shrink-0 border border-rose-200">
-                          {{ customerInitials(c) }}
-                        </div>
-                      }
-                      <div class="min-w-0">
-                        <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ customerDisplayName(c) }}</span>
-                        <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(c.lastMessage) || 'No messages yet' }}</p>
-                      </div>
-                    </div>
-                    @if ((c.unreadCount || 0) > 0) {
-                      <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs shrink-0">
-                        {{ c.unreadCount > 99 ? '99+' : c.unreadCount }}
-                      </span>
-                    }
+              } @else if (directoryTab() === 'partners') {
+                @if (filteredPartnerConvos().length === 0) {
+                  <div class="p-8 text-center text-xs text-gray-400">
+                    <p class="font-bold text-gray-600">No partner chats</p>
                   </div>
+                } @else {
+                  @for (p of filteredPartnerConvos(); track (p.orderRequestId || p.id)) {
+                    <div
+                      (click)="selectPartnerConvo(p)"
+                      class="p-3.5 flex items-center justify-between hover:bg-orange-50/60 cursor-pointer transition-colors group">
+                      <div class="flex items-center gap-3 min-w-0">
+                        @if (formatImageUrl(p.logoUrl)) {
+                          <img
+                            [src]="formatImageUrl(p.logoUrl)"
+                            (error)="onImgError($event, customerDisplayName(p))"
+                            [alt]="customerDisplayName(p)"
+                            class="w-10 h-10 rounded-full object-cover shrink-0 border border-orange-200" />
+                        } @else {
+                          <div class="w-10 h-10 rounded-full bg-orange-100 text-orange-800 font-bold flex items-center justify-center text-sm shrink-0 border border-orange-200">
+                            {{ customerInitials(p) }}
+                          </div>
+                        }
+                        <div class="min-w-0">
+                          <span class="font-bold text-xs text-gray-900 truncate block group-hover:text-orange-800">{{ customerDisplayName(p) }}</span>
+                          <p class="text-[11px] text-slate-400 truncate mt-0.5">{{ cleanMessagePreview(p.lastMessage) || 'Direct partner channel' }}</p>
+                        </div>
+                      </div>
+                      @if ((p.unreadCount || 0) > 0) {
+                        <span class="inline-flex items-center justify-center min-w-[22px] h-5 px-1.5 rounded-full bg-orange-500 text-white text-[10px] font-black shadow-xs shrink-0">
+                          {{ p.unreadCount > 99 ? '99+' : p.unreadCount }}
+                        </span>
+                      }
+                    </div>
+                  }
                 }
               }
             }

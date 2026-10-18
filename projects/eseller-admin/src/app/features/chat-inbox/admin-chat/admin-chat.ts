@@ -296,16 +296,26 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     const myAccountId = this.authStore.currentAccount()?.accountId?.toLowerCase();
     const msgSenderAccountId = String(incoming.senderAccountId || '').toLowerCase();
     const roleLower = String(incoming.senderRole || '').toLowerCase();
-    const isFromAdmin = myAccountId && msgSenderAccountId
-      ? msgSenderAccountId === myAccountId
-      : (this.isPartner()
-          ? roleLower.includes('partner')
-          : (roleLower.includes('superadmin') || roleLower.includes('admin')));
+    const isPartnerSender = roleLower.includes('partner');
+    const isFromAdmin = active?.isReadOnly
+      ? isPartnerSender
+      : (myAccountId && msgSenderAccountId
+          ? msgSenderAccountId === myAccountId
+          : (this.isPartner()
+              ? roleLower.includes('partner')
+              : (roleLower.includes('superadmin') || roleLower.includes('admin'))));
     const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller');
-    let senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
-    if (!isFromAdmin) {
-      if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
-      else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service (Admin)';
+    let senderDisplayName = '';
+    if (active?.isReadOnly) {
+      senderDisplayName = isPartnerSender
+        ? (active.partnerName ? `Partner (${active.partnerName})` : 'Partner')
+        : (active?.shopName || active?.customerName || 'Merchant');
+    } else {
+      senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
+      if (!isFromAdmin) {
+        if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
+        else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service';
+      }
     }
     const incomingId = String(incoming.messageId || '').toLowerCase();
 
@@ -497,16 +507,26 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
           const myAccountId = this.authStore.currentAccount()?.accountId?.toLowerCase();
           const msgSenderAccountId = String(m.senderAccountId || m.SenderAccountId || '').toLowerCase();
           const roleLower = String(m.senderRole || m.SenderRole || '').toLowerCase();
-          const isFromAdmin = myAccountId && msgSenderAccountId
-            ? msgSenderAccountId === myAccountId
-            : (this.isPartner()
-                ? roleLower.includes('partner')
-                : (roleLower.includes('superadmin') || roleLower.includes('admin')));
+          const isPartnerSender = roleLower.includes('partner');
+          const isFromAdmin = convo.isReadOnly
+            ? isPartnerSender
+            : (myAccountId && msgSenderAccountId
+                ? msgSenderAccountId === myAccountId
+                : (this.isPartner()
+                    ? roleLower.includes('partner')
+                    : (roleLower.includes('superadmin') || roleLower.includes('admin'))));
           const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
-          let senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
-          if (!isFromAdmin) {
-            if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
-            else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service (Admin)';
+          let senderDisplayName = '';
+          if (convo.isReadOnly) {
+            senderDisplayName = isPartnerSender
+              ? (convo.partnerName ? `Partner (${convo.partnerName})` : 'Partner')
+              : (convo.shopName || convo.customerName || 'Merchant');
+          } else {
+            senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+            if (!isFromAdmin) {
+              if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
+              else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service';
+            }
           }
           const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
           return {

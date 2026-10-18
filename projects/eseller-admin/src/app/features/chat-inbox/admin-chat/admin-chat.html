@@ -55,7 +55,7 @@
               [class.bg-slate-100]="filterTab() !== 'superadmin'"
               [class.text-slate-700]="filterTab() !== 'superadmin'"
               [class.border-slate-200]="filterTab() !== 'superadmin'">
-              Super Admin
+              Partner Service
               @if (partnerSuperAdminCount() > 0) {
                 <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
                       [class.bg-white/25]="filterTab() === 'superadmin'"
@@ -119,7 +119,7 @@
               [class.bg-slate-100]="filterTab() !== 'partner-referrals'"
               [class.text-slate-700]="filterTab() !== 'partner-referrals'"
               [class.border-slate-200]="filterTab() !== 'partner-referrals'"
-              title="Referred merchants contacting SuperAdmin directly for Management Support">
+              title="Referred merchants contacting Management directly for Management Support">
               Partners Referral
               @if (partnerReferralsCount() > 0) {
                 <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
@@ -132,7 +132,7 @@
               }
             </button>
 
-            <!-- SuperAdmin Tab 3: Partner's Sellers (Read-Only Audit) -->
+            <!-- Tab 3: Partner's Sellers (Read-Only Audit) -->
             <button type="button" (click)="setFilterTab('partner-sellers')"
               class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
               [class.bg-orange-600]="filterTab() === 'partner-sellers'"
@@ -154,7 +154,7 @@
               }
             </button>
 
-            <!-- SuperAdmin Tab 4: Partners -->
+            <!-- Tab 4: Partners -->
             <button type="button" (click)="setFilterTab('partners')"
               class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
               [class.bg-orange-600]="filterTab() === 'partners'"
@@ -163,7 +163,7 @@
               [class.bg-slate-100]="filterTab() !== 'partners'"
               [class.text-slate-700]="filterTab() !== 'partners'"
               [class.border-slate-200]="filterTab() !== 'partners'"
-              title="Direct communication between SuperAdmin and Partners">
+              title="Direct communication between Management and Partners">
               Partners
               @if (partnersCount() > 0) {
                 <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
@@ -586,7 +586,7 @@
               </svg>
             </div>
             <div class="text-xs text-amber-900 leading-relaxed font-medium">
-              <span class="font-bold text-amber-950">🔒 Read-Only Monitoring:</span> Yeh chat Partner <span class="font-bold underline text-amber-950">{{ activeConversation()?.partnerName || 'Partner' }}</span> aur Merchant <span class="font-bold underline text-amber-950">{{ activeConversation()?.customerName }}</span> ke darmiyan hai. SuperAdmin ke liye yeh sirf Read-Only hai.
+              <span class="font-bold text-amber-950">🔒 Read-Only Monitoring:</span> This chat is between Partner <span class="font-bold underline text-amber-950">{{ activeConversation()?.partnerName || 'Partner' }}</span> and Merchant <span class="font-bold underline text-amber-950">{{ activeConversation()?.customerName }}</span>. This channel is strictly view-only for Management monitoring.
             </div>
           </div>
         } @else {

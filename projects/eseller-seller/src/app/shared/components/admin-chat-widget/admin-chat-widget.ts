@@ -1,8 +1,16 @@
 import { Component, OnInit, OnDestroy, HostListener, inject, signal, computed, ElementRef, ViewChild, AfterViewChecked } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 import { AuthStore, ToastService, SignalRService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ParsedReply, parseMessageReply, buildReplyMessage, SkeletonLayout } from 'eseller-shared';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
+
+export interface SellerWidgetChannel {
+  id: string;
+  title: string;
+  type: 'partner' | 'support';
+}
 
 export interface AdminChatMessage {
   id: string;
@@ -49,6 +57,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   readonly unreadCount = signal<number>(0);
   readonly isTyping = signal<boolean>(false);
   readonly shop = signal<ShopDto | null>(null);
+  readonly channels = signal<SellerWidgetChannel[]>([]);
+  readonly activeChannel = signal<SellerWidgetChannel | null>(null);
   readonly messageText = signal<string>('');
   readonly isSending = signal<boolean>(false);
   readonly uploadingFile = signal<boolean>(false);
@@ -110,19 +120,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       this.fetchMessages(cachedRoom, false);
     }
 
-    this.chatService.getShopSupportSession().subscribe({
-      next: (session) => {
-        const roomId = session.orderRequestId || session.conversationId;
-        if (!roomId) return;
-        this.supportRoomId = roomId;
-        this.persistRoomId(roomId);
-        this.signalR.joinOrderRoom(roomId).catch(() => {});
-        this.joinedRoomId = roomId;
-        // Always preload latest messages on login/init
-        this.fetchMessages(roomId, this.isOpen() && this.messages().length === 0);
-      },
-      error: () => {}
-    });
+    this.loadChannels();
 
     this.pollTimer = setInterval(() => {
       this.refreshUnreadBadge();
@@ -130,6 +128,69 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.fetchMessages(this.supportRoomId, false);
       }
     }, 8000);
+  }
+
+  loadChannels(): void {
+    forkJoin({
+      support: this.chatService.getShopSupportSession().pipe(catchError(() => of(null))),
+      partner: this.chatService.getShopPartnerSession().pipe(catchError(() => of(null)))
+    }).subscribe({
+      next: ({ support, partner }) => {
+        const chs: SellerWidgetChannel[] = [];
+        if (partner && partner.conversationId) {
+          chs.push({
+            id: partner.conversationId,
+            title: 'Customer Service',
+            type: 'partner'
+          });
+          if (support) {
+            const suppId = support.orderRequestId || support.conversationId;
+            if (suppId) {
+              chs.push({
+                id: suppId,
+                title: 'Management Service',
+                type: 'support'
+              });
+            }
+          }
+        } else if (support) {
+          const suppId = support.orderRequestId || support.conversationId;
+          if (suppId) {
+            chs.push({
+              id: suppId,
+              title: 'Customer Service',
+              type: 'support'
+            });
+          }
+        }
+
+        this.channels.set(chs);
+        if (chs.length > 0) {
+          const currentId = this.supportRoomId;
+          const match = currentId ? chs.find(c => c.id.toLowerCase() === currentId.toLowerCase()) : null;
+          const chosen = match || chs[0];
+          this.switchChannel(chosen, false);
+        }
+      }
+    });
+  }
+
+  switchChannel(ch: SellerWidgetChannel, reload: boolean = true): void {
+    if (this.joinedRoomId && this.joinedRoomId.toLowerCase() !== ch.id.toLowerCase()) {
+      this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
+    }
+    this.cancelEdit();
+    this.cancelReply();
+    this.exitSelectionMode();
+    this.activeChannel.set(ch);
+    this.supportRoomId = ch.id;
+    this.persistRoomId(ch.id);
+    this.joinedRoomId = ch.id;
+    this.signalR.joinOrderRoom(ch.id).catch(() => {});
+    if (reload || this.messages().length === 0) {
+      this.fetchMessages(ch.id, this.isOpen());
+    }
+    this.queueScrollToLatest();
   }
 
   private persistRoomId(roomId: string): void {
