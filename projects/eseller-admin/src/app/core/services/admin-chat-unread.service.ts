@@ -47,12 +47,19 @@ export class AdminChatUnreadService implements OnDestroy {
   applyFromConversations(list: Array<{ orderRequestId?: string; id?: string; unreadCount?: number }>): void {
     const next: Record<string, number> = {};
     for (const c of list || []) {
-      const id = String(c.orderRequestId || c.id || '').trim();
-      if (!id) continue;
-      const key = id.toLowerCase();
-      if (this.pendingClears.has(key)) continue;
+      const ids = [
+        String(c.orderRequestId || c.id || '').trim(),
+        String((c as any).participantId || '').trim(),
+        String((c as any).shopId || '').trim(),
+        String((c as any).userId || '').trim()
+      ].filter(Boolean);
+
       const n = Number(c.unreadCount || 0);
-      if (n > 0) next[id] = n;
+      for (const id of ids) {
+        const key = id.toLowerCase();
+        if (this.pendingClears.has(key)) continue;
+        if (n > 0) next[id] = n;
+      }
     }
     this.byConversationId.set(next);
   }

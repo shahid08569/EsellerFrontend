@@ -190,6 +190,12 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     if (reload || this.messages().length === 0) {
       this.fetchMessages(ch.id, this.isOpen());
     }
+    if (this.isOpen()) {
+      this.chatService.markConversationAsRead(ch.id).subscribe({
+        next: () => this.refreshUnreadBadge(),
+        error: () => {}
+      });
+    }
     this.queueScrollToLatest();
   }
 
