@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
-import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption, AuthStore } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import {
@@ -50,7 +50,9 @@ export class OrderManagement implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   readonly permissionService = inject(AdminPermissionService);
+  readonly authStore = inject(AuthStore);
 
+  readonly isPartner = computed(() => this.authStore.role() === 'Partner');
   readonly canPlaceOrder = computed(() => this.permissionService.has('orders:place'));
   readonly canManageOrders = computed(() => this.permissionService.has('orders:manage'));
 
@@ -202,20 +204,18 @@ export class OrderManagement implements OnInit {
   readonly placeFilterBrandId = signal<string>('all');
 
   readonly mainShopOptions = computed<SearchableSelectOption[]>(() => [
-    { value: 'all', label: 'All Merchant Shops' },
+    { value: 'all', label: this.isPartner() ? 'All My Referral Shops' : 'All Merchant Shops' },
     ...this.shops().map(s => ({
       value: s.id,
-      label: s.name,
-      sublabel: s.city ? `${s.city}${s.country ? ', ' + s.country : ''}` : (s.phone || undefined)
+      label: s.name
     }))
   ]);
 
   readonly placeShopOptions = computed<SearchableSelectOption[]>(() => [
-    { value: 'all', label: 'All Shops' },
+    { value: 'all', label: this.isPartner() ? 'All My Referral Shops' : 'All Shops' },
     ...this.shops().map(s => ({
       value: s.id,
-      label: s.name,
-      sublabel: s.city ? `${s.city}${s.country ? ', ' + s.country : ''}` : (s.phone || undefined)
+      label: s.name
     }))
   ]);
 
@@ -254,6 +254,10 @@ export class OrderManagement implements OnInit {
 
   readonly filteredPlaceProducts = computed(() => {
     let list = [...this.placeCatalogProducts()];
+    if (this.isPartner()) {
+      const partnerShopIds = new Set(this.shops().map(s => s.id.toLowerCase()));
+      list = list.filter(p => p.shopId && partnerShopIds.has(p.shopId.toLowerCase()));
+    }
     const term = this.placeFilterSearch().trim().toLowerCase();
     const shopId = this.placeFilterShopId();
     const categoryId = this.placeFilterCategoryId();
@@ -415,14 +419,39 @@ export class OrderManagement implements OnInit {
   }
 
   loadShops(): void {
-    this.adminService.getShops(1, 200).pipe(
-      takeUntilDestroyed(this.destroyRef)
-    ).subscribe({
-      next: (res) => {
-        this.shops.set(res?.items || []);
-      },
-      error: () => {}
-    });
+    if (this.isPartner()) {
+      this.adminService.getMyReferrals().pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (res) => {
+          const list = (res?.shops || []).map((s: any) => ({
+            id: s.id,
+            name: s.name,
+            slug: s.slug,
+            city: '',
+            country: '',
+            phone: s.phone,
+            logoUrl: s.logoUrl,
+            status: s.status,
+            isActive: s.isActive,
+            rating: s.rating ?? 5,
+            totalProducts: s.totalProducts ?? 0,
+            createdAt: s.joinedAt || new Date().toISOString()
+          } as unknown as AdminShopDto));
+          this.shops.set(list);
+        },
+        error: () => {}
+      });
+    } else {
+      this.adminService.getShops(1, 500).pipe(
+        takeUntilDestroyed(this.destroyRef)
+      ).subscribe({
+        next: (res) => {
+          this.shops.set(res?.items || []);
+        },
+        error: () => {}
+      });
+    }
   }
 
   loadOrders(): void {
@@ -1114,8 +1143,8 @@ export class OrderManagement implements OnInit {
         if (approvedList.length > 0) {
           this.placeCatalogProducts.set(approvedList);
           this.placeLoadingProducts.set(false);
-        } else if (!shopId) {
-          // If no approved seller listings exist yet, fall back to master warehouse catalog
+        } else if (!shopId && !this.isPartner()) {
+          // If no approved seller listings exist yet, fall back to master warehouse catalog (SuperAdmin only)
           this.adminService.getProducts(undefined, undefined, 1, 200).pipe(
             catchError(() => of({ items: [], totalCount: 0 } as any)),
             takeUntilDestroyed(this.destroyRef)

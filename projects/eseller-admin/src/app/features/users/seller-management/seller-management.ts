@@ -1,29 +1,34 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { Router, ActivatedRoute } from '@angular/router';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
-import { AdminShopkeeperDto, UserLocationLogDto } from '../../../core/models/admin.models';
+import { AdminShopkeeperDto, UserLocationLogDto, AdminPartnerDto } from '../../../core/models/admin.models';
 
 @Component({
   selector: 'app-seller-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout, SearchableSelect],
   templateUrl: './seller-management.html'
 })
 export class SellerManagement implements OnInit {
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
 
   readonly isLoading = signal<boolean>(true);
   readonly searchTerm = signal<string>('');
-  readonly statusFilter = signal<'ALL' | 'Approved' | 'Pending' | 'Rejected'>('ALL');
+  readonly statusFilter = signal<'ALL' | 'Approved' | 'PartnerApproved' | 'Pending' | 'Rejected'>('ALL');
   readonly actionInProgress = signal<string | null>(null);
 
   // Sellers data
   readonly sellers = signal<AdminShopkeeperDto[]>([]);
+
+  // Partners data & filter
+  readonly partners = signal<AdminPartnerDto[]>([]);
+  readonly selectedPartnerFilter = signal<string>('ALL');
 
   // Pagination
   readonly currentPage = signal<number>(1);
@@ -45,8 +50,42 @@ export class SellerManagement implements OnInit {
   readonly deleteSellerReason = signal<string>('');
   readonly sellerToDelete = signal<AdminShopkeeperDto | null>(null);
 
+  readonly partnerOptions = computed<SearchableSelectOption[]>(() => {
+    const opts: SearchableSelectOption[] = [
+      { value: 'ALL', label: 'All Partners' }
+    ];
+    for (const p of this.partners()) {
+      opts.push({
+        value: p.id,
+        label: p.name || p.email,
+        sublabel: p.referralCode ? `Code: ${p.referralCode}` : undefined
+      });
+    }
+    return opts;
+  });
+
   ngOnInit(): void {
+    this.loadPartners();
+    this.route.queryParams.subscribe(params => {
+      if (params['tab'] === 'partner-approved') {
+        this.statusFilter.set('PartnerApproved');
+      }
+      if (params['partnerId']) {
+        this.selectedPartnerFilter.set(params['partnerId']);
+      }
+    });
     this.loadSellers();
+  }
+
+  loadPartners(): void {
+    this.adminService.getPartners().subscribe({
+      next: (list) => {
+        this.partners.set(list || []);
+      },
+      error: () => {
+        this.partners.set([]);
+      }
+    });
   }
 
   loadSellers(): void {
@@ -67,6 +106,9 @@ export class SellerManagement implements OnInit {
   // Summary Metrics
   readonly totalSellersCount = computed(() => this.sellers().length);
   readonly approvedCount = computed(() => this.sellers().filter(s => s.status === 'Approved').length);
+  readonly partnerApprovedCount = computed(() => 
+    this.sellers().filter(s => s.status === 'Approved' && (!!s.partnerId || !!s.referredByCode)).length
+  );
   readonly pendingCount = computed(() => this.sellers().filter(s => s.status === 'Pending').length);
   readonly totalRevenue = computed(() => 
     this.sellers().reduce((sum, s) => sum + (s.totalRevenue || 0), 0)
@@ -79,8 +121,15 @@ export class SellerManagement implements OnInit {
     setTimeout(() => this.isLoading.set(false), 180);
   }
 
-  onFilterStatus(status: 'ALL' | 'Approved' | 'Pending' | 'Rejected'): void {
+  onFilterStatus(status: 'ALL' | 'Approved' | 'PartnerApproved' | 'Pending' | 'Rejected'): void {
     this.statusFilter.set(status);
+    this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
+  onPartnerFilterChange(partnerId: string): void {
+    this.selectedPartnerFilter.set(partnerId);
     this.currentPage.set(1);
     this.isLoading.set(true);
     setTimeout(() => this.isLoading.set(false), 180);
@@ -90,9 +139,20 @@ export class SellerManagement implements OnInit {
     let list = this.sellers();
     const term = this.searchTerm().trim().toLowerCase();
     const status = this.statusFilter();
+    const selectedPartnerId = this.selectedPartnerFilter();
 
-    if (status !== 'ALL') {
+    if (status === 'PartnerApproved') {
+      list = list.filter(s => s.status === 'Approved' && (!!s.partnerId || !!s.referredByCode));
+    } else if (status !== 'ALL') {
       list = list.filter(s => s.status === status);
+    }
+
+    if (selectedPartnerId !== 'ALL') {
+      const partnerObj = this.partners().find(p => p.id === selectedPartnerId);
+      list = list.filter(s => 
+        s.partnerId === selectedPartnerId ||
+        (partnerObj?.referralCode && s.referredByCode === partnerObj.referralCode)
+      );
     }
 
     if (term) {
@@ -101,7 +161,10 @@ export class SellerManagement implements OnInit {
         (s.email && s.email.toLowerCase().includes(term)) ||
         (s.storeName && s.storeName.toLowerCase().includes(term)) ||
         (s.city && s.city.toLowerCase().includes(term)) ||
-        (s.phone && s.phone.includes(term))
+        (s.phone && s.phone.includes(term)) ||
+        (s.partnerName && s.partnerName.toLowerCase().includes(term)) ||
+        (s.referredByName && s.referredByName.toLowerCase().includes(term)) ||
+        (s.referredByCode && s.referredByCode.toLowerCase().includes(term))
       );
     }
 

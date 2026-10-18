@@ -2,15 +2,15 @@ import { Component, computed, inject, OnInit, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { AuthStore, ToastService, SkeletonLayout } from 'eseller-shared';
+import { AuthStore, ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPermissionService } from '../../../core/services/admin-permission.service';
-import { PartnerReferralsDto, PartnerReferredShopDto } from '../../../core/models/admin.models';
+import { PartnerReferralsDto, PartnerReferredShopDto, AdminPartnerDto } from '../../../core/models/admin.models';
 
 @Component({
   selector: 'app-partner-referrals',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout, SearchableSelect],
   templateUrl: './partner-referrals.html'
 })
 export class PartnerReferrals implements OnInit {
@@ -22,6 +22,11 @@ export class PartnerReferrals implements OnInit {
 
   readonly isLoading = signal<boolean>(true);
   readonly data = signal<PartnerReferralsDto | null>(null);
+  readonly actionInProgress = signal<string | null>(null);
+
+  // Partners list for SuperAdmin filter
+  readonly partners = signal<AdminPartnerDto[]>([]);
+  readonly selectedPartnerId = signal<string>('');
 
   // Search & Filters
   readonly searchQuery = signal<string>('');
@@ -38,6 +43,14 @@ export class PartnerReferrals implements OnInit {
   // Permissions
   readonly canManageShops = computed(() => this.permissions.has('shops:manage') || this.isSuperAdmin());
   readonly canPlaceOrders = computed(() => this.permissions.has('orders:place') || this.isSuperAdmin());
+
+  readonly partnerSelectOptions = computed<SearchableSelectOption[]>(() => {
+    return this.partners().map(p => ({
+      value: p.id,
+      label: p.name || p.email,
+      sublabel: p.referralCode ? `Code: ${p.referralCode}` : undefined
+    }));
+  });
 
   readonly filteredShops = computed(() => {
     const list = this.data()?.shops || [];
@@ -63,19 +76,53 @@ export class PartnerReferrals implements OnInit {
   });
 
   ngOnInit(): void {
+    if (this.isSuperAdmin()) {
+      this.adminService.getPartners().subscribe(list => {
+        this.partners.set(list || []);
+      });
+    }
     this.loadReferrals();
   }
 
-  loadReferrals(): void {
+  loadReferrals(partnerId?: string): void {
     this.isLoading.set(true);
-    this.adminService.getMyReferrals().subscribe({
+    const pId = partnerId || this.selectedPartnerId();
+    const req = (this.isSuperAdmin() && pId)
+      ? this.adminService.getPartnerReferrals(pId)
+      : this.adminService.getMyReferrals();
+
+    req.subscribe({
       next: (res) => {
         this.data.set(res);
+        if (this.isSuperAdmin() && !this.selectedPartnerId() && res?.partnerId) {
+          this.selectedPartnerId.set(res.partnerId);
+        }
         this.isLoading.set(false);
       },
       error: () => {
         this.toast.show('Failed to load partner referral information.', 'error');
         this.isLoading.set(false);
+      }
+    });
+  }
+
+  onPartnerSelectChange(partnerId: string): void {
+    this.selectedPartnerId.set(partnerId);
+    this.loadReferrals(partnerId);
+  }
+
+  approveReferredShop(shop: PartnerReferredShopDto): void {
+    const targetId = shop.shopkeeperId || shop.id;
+    this.actionInProgress.set(shop.id);
+    this.adminService.approveShopkeeper(targetId).subscribe({
+      next: () => {
+        this.actionInProgress.set(null);
+        this.toast.show(`Store "${shop.name}" approved successfully!`, 'success');
+        this.loadReferrals();
+      },
+      error: (err: any) => {
+        this.actionInProgress.set(null);
+        this.toast.show(err?.error?.error || 'Failed to approve store', 'error');
       }
     });
   }

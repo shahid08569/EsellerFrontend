@@ -46,6 +46,8 @@ export interface AdminShopkeeperDto {
   referralsCount?: number;
   referredByCode?: string | null;
   referredByName?: string | null;
+  partnerId?: string | null;
+  partnerName?: string | null;
 }
 
 export interface ShopCategoryDto {

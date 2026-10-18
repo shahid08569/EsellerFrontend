@@ -622,11 +622,14 @@
                 </a>
               }
               @if (canAccessShops()) {
-                <a routerLink="/sellers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                <a routerLink="/sellers" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                   <span>Sellers (Merchants)</span>
                   @if (pendingSellersCount() > 0) {
                     <span class="admin-nav-count">{{ formatNavBadge(pendingSellersCount()) }}</span>
                   }
+                </a>
+                <a [routerLink]="['/sellers']" [queryParams]="{tab: 'partner-approved'}" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
+                  <span>Partner Approved Sellers</span>
                 </a>
                 <a routerLink="/shops" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
                   <span>Seller Registrations</span>
