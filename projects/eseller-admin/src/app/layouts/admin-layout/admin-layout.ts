@@ -193,7 +193,7 @@ export class AdminLayout implements OnInit {
   }
 
   /** Shop Management submenu — match by view (+ tab for applications). */
-  isShopNav(item: 'pending' | 'stores' | 'tiers' | 'traffic' | 'all'): boolean {
+  isShopNav(item: 'pending' | 'stores' | 'tiers' | 'traffic' | 'all' | 'referrals'): boolean {
     const url = this.currentUrl() || this.router.url || '';
     if (!url.startsWith('/shops')) return false;
 
@@ -204,6 +204,7 @@ export class AdminLayout implements OnInit {
 
     if (item === 'traffic') return view === 'traffic';
     if (item === 'tiers') return view === 'tiers';
+    if (item === 'referrals') return view === 'referrals';
     if (item === 'stores') return view === 'stores' || (!view && !tab);
     if (item === 'pending') {
       return view === 'applications' && (tab === 'pending' || tab === '');

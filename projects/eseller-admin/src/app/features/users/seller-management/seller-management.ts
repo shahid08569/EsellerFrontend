@@ -103,15 +103,20 @@ export class SellerManagement implements OnInit {
     });
   }
 
-  // Summary Metrics
-  readonly totalSellersCount = computed(() => this.sellers().length);
-  readonly approvedCount = computed(() => this.sellers().filter(s => s.status === 'Approved').length);
-  readonly partnerApprovedCount = computed(() => 
-    this.sellers().filter(s => s.status === 'Approved' && (!!s.partnerId || !!s.referredByCode)).length
-  );
-  readonly pendingCount = computed(() => this.sellers().filter(s => s.status === 'Pending').length);
+  // Isolate Direct Platform Merchants vs Partner Referrals
+  isNormalSeller = (s: AdminShopkeeperDto) => !s.partnerId && !s.referredByCode;
+  isReferralSeller = (s: AdminShopkeeperDto) => !!s.partnerId || !!s.referredByCode;
+
+  readonly normalSellers = computed(() => this.sellers().filter(this.isNormalSeller));
+  readonly referralSellers = computed(() => this.sellers().filter(this.isReferralSeller));
+
+  // Summary Metrics (Direct merchants for platform stats, Referral sellers for partner metrics)
+  readonly totalSellersCount = computed(() => this.normalSellers().length);
+  readonly approvedCount = computed(() => this.normalSellers().filter(s => s.status === 'Approved').length);
+  readonly partnerApprovedCount = computed(() => this.referralSellers().length);
+  readonly pendingCount = computed(() => this.normalSellers().filter(s => s.status === 'Pending').length);
   readonly totalRevenue = computed(() => 
-    this.sellers().reduce((sum, s) => sum + (s.totalRevenue || 0), 0)
+    this.normalSellers().reduce((sum, s) => sum + (s.totalRevenue || 0), 0)
   );
 
   onSearch(term: string): void {
@@ -136,23 +141,30 @@ export class SellerManagement implements OnInit {
   }
 
   readonly filteredSellers = computed(() => {
-    let list = this.sellers();
-    const term = this.searchTerm().trim().toLowerCase();
     const status = this.statusFilter();
+    const term = this.searchTerm().trim().toLowerCase();
     const selectedPartnerId = this.selectedPartnerFilter();
 
-    if (status === 'PartnerApproved') {
-      list = list.filter(s => s.status === 'Approved' && (!!s.partnerId || !!s.referredByCode));
-    } else if (status !== 'ALL') {
-      list = list.filter(s => s.status === status);
-    }
+    let list: AdminShopkeeperDto[];
 
-    if (selectedPartnerId !== 'ALL') {
-      const partnerObj = this.partners().find(p => p.id === selectedPartnerId);
-      list = list.filter(s => 
-        s.partnerId === selectedPartnerId ||
-        (partnerObj?.referralCode && s.referredByCode === partnerObj.referralCode)
-      );
+    if (status === 'PartnerApproved') {
+      // STRICTLY PARTNER REFERRALS ONLY
+      list = this.referralSellers();
+
+      if (selectedPartnerId !== 'ALL') {
+        const partnerObj = this.partners().find(p => p.id === selectedPartnerId);
+        list = list.filter(s => 
+          s.partnerId === selectedPartnerId ||
+          (partnerObj?.referralCode && s.referredByCode === partnerObj.referralCode)
+        );
+      }
+    } else {
+      // STRICTLY NORMAL PLATFORM DIRECT MERCHANTS ONLY
+      list = this.normalSellers();
+
+      if (status !== 'ALL') {
+        list = list.filter(s => s.status === status);
+      }
     }
 
     if (term) {

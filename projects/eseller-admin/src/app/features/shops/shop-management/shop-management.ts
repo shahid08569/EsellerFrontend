@@ -5,11 +5,11 @@ import { Router, ActivatedRoute } from '@angular/router';
 import { AuthStore, ToastService, SignalRService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPermissionService } from '../../../core/services/admin-permission.service';
-import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto, AdminShopTrafficItemDto, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto } from '../../../core/models/admin.models';
+import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto, AdminShopTrafficItemDto, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto, AdminPartnerDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
-type ViewMode = 'stores' | 'applications' | 'tiers' | 'traffic';
+type ViewMode = 'stores' | 'applications' | 'referrals' | 'tiers' | 'traffic';
 
 export interface TierUpgradeRequest {
   id: string;
@@ -87,6 +87,40 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly activeTab = signal<FilterTab>('all');
   readonly searchTerm = signal<string>('');
   readonly actionInProgress = signal<string | null>(null);
+
+  // Direct platform merchants vs Partner Referrals isolation
+  isNormalShopkeeper = (s: AdminShopkeeperDto) => !s.partnerId && !s.referredByCode;
+  isReferralShopkeeper = (s: AdminShopkeeperDto) => !!s.partnerId || !!s.referredByCode;
+
+  readonly normalShopkeepers = computed(() => this.allShopkeepers().filter(this.isNormalShopkeeper));
+  readonly referralShopkeepers = computed(() => this.allShopkeepers().filter(this.isReferralShopkeeper));
+
+  readonly referralShopIds = computed(() => {
+    const set = new Set<string>();
+    for (const r of this.referralShopkeepers()) {
+      if (r.shopId) set.add(r.shopId);
+    }
+    return set;
+  });
+
+  // Partners data & filter for referrals view
+  readonly partners = signal<AdminPartnerDto[]>([]);
+  readonly selectedPartnerFilter = signal<string>('ALL');
+  readonly referralActiveTab = signal<FilterTab>('all');
+
+  readonly partnerOptions = computed<SearchableSelectOption[]>(() => {
+    const opts: SearchableSelectOption[] = [
+      { value: 'ALL', label: 'All Partners' }
+    ];
+    for (const p of this.partners()) {
+      opts.push({
+        value: p.id,
+        label: p.name || p.email,
+        sublabel: p.referralCode ? `Code: ${p.referralCode}` : undefined
+      });
+    }
+    return opts;
+  });
 
   // Traffic & Visitor Analytics State
   readonly Math = Math;
@@ -429,7 +463,7 @@ export class ShopManagement implements OnInit, OnDestroy {
       const tabParam = params.get('tab') as FilterTab | null;
       const viewParam = params.get('view') as ViewMode | null;
 
-      if (viewParam && ['stores', 'applications', 'tiers', 'traffic'].includes(viewParam)) {
+      if (viewParam && ['stores', 'applications', 'referrals', 'tiers', 'traffic'].includes(viewParam)) {
         this.viewMode.set(viewParam);
         if (viewParam === 'traffic') {
           this.loadAllShopsTraffic();
@@ -440,6 +474,11 @@ export class ShopManagement implements OnInit, OnDestroy {
 
       if (tabParam && ['all', 'pending', 'approved', 'rejected'].includes(tabParam)) {
         this.activeTab.set(tabParam);
+        this.referralActiveTab.set(tabParam);
+      }
+      const partnerParam = params.get('partnerId');
+      if (partnerParam) {
+        this.selectedPartnerFilter.set(partnerParam);
       }
       this.currentPage.set(1);
     });
@@ -560,6 +599,12 @@ export class ShopManagement implements OnInit, OnDestroy {
       });
     }
 
+    // Fetch partner operators for referral filter
+    this.adminService.getPartners().subscribe({
+      next: (list) => this.partners.set(list || []),
+      error: () => this.partners.set([])
+    });
+
     // Fetch tier upgrade requests (Pending + Approved + Rejected)
     this.reloadTierRequests();
 
@@ -567,9 +612,9 @@ export class ShopManagement implements OnInit, OnDestroy {
     this.loadAllShopsTraffic();
   }
 
-  // Filtered Applications List
+  // Filtered Applications List (Direct Platform Merchants ONLY)
   readonly filteredShopkeepers = computed(() => {
-    let list = this.allShopkeepers();
+    let list = this.normalShopkeepers();
     const tab = this.activeTab();
     const term = this.searchTerm().trim().toLowerCase();
 
@@ -601,9 +646,10 @@ export class ShopManagement implements OnInit, OnDestroy {
     return list;
   });
 
-  // Filtered Active Stores List
+  // Filtered Active Stores List (Direct Platform Stores ONLY, excludes partner referrals)
   readonly filteredActiveStores = computed(() => {
-    let list = this.activeShops();
+    const refIds = this.referralShopIds();
+    let list = this.activeShops().filter(s => !refIds.has(s.id));
     const term = this.searchTerm().trim().toLowerCase();
     const catFilter = this.selectedCategoryFilter();
 
@@ -625,15 +671,65 @@ export class ShopManagement implements OnInit, OnDestroy {
     return list;
   });
 
-  // Tab counts for Applications
+  // Filtered Partner Referrals List (Strictly Partner Referrals ONLY)
+  readonly filteredReferralShopkeepers = computed(() => {
+    let list = this.referralShopkeepers();
+    const tab = this.referralActiveTab();
+    const term = this.searchTerm().trim().toLowerCase();
+    const selectedPartnerId = this.selectedPartnerFilter();
+
+    if (tab === 'pending') {
+      list = list.filter(s => String(s.status).toLowerCase() === 'pending');
+    } else if (tab === 'approved') {
+      list = list.filter(s => String(s.status).toLowerCase() === 'approved');
+    } else if (tab === 'rejected') {
+      list = list.filter(s => String(s.status).toLowerCase() === 'rejected');
+    }
+
+    if (selectedPartnerId !== 'ALL') {
+      const partnerObj = this.partners().find(p => p.id === selectedPartnerId);
+      list = list.filter(s => 
+        s.partnerId === selectedPartnerId ||
+        (partnerObj?.referralCode && s.referredByCode === partnerObj.referralCode)
+      );
+    }
+
+    if (term) {
+      list = list.filter(s => 
+        (s.storeName && s.storeName.toLowerCase().includes(term)) ||
+        (s.name && s.name.toLowerCase().includes(term)) ||
+        (s.email && s.email.toLowerCase().includes(term)) ||
+        (s.city && s.city.toLowerCase().includes(term)) ||
+        (s.phone && s.phone.includes(term)) ||
+        (s.partnerName && s.partnerName.toLowerCase().includes(term)) ||
+        (s.referredByName && s.referredByName.toLowerCase().includes(term)) ||
+        (s.referredByCode && s.referredByCode.toLowerCase().includes(term))
+      );
+    }
+
+    return list;
+  });
+
+  // Tab counts for Applications (Direct platform merchants only)
   readonly countPending = computed(() => 
-    this.allShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
+    this.normalShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
   );
   readonly countApproved = computed(() => 
-    this.allShopkeepers().filter(s => String(s.status).toLowerCase() === 'approved').length
+    this.normalShopkeepers().filter(s => String(s.status).toLowerCase() === 'approved').length
   );
   readonly countRejected = computed(() => 
-    this.allShopkeepers().filter(s => String(s.status).toLowerCase() === 'rejected').length
+    this.normalShopkeepers().filter(s => String(s.status).toLowerCase() === 'rejected').length
+  );
+
+  // Tab counts for Partner Referrals
+  readonly countPendingReferrals = computed(() => 
+    this.referralShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
+  );
+  readonly countApprovedReferrals = computed(() => 
+    this.referralShopkeepers().filter(s => String(s.status).toLowerCase() === 'approved').length
+  );
+  readonly countRejectedReferrals = computed(() => 
+    this.referralShopkeepers().filter(s => String(s.status).toLowerCase() === 'rejected').length
   );
 
   // Paginated Slices
@@ -657,13 +753,27 @@ export class ShopManagement implements OnInit, OnDestroy {
     Math.ceil(this.filteredActiveStores().length / this.pageSize()) || 1
   );
 
-  readonly currentTotalPages = computed(() => 
-    this.viewMode() === 'stores' ? this.totalActiveStorePages() : this.totalShopkeeperPages()
+  readonly pagedReferralShopkeepers = computed(() => {
+    const list = this.filteredReferralShopkeepers();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
+  readonly totalReferralPages = computed(() => 
+    Math.ceil(this.filteredReferralShopkeepers().length / this.pageSize()) || 1
   );
 
-  readonly currentTotalItems = computed(() => 
-    this.viewMode() === 'stores' ? this.filteredActiveStores().length : this.filteredShopkeepers().length
-  );
+  readonly currentTotalPages = computed(() => {
+    if (this.viewMode() === 'stores') return this.totalActiveStorePages();
+    if (this.viewMode() === 'referrals') return this.totalReferralPages();
+    return this.totalShopkeeperPages();
+  });
+
+  readonly currentTotalItems = computed(() => {
+    if (this.viewMode() === 'stores') return this.filteredActiveStores().length;
+    if (this.viewMode() === 'referrals') return this.filteredReferralShopkeepers().length;
+    return this.filteredShopkeepers().length;
+  });
 
   readonly startItemIndex = computed(() => {
     if (this.currentTotalItems() === 0) return 0;
@@ -712,6 +822,8 @@ export class ShopManagement implements OnInit, OnDestroy {
     this.router.navigate([], {
       queryParams: mode === 'applications'
         ? { view: mode, tab: this.activeTab() }
+        : mode === 'referrals'
+        ? { view: mode, tab: this.referralActiveTab() }
         : { view: mode, tab: null },
       queryParamsHandling: ''
     });
@@ -728,6 +840,20 @@ export class ShopManagement implements OnInit, OnDestroy {
     this.isLoading.set(true);
     setTimeout(() => this.isLoading.set(false), 180);
     this.router.navigate([], { queryParams: { tab: tab }, queryParamsHandling: 'merge' });
+  }
+
+  switchReferralTab(tab: FilterTab): void {
+    this.referralActiveTab.set(tab);
+    this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
+  onPartnerFilterChange(partnerId: string): void {
+    this.selectedPartnerFilter.set(partnerId);
+    this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
   }
 
   onSearch(term: string): void {
