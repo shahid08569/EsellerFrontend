@@ -52,6 +52,10 @@ export class PartnerReferrals implements OnInit {
     }));
   });
 
+  readonly activeCount = computed(() => (this.data()?.shops || []).filter(s => s.status === 'Approved' && s.isActive).length);
+  readonly pendingCount = computed(() => (this.data()?.shops || []).filter(s => s.status === 'Pending').length);
+  readonly suspendedCount = computed(() => (this.data()?.shops || []).filter(s => s.status !== 'Pending' && (!s.isActive || s.status === 'Rejected' || s.status === 'Suspended')).length);
+
   readonly filteredShops = computed(() => {
     const list = this.data()?.shops || [];
     const query = this.searchQuery().trim().toLowerCase();
@@ -69,7 +73,7 @@ export class PartnerReferrals implements OnInit {
         status === 'all' ||
         (status === 'Approved' && shop.status === 'Approved' && shop.isActive) ||
         (status === 'Pending' && shop.status === 'Pending') ||
-        (status === 'Suspended' && (!shop.isActive || shop.status === 'Rejected'));
+        (status === 'Suspended' && shop.status !== 'Pending' && (!shop.isActive || shop.status === 'Rejected' || shop.status === 'Suspended'));
 
       return matchQuery && matchStatus;
     });

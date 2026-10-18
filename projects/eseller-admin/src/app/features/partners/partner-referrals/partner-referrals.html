@@ -167,7 +167,7 @@
           </svg>
         </div>
       </div>
-      <div class="text-2xl font-black text-emerald-600">{{ data()?.activeShops || 0 }}</div>
+      <div class="text-2xl font-black text-emerald-600">{{ activeCount() }}</div>
       <p class="text-[10px] text-emerald-500/80">Approved & selling</p>
     </div>
 
@@ -181,7 +181,7 @@
           </svg>
         </div>
       </div>
-      <div class="text-2xl font-black text-amber-600">{{ data()?.pendingShops || 0 }}</div>
+      <div class="text-2xl font-black text-amber-600">{{ pendingCount() }}</div>
       <p class="text-[10px] text-amber-500/80">Awaiting merchant review</p>
     </div>
 
@@ -259,7 +259,7 @@
           [class.bg-emerald-50]="statusFilter() !== 'Approved'"
           [class.text-emerald-700]="statusFilter() !== 'Approved'"
           class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
-          Active ({{ data()?.activeShops || 0 }})
+          Active ({{ activeCount() }})
         </button>
 
         <button
@@ -270,7 +270,7 @@
           [class.bg-amber-50]="statusFilter() !== 'Pending'"
           [class.text-amber-700]="statusFilter() !== 'Pending'"
           class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
-          Pending ({{ data()?.pendingShops || 0 }})
+          Pending ({{ pendingCount() }})
         </button>
 
         <button
@@ -281,7 +281,7 @@
           [class.bg-rose-50]="statusFilter() !== 'Suspended'"
           [class.text-rose-700]="statusFilter() !== 'Suspended'"
           class="px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap">
-          Suspended ({{ data()?.suspendedShops || 0 }})
+          Suspended ({{ suspendedCount() }})
         </button>
       </div>
     </div>
