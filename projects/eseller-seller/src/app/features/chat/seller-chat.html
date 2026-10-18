@@ -216,16 +216,7 @@
                       }
                       @if (msg.isMe && tickState(msg) !== 'pending') {
                         <div class="flex items-center justify-end gap-0.5 mt-1 text-[10px]">
-                          @if (tickState(msg) === 'read') {
-                            <!-- Read: double tick in sky blue #38bdf8 -->
-                            <span class="font-black text-[11px] tracking-tighter" style="color: #38bdf8 !important;" title="Read">✓✓</span>
-                          } @else if (tickState(msg) === 'delivered') {
-                            <!-- Delivered: double tick in grey/white -->
-                            <span class="opacity-80 font-bold text-[11px] tracking-tighter" title="Delivered">✓✓</span>
-                          } @else {
-                            <!-- Sent / Offline: single tick -->
-                            <span class="opacity-70 text-[11px]" title="Sent">✓</span>
-                          }
+                          <span class="opacity-70 text-[11px]" title="Sent">✓</span>
                         </div>
                       }
                     }

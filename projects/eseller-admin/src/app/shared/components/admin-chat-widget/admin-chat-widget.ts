@@ -226,9 +226,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
     this.signalR.startChatConnection().then(() => {
       this.unsubscribeSignalR = this.signalR.onReceiveMessage((incoming) => {
-        const myAccId = this.authStore.currentAccount()?.accountId?.toLowerCase();
-        const msgSenderAccId = String((incoming as any).senderAccountId || '').toLowerCase();
-        if (myAccId && msgSenderAccId && myAccId === msgSenderAccId) {
+        if (this.isMyMessage(incoming)) {
           return;
         }
 
@@ -254,10 +252,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
         if (!shopName) shopName = 'Contact';
 
-        const roleLower = String(incoming.senderRole || '').toLowerCase();
-        const isFromAdmin = this.isPartner()
-          ? roleLower.includes('partner')
-          : (roleLower.includes('superadmin') || roleLower.includes('admin'));
+        const senderDisplayName = this.getSenderDisplayName(incoming, false, shopName);
 
         this.messagesMap.update(map => {
           const list = (map[shopId] || []).filter(m =>
@@ -271,8 +266,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               ...list,
               {
                 id: incoming.messageId || `m-${Date.now()}`,
-                sender: isFromAdmin ? ('admin' as const) : ('seller' as const),
-                senderName: isFromAdmin ? 'Management' : ((incoming as any).senderName || shopName),
+                sender: 'seller' as const,
+                senderName: senderDisplayName,
                 message: incoming.message,
                 timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
                   hour: '2-digit',
@@ -730,13 +725,17 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         if (!msgs || !msgs.length) {
           if (!(this.messagesMap()[shopId]?.length)) {
             const shop = this.shops().find(s => s.id === shopId);
+            const myName = this.isPartner() ? 'Partner Support' : 'Management';
+            const welcomeMsg = this.isPartner()
+              ? `Hello ${shop?.name || 'Merchant'}! This is your direct partner support channel.`
+              : `Hello ${shop?.name || 'Merchant'}! This is your direct support channel with Management.`;
             this.messagesMap.update(map => ({
               ...map,
               [shopId]: [{
                 id: `init-${shopId}`,
                 sender: 'admin',
-                senderName: 'Management',
-                message: `Hello ${shop?.name || 'Merchant'}! This is your direct support channel with Management.`,
+                senderName: myName,
+                message: welcomeMsg,
                 timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
               }]
             }));
@@ -745,13 +744,12 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
 
         const formatted: AdminToSellerMessage[] = msgs.map((m: any) => {
-          const role = String(m.senderRole || '');
-          const isAdmin = this.isAdminRole(role);
+          const isMe = this.isMyMessage(m);
           const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
           return {
             id: m.id || `msg-${Math.random()}`,
-            sender: isAdmin ? 'admin' : 'seller',
-            senderName: isAdmin ? 'Management' : (this.selectedShop()?.name || 'Merchant'),
+            sender: isMe ? 'admin' : 'seller',
+            senderName: this.getSenderDisplayName(m, isMe),
             message: isDel ? 'This message was deleted' : (m.message || m.content || ''),
             timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
               hour: '2-digit',
@@ -827,7 +825,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   startReply(msg: AdminToSellerMessage): void {
     if (msg.isDeletedForEveryone) return;
     const clean = this.getCleanMessage(msg.message);
-    const sName = msg.sender === 'admin' ? 'Management' : (this.selectedShop()?.name || 'Merchant');
+    const sName = msg.senderName || (msg.sender === 'admin' ? (this.isPartner() ? 'Partner Support' : 'Management') : (this.selectedShop()?.name || 'Merchant'));
     this.replyingTo.set({
       id: msg.id,
       senderName: sName,
@@ -1063,6 +1061,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     const tempId = `tmp-${Date.now()}`;
     const preview = payloadText || (attachment ? `📎 ${attachment.fileName}` : '');
     const stamp = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const myName = this.isPartner() ? 'Partner Support' : 'Management';
 
     this.messagesMap.update(map => ({
       ...map,
@@ -1071,7 +1070,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         {
           id: tempId,
           sender: 'admin',
-          senderName: 'Management',
+          senderName: myName,
           message: preview,
           timestamp: stamp,
           attachmentUrl: attachment?.url || null,
@@ -1121,7 +1120,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
               {
                 id: realId,
                 sender: 'admin',
-                senderName: 'Management',
+                senderName: myName,
                 message: preview,
                 timestamp: stamp,
                 attachmentUrl: attachment?.url || null,
@@ -1209,21 +1208,47 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     return status || 'Pending';
   }
 
-  private isAdminRole(role: string): boolean {
-    const r = role.toLowerCase();
-    // RoleType: Management=3, Partner=4
-    return r.includes('superadmin') || r.includes('partner') || r === '3' || r === '4';
+  private isMyMessage(m: any): boolean {
+    const myAccId = this.authStore.currentAccount()?.accountId?.toLowerCase();
+    const msgSenderAccId = String(
+      m?.senderAccountId || m?.SenderAccountId || m?.senderId || m?.SenderId || ''
+    ).toLowerCase();
+
+    if (myAccId && msgSenderAccId) {
+      return myAccId === msgSenderAccId;
+    }
+
+    const roleLower = String(m?.senderRole || m?.SenderRole || '').toLowerCase();
+    if (this.isPartner()) {
+      return roleLower.includes('partner') || roleLower === '4';
+    }
+    return roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower === '3';
   }
 
-  private isShopkeeperRole(role: string): boolean {
-    const r = role.toLowerCase();
-    // RoleType: Shopkeeper=2
-    return r.includes('shopkeeper') || r.includes('seller') || r === '2';
-  }
+  private getSenderDisplayName(m: any, isMe: boolean, fallbackName?: string): string {
+    if (isMe) {
+      return this.isPartner() ? 'Partner Support' : 'Management';
+    }
 
-  private isCustomerRole(role: string): boolean {
-    const r = role.toLowerCase();
-    return r.includes('user') || r.includes('customer') || r === '1';
+    const activeShop = this.selectedShop();
+    const activeName = fallbackName || activeShop?.name || '';
+    const roleLower = String(m?.senderRole || m?.SenderRole || '').toLowerCase();
+
+    if (this.isPartner()) {
+      if (this.directoryTab() === 'partner-service' || roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower === '3') {
+        return 'Partner Service';
+      }
+      return activeName || 'Merchant';
+    }
+
+    // SuperAdmin perspective
+    if (this.directoryTab() === 'partners' || roleLower.includes('partner') || roleLower === '4') {
+      return activeName || 'Partner';
+    }
+    if (this.directoryTab() === 'customers' || roleLower.includes('user') || roleLower.includes('customer') || roleLower === '1') {
+      return activeName || 'Customer';
+    }
+    return activeName || 'Merchant';
   }
 
   private queueScrollToLatest(): void {

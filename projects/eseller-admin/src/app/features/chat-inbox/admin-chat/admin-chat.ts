@@ -311,10 +311,11 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         ? (active.partnerName ? `Partner (${active.partnerName})` : 'Partner')
         : (active?.shopName || active?.customerName || 'Merchant');
     } else {
-      senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
+      const myOutboundName = this.isPartner() ? 'Partner Support' : 'Management';
+      senderDisplayName = isFromAdmin ? myOutboundName : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
       if (!isFromAdmin) {
-        if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
-        else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service';
+        if (roleLower.includes('partner')) senderDisplayName = active?.partnerName || active?.customerName || 'Partner';
+        else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Partner Service';
       }
     }
     const incomingId = String(incoming.messageId || '').toLowerCase();
@@ -522,10 +523,11 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               ? (convo.partnerName ? `Partner (${convo.partnerName})` : 'Partner')
               : (convo.shopName || convo.customerName || 'Merchant');
           } else {
-            senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+            const myOutboundName = this.isPartner() ? 'Partner Support' : 'Management';
+            senderDisplayName = isFromAdmin ? myOutboundName : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
             if (!isFromAdmin) {
-              if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
-              else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service';
+              if (roleLower.includes('partner')) senderDisplayName = convo.partnerName || convo.customerName || 'Partner';
+              else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Partner Service';
             }
           }
           const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
@@ -596,7 +598,8 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   startReply(msg: AdminDisplayMessage): void {
     if (msg.isDeletedForEveryone) return;
     const clean = this.getCleanMessage(msg.content);
-    const sName = msg.isFromAdmin ? 'Management' : (msg.senderName || 'Customer');
+    const myOutboundName = this.isPartner() ? 'Partner Support' : 'Management';
+    const sName = msg.isFromAdmin ? myOutboundName : (msg.senderName || 'Customer');
     this.replyingTo.set({
       id: msg.id,
       senderName: sName,
@@ -820,9 +823,10 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     this.cancelReply();
     const tempId = `tmp-${Date.now()}`;
     const preview = rawText || (attachment ? `📎 ${attachment.fileName}` : '');
+    const myOutboundName = this.isPartner() ? 'Partner Support' : 'Management';
     this.messages.update(prev => [...prev, {
       id: tempId,
-      senderName: 'Management',
+      senderName: myOutboundName,
       content: text,
       createdAt: new Date().toISOString(),
       isFromAdmin: true,
@@ -853,7 +857,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
           );
           return [...withoutDupes, {
             id: realId,
-            senderName: 'Management',
+            senderName: myOutboundName,
             content: text,
             createdAt: new Date().toISOString(),
             isFromAdmin: true,
