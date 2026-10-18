@@ -115,7 +115,9 @@ export class MainLayout implements OnInit, OnDestroy {
     // Route navigation loading bar & auto close sidebar on mobile
     this.router.events.pipe(takeUntilDestroyed(this.destroyRef)).subscribe(event => {
       if (event instanceof NavigationStart) {
-        this.isNavigating.set(true);
+        if (!event.url.includes('/chat')) {
+          this.isNavigating.set(true);
+        }
       } else if (
         event instanceof NavigationEnd ||
         event instanceof NavigationCancel ||

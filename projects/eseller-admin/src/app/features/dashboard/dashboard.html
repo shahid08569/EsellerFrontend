@@ -173,14 +173,16 @@
               <h3 class="text-sm font-black text-slate-900">Monthly Revenue</h3>
               <p class="text-[11px] text-slate-500 font-medium">Breakdown by month</p>
             </div>
-            <select
-              class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-hidden cursor-pointer"
-              [ngModel]="revenueMonthsFilter()"
-              (ngModelChange)="revenueMonthsFilter.set($event)">
-              <option [ngValue]="6">Last 6 months</option>
-              <option [ngValue]="9">Last 9 months</option>
-              <option [ngValue]="12">Last 12 months</option>
-            </select>
+            <div class="w-36">
+              <es-searchable-select
+                [options]="revenueMonthsOptions"
+                [value]="revenueMonthsFilter()"
+                (valueChange)="revenueMonthsFilter.set(+$event)"
+                customClass="w-full flex items-center justify-between gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer"
+                placeholder="Months"
+                searchPlaceholder="Search..."
+              />
+            </div>
           </div>
           <div class="flex-1 overflow-y-auto px-2 py-1">
             @if (filteredMonthlyRevenue().length === 0) {
@@ -216,14 +218,16 @@
               <h3 class="text-sm font-black text-slate-900">Weekly Orders</h3>
               <p class="text-[11px] text-slate-500 font-medium">Orders by day</p>
             </div>
-            <select
-              class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-hidden cursor-pointer"
-              [ngModel]="weeklyFilter()"
-              (ngModelChange)="weeklyFilter.set($event)">
-              <option value="this">This week</option>
-              <option value="busy">Busy days (10+)</option>
-              <option value="quiet">Quiet days (&lt;10)</option>
-            </select>
+            <div class="w-40">
+              <es-searchable-select
+                [options]="weeklyOptions"
+                [value]="weeklyFilter()"
+                (valueChange)="weeklyFilter.set($event)"
+                customClass="w-full flex items-center justify-between gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer"
+                placeholder="Filter"
+                searchPlaceholder="Search..."
+              />
+            </div>
           </div>
           <div class="flex-1 overflow-y-auto px-2 py-1">
             @if (filteredWeeklyOrders().length === 0) {
@@ -260,14 +264,16 @@
               <h3 class="text-sm font-black text-slate-900">Low Stock Alerts</h3>
               <p class="text-[11px] text-slate-500 font-medium">Inventory below threshold</p>
             </div>
-            <select
-              class="bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-slate-700 outline-hidden cursor-pointer"
-              [ngModel]="lowStockMin()"
-              (ngModelChange)="lowStockMin.set($event)">
-              <option [ngValue]="5">Max 5 left</option>
-              <option [ngValue]="10">Max 10 left</option>
-              <option [ngValue]="20">Max 20 left</option>
-            </select>
+            <div class="w-36">
+              <es-searchable-select
+                [options]="lowStockOptions"
+                [value]="lowStockMin()"
+                (valueChange)="lowStockMin.set(+$event)"
+                customClass="w-full flex items-center justify-between gap-1 px-2.5 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-lg text-xs font-semibold text-slate-700 cursor-pointer"
+                placeholder="Threshold"
+                searchPlaceholder="Search..."
+              />
+            </div>
           </div>
           <div class="flex-1 overflow-y-auto px-2 py-1">
             @if (dynamicLowStockItems().length === 0) {

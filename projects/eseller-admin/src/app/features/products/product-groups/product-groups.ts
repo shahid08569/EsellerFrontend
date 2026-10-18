@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { RouterLink, ActivatedRoute } from '@angular/router';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminShopDto, AdminProductDto, AdminCategoryDto } from '../../../core/models/admin.models';
 
@@ -64,7 +64,7 @@ export interface ProductGroupDetailDto {
 @Component({
   selector: 'app-product-groups',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout],
+  imports: [CommonModule, FormsModule, RouterLink, SkeletonLayout, SearchableSelect],
   templateUrl: './product-groups.html'
 })
 export class ProductGroups implements OnInit {
@@ -77,6 +77,16 @@ export class ProductGroups implements OnInit {
   readonly groups = signal<ProductGroupListItemDto[]>([]);
   readonly shops = signal<AdminShopDto[]>([]);
   readonly categories = signal<AdminCategoryDto[]>([]);
+
+  readonly shopFilterOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Merchant Shops' },
+    ...this.shops().map(s => ({ value: s.id, label: s.name }))
+  ]);
+
+  readonly warehouseCategoryOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Categories' },
+    ...this.categories().map(c => ({ value: c.id, label: c.name }))
+  ]);
 
   // Selected Group for Detail / Cards View
   readonly selectedGroup = signal<ProductGroupDetailDto | null>(null);

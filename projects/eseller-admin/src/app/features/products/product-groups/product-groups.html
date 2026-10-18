@@ -70,16 +70,15 @@
         />
       </div>
 
-      <div class="flex items-center gap-2 w-full sm:w-auto">
-        <select
-          [ngModel]="selectedShopId()"
-          (ngModelChange)="onShopFilterChange($event)"
-          class="w-full sm:w-48 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
-          <option value="all">All Merchant Shops</option>
-          @for (s of shops(); track s.id) {
-            <option [value]="s.id">{{ s.name }}</option>
-          }
-        </select>
+      <div class="w-full sm:w-56">
+        <es-searchable-select
+          [options]="shopFilterOptions()"
+          [value]="selectedShopId()"
+          (valueChange)="onShopFilterChange($event)"
+          customClass="w-full flex items-center justify-between gap-1 px-3 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 cursor-pointer"
+          placeholder="All Merchant Shops"
+          searchPlaceholder="Search shop..."
+        />
       </div>
     </div>
 
@@ -462,15 +461,16 @@
           class="w-full sm:w-80 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs text-slate-800 focus:outline-none focus:ring-1 focus:ring-slate-900"
         />
 
-        <select
-          [ngModel]="warehouseCategoryId()"
-          (ngModelChange)="warehouseCategoryId.set($event)"
-          class="w-full sm:w-48 px-3 py-1.5 bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:outline-none cursor-pointer">
-          <option value="all">All Categories</option>
-          @for (c of categories(); track c.id) {
-            <option [value]="c.id">{{ c.name }}</option>
-          }
-        </select>
+        <div class="w-full sm:w-56">
+          <es-searchable-select
+            [options]="warehouseCategoryOptions()"
+            [value]="warehouseCategoryId()"
+            (valueChange)="warehouseCategoryId.set($event)"
+            customClass="w-full flex items-center justify-between gap-1 px-3 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 cursor-pointer"
+            placeholder="All Categories"
+            searchPlaceholder="Search category..."
+          />
+        </div>
       </div>
 
       <!-- Warehouse Products List -->

@@ -2,19 +2,26 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, SellerReferralDto, ReferredStoreDto } from '../../core/services/seller.service';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 
 import { environment } from '../../../environments/environment';
 
 @Component({
   selector: 'app-referral-center',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout, SearchableSelect],
   templateUrl: './referral-center.html'
 })
 export class ReferralCenter implements OnInit {
   private readonly sellerService = inject(SellerService);
   private readonly toast = inject(ToastService);
+
+  readonly statusFilterOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'All Stores' },
+    { value: 'active', label: 'Active (Has Products)' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'pending', label: 'Pending' }
+  ];
 
   readonly loading = signal<boolean>(true);
   readonly referralData = signal<SellerReferralDto | null>(null);

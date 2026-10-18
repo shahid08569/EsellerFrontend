@@ -49,25 +49,25 @@
 
     <!-- Category, Brand & Price Filters -->
     <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
-      <select 
-        [ngModel]="selectedCategory()" 
-        (ngModelChange)="selectedCategory.set($event); onFilterChange()"
-        class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
-        <option value="all">All Categories</option>
-        @for (cat of categories(); track cat.id) {
-          <option [value]="cat.name">{{ cat.name }}</option>
-        }
-      </select>
+      <div class="w-full sm:w-44">
+        <es-searchable-select
+          [options]="categoryOptions()"
+          [value]="selectedCategory()"
+          (valueChange)="selectedCategory.set($event); onFilterChange()"
+          placeholder="All Categories"
+          searchPlaceholder="Search category..."
+        />
+      </div>
 
-      <select 
-        [ngModel]="selectedBrand()" 
-        (ngModelChange)="selectedBrand.set($event); onFilterChange()"
-        class="w-full sm:w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
-        <option value="all">All Brands</option>
-        @for (brand of brands(); track brand.id) {
-          <option [value]="brand.name">{{ brand.name }}</option>
-        }
-      </select>
+      <div class="w-full sm:w-40">
+        <es-searchable-select
+          [options]="brandOptions()"
+          [value]="selectedBrand()"
+          (valueChange)="selectedBrand.set($event); onFilterChange()"
+          placeholder="All Brands"
+          searchPlaceholder="Search brand..."
+        />
+      </div>
 
       <!-- Price Range Filter (Min & Max) -->
       <div class="flex items-center gap-1.5 bg-slate-50 border border-slate-200 rounded-xl px-2.5 py-1.5 w-full sm:w-auto">

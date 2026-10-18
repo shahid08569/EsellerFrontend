@@ -2,11 +2,11 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute, RouterLink } from '@angular/router';
-import { AuthService, AuthStore, ToastService } from 'eseller-shared';
+import { AuthService, AuthStore, ToastService, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 
 @Component({
   selector: 'app-register',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SearchableSelect],
   templateUrl: './register.html',
   styleUrl: './register.css'
 })
@@ -75,6 +75,12 @@ export class Register implements OnInit {
     { label: '🇸🇦 Saudi Arabia (+966)', code: '+966', placeholder: '50 123 4567' },
     { label: '🇬🇧 UK (+44)', code: '+44', placeholder: '7911 123456' }
   ];
+
+  readonly countryDialCodeOptions: SearchableSelectOption[] = this.countryCodes.map(c => ({
+    value: c.code,
+    label: c.code,
+    sublabel: c.label
+  }));
 
   readonly currentPlaceholder = computed(() => {
     const found = this.countryCodes.find((c) => c.code === this.selectedDialCode());

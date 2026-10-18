@@ -187,15 +187,14 @@
             <label class="text-xs font-black text-slate-900 tracking-tight">
               Brand (Optional)
             </label>
-            <select
-              [ngModel]="selectedBrandId()"
-              (ngModelChange)="selectedBrandId.set($event)"
-              class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none focus:ring-1 focus:ring-slate-900 cursor-pointer">
-              <option value="">Any Brand (All)</option>
-              @for (brand of brands(); track brand.id) {
-                <option [value]="brand.id">{{ brand.name }}</option>
-              }
-            </select>
+            <es-searchable-select
+              [options]="brandOptions()"
+              [value]="selectedBrandId()"
+              (valueChange)="selectedBrandId.set($event)"
+              customClass="w-full flex items-center justify-between gap-2 px-3 py-2 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 cursor-pointer"
+              placeholder="Any Brand (All)"
+              searchPlaceholder="Search brand..."
+            />
           </div>
 
           <!-- Custom Batch Name -->

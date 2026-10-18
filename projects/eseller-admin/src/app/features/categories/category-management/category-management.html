@@ -188,17 +188,14 @@
 
         <div>
           <label class="block text-xs font-bold text-gray-700 mb-1">Parent Category</label>
-          <select 
-            [ngModel]="formParentId()"
-            (ngModelChange)="formParentId.set($event)"
-            class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
-            <option [ngValue]="null">-- None (Root Level Category) --</option>
-            @for (c of categories(); track c.id) {
-              @if (!isEditing() || c.id !== editingId()) {
-                <option [ngValue]="c.id">{{ c.name }}</option>
-              }
-            }
-          </select>
+          <es-searchable-select
+            [options]="parentCategoryOptions()"
+            [value]="formParentId() || ''"
+            (valueChange)="formParentId.set($event || null)"
+            placeholder="Select Parent Category"
+            searchPlaceholder="Search categories..."
+            customClass="w-full flex items-center justify-between gap-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-xl text-xs focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 cursor-pointer"
+          />
         </div>
 
         <!-- CATEGORY IMAGE (URL + FILE UPLOAD) -->

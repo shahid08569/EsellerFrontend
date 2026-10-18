@@ -5,7 +5,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { catchError, retry } from 'rxjs/operators';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import {
@@ -40,7 +40,7 @@ export interface PlaceOrderMultiItem {
 @Component({
   selector: 'app-order-management',
   standalone: true,
-  imports: [CommonModule, NgTemplateOutlet, FormsModule, SkeletonLayout],
+  imports: [CommonModule, NgTemplateOutlet, FormsModule, SkeletonLayout, SearchableSelect],
   templateUrl: './order-management.html'
 })
 export class OrderManagement implements OnInit {
@@ -84,6 +84,29 @@ export class OrderManagement implements OnInit {
   readonly currentPage = signal<number>(1);
   readonly pageSize = signal<number>(10);
   readonly pageSizeOptions = [10, 20, 50, 100];
+
+  readonly sortOrderOptions: SearchableSelectOption[] = [
+    { value: 'newest', label: 'Newest Orders First' },
+    { value: 'oldest', label: 'Oldest Orders First' }
+  ];
+
+  readonly pageSizeSearchableOptions = computed<SearchableSelectOption[]>(() =>
+    this.pageSizeOptions.map(o => ({ value: String(o), label: String(o) }))
+  );
+
+  getNextStatusSearchableOptions(currentStatus: number | string): SearchableSelectOption[] {
+    return this.getNextStatusOptions(currentStatus).map(opt => ({
+      value: String(opt.value),
+      label: opt.label
+    }));
+  }
+
+  getItemVariantOptions(item: PlaceOrderMultiItem): SearchableSelectOption[] {
+    return item.variants.map(v => ({
+      value: v.id,
+      label: `${v.sku} — $${v.price} (stock ${v.stockQty})`
+    }));
+  }
 
   // Details Modal
   readonly detailsModalOpen = signal<boolean>(false);
@@ -177,10 +200,50 @@ export class OrderManagement implements OnInit {
   readonly placeFilterShopId = signal<string>('all');
   readonly placeFilterCategoryId = signal<string>('all');
   readonly placeFilterBrandId = signal<string>('all');
+
+  readonly mainShopOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Merchant Shops' },
+    ...this.shops().map(s => ({
+      value: s.id,
+      label: s.name,
+      sublabel: s.city ? `${s.city}${s.country ? ', ' + s.country : ''}` : (s.phone || undefined)
+    }))
+  ]);
+
+  readonly placeShopOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Shops' },
+    ...this.shops().map(s => ({
+      value: s.id,
+      label: s.name,
+      sublabel: s.city ? `${s.city}${s.country ? ', ' + s.country : ''}` : (s.phone || undefined)
+    }))
+  ]);
+
+  readonly placeCategoryOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Categories' },
+    ...this.placeCategories().map(c => ({
+      value: c.id,
+      label: c.name
+    }))
+  ]);
+
+  readonly placeBrandOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Brands' },
+    ...this.placeBrands().map(b => ({
+      value: b.id,
+      label: b.name
+    }))
+  ]);
   readonly placeProductId = signal<string>('');
   readonly placeSelectedProduct = signal<AdminProductDto | null>(null);
   readonly placeVariants = signal<{ id: string; sku: string; price: number; stockQty: number }[]>([]);
   readonly placeVariantId = signal<string>('');
+  readonly placeVariantOptions = computed<SearchableSelectOption[]>(() =>
+    this.placeVariants().map(v => ({
+      value: v.id,
+      label: `${v.sku} — $${v.price} (stock: ${v.stockQty})`
+    }))
+  );
   readonly placeQty = signal<number>(1);
   readonly placeCustomerName = signal<string>('');
   readonly placeCustomerPhone = signal<string>('');
@@ -669,6 +732,10 @@ export class OrderManagement implements OnInit {
     return this.statusOptions.filter(o => commonValues.includes(o.value));
   });
 
+  readonly batchNextStatusSearchableOptions = computed<SearchableSelectOption[]>(() =>
+    this.batchNextStatusOptions().map(o => ({ value: String(o.value), label: o.label }))
+  );
+
   openBatchStatusModal(): void {
     if (!this.canManageOrders()) {
       this.toast.show('You do not have permission to manage orders', 'error');
@@ -1029,7 +1096,7 @@ export class OrderManagement implements OnInit {
     }
 
     // Directly fetch catalog products without blocking behind categories/brands
-    this.adminService.getApprovedSellerProducts(1, 500, undefined, shopId).pipe(
+    this.adminService.getApprovedSellerProducts(1, 500, 'all', shopId).pipe(
       catchError(() => of({ items: [], totalCount: 0 } as any)),
       takeUntilDestroyed(this.destroyRef)
     ).subscribe({

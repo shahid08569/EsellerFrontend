@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, ActivatedRoute } from '@angular/router';
-import { AuthStore, ToastService, SignalRService, SkeletonLayout } from 'eseller-shared';
+import { AuthStore, ToastService, SignalRService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminPermissionService } from '../../../core/services/admin-permission.service';
 import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto, AdminShopTrafficItemDto, ShopTrafficSummaryDto, ShopTrafficPointDto, ShopTrafficMonthDto } from '../../../core/models/admin.models';
@@ -32,7 +32,7 @@ export interface TierUpgradeRequest {
 @Component({
   selector: 'app-shop-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, SkeletonLayout],
+  imports: [CommonModule, FormsModule, SkeletonLayout, SearchableSelect],
   templateUrl: './shop-management.html'
 })
 export class ShopManagement implements OnInit, OnDestroy {
@@ -44,6 +44,28 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly authStore = inject(AuthStore);
   private readonly signalR = inject(SignalRService);
   private unsubNotif: (() => void) | null = null;
+
+  readonly tierFilterOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Tiers & Badges' },
+    ...this.shopCategories().map(cat => ({ value: cat.id, label: cat.name }))
+  ]);
+
+  readonly pageSizeSearchableOptions = computed<SearchableSelectOption[]>(() =>
+    this.pageSizeOptions.map(opt => ({ value: String(opt), label: String(opt) }))
+  );
+
+  readonly tierPlanSearchableOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'ALL', label: 'All plans' },
+    ...this.tierPlanOptions().map(plan => ({ value: plan, label: plan }))
+  ]);
+
+  readonly assignTierOptions = computed<SearchableSelectOption[]>(() => [
+    { value: '', label: '-- None (Standard Store / Unassigned) --' },
+    ...this.shopCategories().map(tier => ({
+      value: tier.id,
+      label: `${tier.iconUrl || '💎'} ${tier.name} (Badge: ${tier.badgeText || tier.name})`
+    }))
+  ]);
 
   /** Only Management can create / edit / delete tier packages. */
   readonly canManageTiers = computed(() => this.authStore.hasRole('SuperAdmin'));

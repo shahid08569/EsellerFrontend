@@ -2,19 +2,24 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { SellerService, CouponDto, ShopDto } from '../../../core/services/seller.service';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 
 @Component({
   selector: 'app-coupon-list',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout, ConfirmModal],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout, ConfirmModal, SearchableSelect],
   templateUrl: './coupon-list.html'
 })
 export class CouponList implements OnInit {
   private readonly sellerSvc = inject(SellerService);
   private readonly toast = inject(ToastService);
+
+  readonly couponTypeOptions: SearchableSelectOption[] = [
+    { value: '1', label: 'Percentage (%)' },
+    { value: '2', label: 'Fixed Amount (USD)' }
+  ];
 
   readonly isLoading = signal<boolean>(true);
   readonly deleteConfirmOpen = signal(false);

@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed, HostListener, ElementRef }
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, ActivatedRoute } from '@angular/router';
-import { AuthService, AuthStore, ToastService, ApiService } from 'eseller-shared';
+import { AuthService, AuthStore, ToastService, ApiService, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import {
   COUNTRIES_DATA,
   CountryStateData,
@@ -21,7 +21,7 @@ export interface VerificationDocOption {
 
 @Component({
   selector: 'app-seller-register',
-  imports: [CommonModule, FormsModule, RouterLink],
+  imports: [CommonModule, FormsModule, RouterLink, SearchableSelect],
   templateUrl: './seller-register.html',
   styleUrl: './seller-register.css'
 })
@@ -95,6 +95,22 @@ export class SellerRegister implements OnInit {
         )
       : [];
   });
+
+  readonly countryOptions = computed<SearchableSelectOption[]>(() =>
+    this.sortedCountries().map(c => ({
+      value: c.name,
+      label: c.name,
+      flag: c.flag,
+      sublabel: c.phoneCode
+    }))
+  );
+
+  readonly stateOptions = computed<SearchableSelectOption[]>(() =>
+    this.availableStates().map(s => ({
+      value: s,
+      label: s
+    }))
+  );
 
   // Document Verification Options
   readonly docOptions: VerificationDocOption[] = [

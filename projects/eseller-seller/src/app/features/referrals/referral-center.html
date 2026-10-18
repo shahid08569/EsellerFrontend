@@ -160,15 +160,16 @@
           <span class="absolute left-2.5 top-2 text-slate-400 text-xs">🔍</span>
         </div>
 
-        <select
-          [ngModel]="statusFilter()"
-          (ngModelChange)="statusFilter.set($event)"
-          class="px-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
-          <option value="all">All Stores</option>
-          <option value="active">Active (Has Products)</option>
-          <option value="approved">Approved</option>
-          <option value="pending">Pending</option>
-        </select>
+        <div class="w-full sm:w-48">
+          <es-searchable-select 
+            [options]="statusFilterOptions"
+            [value]="statusFilter()"
+            (valueChange)="statusFilter.set($event)"
+            customClass="w-full flex items-center justify-between gap-1 px-3 py-1.5 bg-slate-50 hover:bg-white border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 cursor-pointer"
+            placeholder="All Stores"
+            searchPlaceholder="Search status..."
+          />
+        </div>
       </div>
     </div>
 

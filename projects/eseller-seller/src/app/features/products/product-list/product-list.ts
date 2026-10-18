@@ -4,7 +4,7 @@ import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { SellerProductService } from '../../../core/services/product.service';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
-import { ProductListDto, PagedList, ToastService, HomeService, CategoryTreeDto, BrandDto, ChatService, SkeletonLayout } from 'eseller-shared';
+import { ProductListDto, PagedList, ToastService, HomeService, CategoryTreeDto, BrandDto, ChatService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
@@ -16,7 +16,7 @@ export type ProductOriginTab = 'own' | 'warehouse';
 @Component({
   selector: 'app-product-list',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, ConfirmModal, TablePagination, ImageUrlPipe, GroupProductImportModal, SkeletonLayout],
+  imports: [CommonModule, RouterLink, FormsModule, ConfirmModal, TablePagination, ImageUrlPipe, GroupProductImportModal, SkeletonLayout, SearchableSelect],
   templateUrl: './product-list.html'
 })
 export class ProductList implements OnInit {
@@ -43,6 +43,21 @@ export class ProductList implements OnInit {
   // Default: show all statuses within the selected origin
   readonly selectedStatus = signal<string>('all');
   readonly sortBy = signal<SortOption>('newest');
+
+  readonly categoryOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Categories' },
+    ...this.categories().map(c => ({
+      value: c.name,
+      label: c.name
+    }))
+  ]);
+
+  readonly statusOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'All Status' },
+    { value: 'approved', label: 'Approved' },
+    { value: 'pending', label: 'Pending Approval' },
+    { value: 'rejected', label: 'Rejected' }
+  ];
 
   readonly ownCount = computed(() =>
     this.products().filter(p => !p.sourceProductId).length

@@ -112,7 +112,9 @@ export class AdminLayout implements OnInit {
 
     this.router.events.subscribe(event => {
       if (event instanceof NavigationStart) {
-        this.isNavigating.set(true);
+        if (!event.url.includes('/chat') && !event.url.includes('chat-inbox')) {
+          this.isNavigating.set(true);
+        }
       } else if (
         event instanceof NavigationEnd ||
         event instanceof NavigationCancel ||

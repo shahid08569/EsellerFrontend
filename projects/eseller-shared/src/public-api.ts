@@ -50,3 +50,4 @@ export * from './lib/ui/shop-rating-badge/shop-rating-badge';
 export * from './lib/ui/skeleton/skeleton';
 export * from './lib/ui/skeleton/skeleton-layout';
 export * from './lib/ui/loading-overlay/loading-overlay';
+export * from './lib/ui/searchable-select/searchable-select';

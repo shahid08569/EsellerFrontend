@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, HostListener } from '@angular/core';
+import { Component, OnInit, inject, signal, computed, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
@@ -9,7 +9,7 @@ import {
   UpdateVariantRequest 
 } from '../../../core/services/product.service';
 import { SellerService } from '../../../core/services/seller.service';
-import { ProductListDto, ProductDto, ToastService } from 'eseller-shared';
+import { ProductListDto, ProductDto, ToastService, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { ConfirmModal } from '../../../shared/components/confirm-modal/confirm-modal';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
 import { ImgFallbackDirective } from '../../../shared/directives/img-fallback.directive';
@@ -22,7 +22,7 @@ interface AttributeRow {
 @Component({
   selector: 'app-variant-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ConfirmModal, ImageUrlPipe, ImgFallbackDirective],
+  imports: [CommonModule, FormsModule, RouterLink, ConfirmModal, ImageUrlPipe, ImgFallbackDirective, SearchableSelect],
   templateUrl: './variant-manager.html'
 })
 export class VariantManager implements OnInit {
@@ -33,6 +33,12 @@ export class VariantManager implements OnInit {
   private readonly router = inject(Router);
 
   readonly allProducts = signal<ProductListDto[]>([]);
+  readonly productOptions = computed<SearchableSelectOption[]>(() =>
+    this.allProducts().map(p => ({
+      value: p.id,
+      label: `${p.name} ($ ${p.basePrice})`
+    }))
+  );
   readonly selectedProductId = signal<string>('');
   readonly selectedProduct = signal<ProductDto | null>(null);
   readonly variants = signal<ProductVariantDto[]>([]);

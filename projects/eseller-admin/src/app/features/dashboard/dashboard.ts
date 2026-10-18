@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { RouterLink, ActivatedRoute, Router } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of, catchError } from 'rxjs';
-import { ToastService, AuthStore, SkeletonLayout } from 'eseller-shared';
+import { ToastService, AuthStore, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../core/services/admin.service';
 import {
   AdminShopkeeperDto,
@@ -15,7 +15,7 @@ import {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, FormsModule, SkeletonLayout],
+  imports: [CommonModule, RouterLink, FormsModule, SkeletonLayout, SearchableSelect],
   templateUrl: './dashboard.html'
 })
 export class Dashboard implements OnInit {
@@ -24,6 +24,24 @@ export class Dashboard implements OnInit {
   readonly authStore = inject(AuthStore);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+
+  readonly revenueMonthsOptions: SearchableSelectOption[] = [
+    { value: '6', label: 'Last 6 months' },
+    { value: '9', label: 'Last 9 months' },
+    { value: '12', label: 'Last 12 months' }
+  ];
+
+  readonly weeklyOptions: SearchableSelectOption[] = [
+    { value: 'this', label: 'This week' },
+    { value: 'busy', label: 'Busy days (10+)' },
+    { value: 'quiet', label: 'Quiet days (<10)' }
+  ];
+
+  readonly lowStockOptions: SearchableSelectOption[] = [
+    { value: '5', label: 'Max 5 left' },
+    { value: '10', label: 'Max 10 left' },
+    { value: '20', label: 'Max 20 left' }
+  ];
 
   // Active View: 'dashboard' (Screenshot Design) | 'operations' (Moderation & Queues)
   readonly activeView = signal<'dashboard' | 'operations'>('dashboard');

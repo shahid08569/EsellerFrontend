@@ -1,13 +1,13 @@
 import { Component, EventEmitter, Input, OnInit, Output, inject, signal, computed, OnChanges, SimpleChanges } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService, CategoryTreeDto, BrandDto, HomeService } from 'eseller-shared';
+import { ToastService, CategoryTreeDto, BrandDto, HomeService, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { SellerProductService, AddGroupToStoreResponse } from '../../../core/services/product.service';
 
 @Component({
   selector: 'app-group-product-import-modal',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelect],
   templateUrl: './group-product-import-modal.html'
 })
 export class GroupProductImportModal implements OnInit, OnChanges {
@@ -25,6 +25,10 @@ export class GroupProductImportModal implements OnInit, OnChanges {
 
   readonly categories = signal<CategoryTreeDto[]>([]);
   readonly brands = signal<BrandDto[]>([]);
+  readonly brandOptions = computed<SearchableSelectOption[]>(() => [
+    { value: '', label: 'Any Brand (All)' },
+    ...this.brands().map(b => ({ value: b.id, label: b.name }))
+  ]);
   readonly isLoadingMeta = signal<boolean>(false);
 
   // Form inputs

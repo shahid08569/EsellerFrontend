@@ -1,7 +1,7 @@
 import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminCouponDto, AdminFlashSaleDto, AdminBannerDto, AdminPaymentLogoDto } from '../../../core/models/admin.models';
 import { environment } from '../../../../environments/environment';
@@ -12,12 +12,17 @@ type PromoTab = 'coupons' | 'flash-sales' | 'banners' | 'payment-logos';
 @Component({
   selector: 'app-promotions-manager',
   standalone: true,
-  imports: [CommonModule, FormsModule, ConfirmModal],
+  imports: [CommonModule, FormsModule, ConfirmModal, SearchableSelect],
   templateUrl: './promotions-manager.html'
 })
 export class PromotionsManager implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
+
+  readonly couponDiscountTypeOptions: SearchableSelectOption[] = [
+    { value: 'Percentage', label: 'Percentage (%)' },
+    { value: 'Fixed', label: 'Fixed Amount ($)' }
+  ];
 
   readonly isLoading = signal<boolean>(true);
   readonly activeTab = signal<PromoTab>('coupons');

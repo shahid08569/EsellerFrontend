@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { map, Observable } from 'rxjs';
-import { ToastService, SkeletonLayout } from 'eseller-shared';
+import { ToastService, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 import { AdminCategoryDto } from '../../../core/models/admin.models';
 import { TablePagination } from '../../../shared/components/table-pagination/table-pagination';
@@ -12,7 +12,7 @@ type CategoryTab = 'all' | 'homepage';
 @Component({
   selector: 'app-category-management',
   standalone: true,
-  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout],
+  imports: [CommonModule, FormsModule, TablePagination, SkeletonLayout, SearchableSelect],
   templateUrl: './category-management.html'
 })
 export class CategoryManagement implements OnInit {
@@ -24,6 +24,18 @@ export class CategoryManagement implements OnInit {
   readonly activeTab = signal<CategoryTab>('all');
   readonly searchTerm = signal<string>('');
   readonly actionInProgress = signal<string | null>(null);
+
+  readonly parentCategoryOptions = computed<SearchableSelectOption[]>(() => {
+    const list: SearchableSelectOption[] = [
+      { value: '', label: '-- None (Root Level Category) --' }
+    ];
+    for (const c of this.categories()) {
+      if (!this.isEditing() || c.id !== this.editingId()) {
+        list.push({ value: c.id, label: c.name });
+      }
+    }
+    return list;
+  });
 
   readonly homepageCategoriesCount = computed(() => 
     this.categories().filter(c => c.isFeaturedOnHomepage).length

@@ -37,7 +37,9 @@ export interface SendChatMessageRequest {
 
 export interface SendChatMessageResponse {
   messageId: string;
-  message: string;
+  message?: string;
+  isDelivered?: boolean;
+  deliveredAt?: string | null;
 }
 
 export interface ChatAttachmentUploadResult {

@@ -6,14 +6,16 @@
     </span>
     <label class="flex items-center gap-1.5">
       <span class="font-semibold text-gray-500">Rows:</span>
-      <select
-        [ngModel]="pageSize()"
-        (ngModelChange)="onPageSizeChange(+$event)"
-        class="bg-gray-50 border border-gray-200 rounded-lg px-2 py-1 text-xs font-bold text-gray-700 cursor-pointer focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
-        @for (size of pageSizeOptions(); track size) {
-          <option [value]="size">{{ size }}</option>
-        }
-      </select>
+      <div class="w-24">
+        <es-searchable-select
+          [options]="mappedPageSizeOptions()"
+          [value]="pageSize()"
+          (valueChange)="onPageSizeChange(+$event)"
+          customClass="w-full flex items-center justify-between gap-1 px-2.5 py-1 bg-gray-50 hover:bg-white border border-gray-200 rounded-lg text-xs font-bold text-gray-700 cursor-pointer"
+          placeholder="Size"
+          searchPlaceholder="Search..."
+        />
+      </div>
     </label>
   </div>
 

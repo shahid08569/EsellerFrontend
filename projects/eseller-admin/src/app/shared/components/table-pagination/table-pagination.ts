@@ -1,6 +1,7 @@
 import { Component, computed, input, output } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 
 /**
  * Reusable admin table pager — shows "X–Y of Z" summary, a page-size selector,
@@ -10,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 @Component({
   selector: 'app-table-pagination',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelect],
   templateUrl: './table-pagination.html'
 })
 export class TablePagination {
@@ -19,6 +20,10 @@ export class TablePagination {
   readonly total = input.required<number>();
   readonly pageSizeOptions = input<number[]>([10, 25, 50]);
   readonly label = input<string>('items');
+
+  readonly mappedPageSizeOptions = computed<SearchableSelectOption[]>(() =>
+    this.pageSizeOptions().map(s => ({ value: String(s), label: String(s) }))
+  );
 
   readonly pageChange = output<number>();
   readonly pageSizeChange = output<number>();

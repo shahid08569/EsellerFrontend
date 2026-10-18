@@ -153,11 +153,28 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   private shouldScrollToBottom = false;
   private pollTimer: ReturnType<typeof setInterval> | null = null;
   private joinedRoomId: string | null = null;
+  private partnerSuperAdminShop: AdminChatShop | null = null;
 
   ngOnInit(): void {
     this.chatUnread.start();
-    this.loadShops();
-    if (!this.isPartner()) {
+    if (this.isPartner()) {
+      this.chatService.getPartnerSupportSession().subscribe({
+        next: (session) => {
+          const roomId = session.conversationId || session.orderRequestId;
+          this.partnerSuperAdminShop = {
+            id: roomId,
+            name: 'Platform Management (Super Admin)',
+            merchantStatus: 'Official Support',
+            tierLabel: 'Super Admin'
+          };
+          this.loadShops();
+        },
+        error: () => {
+          this.loadShops();
+        }
+      });
+    } else {
+      this.loadShops();
       this.loadCustomerConvos();
     }
 
@@ -483,6 +500,22 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           }
           return shop;
         }));
+
+        if (this.isPartner() && this.partnerSuperAdminShop) {
+          const saConvo = convos.find((c: any) => String(c.participantType || '').toLowerCase() === 'partner');
+          if (saConvo) {
+            this.partnerSuperAdminShop = {
+              ...this.partnerSuperAdminShop,
+              id: saConvo.orderRequestId || saConvo.id || this.partnerSuperAdminShop.id,
+              lastMessage: saConvo.lastMessage || null,
+              lastMessageTime: saConvo.lastMessageAt || null
+            };
+          }
+          this.shops.update(currentList => {
+            const rest = currentList.filter(s => s.id !== this.partnerSuperAdminShop!.id);
+            return [this.partnerSuperAdminShop!, ...rest];
+          });
+        }
       },
       error: () => {
         this.isLoadingCustomers.set(false);
@@ -529,14 +562,42 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     if (!this.isPartner() && this.directoryTab() === 'customers') this.loadCustomerConvos();
   }
 
+  openPartnerSuperAdminChat(): void {
+    if (this.partnerSuperAdminShop) {
+      this.openThread(this.partnerSuperAdminShop);
+      return;
+    }
+
+    this.isLoadingMessages.set(true);
+    this.chatService.getPartnerSupportSession().subscribe({
+      next: (session) => {
+        const roomId = session.conversationId || session.orderRequestId;
+        this.partnerSuperAdminShop = {
+          id: roomId,
+          name: 'Platform Management (Super Admin)',
+          merchantStatus: 'Official Support',
+          tierLabel: 'Super Admin'
+        };
+        this.openThread(this.partnerSuperAdminShop);
+      },
+      error: () => {
+        this.isLoadingMessages.set(false);
+        this.currentView.set('directory');
+        if (!this.shops().length) this.loadShops();
+      }
+    });
+  }
+
   toggleChat(): void {
     const nextState = !this.isOpen();
     this.isOpen.set(nextState);
     if (nextState) {
-      this.currentView.set('directory');
       this.chatUnread.refresh();
-      if (!this.shops().length) this.loadShops();
-      if (!this.isPartner()) {
+      if (this.isPartner()) {
+        this.openPartnerSuperAdminChat();
+      } else {
+        this.currentView.set('directory');
+        if (!this.shops().length) this.loadShops();
         this.loadCustomerConvos();
       }
     }

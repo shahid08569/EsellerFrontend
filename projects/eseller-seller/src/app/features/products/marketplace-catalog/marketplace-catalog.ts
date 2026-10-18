@@ -2,7 +2,7 @@ import { Component, OnInit, inject, signal, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink } from '@angular/router';
-import { ApiService, ToastService, ProductListDto, CategoryTreeDto, BrandDto, HomeService, PagedList, SkeletonLayout } from 'eseller-shared';
+import { ApiService, ToastService, ProductListDto, CategoryTreeDto, BrandDto, HomeService, PagedList, SkeletonLayout, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { SellerService, ShopDto } from '../../../core/services/seller.service';
 import { SellerProductService } from '../../../core/services/product.service';
 import { ImageUrlPipe } from '../../../shared/pipes/image-url.pipe';
@@ -13,7 +13,7 @@ import { GroupProductImportModal } from '../../../shared/components/group-produc
 @Component({
   selector: 'app-marketplace-catalog',
   standalone: true,
-  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal, GroupProductImportModal, SkeletonLayout],
+  imports: [CommonModule, FormsModule, RouterLink, ImageUrlPipe, TablePagination, WarehouseProductDetailModal, GroupProductImportModal, SkeletonLayout, SearchableSelect],
   templateUrl: './marketplace-catalog.html'
 })
 export class MarketplaceCatalog implements OnInit {
@@ -36,6 +36,22 @@ export class MarketplaceCatalog implements OnInit {
   readonly searchTerm = signal<string>('');
   readonly selectedCategory = signal<string>('all');
   readonly selectedBrand = signal<string>('all');
+
+  readonly categoryOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Categories' },
+    ...this.categories().map(c => ({
+      value: c.name,
+      label: c.name
+    }))
+  ]);
+
+  readonly brandOptions = computed<SearchableSelectOption[]>(() => [
+    { value: 'all', label: 'All Brands' },
+    ...this.brands().map(b => ({
+      value: b.name,
+      label: b.name
+    }))
+  ]);
   readonly sortBy = signal<string>('featured');
   readonly minPrice = signal<number | null>(null);
   readonly maxPrice = signal<number | null>(null);

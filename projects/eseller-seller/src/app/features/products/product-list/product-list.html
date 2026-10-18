@@ -88,25 +88,25 @@
     </div>
 
     <div class="flex items-center gap-2 w-full sm:w-auto">
-      <select
-        [ngModel]="selectedCategory()"
-        (ngModelChange)="selectedCategory.set($event); onFilterChange()"
-        class="w-full sm:w-40 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
-        <option value="all">All Categories</option>
-        @for (c of categories(); track c.id) {
-          <option [value]="c.name">{{ c.name }}</option>
-        }
-      </select>
+      <div class="w-full sm:w-44">
+        <es-searchable-select
+          [options]="categoryOptions()"
+          [value]="selectedCategory()"
+          (valueChange)="selectedCategory.set($event); onFilterChange()"
+          placeholder="All Categories"
+          searchPlaceholder="Search category..."
+        />
+      </div>
 
-      <select
-        [ngModel]="selectedStatus()"
-        (ngModelChange)="selectedStatus.set($event); onFilterChange()"
-        class="w-full sm:w-36 px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-semibold text-slate-800 focus:bg-white focus:outline-none cursor-pointer">
-        <option value="all">All Status</option>
-        <option value="approved">Approved</option>
-        <option value="pending">Pending Approval</option>
-        <option value="rejected">Rejected</option>
-      </select>
+      <div class="w-full sm:w-40">
+        <es-searchable-select
+          [options]="statusOptions"
+          [value]="selectedStatus()"
+          (valueChange)="selectedStatus.set($event); onFilterChange()"
+          placeholder="All Status"
+          searchPlaceholder="Search status..."
+        />
+      </div>
 
       @if (searchTerm() || selectedCategory() !== 'all' || selectedStatus() !== 'all') {
         <button

@@ -43,44 +43,157 @@
             class="w-full bg-slate-50 border border-slate-200 rounded-full pl-9 pr-3 py-2 text-xs outline-hidden focus:border-orange-500 focus:ring-2 focus:ring-orange-500/15" />
         </div>
 
-        <!-- Only Support + Customers -->
-        <div class="flex items-center gap-1.5">
-          <button type="button" (click)="setFilterTab('support')"
-            class="px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5"
-            [class.bg-orange-600]="filterTab() === 'support'"
-            [class.text-white]="filterTab() === 'support'"
-            [class.border-orange-600]="filterTab() === 'support'"
-            [class.bg-slate-100]="filterTab() !== 'support'"
-            [class.text-slate-700]="filterTab() !== 'support'"
-            [class.border-slate-200]="filterTab() !== 'support'">
-            Support
-            @if (supportTabCount() > 0) {
-              <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
-                    [class.bg-white/25]="filterTab() === 'support'"
-                    [class.text-white]="filterTab() === 'support'"
-                    [class.bg-slate-200]="filterTab() !== 'support'"
-                    [class.text-slate-700]="filterTab() !== 'support'">
-                {{ supportTabCount() }}
-              </span>
-            }
-          </button>
-          @if (!isPartner()) {
+        <!-- Dynamic Filter Tabs: SuperAdmin vs Partner -->
+        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar text-xs">
+          @if (isPartner()) {
+            <!-- Partner Tab 1: Super Admin (Platform Support) -->
+            <button type="button" (click)="setFilterTab('superadmin')"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
+              [class.bg-orange-600]="filterTab() === 'superadmin'"
+              [class.text-white]="filterTab() === 'superadmin'"
+              [class.border-orange-600]="filterTab() === 'superadmin'"
+              [class.bg-slate-100]="filterTab() !== 'superadmin'"
+              [class.text-slate-700]="filterTab() !== 'superadmin'"
+              [class.border-slate-200]="filterTab() !== 'superadmin'">
+              Super Admin
+              @if (partnerSuperAdminCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'superadmin'"
+                      [class.text-white]="filterTab() === 'superadmin'"
+                      [class.bg-slate-200]="filterTab() !== 'superadmin'"
+                      [class.text-slate-700]="filterTab() !== 'superadmin'">
+                  {{ partnerSuperAdminCount() }}
+                </span>
+              }
+            </button>
+
+            <!-- Partner Tab 2: Referred Shops -->
+            <button type="button" (click)="setFilterTab('my-sellers')"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
+              [class.bg-orange-600]="filterTab() === 'my-sellers'"
+              [class.text-white]="filterTab() === 'my-sellers'"
+              [class.border-orange-600]="filterTab() === 'my-sellers'"
+              [class.bg-slate-100]="filterTab() !== 'my-sellers'"
+              [class.text-slate-700]="filterTab() !== 'my-sellers'"
+              [class.border-slate-200]="filterTab() !== 'my-sellers'">
+              Referred Shops
+              @if (partnerSellersCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'my-sellers'"
+                      [class.text-white]="filterTab() === 'my-sellers'"
+                      [class.bg-slate-200]="filterTab() !== 'my-sellers'"
+                      [class.text-slate-700]="filterTab() !== 'my-sellers'">
+                  {{ partnerSellersCount() }}
+                </span>
+              }
+            </button>
+          } @else {
+            <!-- SuperAdmin Tab 1: Direct Sellers -->
+            <button type="button" (click)="setFilterTab('direct-sellers')"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
+              [class.bg-orange-600]="filterTab() === 'direct-sellers'"
+              [class.text-white]="filterTab() === 'direct-sellers'"
+              [class.border-orange-600]="filterTab() === 'direct-sellers'"
+              [class.bg-slate-100]="filterTab() !== 'direct-sellers'"
+              [class.text-slate-700]="filterTab() !== 'direct-sellers'"
+              [class.border-slate-200]="filterTab() !== 'direct-sellers'"
+              title="Normal merchants without partner referral">
+              Direct Sellers
+              @if (directSellersCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'direct-sellers'"
+                      [class.text-white]="filterTab() === 'direct-sellers'"
+                      [class.bg-slate-200]="filterTab() !== 'direct-sellers'"
+                      [class.text-slate-700]="filterTab() !== 'direct-sellers'">
+                  {{ directSellersCount() }}
+                </span>
+              }
+            </button>
+
+            <!-- SuperAdmin Tab 2: Partners Referral -->
+            <button type="button" (click)="setFilterTab('partner-referrals')"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
+              [class.bg-orange-600]="filterTab() === 'partner-referrals'"
+              [class.text-white]="filterTab() === 'partner-referrals'"
+              [class.border-orange-600]="filterTab() === 'partner-referrals'"
+              [class.bg-slate-100]="filterTab() !== 'partner-referrals'"
+              [class.text-slate-700]="filterTab() !== 'partner-referrals'"
+              [class.border-slate-200]="filterTab() !== 'partner-referrals'"
+              title="Referred merchants contacting SuperAdmin directly for Management Support">
+              Partners Referral
+              @if (partnerReferralsCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'partner-referrals'"
+                      [class.text-white]="filterTab() === 'partner-referrals'"
+                      [class.bg-slate-200]="filterTab() !== 'partner-referrals'"
+                      [class.text-slate-700]="filterTab() !== 'partner-referrals'">
+                  {{ partnerReferralsCount() }}
+                </span>
+              }
+            </button>
+
+            <!-- SuperAdmin Tab 3: Partner's Sellers (Read-Only Audit) -->
+            <button type="button" (click)="setFilterTab('partner-sellers')"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
+              [class.bg-orange-600]="filterTab() === 'partner-sellers'"
+              [class.text-white]="filterTab() === 'partner-sellers'"
+              [class.border-orange-600]="filterTab() === 'partner-sellers'"
+              [class.bg-slate-100]="filterTab() !== 'partner-sellers'"
+              [class.text-slate-700]="filterTab() !== 'partner-sellers'"
+              [class.border-slate-200]="filterTab() !== 'partner-sellers'"
+              title="Audit chat between Partner and their referred merchants (Read-Only)">
+              <span>🔒 Partner's Sellers</span>
+              @if (partnerSellersCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'partner-sellers'"
+                      [class.text-white]="filterTab() === 'partner-sellers'"
+                      [class.bg-slate-200]="filterTab() !== 'partner-sellers'"
+                      [class.text-slate-700]="filterTab() !== 'partner-sellers'">
+                  {{ partnerSellersCount() }}
+                </span>
+              }
+            </button>
+
+            <!-- SuperAdmin Tab 4: Partners -->
+            <button type="button" (click)="setFilterTab('partners')"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
+              [class.bg-orange-600]="filterTab() === 'partners'"
+              [class.text-white]="filterTab() === 'partners'"
+              [class.border-orange-600]="filterTab() === 'partners'"
+              [class.bg-slate-100]="filterTab() !== 'partners'"
+              [class.text-slate-700]="filterTab() !== 'partners'"
+              [class.border-slate-200]="filterTab() !== 'partners'"
+              title="Direct communication between SuperAdmin and Partners">
+              Partners
+              @if (partnersCount() > 0) {
+                <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
+                      [class.bg-white/25]="filterTab() === 'partners'"
+                      [class.text-white]="filterTab() === 'partners'"
+                      [class.bg-slate-200]="filterTab() !== 'partners'"
+                      [class.text-slate-700]="filterTab() !== 'partners'">
+                  {{ partnersCount() }}
+                </span>
+              }
+            </button>
+
+            <!-- SuperAdmin Tab 5: Customers -->
             <button type="button" (click)="setFilterTab('customers')"
-              class="px-3 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5"
+              class="px-2.5 py-1.5 rounded-full text-[11px] font-bold transition-colors cursor-pointer border inline-flex items-center gap-1.5 shrink-0"
               [class.bg-orange-600]="filterTab() === 'customers'"
               [class.text-white]="filterTab() === 'customers'"
               [class.border-orange-600]="filterTab() === 'customers'"
               [class.bg-slate-100]="filterTab() !== 'customers'"
               [class.text-slate-700]="filterTab() !== 'customers'"
-              [class.border-slate-200]="filterTab() !== 'customers'">
+              [class.border-slate-200]="filterTab() !== 'customers'"
+              title="Platform buyer support chats">
               Customers
-              @if (customerTabCount() > 0) {
+              @if (customersCount() > 0) {
                 <span class="min-w-[16px] h-4 px-1 rounded-full text-[9px] font-black inline-flex items-center justify-center"
                       [class.bg-white/25]="filterTab() === 'customers'"
                       [class.text-white]="filterTab() === 'customers'"
                       [class.bg-slate-200]="filterTab() !== 'customers'"
                       [class.text-slate-700]="filterTab() !== 'customers'">
-                  {{ customerTabCount() }}
+                  {{ customersCount() }}
                 </span>
               }
             </button>
@@ -465,63 +578,76 @@
           }
         </div>
 
-        <div class="p-3 border-t border-slate-100 bg-white space-y-2">
-          @if (replyingTo(); as repMsg) {
-            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-orange-50 border-l-4 border-orange-500 text-xs shadow-xs min-w-0 max-w-full overflow-hidden">
-              <div class="flex flex-col min-w-0 flex-1">
-                <div class="flex items-center gap-1.5">
-                  <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-orange-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                    <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a5 5 0 015 5v3M3 10l6-6M3 10l6 6" />
-                  </svg>
-                  <span class="font-bold text-orange-700 truncate">Replying to {{ repMsg.senderName }}</span>
+        @if (activeConversation()?.isReadOnly) {
+          <div class="p-4 border-t border-amber-200 bg-amber-50/90 flex items-center justify-center gap-3 text-center">
+            <div class="w-8 h-8 rounded-full bg-amber-100 flex items-center justify-center shrink-0 text-amber-700">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <div class="text-xs text-amber-900 leading-relaxed font-medium">
+              <span class="font-bold text-amber-950">🔒 Read-Only Monitoring:</span> Yeh chat Partner <span class="font-bold underline text-amber-950">{{ activeConversation()?.partnerName || 'Partner' }}</span> aur Merchant <span class="font-bold underline text-amber-950">{{ activeConversation()?.customerName }}</span> ke darmiyan hai. SuperAdmin ke liye yeh sirf Read-Only hai.
+            </div>
+          </div>
+        } @else {
+          <div class="p-3 border-t border-slate-100 bg-white space-y-2">
+            @if (replyingTo(); as repMsg) {
+              <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-orange-50 border-l-4 border-orange-500 text-xs shadow-xs min-w-0 max-w-full overflow-hidden">
+                <div class="flex flex-col min-w-0 flex-1">
+                  <div class="flex items-center gap-1.5">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="w-3 h-3 text-orange-600 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M3 10h10a5 5 0 015 5v3M3 10l6-6M3 10l6 6" />
+                    </svg>
+                    <span class="font-bold text-orange-700 truncate">Replying to {{ repMsg.senderName }}</span>
+                  </div>
+                  <span class="line-clamp-2 break-words text-slate-600 text-[11px] pl-4 italic">{{ repMsg.text }}</span>
                 </div>
-                <span class="line-clamp-2 break-words text-slate-600 text-[11px] pl-4 italic">{{ repMsg.text }}</span>
+                <button type="button" (click)="cancelReply()" class="w-6 h-6 rounded-full hover:bg-orange-100 flex items-center justify-center text-slate-400 hover:text-slate-700 font-bold cursor-pointer text-xs shrink-0" title="Cancel reply">
+                  ✕
+                </button>
               </div>
-              <button type="button" (click)="cancelReply()" class="w-6 h-6 rounded-full hover:bg-orange-100 flex items-center justify-center text-slate-400 hover:text-slate-700 font-bold cursor-pointer text-xs shrink-0" title="Cancel reply">
-                ✕
+            }
+            @if (editingMessage(); as editMsg) {
+              <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
+                <div class="flex items-center gap-2 min-w-0">
+                  <span class="font-bold text-amber-800 shrink-0">Editing:</span>
+                  <span class="truncate text-slate-700 italic">"{{ editMsg.content }}"</span>
+                </div>
+                <button type="button" (click)="cancelEdit()" class="text-amber-800 hover:text-amber-950 font-bold cursor-pointer text-xs shrink-0">Cancel</button>
+              </div>
+            }
+            @if (pendingAttachment(); as att) {
+              <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 text-xs">
+                <span class="truncate font-semibold text-orange-800">📎 {{ att.fileName }}</span>
+                <button type="button" (click)="clearPendingAttachment()" class="text-orange-600 font-bold cursor-pointer">Remove</button>
+              </div>
+            }
+            <div class="flex items-center gap-2">
+              <label class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center cursor-pointer hover:bg-slate-100 shrink-0"
+                     [class.opacity-50]="uploadingFile()" title="Attach file">
+                <input type="file" class="hidden" (change)="onFileSelected($event)"
+                       accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" [disabled]="uploadingFile()" />
+                <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                  <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
+                </svg>
+              </label>
+              <input
+                type="text"
+                [ngModel]="newMessage()"
+                (ngModelChange)="newMessage.set($event)"
+                (keyup.enter)="sendMessage()"
+                placeholder="Type a message..."
+                class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-hidden focus:border-orange-500 focus:bg-white transition-all">
+              <button
+                type="button"
+                (click)="sendMessage()"
+                [disabled]="sendingMessage() || uploadingFile() || (!newMessage().trim() && !pendingAttachment())"
+                class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer transition-all">
+                {{ sendingMessage() ? 'Sending...' : (uploadingFile() ? 'Uploading...' : (editingMessage() ? 'Update' : 'Send')) }}
               </button>
             </div>
-          }
-          @if (editingMessage(); as editMsg) {
-            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-xl bg-amber-50 border border-amber-200 text-xs">
-              <div class="flex items-center gap-2 min-w-0">
-                <span class="font-bold text-amber-800 shrink-0">Editing:</span>
-                <span class="truncate text-slate-700 italic">"{{ editMsg.content }}"</span>
-              </div>
-              <button type="button" (click)="cancelEdit()" class="text-amber-800 hover:text-amber-950 font-bold cursor-pointer text-xs shrink-0">Cancel</button>
-            </div>
-          }
-          @if (pendingAttachment(); as att) {
-            <div class="flex items-center justify-between gap-2 px-3 py-1.5 rounded-lg bg-orange-50 border border-orange-100 text-xs">
-              <span class="truncate font-semibold text-orange-800">📎 {{ att.fileName }}</span>
-              <button type="button" (click)="clearPendingAttachment()" class="text-orange-600 font-bold cursor-pointer">Remove</button>
-            </div>
-          }
-          <div class="flex items-center gap-2">
-            <label class="w-10 h-10 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-center cursor-pointer hover:bg-slate-100 shrink-0"
-                   [class.opacity-50]="uploadingFile()" title="Attach file">
-              <input type="file" class="hidden" (change)="onFileSelected($event)"
-                     accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.txt" [disabled]="uploadingFile()" />
-              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M15.172 7l-6.586 6.586a2 2 0 102.828 2.828l6.414-6.586a4 4 0 00-5.656-5.656l-6.415 6.585a6 6 0 108.486 8.486L20.5 13" />
-              </svg>
-            </label>
-            <input
-              type="text"
-              [ngModel]="newMessage()"
-              (ngModelChange)="newMessage.set($event)"
-              (keyup.enter)="sendMessage()"
-              placeholder="Type a message..."
-              class="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-xs outline-hidden focus:border-orange-500 focus:bg-white transition-all">
-            <button
-              type="button"
-              (click)="sendMessage()"
-              [disabled]="sendingMessage() || uploadingFile() || (!newMessage().trim() && !pendingAttachment())"
-              class="px-5 py-2.5 rounded-xl bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs shadow-xs disabled:opacity-50 cursor-pointer transition-all">
-              {{ sendingMessage() ? 'Sending...' : (uploadingFile() ? 'Uploading...' : (editingMessage() ? 'Update' : 'Send')) }}
-            </button>
           </div>
-        </div>
+        }
 
         @if (deleteModalMessage(); as delMsg) {
           <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-xs p-4" (click)="closeDeleteModal()">

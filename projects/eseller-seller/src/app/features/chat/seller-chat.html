@@ -43,26 +43,29 @@
               [class.border-teal-600]="selectedRoomId() === c.roomId">
               <div class="flex items-center justify-between gap-2">
                 <div class="flex items-center gap-2 min-w-0">
-                  <span class="w-8 h-8 rounded-full bg-teal-700 text-white flex items-center justify-center shrink-0">
+                  <span class="w-8 h-8 rounded-full flex items-center justify-center shrink-0"
+                        [ngClass]="c.type === 'partner' ? 'bg-amber-600 text-white' : 'bg-teal-700 text-white'">
                     <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                       <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0115 0v5.25A2.25 2.25 0 0117.25 19.5h-1.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75h1.5V12a6 6 0 10-12 0v1.5h1.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-1.5A2.25 2.25 0 014.5 17.25V12z" />
                     </svg>
                   </span>
                   <div class="min-w-0">
                     <div class="flex items-center gap-1.5">
-                      <span class="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
-                      <span class="font-bold text-xs text-gray-900 truncate">Customer Service</span>
+                      <span class="w-2 h-2 rounded-full shrink-0"
+                            [ngClass]="c.type === 'partner' ? 'bg-amber-500' : 'bg-emerald-500'"></span>
+                      <span class="font-bold text-xs text-gray-900 truncate">{{ c.title }}</span>
                     </div>
                     <p class="text-[11px] text-gray-500 mt-0.5 truncate">
-                      {{ cleanMessagePreview(c.lastMessage) || 'Chat with Customer Service' }}
+                      {{ cleanMessagePreview(c.lastMessage) || (c.type === 'partner' ? 'Chat with Referring Partner' : 'Chat with Customer Service') }}
                     </p>
                   </div>
                 </div>
                 <span class="text-[10px] text-gray-400 shrink-0">{{ c.lastMessageTime | date:'shortTime' }}</span>
               </div>
               <div class="flex items-center justify-end mt-1.5">
-                <span class="px-1.5 py-0.5 rounded-md uppercase font-bold text-[9px] bg-teal-50 text-teal-700">
-                  Customer Service
+                <span class="px-1.5 py-0.5 rounded-md uppercase font-bold text-[9px]"
+                      [ngClass]="c.type === 'partner' ? 'bg-amber-50 text-amber-700 border border-amber-200' : 'bg-teal-50 text-teal-700 border border-teal-200'">
+                  {{ c.type === 'partner' ? 'Partner Support' : 'Customer Support' }}
                 </span>
               </div>
             </div>
@@ -78,19 +81,23 @@
       @if (selectedConversation()) {
         <div class="p-4 border-b border-gray-100 flex items-center justify-between shrink-0 bg-slate-50/30">
           <div class="flex items-center gap-3">
-            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-teal-700 text-white">
+            <div class="w-10 h-10 rounded-full flex items-center justify-center shrink-0"
+                 [ngClass]="selectedConversation()?.type === 'partner' ? 'bg-amber-600 text-white' : 'bg-teal-700 text-white'">
               <svg xmlns="http://www.w3.org/2000/svg" class="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                 <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0115 0v5.25A2.25 2.25 0 0117.25 19.5h-1.5a.75.75 0 01-.75-.75v-4.5a.75.75 0 01.75-.75h1.5V12a6 6 0 10-12 0v1.5h1.5a.75.75 0 01.75.75v4.5a.75.75 0 01-.75.75h-1.5A2.25 2.25 0 014.5 17.25V12z" />
               </svg>
             </div>
             <div>
-              <h2 class="font-bold text-sm text-gray-900">Customer Service</h2>
-              <p class="text-[11px] text-gray-400">Typically reply soon</p>
+              <h2 class="font-bold text-sm text-gray-900">{{ selectedConversation()?.title || 'Customer Service' }}</h2>
+              <p class="text-[11px] text-gray-400">
+                {{ selectedConversation()?.type === 'partner' ? 'Direct channel with referring partner' : 'Super Admin customer support' }}
+              </p>
             </div>
           </div>
 
-          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border bg-teal-50 text-teal-700 border-teal-200">
-            Customer Service
+          <span class="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border"
+                [ngClass]="selectedConversation()?.type === 'partner' ? 'bg-amber-50 text-amber-700 border-amber-200' : 'bg-teal-50 text-teal-700 border-teal-200'">
+            {{ selectedConversation()?.type === 'partner' ? 'Partner Support' : 'Customer Support' }}
           </span>
         </div>
 
@@ -220,7 +227,16 @@
                       }
                       @if (msg.isMe && tickState(msg) !== 'pending') {
                         <div class="flex items-center justify-end gap-0.5 mt-1 text-[10px]">
-                          <span class="opacity-80">✓</span>
+                          @if (tickState(msg) === 'read') {
+                            <!-- Read: double tick in sky blue #38bdf8 -->
+                            <span class="font-black text-[11px] tracking-tighter" style="color: #38bdf8 !important;" title="Read">✓✓</span>
+                          } @else if (tickState(msg) === 'delivered') {
+                            <!-- Delivered: double tick in grey/white -->
+                            <span class="opacity-80 font-bold text-[11px] tracking-tighter" title="Delivered">✓✓</span>
+                          } @else {
+                            <!-- Sent / Offline: single tick -->
+                            <span class="opacity-70 text-[11px]" title="Sent">✓</span>
+                          }
                         </div>
                       }
                     }

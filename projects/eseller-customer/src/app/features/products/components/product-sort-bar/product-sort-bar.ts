@@ -1,4 +1,5 @@
 import { Component, input, output, computed } from '@angular/core';
+import { SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 
 export interface ActiveFilterChip {
   id: string;
@@ -8,11 +9,19 @@ export interface ActiveFilterChip {
 
 @Component({
   selector: 'app-product-sort-bar',
-  imports: [],
+  standalone: true,
+  imports: [SearchableSelect],
   templateUrl: './product-sort-bar.html',
   styleUrl: './product-sort-bar.css'
 })
 export class ProductSortBar {
+  readonly sortOptions: SearchableSelectOption[] = [
+    { value: 'newest', label: 'Newest Arrivals' },
+    { value: 'popular', label: 'Most Popular' },
+    { value: 'price_asc', label: 'Price: Low to High' },
+    { value: 'price_desc', label: 'Price: High to Low' },
+    { value: 'rating', label: 'Customer Rating' }
+  ];
   // Title & Info
   readonly title = input<string>('');
   readonly subtitle = input<string>('');

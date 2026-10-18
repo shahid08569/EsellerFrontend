@@ -16,15 +16,16 @@
     </div>
 
     <div class="flex items-center gap-3">
-      <select 
-        [ngModel]="selectedPeriod()"
-        (ngModelChange)="selectedPeriod.set($event); loadReport()"
-        class="bg-white/20 border border-white/30 rounded-xl px-3 py-2 text-xs font-bold text-white outline-hidden backdrop-blur-xs cursor-pointer">
-        <option value="7d" class="text-gray-900 font-medium">Last 7 Days</option>
-        <option value="30d" class="text-gray-900 font-medium">Last 30 Days</option>
-        <option value="90d" class="text-gray-900 font-medium">Last 90 Days</option>
-        <option value="year" class="text-gray-900 font-medium">Past Year</option>
-      </select>
+      <div class="w-40">
+        <es-searchable-select 
+          [options]="periodOptions"
+          [value]="selectedPeriod()"
+          (valueChange)="selectedPeriod.set($event); loadReport()"
+          customClass="w-full flex items-center justify-between gap-1 px-3 py-2 bg-white/20 hover:bg-white/30 border border-white/30 rounded-xl text-xs font-bold text-white cursor-pointer backdrop-blur-xs"
+          placeholder="Period"
+          searchPlaceholder="Search period..."
+        />
+      </div>
       <button 
         type="button" 
         (click)="exportCsv()"

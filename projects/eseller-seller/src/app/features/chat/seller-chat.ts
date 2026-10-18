@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, AfterViewChecked, ViewChild, ElementRef, 
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
+import { Subscription, forkJoin, of, catchError } from 'rxjs';
 import { SellerService } from '../../core/services/seller.service';
 import { SignalRService, AuthStore, ToastService, ChatService, SignalRIncomingMessage, SignalRMessageEdited, SignalRMessageDeleted, ChatMessageDto, SkeletonLayout, ParsedReply, parseMessageReply, buildReplyMessage, cleanMessagePreview } from 'eseller-shared';
 
@@ -12,7 +12,10 @@ interface ChatMessage {
   message: string;
   createdAt: string;
   isMe?: boolean;
+  isDelivered?: boolean;
+  deliveredAt?: string | null;
   isRead?: boolean;
+  readAt?: string | null;
   attachmentUrl?: string | null;
   attachmentFileName?: string | null;
   attachmentContentType?: string | null;
@@ -24,6 +27,8 @@ interface ChatMessage {
 interface ChatConversation {
   roomId: string;
   title: string;
+  type?: 'support' | 'partner';
+  partnerName?: string;
   lastMessage?: string;
   lastMessageTime?: string;
 }
@@ -55,6 +60,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
   private shouldScrollToBottom = false;
   private receiveMessageUnsubscribe: (() => void) | null = null;
+  private messageDeliveredUnsubscribe: (() => void) | null = null;
   private messageReadUnsubscribe: (() => void) | null = null;
   private messageEditedUnsubscribe: (() => void) | null = null;
   private messageDeletedUnsubscribe: (() => void) | null = null;
@@ -121,6 +127,7 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       this.conversations.set([{
         roomId: initialRoom,
         title: 'Customer Service',
+        type: 'support',
         lastMessage: 'Connecting…',
         lastMessageTime: undefined
       }]);
@@ -137,10 +144,12 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       this.signalR.leaveOrderRoom(id).catch(() => {});
     }
     this.receiveMessageUnsubscribe?.();
+    this.messageDeliveredUnsubscribe?.();
     this.messageReadUnsubscribe?.();
     this.messageEditedUnsubscribe?.();
     this.messageDeletedUnsubscribe?.();
     this.receiveMessageUnsubscribe = null;
+    this.messageDeliveredUnsubscribe = null;
     this.messageReadUnsubscribe = null;
     this.messageEditedUnsubscribe = null;
     this.messageDeletedUnsubscribe = null;
@@ -152,12 +161,14 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     }
   }
 
-  /** WhatsApp-style: pending (no id) → single ✓ → double ✓ when read */
-  tickState(msg: ChatMessage): 'pending' | 'sent' | 'read' {
+  /** WhatsApp-style: pending (no id) → single ✓ → double ✓ when delivered → blue double ✓ when read */
+  tickState(msg: ChatMessage): 'pending' | 'sent' | 'delivered' | 'read' {
     if (!msg.isMe) return 'sent';
     const id = String(msg.id || '');
     if (!id || id.startsWith('tmp-')) return 'pending';
-    return msg.isRead ? 'read' : 'sent';
+    if (msg.isRead) return 'read';
+    if (msg.isDelivered || msg.deliveredAt) return 'delivered';
+    return 'sent';
   }
 
   private queueScrollToLatest(): void {
@@ -197,7 +208,10 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       message: isDel ? 'This message was deleted' : (m.message || m.content || m.Message || ''),
       createdAt: m.sentAt || m.createdAt || new Date().toISOString(),
       isMe: this.isMyRole(String(role)) || role === 2,
-      isRead: !!m.isRead,
+      isDelivered: !!(m.isDelivered ?? m.IsDelivered ?? m.deliveredAt ?? m.DeliveredAt),
+      deliveredAt: m.deliveredAt || m.DeliveredAt || null,
+      isRead: !!(m.isRead ?? m.IsRead),
+      readAt: m.readAt || m.ReadAt || null,
       attachmentUrl: isDel ? null : (m.attachmentUrl || null),
       attachmentFileName: isDel ? null : (m.attachmentFileName || null),
       attachmentContentType: isDel ? null : (m.attachmentContentType || null),
@@ -211,7 +225,16 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
     const id = messageId.toLowerCase();
     this.messages.update(list =>
       list.map(m =>
-        m.id && m.id.toLowerCase() === id ? { ...m, isRead: true, createdAt: m.createdAt || readAt } : m
+        m.id && m.id.toLowerCase() === id ? { ...m, isRead: true, isDelivered: true, readAt } : m
+      )
+    );
+  }
+
+  private applyMessageDelivered(messageId: string, deliveredAt: string): void {
+    const id = messageId.toLowerCase();
+    this.messages.update(list =>
+      list.map(m =>
+        m.id && m.id.toLowerCase() === id ? { ...m, isDelivered: true, deliveredAt } : m
       )
     );
   }
@@ -255,6 +278,8 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
               createdAt: incoming.sentAt || new Date().toISOString(),
               isMe,
               isRead: false,
+              isDelivered: true,
+              deliveredAt: incoming.sentAt || new Date().toISOString(),
               attachmentUrl: incoming.attachmentUrl || null,
               attachmentFileName: incoming.attachmentFileName || null,
               attachmentContentType: incoming.attachmentContentType || null
@@ -268,6 +293,10 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
         }
 
         this.updateConversationPreview(roomId, incoming.message, incoming.sentAt);
+      });
+
+      this.messageDeliveredUnsubscribe = this.signalR.onMessageDelivered((messageId, deliveredAt) => {
+        this.applyMessageDelivered(messageId, deliveredAt);
       });
 
       this.messageReadUnsubscribe = this.signalR.onMessageRead((messageId, readAt) => {
@@ -306,36 +335,72 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
   loadConversations(productId?: string | null): void {
     this.isLoading.set(true);
 
-    this.chatService.getShopSupportSession(productId).subscribe({
-      next: (session) => {
-        const roomId = session.orderRequestId || session.conversationId;
-        if (!roomId) {
+    forkJoin({
+      support: this.chatService.getShopSupportSession(productId).pipe(catchError(() => of(null))),
+      partner: this.chatService.getShopPartnerSession().pipe(catchError(() => of(null)))
+    }).subscribe({
+      next: ({ support, partner }) => {
+        const convos: ChatConversation[] = [];
+
+        if (partner && partner.conversationId) {
+          // 1. Referred Seller -> Customer Service (Partner)
+          convos.push({
+            roomId: partner.conversationId,
+            title: partner.partnerName ? `Customer Service (${partner.partnerName})` : 'Customer Service (Partner)',
+            type: 'partner',
+            partnerName: partner.partnerName,
+            lastMessage: 'Direct Partner Support',
+            lastMessageTime: undefined
+          });
+
+          // 2. Referred Seller -> Management Support (Super Admin)
+          if (support) {
+            const roomId = support.orderRequestId || support.conversationId;
+            if (roomId) {
+              convos.push({
+                roomId,
+                title: 'Management Support (Super Admin)',
+                type: 'support',
+                lastMessage: 'Official Platform Support',
+                lastMessageTime: undefined
+              });
+            }
+          }
+        } else {
+          // Normal Seller -> Customer Service (Super Admin) ONLY
+          if (support) {
+            const roomId = support.orderRequestId || support.conversationId;
+            if (roomId) {
+              convos.push({
+                roomId,
+                title: 'Customer Service (Super Admin)',
+                type: 'support',
+                lastMessage: 'Official Platform Support',
+                lastMessageTime: undefined
+              });
+            }
+          }
+        }
+
+        if (convos.length === 0) {
           this.isLoading.set(false);
-          this.toast.show('Could not open customer service chat.', 'error');
+          this.toast.show('Could not open support chat.', 'error');
           return;
         }
 
-        this.persistRoomId(roomId);
-
-        const supportConvo: ChatConversation = {
-          roomId,
-          title: 'Customer Service',
-          lastMessage: 'Loading…',
-          lastMessageTime: undefined
-        };
-
-        this.conversations.set([supportConvo]);
+        this.conversations.set(convos);
         this.isLoading.set(false);
 
-        // Always prioritize fresh authoritative roomId from server
-        const preferred = roomId || this.selectedRoomId();
-        if (preferred) {
-          this.selectConversation(preferred);
-        }
+        const currentSelected = this.selectedRoomId();
+        const preferred = (currentSelected && convos.some(c => c.roomId.toLowerCase() === currentSelected.toLowerCase()))
+          ? currentSelected
+          : convos[0].roomId;
+
+        this.selectConversation(preferred);
       },
       error: () => {
         this.isLoading.set(false);
-        this.toast.show('Failed to open Customer Service chat', 'error');
+        this.toast.show('Failed to open chat sessions', 'error');
       }
     });
   }
@@ -693,11 +758,18 @@ export class SellerChat implements OnInit, OnDestroy, AfterViewChecked {
       next: (res) => {
         this.isSending.set(false);
         const realId = res?.messageId ? String(res.messageId) : tempId;
+        const isDelivered = !!(res?.isDelivered ?? res?.deliveredAt);
         this.messages.update(list => {
           const without = list.filter(m =>
             m.id !== tempId && String(m.id || '').toLowerCase() !== realId.toLowerCase()
           );
-          return [...without, { ...optimisticMsg, id: realId, isRead: false }];
+          return [...without, {
+            ...optimisticMsg,
+            id: realId,
+            isRead: false,
+            isDelivered,
+            deliveredAt: res?.deliveredAt ?? null
+          }];
         });
         this.updateConversationPreview(roomId, preview, new Date().toISOString());
       },

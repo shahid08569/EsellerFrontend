@@ -25,6 +25,15 @@ export interface AdminDisplayMessage {
   readAt?: string | Date | null;
 }
 
+export type AdminChatTab =
+  | 'direct-sellers'
+  | 'partner-referrals'
+  | 'partner-sellers'
+  | 'partners'
+  | 'customers'
+  | 'superadmin'
+  | 'my-sellers';
+
 @Component({
   selector: 'app-admin-chat',
   standalone: true,
@@ -57,8 +66,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   readonly sendingMessage = signal<boolean>(false);
   readonly uploadingFile = signal<boolean>(false);
   readonly searchTerm = signal<string>('');
-  /** Inbox filter: Support | Customers only */
-  readonly filterTab = signal<'support' | 'customers'>('support');
+  
+  /** Dynamic Tabs: SuperAdmin (direct-sellers, partner-referrals, partner-sellers, partners, customers) vs Partner (superadmin, my-sellers) */
+  readonly filterTab = signal<AdminChatTab>(this.isPartner() ? 'superadmin' : 'direct-sellers');
   readonly pendingAttachment = signal<{
     url: string;
     fileName: string;
@@ -120,21 +130,55 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   });
 
   readonly filteredConversations = computed(() => {
-    if (this.isPartner()) {
-      return this.enrichedConversations().filter(c => this.isSellerSupport(c));
-    }
-    const tab = this.filterTab();
     const list = this.enrichedConversations();
-    if (tab === 'customers') return list.filter(c => !this.isSellerSupport(c));
-    return list.filter(c => this.isSellerSupport(c));
+    if (this.isPartner()) {
+      const tab = this.filterTab();
+      if (tab === 'my-sellers') {
+        return list.filter(c => c.participantType === 'SellerPartner');
+      }
+      return list.filter(c => c.participantType === 'Partner');
+    }
+
+    const tab = this.filterTab();
+    switch (tab) {
+      case 'direct-sellers':
+        return list.filter(c => c.participantType === 'Seller' && !c.isReferred);
+      case 'partner-referrals':
+        return list.filter(c => c.participantType === 'Seller' && c.isReferred);
+      case 'partner-sellers':
+        return list.filter(c => c.participantType === 'SellerPartner');
+      case 'partners':
+        return list.filter(c => c.participantType === 'Partner');
+      case 'customers':
+        return list.filter(c => c.participantType === 'Customer');
+      default:
+        return list.filter(c => c.participantType === 'Seller' && !c.isReferred);
+    }
   });
 
-  readonly supportTabCount = computed(() =>
-    this.enrichedConversations().filter(c => this.isSellerSupport(c)).length
+  // Tab counts
+  readonly directSellersCount = computed(() =>
+    this.enrichedConversations().filter(c => c.participantType === 'Seller' && !c.isReferred).length
   );
 
-  readonly customerTabCount = computed(() =>
-    this.isPartner() ? 0 : this.enrichedConversations().filter(c => !this.isSellerSupport(c)).length
+  readonly partnerReferralsCount = computed(() =>
+    this.enrichedConversations().filter(c => c.participantType === 'Seller' && c.isReferred).length
+  );
+
+  readonly partnerSellersCount = computed(() =>
+    this.enrichedConversations().filter(c => c.participantType === 'SellerPartner').length
+  );
+
+  readonly partnersCount = computed(() =>
+    this.enrichedConversations().filter(c => c.participantType === 'Partner').length
+  );
+
+  readonly customersCount = computed(() =>
+    this.isPartner() ? 0 : this.enrichedConversations().filter(c => c.participantType === 'Customer').length
+  );
+
+  readonly partnerSuperAdminCount = computed(() =>
+    this.enrichedConversations().filter(c => c.participantType === 'Partner').length
   );
 
   private unsubscribeSignalR?: () => void;
@@ -249,10 +293,20 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   private handleIncomingMessage(incoming: SignalRIncomingMessage): void {
     const active = this.activeConversation();
     const activeOrderId = active ? (active.orderRequestId || active.id) : null;
+    const myAccountId = this.authStore.currentAccount()?.accountId?.toLowerCase();
+    const msgSenderAccountId = String(incoming.senderAccountId || '').toLowerCase();
     const roleLower = String(incoming.senderRole || '').toLowerCase();
-    const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
+    const isFromAdmin = myAccountId && msgSenderAccountId
+      ? msgSenderAccountId === myAccountId
+      : (this.isPartner()
+          ? roleLower.includes('partner')
+          : (roleLower.includes('superadmin') || roleLower.includes('admin')));
     const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller');
-    const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
+    let senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (active?.shopName || active?.customerName || 'Merchant Store') : (active?.customerName || 'Customer'));
+    if (!isFromAdmin) {
+      if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
+      else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service (Admin)';
+    }
     const incomingId = String(incoming.messageId || '').toLowerCase();
 
     // If message belongs to active thread, append (dedupe by id / temp optimistic)
@@ -282,9 +336,10 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         ];
       });
       this.queueScrollToLatest();
-      // Thread is open — mark read so badges don't stick on already-seen messages
+      // Thread is open — mark read so badges don't stick on already-seen messages and backend fires read receipt
       if (!isFromAdmin && activeOrderId) {
         this.chatUnread.markConversationRead(activeOrderId);
+        this.chatService.markConversationAsRead(activeOrderId).subscribe({ error: () => {} });
       }
     }
 
@@ -360,12 +415,17 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         this.chatUnread.applyFromConversations(convos);
         this.isLoading.set(false);
 
-        // Do NOT auto-open first thread — that clears unread before admin chooses who messaged.
-        // Only open a thread when deep-linked (?targetId=) or when selectFirst is used after targetId path above.
-        if (selectFirst && targetId && convos.length > 0 && !this.activeConversation()) {
-          const match = convos.find((c: any) =>
-            (c.orderRequestId || c.id)?.toLowerCase() === targetId.toLowerCase());
-          if (match) this.selectConversation(match);
+        // Do NOT auto-open first thread for SuperAdmin — that clears unread before admin chooses who messaged.
+        // For Partner: automatically select their default SuperAdmin conversation!
+        if (selectFirst && !this.activeConversation()) {
+          if (targetId) {
+            const match = convos.find((c: any) =>
+              (c.orderRequestId || c.id)?.toLowerCase() === targetId.toLowerCase());
+            if (match) this.selectConversation(match);
+          } else if (this.isPartner()) {
+            const saConvo = convos.find((c: any) => c.participantType === 'Partner');
+            if (saConvo) this.selectConversation(saConvo);
+          }
         }
       },
       error: () => {
@@ -422,6 +482,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         : c;
     }));
     this.chatUnread.markConversationRead(targetId);
+    this.chatService.markConversationAsRead(targetId).subscribe({ error: () => {} });
 
     this.signalRService.joinOrderRoom(targetId).catch(() => {});
     this.messagesSub = this.adminService.getConversationMessages(targetId).subscribe({
@@ -433,10 +494,20 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         this.isLoadingMessages.set(false);
         const list = Array.isArray(msgs) ? msgs : (msgs?.items || msgs?.messages || []);
         this.messages.set(list.map((m: any) => {
-          const roleLower = String(m.senderRole || '').toLowerCase();
-          const isFromAdmin = roleLower.includes('superadmin') || roleLower.includes('admin') || roleLower.includes('partner');
+          const myAccountId = this.authStore.currentAccount()?.accountId?.toLowerCase();
+          const msgSenderAccountId = String(m.senderAccountId || m.SenderAccountId || '').toLowerCase();
+          const roleLower = String(m.senderRole || m.SenderRole || '').toLowerCase();
+          const isFromAdmin = myAccountId && msgSenderAccountId
+            ? msgSenderAccountId === myAccountId
+            : (this.isPartner()
+                ? roleLower.includes('partner')
+                : (roleLower.includes('superadmin') || roleLower.includes('admin')));
           const isShopkeeper = roleLower.includes('shopkeeper') || roleLower.includes('seller') || roleLower === '2';
-          const senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+          let senderDisplayName = isFromAdmin ? 'Management' : (isShopkeeper ? (convo.shopName || convo.customerName || 'Merchant Store') : (convo.customerName || 'Customer'));
+          if (!isFromAdmin) {
+            if (roleLower.includes('partner')) senderDisplayName = 'Partner Support';
+            else if (roleLower.includes('superadmin') || roleLower.includes('admin')) senderDisplayName = 'Customer Service (Admin)';
+          }
           const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
           return {
             id: m.id || m.Id,
@@ -717,6 +788,10 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     const attachment = this.pendingAttachment();
     const convo = this.activeConversation();
     if ((!text && !attachment) || !convo) return;
+    if (convo.isReadOnly) {
+      this.toast.show('Yeh conversation read-only audit hai. Yahan messages nahi bheje jaa sakty.', 'warning');
+      return;
+    }
 
     const targetId = convo.orderRequestId || convo.id;
     if (!targetId) return;
@@ -861,8 +936,7 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     return `${months}mo`;
   }
 
-  setFilterTab(tab: 'support' | 'customers'): void {
-    if (this.isPartner() && tab === 'customers') return;
+  setFilterTab(tab: AdminChatTab): void {
     this.filterTab.set(tab);
   }
 

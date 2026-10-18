@@ -1,0 +1,4 @@
+/* Searchable select styles */
+:host {
+  display: block;
+}

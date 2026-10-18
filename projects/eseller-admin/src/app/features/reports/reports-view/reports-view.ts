@@ -2,18 +2,25 @@ import { Component, OnInit, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { ToastService } from 'eseller-shared';
+import { ToastService, SearchableSelect, SearchableSelectOption } from 'eseller-shared';
 import { AdminService } from '../../../core/services/admin.service';
 
 @Component({
   selector: 'app-reports-view',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, SearchableSelect],
   templateUrl: './reports-view.html'
 })
 export class ReportsView implements OnInit {
   private readonly adminService = inject(AdminService);
   private readonly toast = inject(ToastService);
+
+  readonly periodOptions: SearchableSelectOption[] = [
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+    { value: '90d', label: 'Last 90 Days' },
+    { value: 'year', label: 'Past Year' }
+  ];
 
   readonly isLoading = signal<boolean>(true);
   readonly selectedPeriod = signal<string>('30d');

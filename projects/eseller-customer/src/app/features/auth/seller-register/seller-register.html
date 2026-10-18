@@ -274,31 +274,25 @@
           <div class="grid sm:grid-cols-3 gap-3">
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Country *</label>
-              <select
-                [ngModel]="selectedCountry()"
-                (ngModelChange)="onCountryChange($event)"
-                name="selectedCountry"
-                class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white outline-none cursor-pointer">
-                <option value="" disabled>Select Country</option>
-                @for (c of sortedCountries(); track c.code) {
-                  <option [value]="c.name">{{ c.flag }} {{ c.name }}</option>
-                }
-              </select>
+              <es-searchable-select
+                [options]="countryOptions()"
+                [value]="selectedCountry()"
+                (valueChange)="onCountryChange($event)"
+                placeholder="Select Country"
+                searchPlaceholder="Search country..."
+              />
             </div>
 
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">State / Province *</label>
               @if (availableStates().length > 0) {
-                <select
-                  [ngModel]="selectedState()"
-                  (ngModelChange)="onStateChange($event)"
-                  name="selectedState"
-                  class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-900 focus:bg-white outline-none cursor-pointer">
-                  <option value="" disabled>Select State / Province</option>
-                  @for (s of availableStates(); track s) {
-                    <option [value]="s">{{ s }}</option>
-                  }
-                </select>
+                <es-searchable-select
+                  [options]="stateOptions()"
+                  [value]="selectedState()"
+                  (valueChange)="onStateChange($event)"
+                  placeholder="Select State / Province"
+                  searchPlaceholder="Search state..."
+                />
               } @else {
                 <input
                   type="text"

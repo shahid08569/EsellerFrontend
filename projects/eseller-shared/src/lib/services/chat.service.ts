@@ -78,6 +78,29 @@ export class ChatService {
     return this.api.get(url);
   }
 
+  getShopPartnerSession(): Observable<{
+    conversationId: string;
+    orderRequestId: string;
+    orderRef: string;
+    shopId: string;
+    shopName: string;
+    partnerId: string;
+    partnerName: string;
+    partnerCode?: string;
+  }> {
+    return this.api.get('/Chat/shop-partner-session');
+  }
+
+  getPartnerSupportSession(): Observable<{
+    conversationId: string;
+    orderRequestId: string;
+    orderRef: string;
+    partnerId: string;
+    partnerCode?: string;
+  }> {
+    return this.api.get('/Chat/partner-support-session');
+  }
+
   getAdminConversations(): Observable<any[]> {
     return this.api.get<any[]>('/Chat/conversations').pipe(
       catchError(() => of([]))
