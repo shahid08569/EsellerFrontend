@@ -142,7 +142,7 @@ export class OrderList implements OnInit {
             status: o.status,
             paymentStatus: o.paymentStatus || 'Pending',
             paymentMethod: o.paymentMethod || 'Cash on delivery',
-            merchantProfit: Number(o.merchantProfit) || Math.round(total * MERCHANT_COMMISSION_RATE * 100) / 100,
+            merchantProfit: Number(o.merchantProfit) || total,
             totalAmount: total,
             totalItems: Number(o.totalItems) || 0,
             createdAt: o.createdAt,
@@ -169,7 +169,7 @@ export class OrderList implements OnInit {
   }
 
   getCommission(amount: number): number {
-    return Math.round((Number(amount) || 0) * MERCHANT_COMMISSION_RATE * 100) / 100;
+    return Number(amount) || 0;
   }
 
   openDetail(order: Order): void {

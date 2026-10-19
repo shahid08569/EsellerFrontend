@@ -88,7 +88,7 @@ export class EarningsOverview implements OnInit {
               const apiProfit = Number(o.merchantProfit);
               const sellerCommission = Number.isFinite(apiProfit) && apiProfit > 0
                 ? apiProfit
-                : Math.round(gross * rate * 100) / 100;
+                : gross;
               const st = String(o.status || '').toLowerCase();
               return {
                 id: o.id,
@@ -117,25 +117,27 @@ export class EarningsOverview implements OnInit {
   );
 
   readonly pendingEarnings = computed(() => {
-    if (this.walletLoaded()) {
+    if (this.walletLoaded() && this.walletPending() > 0) {
       return this.walletPending();
     }
-    return this.transactions()
+    const computedFromTx = this.transactions()
       .filter(t => t.status === 'Pending')
-      .reduce((sum, t) => sum + t.sellerCommission, 0);
+      .reduce((sum, t) => sum + (t.grossAmount || t.sellerCommission), 0);
+    return computedFromTx > 0 ? computedFromTx : this.walletPending();
   });
 
   readonly availableEarnings = computed(() => {
-    if (this.walletLoaded()) {
+    if (this.walletLoaded() && this.walletAvailableEarnings() > 0) {
       return this.walletAvailableEarnings();
     }
-    return this.transactions()
+    const computedFromTx = this.transactions()
       .filter(t => t.status === 'Available')
-      .reduce((sum, t) => sum + t.sellerCommission, 0);
+      .reduce((sum, t) => sum + (t.grossAmount || t.sellerCommission), 0);
+    return computedFromTx > 0 ? computedFromTx : this.walletAvailableEarnings();
   });
 
   readonly withdrawableBalance = computed(() => {
-    if (this.walletLoaded()) {
+    if (this.walletLoaded() && this.walletBalance() > 0) {
       return this.walletBalance();
     }
     return this.availableEarnings();

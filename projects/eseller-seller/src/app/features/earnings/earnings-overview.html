@@ -5,14 +5,14 @@
     <div>
       <div class="flex items-center gap-2">
         <h2 class="text-xl font-black text-slate-900 tracking-tight">
-          Seller Earnings &amp; 20% Commissions
+          Seller Earnings &amp; Orders Revenue
         </h2>
         <span class="px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 text-[11px] font-extrabold">
-          20% Flat Commission Active
+          Full Order Payout Active
         </span>
       </div>
       <p class="text-xs text-slate-500 mt-1">
-        You earn a flat 20% commission on store orders. Profit moves to your wallet when Management marks the order Delivered — then you can withdraw.
+        Full order amount is held in Pending while in progress, and moves to Available once Delivered.
       </p>
     </div>
 
@@ -38,7 +38,7 @@
     <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
       <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Available</span>
       <p class="text-2xl font-black text-emerald-600 font-mono">$ {{ availableEarnings() | number:'1.2-2' }}</p>
-      <p class="text-[10px] text-slate-400">Delivered commission total</p>
+      <p class="text-[10px] text-slate-400">Delivered orders total</p>
     </div>
 
     <div class="bg-emerald-950 text-white rounded-2xl border border-emerald-800 p-4 shadow-md space-y-1">
@@ -51,7 +51,7 @@
   <!-- Transactions Ledger Table -->
   <div class="bg-white rounded-2xl border border-slate-200/80 shadow-sm overflow-hidden">
     <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-      <h3 class="text-sm font-bold text-slate-900">Order-by-Order Commission Ledger</h3>
+      <h3 class="text-sm font-bold text-slate-900">Order-by-Order Earnings Ledger</h3>
       <span class="text-xs text-slate-500">{{ transactions().length }} Transactions</span>
     </div>
 
@@ -71,7 +71,7 @@
             <tr>
               <th>Order</th>
               <th class="text-right">Gross</th>
-              <th class="text-right">Your 20%</th>
+              <th class="text-right">Payout Value</th>
               <th class="text-center">Status</th>
             </tr>
           </thead>
