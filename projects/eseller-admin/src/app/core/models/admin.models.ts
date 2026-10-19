@@ -402,6 +402,8 @@ export interface AdminAuditLogDto {
   entityType?: string;
   entityId?: string;
   details?: string;
+  oldValues?: string;
+  newValues?: string;
   ipAddress?: string;
   timestamp?: string;
   createdAt: string;

@@ -1,4 +1,4 @@
-import { Component, OnInit, inject, signal, computed } from '@angular/core';
+import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
 import { CommonModule, NgTemplateOutlet } from '@angular/common';
 import { RouterOutlet, RouterLink, RouterLinkActive, Router, NavigationStart, NavigationEnd, NavigationCancel, NavigationError } from '@angular/router';
 import { AuthStore, AuthService, ToastService } from 'eseller-shared';
@@ -17,7 +17,7 @@ import { AdminPermissionService } from '../../core/services/admin-permission.ser
   imports: [CommonModule, NgTemplateOutlet, RouterOutlet, RouterLink, RouterLinkActive, AdminChatWidget, NotificationBell],
   templateUrl: './admin-layout.html'
 })
-export class AdminLayout implements OnInit {
+export class AdminLayout implements OnInit, OnDestroy {
   private readonly http = inject(HttpClient);
   readonly authStore = inject(AuthStore);
   private readonly authService = inject(AuthService);
@@ -29,6 +29,9 @@ export class AdminLayout implements OnInit {
   readonly customerUrl = environment.customerUrl;
   readonly sellerUrl = environment.sellerUrl;
   readonly customerPortalUrl = environment.customerPortalUrl;
+
+  private badgePollTimer: any = null;
+  private badgeTriggerSub: any = null;
 
   readonly isSuperAdmin = computed(() => this.authStore.role() === 'SuperAdmin');
   readonly isPartner = computed(() => this.authStore.role() === 'Partner');
@@ -72,7 +75,7 @@ export class AdminLayout implements OnInit {
   readonly totalShopsCount = signal<number>(0);
 
   readonly usersNewCount = computed(
-    () => this.pendingCustomersCount() + this.pendingSellersCount() + this.pendingShopsCount()
+    () => this.pendingCustomersCount() + this.pendingSellersCount()
   );
   readonly shopsNewCount = computed(
     () => this.pendingShopsCount() + this.pendingTierCount()
@@ -103,6 +106,11 @@ export class AdminLayout implements OnInit {
 
   ngOnInit(): void {
     this.refreshBadges();
+    this.badgePollTimer = setInterval(() => this.refreshBadges(), 10000);
+    this.badgeTriggerSub = this.adminService.badgesRefreshTrigger$.subscribe(() => {
+      this.refreshBadges();
+    });
+
     this.chatUnread.start();
     this.currentUrl.set(this.router.url || '');
     this.autoExpandActiveDropdown(this.router.url);
@@ -129,6 +137,17 @@ export class AdminLayout implements OnInit {
         }
       }
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.badgePollTimer) {
+      clearInterval(this.badgePollTimer);
+      this.badgePollTimer = null;
+    }
+    if (this.badgeTriggerSub) {
+      this.badgeTriggerSub.unsubscribe();
+      this.badgeTriggerSub = null;
+    }
   }
 
   toggleDesktopSidebar(): void {
@@ -242,7 +261,7 @@ export class AdminLayout implements OnInit {
         if (!d) return;
         this.pendingShopsCount.set(d.pendingShops || 0);
         this.pendingProductsCount.set(d.pendingProducts || 0);
-        this.pendingOrdersCount.set(d.pendingOrders || d.newOrders || 0);
+        this.pendingOrdersCount.set(d.newOrders ?? 0);
         this.pendingWithdrawalsCount.set(d.pendingWithdrawals || 0);
         this.totalShopsCount.set(d.totalShops || d.activeShops || 0);
       },
@@ -252,8 +271,9 @@ export class AdminLayout implements OnInit {
     this.adminService.getShopkeepers().subscribe({
       next: (list) => {
         const pending = (list || []).filter(s => String(s.status || '').toLowerCase() === 'pending');
+        const directPending = pending.filter(s => !s.partnerId && !s.referredByCode);
         this.pendingShopsCount.set(pending.length);
-        this.pendingSellersCount.set(pending.length);
+        this.pendingSellersCount.set(directPending.length);
       },
       error: () => {}
     });
@@ -278,8 +298,12 @@ export class AdminLayout implements OnInit {
       error: () => {}
     });
 
-    this.adminService.getOrders(1, 1, 'pending').subscribe({
-      next: (res) => this.pendingOrdersCount.set(res?.totalCount || 0),
+    this.adminService.getOrders(1, 1, 'Pending').subscribe({
+      next: (res) => {
+        if (res?.totalCount !== undefined) {
+          this.pendingOrdersCount.set(res.totalCount);
+        }
+      },
       error: () => {}
     });
 

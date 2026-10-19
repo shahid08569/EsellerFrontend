@@ -50,10 +50,13 @@
                   {{ log.entityType }} #{{ log.entityId ? log.entityId.slice(0, 8) : 'N/A' }}
                 </td>
                 <td class="py-3.5 px-4 text-xs text-gray-700">
-                  {{ log.userEmail || 'System Admin' }}
+                  <div class="font-medium text-gray-900">{{ log.actorEmail || log.userEmail || 'Platform Authority' }}</div>
+                  @if (log.actorType) {
+                    <div class="text-[10px] text-gray-400 font-mono">{{ log.actorType }}</div>
+                  }
                 </td>
-                <td class="py-3.5 px-4 text-xs text-gray-500 max-w-xs truncate">
-                  {{ log.details || '-' }}
+                <td class="py-3.5 px-4 text-xs text-gray-600 max-w-sm truncate">
+                  {{ log.details || log.newValues || (log.oldValues ? 'Prior: ' + log.oldValues : '-') }}
                 </td>
                 <td class="py-3.5 px-4 text-xs text-gray-400 text-right font-mono">
                   {{ (log.createdAt || log.timestamp) | date:'medium' }}

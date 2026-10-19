@@ -12,7 +12,12 @@ export class AdminChatUnreadService implements OnDestroy {
   private readonly chatService = inject(ChatService);
   private readonly adminService = inject(AdminService);
 
+  /** Maps canonical conversation ID -> unread count (single source of truth, no double-counting) */
   readonly byConversationId = signal<Record<string, number>>({});
+
+  /** Maps aliases (shopId, participantId, userId) -> canonical conversation ID */
+  readonly aliasMap = signal<Record<string, string>>({});
+
   readonly totalUnread = computed(() =>
     Object.values(this.byConversationId()).reduce((sum, n) => sum + (Number(n) || 0), 0)
   );
@@ -38,30 +43,55 @@ export class AdminChatUnreadService implements OnDestroy {
     if (!conversationId) return 0;
     const key = conversationId.toLowerCase();
     if (this.pendingClears.has(key)) return 0;
+
     const map = this.byConversationId();
-    const hit = Object.entries(map).find(([k]) => k.toLowerCase() === key);
-    return hit ? Number(hit[1]) || 0 : 0;
+    // 1. Direct match by canonical ID
+    for (const [k, count] of Object.entries(map)) {
+      if (k.toLowerCase() === key) return Number(count) || 0;
+    }
+
+    // 2. Check alias map (e.g. shopId, participantId, userId)
+    const canonical = this.aliasMap()[key];
+    if (canonical) {
+      if (this.pendingClears.has(canonical.toLowerCase())) return 0;
+      for (const [k, count] of Object.entries(map)) {
+        if (k.toLowerCase() === canonical.toLowerCase()) return Number(count) || 0;
+      }
+    }
+
+    return 0;
   }
 
   /** Replace map from conversations API (authoritative). */
   applyFromConversations(list: Array<{ orderRequestId?: string; id?: string; unreadCount?: number }>): void {
-    const next: Record<string, number> = {};
+    const nextConvos: Record<string, number> = {};
+    const nextAliases: Record<string, string> = {};
+
     for (const c of list || []) {
-      const ids = [
-        String(c.orderRequestId || c.id || '').trim(),
+      const canonicalId = String(c.orderRequestId || c.id || '').trim();
+      if (!canonicalId) continue;
+
+      const n = Number(c.unreadCount || 0);
+      const canonicalKey = canonicalId.toLowerCase();
+
+      if (!this.pendingClears.has(canonicalKey) && n > 0) {
+        nextConvos[canonicalId] = n;
+      }
+
+      // Record lookup aliases without duplicating unread count totals
+      const otherIds = [
         String((c as any).participantId || '').trim(),
         String((c as any).shopId || '').trim(),
         String((c as any).userId || '').trim()
       ].filter(Boolean);
 
-      const n = Number(c.unreadCount || 0);
-      for (const id of ids) {
-        const key = id.toLowerCase();
-        if (this.pendingClears.has(key)) continue;
-        if (n > 0) next[id] = n;
+      for (const alt of otherIds) {
+        nextAliases[alt.toLowerCase()] = canonicalId;
       }
     }
-    this.byConversationId.set(next);
+
+    this.aliasMap.set(nextAliases);
+    this.byConversationId.set(nextConvos);
   }
 
   refresh(): void {
@@ -74,9 +104,9 @@ export class AdminChatUnreadService implements OnDestroy {
             const n = Number(res?.unreadCount || 0);
             if (n <= 0) {
               this.byConversationId.set({});
+              this.aliasMap.set({});
               return;
             }
-            // Keep existing per-id map if present; only seed a synthetic total bucket when empty
             if (Object.keys(this.byConversationId()).length === 0) {
               this.byConversationId.set({ __total__: n });
             }
@@ -91,9 +121,12 @@ export class AdminChatUnreadService implements OnDestroy {
     if (!conversationId || by <= 0) return;
     const key = conversationId.toLowerCase();
     this.pendingClears.delete(key);
+    const canonicalId = this.aliasMap()[key] || conversationId;
+    this.pendingClears.delete(canonicalId.toLowerCase());
+
     this.byConversationId.update((map) => {
-      const existing = Object.keys(map).find((k) => k.toLowerCase() === key) || conversationId;
-      return { ...map, [existing]: (Number(map[existing]) || 0) + by };
+      const existingKey = Object.keys(map).find((k) => k.toLowerCase() === canonicalId.toLowerCase()) || canonicalId;
+      return { ...map, [existingKey]: (Number(map[existingKey]) || 0) + by };
     });
   }
 
@@ -101,23 +134,34 @@ export class AdminChatUnreadService implements OnDestroy {
   markConversationRead(conversationId: string): void {
     if (!conversationId) return;
     const key = conversationId.toLowerCase();
+    const canonicalId = this.aliasMap()[key] || conversationId;
+
     this.pendingClears.add(key);
+    this.pendingClears.add(canonicalId.toLowerCase());
+
     this.byConversationId.update((map) => {
       const next = { ...map };
       for (const k of Object.keys(next)) {
-        if (k.toLowerCase() === key || k === '__total__') {
+        if (
+          k.toLowerCase() === key ||
+          k.toLowerCase() === canonicalId.toLowerCase() ||
+          k === '__total__'
+        ) {
           delete next[k];
         }
       }
       return next;
     });
-    this.chatService.markConversationAsRead(conversationId).subscribe({
+
+    this.chatService.markConversationAsRead(canonicalId).subscribe({
       next: () => {
         this.pendingClears.delete(key);
+        this.pendingClears.delete(canonicalId.toLowerCase());
         this.refresh();
       },
       error: () => {
         this.pendingClears.delete(key);
+        this.pendingClears.delete(canonicalId.toLowerCase());
         this.refresh();
       }
     });

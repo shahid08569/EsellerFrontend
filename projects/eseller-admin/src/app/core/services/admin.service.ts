@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs';
+import { Observable, of, throwError, Subject } from 'rxjs';
 import { map, catchError, switchMap } from 'rxjs/operators';
 import { ApiService } from 'eseller-shared';
 import { environment } from '../../../environments/environment';
@@ -39,6 +39,12 @@ import {
 @Injectable({ providedIn: 'root' })
 export class AdminService {
   private readonly api = inject(ApiService);
+
+  readonly badgesRefreshTrigger$ = new Subject<void>();
+
+  triggerBadgesRefresh(): void {
+    this.badgesRefreshTrigger$.next();
+  }
 
   private normalizeStatus(status: any): 'Pending' | 'Approved' | 'Rejected' {
     if (status === undefined || status === null) return 'Pending';
@@ -96,11 +102,21 @@ export class AdminService {
   }
 
   approveShopkeeper(id: string): Observable<{ message: string }> {
-    return this.api.post<{ message: string }>(`/admin/shopkeepers/${id}/approve`, {});
+    return this.api.post<{ message: string }>(`/admin/shopkeepers/${id}/approve`, {}).pipe(
+      map(res => {
+        this.triggerBadgesRefresh();
+        return res;
+      })
+    );
   }
 
   rejectShopkeeper(id: string, reason: string): Observable<{ message: string }> {
-    return this.api.post<{ message: string }>(`/admin/shopkeepers/${id}/reject`, { reason });
+    return this.api.post<{ message: string }>(`/admin/shopkeepers/${id}/reject`, { reason }).pipe(
+      map(res => {
+        this.triggerBadgesRefresh();
+        return res;
+      })
+    );
   }
 
   getShops(pageNumber: number = 1, pageSize: number = 100, shopCategoryId?: string): Observable<PagedResult<AdminShopDto>> {
@@ -680,7 +696,12 @@ export class AdminService {
   }
 
   updateOrderStatus(id: string, newStatus: number): Observable<any> {
-    return this.api.put<any>(`/admin/orders/${id}/status`, { newStatus });
+    return this.api.put<any>(`/admin/orders/${id}/status`, { newStatus }).pipe(
+      map(res => {
+        this.triggerBadgesRefresh();
+        return res;
+      })
+    );
   }
 
   /** PaymentStatus: 1=Pending, 2=Completed(Paid), 3=Failed, 4=Refunded */
@@ -695,14 +716,24 @@ export class AdminService {
   }
 
   deleteOrder(id: string): Observable<any> {
-    return this.api.delete<any>(`/admin/orders/${id}`);
+    return this.api.delete<any>(`/admin/orders/${id}`).pipe(
+      map(res => {
+        this.triggerBadgesRefresh();
+        return res;
+      })
+    );
   }
 
   batchUpdateOrderStatus(orderIds: string[], newStatus: number): Observable<{ successCount: number; failureCount: number; message: string }> {
     return this.api.put<{ successCount: number; failureCount: number; message: string }>('/admin/orders/batch-status', {
       orderIds,
       newStatus
-    });
+    }).pipe(
+      map(res => {
+        this.triggerBadgesRefresh();
+        return res;
+      })
+    );
   }
 
   // ═══════════════════════════════════════════════════════════
