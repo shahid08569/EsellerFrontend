@@ -1,10 +1,11 @@
 import { inject } from '@angular/core';
-import { CanActivateFn } from '@angular/router';
+import { CanActivateFn, Router } from '@angular/router';
 import { AuthStore, safeDecodeHandoff } from 'eseller-shared';
 import { environment } from '../../../environments/environment';
 
 export const adminGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
+  const router = inject(Router);
 
   const role = authStore.currentAccount()?.roleType;
   const roleLower = String(role || '').toLowerCase();
@@ -92,12 +93,7 @@ export const adminGuard: CanActivateFn = () => {
     }
   }
 
-  // Use main customer portal login (handoff back to admin after sign-in)
-  if (typeof window !== 'undefined') {
-    const expiredParam = isExpired ? '&logout=true&reason=expired' : '';
-    window.location.replace(
-      `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}${expiredParam}`
-    );
-  }
+  // Redirect directly to admin's dedicated login page
+  router.navigate(['/login']);
   return false;
 };

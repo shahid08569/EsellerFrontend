@@ -144,7 +144,7 @@ export class AdminPermissionService {
     this.hydrateFromCache();
   }
 
-  private hydrateFromCache(): void {
+  hydrateFromCache(): void {
     if (this.isSuperAdmin()) {
       this.permissions.set(['*']);
       this.isLoaded.set(true);
