@@ -122,27 +122,25 @@ export class EarningsOverview implements OnInit {
   );
 
   readonly pendingEarnings = computed(() => {
-    if (this.walletLoaded() && this.walletPending() > 0) {
+    if (this.walletLoaded()) {
       return this.walletPending();
     }
-    const computedFromTx = this.transactions()
+    return this.transactions()
       .filter(t => t.status === 'Pending')
       .reduce((sum, t) => sum + (t.grossAmount || t.sellerCommission), 0);
-    return computedFromTx > 0 ? computedFromTx : this.walletPending();
   });
 
   readonly availableEarnings = computed(() => {
-    if (this.walletLoaded() && this.walletAvailableEarnings() > 0) {
+    if (this.walletLoaded()) {
       return this.walletAvailableEarnings();
     }
-    const computedFromTx = this.transactions()
+    return this.transactions()
       .filter(t => t.status === 'Available')
       .reduce((sum, t) => sum + (t.grossAmount || t.sellerCommission), 0);
-    return computedFromTx > 0 ? computedFromTx : this.walletAvailableEarnings();
   });
 
   readonly withdrawableBalance = computed(() => {
-    if (this.walletLoaded() && this.walletBalance() > 0) {
+    if (this.walletLoaded()) {
       return this.walletBalance();
     }
     return this.availableEarnings();
