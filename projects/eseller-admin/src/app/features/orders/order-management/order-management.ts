@@ -512,12 +512,13 @@ export class OrderManagement implements OnInit {
     let list = [...this.orders()];
     const shopId = this.selectedShopId();
     if (shopId && shopId !== 'all') {
-      const selectedShop = this.shops().find(s => s.id === shopId);
+      const selectedShop = this.shops().find(s => s.id.toLowerCase() === shopId.toLowerCase());
       const selectedShopName = selectedShop?.name.toLowerCase();
+      const sid = shopId.toLowerCase();
       list = list.filter(o => {
-        if ((o as any).shopId && (o as any).shopId === shopId) return true;
+        if ((o as any).shopId && String((o as any).shopId).toLowerCase() === sid) return true;
         if (selectedShopName && o.shopName && o.shopName.toLowerCase().includes(selectedShopName)) return true;
-        if (o.items && o.items.some(i => i.shopId === shopId || (selectedShopName && i.shopName?.toLowerCase().includes(selectedShopName)))) return true;
+        if (o.items && o.items.some(i => (i.shopId && String(i.shopId).toLowerCase() === sid) || (selectedShopName && i.shopName?.toLowerCase().includes(selectedShopName)))) return true;
         return false;
       });
     }
@@ -561,12 +562,13 @@ export class OrderManagement implements OnInit {
 
     // 2. Shop Filter (client fallback if multi-shop)
     if (shopId && shopId !== 'all') {
-      const selectedShop = this.shops().find(s => s.id === shopId);
+      const selectedShop = this.shops().find(s => s.id.toLowerCase() === shopId.toLowerCase());
       const selectedShopName = selectedShop?.name.toLowerCase();
+      const sid = shopId.toLowerCase();
       list = list.filter(o => {
-        if ((o as any).shopId && (o as any).shopId === shopId) return true;
+        if ((o as any).shopId && String((o as any).shopId).toLowerCase() === sid) return true;
         if (selectedShopName && o.shopName && o.shopName.toLowerCase().includes(selectedShopName)) return true;
-        if (o.items && o.items.some(i => i.shopId === shopId || (selectedShopName && i.shopName?.toLowerCase().includes(selectedShopName)))) return true;
+        if (o.items && o.items.some(i => (i.shopId && String(i.shopId).toLowerCase() === sid) || (selectedShopName && i.shopName?.toLowerCase().includes(selectedShopName)))) return true;
         return false;
       });
     }

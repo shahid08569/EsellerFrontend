@@ -669,7 +669,10 @@ export class AdminService {
     if (shopId && shopId !== 'all') url += `&shopId=${shopId}`;
     if (search && search.trim()) url += `&search=${encodeURIComponent(search.trim())}`;
     return this.api.get<any>(url).pipe(
-      catchError(() => of({ items: [], totalCount: 0, pageNumber: 1, pageSize: 20, totalPages: 0 }))
+      catchError((err) => {
+        console.error('Failed to load orders from /admin/orders:', err);
+        return throwError(() => err);
+      })
     );
   }
 
