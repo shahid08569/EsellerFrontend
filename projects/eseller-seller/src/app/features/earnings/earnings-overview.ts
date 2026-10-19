@@ -91,13 +91,17 @@ export class EarningsOverview implements OnInit {
                 ? apiProfit
                 : profit20;
               const st = String(o.status || '').toLowerCase();
+              const paySt = String(o.paymentStatus || '').toLowerCase();
+              const isPaid = paySt === 'paid' || paySt === 'completed';
+              const isClosed = st === 'cancelled' || st === 'refunded';
+              const isAvailable = st === 'delivered' && isPaid;
               return {
                 id: o.id,
                 orderId: o.id.slice(0, 8),
                 date: o.createdAt,
                 grossAmount: gross,
                 sellerCommission,
-                status: st === 'delivered' ? 'Available' : st === 'cancelled' || st === 'refunded' ? 'Closed' : 'Pending'
+                status: isAvailable ? 'Available' : isClosed ? 'Closed' : 'Pending'
               };
             });
 

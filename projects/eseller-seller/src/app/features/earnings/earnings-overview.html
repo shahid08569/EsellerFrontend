@@ -12,7 +12,7 @@
         </span>
       </div>
       <p class="text-xs text-slate-500 mt-1">
-        Full order amount is held in Pending while in progress, and moves to Available once Delivered.
+        Full order amount is held in Pending while in progress or unpaid, and moves to Available once Delivered &amp; Paid.
       </p>
     </div>
 
@@ -32,13 +32,13 @@
     <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
       <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Pending</span>
       <p class="text-2xl font-black text-amber-600 font-mono">$ {{ pendingEarnings() | number:'1.2-2' }}</p>
-      <p class="text-[10px] text-slate-400">In progress orders — clears on delivery</p>
+      <p class="text-[10px] text-slate-400">In progress / unpaid — clears when delivered &amp; paid</p>
     </div>
 
     <div class="bg-white rounded-2xl border border-slate-200/80 p-4 shadow-sm space-y-1">
       <span class="text-[11px] font-bold text-slate-400 uppercase tracking-wider">Available</span>
       <p class="text-2xl font-black text-emerald-600 font-mono">$ {{ availableEarnings() | number:'1.2-2' }}</p>
-      <p class="text-[10px] text-slate-400">Delivered orders total</p>
+      <p class="text-[10px] text-slate-400">Delivered &amp; paid orders total</p>
     </div>
 
     <div class="bg-emerald-950 text-white rounded-2xl border border-emerald-800 p-4 shadow-md space-y-1">
