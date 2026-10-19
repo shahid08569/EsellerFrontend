@@ -90,8 +90,8 @@ export class OrderManagement implements OnInit {
 
   readonly paymentFilterOptions: SearchableSelectOption[] = [
     { value: 'all', label: 'All Payment Statuses' },
-    { value: 'paid', label: 'Paid (Settled by Admin)' },
-    { value: 'unpaid', label: 'Unpaid (Pending Settlement)' }
+    { value: 'paid', label: 'Paid' },
+    { value: 'unpaid', label: 'Unpaid' }
   ];
 
   readonly dateFilterOptions: SearchableSelectOption[] = [
