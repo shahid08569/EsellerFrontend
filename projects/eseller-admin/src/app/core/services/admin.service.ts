@@ -686,7 +686,12 @@ export class AdminService {
     orderNotes?: string;
     items?: Array<{ productVariantId: string; quantity: number }>;
   }): Observable<{ orderId: string; message: string }> {
-    return this.api.post<{ orderId: string; message: string }>('/admin/orders/place', data);
+    return this.api.post<{ orderId: string; message: string }>('/admin/orders/place', data).pipe(
+      map(res => {
+        this.triggerBadgesRefresh();
+        return res;
+      })
+    );
   }
 
   getOrderById(id: string): Observable<AdminOrderDto | null> {

@@ -1419,17 +1419,40 @@ export class OrderManagement implements OnInit {
     this.multiOrderItems.set(items);
   }
 
+  private resetPlaceOrderForm(): void {
+    this.orderStep.set('select');
+    this.placeSelectedProduct.set(null);
+    this.placeProductId.set('');
+    this.placeShopId.set('');
+    this.placeVariantId.set('');
+    this.placeVariants.set([]);
+    this.placeQty.set(1);
+    this.placeCustomerName.set('');
+    this.placeCustomerPhone.set('');
+    this.placeAddress.set('');
+    this.placeCity.set('');
+    this.placeOrderNotes.set('Placed by Management');
+    this.multiOrderItems.set([]);
+  }
+
   closePlaceOrder(): void {
     if (this.isPlacingOrder()) return;
     const wasPage = this.placeOrderMode() === 'page';
-    this.placeOrderMode.set(null);
-    this.orderStep.set('select');
+    this.resetPlaceOrderForm();
     if (wasPage) {
-      void this.router.navigate(['/orders'], { queryParams: {} });
+      this.router.navigateByUrl('/orders').then(() => {
+        this.placeOrderMode.set(null);
+      }).catch(() => {
+        this.placeOrderMode.set(null);
+      });
+    } else {
+      this.placeOrderMode.set(null);
     }
   }
 
   submitPlaceOrder(): void {
+    if (this.isPlacingOrder()) return;
+
     if (this.orderPlacementType() === 'single') {
       const variantId = this.placeVariantId();
       const qty = Math.max(1, Number(this.placeQty()) || 1);
@@ -1459,14 +1482,24 @@ export class OrderManagement implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       ).subscribe({
         next: (res) => {
-          this.isPlacingOrder.set(false);
           const wasPage = this.placeOrderMode() === 'page';
-          this.placeOrderMode.set(null);
-          this.orderStep.set('select');
           this.toast.show(res?.message || 'Order placed successfully.', 'success');
-          this.loadOrders();
+          this.resetPlaceOrderForm();
+
           if (wasPage) {
-            void this.router.navigate(['/orders'], { queryParams: {} });
+            this.router.navigateByUrl('/orders').then(() => {
+              this.placeOrderMode.set(null);
+              this.isPlacingOrder.set(false);
+              this.loadOrders();
+            }).catch(() => {
+              this.placeOrderMode.set(null);
+              this.isPlacingOrder.set(false);
+              this.loadOrders();
+            });
+          } else {
+            this.placeOrderMode.set(null);
+            this.isPlacingOrder.set(false);
+            this.loadOrders();
           }
         },
         error: (err) => {
@@ -1510,15 +1543,24 @@ export class OrderManagement implements OnInit {
         takeUntilDestroyed(this.destroyRef)
       ).subscribe({
         next: (res) => {
-          this.isPlacingOrder.set(false);
           const wasPage = this.placeOrderMode() === 'page';
-          this.placeOrderMode.set(null);
-          this.orderStep.set('select');
-          this.multiOrderItems.set([]);
           this.toast.show(res?.message || 'Order placed successfully with multiple products!', 'success');
-          this.loadOrders();
+          this.resetPlaceOrderForm();
+
           if (wasPage) {
-            void this.router.navigate(['/orders'], { queryParams: {} });
+            this.router.navigateByUrl('/orders').then(() => {
+              this.placeOrderMode.set(null);
+              this.isPlacingOrder.set(false);
+              this.loadOrders();
+            }).catch(() => {
+              this.placeOrderMode.set(null);
+              this.isPlacingOrder.set(false);
+              this.loadOrders();
+            });
+          } else {
+            this.placeOrderMode.set(null);
+            this.isPlacingOrder.set(false);
+            this.loadOrders();
           }
         },
         error: (err) => {
