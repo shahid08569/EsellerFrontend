@@ -82,6 +82,35 @@ export class OrderManagement implements OnInit {
   readonly searchTerm = signal<string>('');
   readonly actionInProgress = signal<string | null>(null);
 
+  // All Orders Dedicated Filters: Payment Status & Date Filter
+  readonly paymentFilter = signal<string>('all');
+  readonly dateFilter = signal<string>('all');
+  readonly customStartDate = signal<string>('');
+  readonly customEndDate = signal<string>('');
+
+  readonly paymentFilterOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'All Payment Statuses' },
+    { value: 'paid', label: 'Paid (Settled by Admin)' },
+    { value: 'unpaid', label: 'Unpaid (Pending Settlement)' }
+  ];
+
+  readonly dateFilterOptions: SearchableSelectOption[] = [
+    { value: 'all', label: 'All Dates' },
+    { value: 'today', label: 'Today' },
+    { value: 'yesterday', label: 'Yesterday' },
+    { value: '7d', label: 'Last 7 Days' },
+    { value: '30d', label: 'Last 30 Days' },
+    { value: 'this_month', label: 'This Month' },
+    { value: 'custom', label: 'Custom Range...' }
+  ];
+
+  readonly hasActiveAllOrderFilters = computed(() => {
+    return this.paymentFilter() !== 'all' ||
+           this.dateFilter() !== 'all' ||
+           !!this.customStartDate() ||
+           !!this.customEndDate();
+  });
+
   // Pagination
   readonly currentPage = signal<number>(1);
   readonly pageSize = signal<number>(10);
@@ -563,6 +592,19 @@ export class OrderManagement implements OnInit {
       return sort === 'newest' ? timeB - timeA : timeA - timeB;
     });
 
+    // 5. All Orders Specific Filters: Payment Status & Date Range
+    if (tab === 'all') {
+      if (this.paymentFilter() === 'paid') {
+        list = list.filter(o => this.isPaymentPaid(o));
+      } else if (this.paymentFilter() === 'unpaid') {
+        list = list.filter(o => !this.isPaymentPaid(o));
+      }
+
+      if (this.dateFilter() !== 'all') {
+        list = list.filter(o => this.matchesOrderDate(o));
+      }
+    }
+
     return list;
   });
 
@@ -860,6 +902,86 @@ export class OrderManagement implements OnInit {
   onPageSizeChange(size: number): void {
     this.pageSize.set(size);
     this.currentPage.set(1);
+  }
+
+  onPaymentFilterChange(val: string): void {
+    this.paymentFilter.set(val);
+    this.currentPage.set(1);
+  }
+
+  onDateFilterChange(val: string): void {
+    this.dateFilter.set(val);
+    this.currentPage.set(1);
+  }
+
+  onCustomDateChange(type: 'start' | 'end', val: string): void {
+    if (type === 'start') {
+      this.customStartDate.set(val);
+    } else {
+      this.customEndDate.set(val);
+    }
+    this.currentPage.set(1);
+  }
+
+  clearAllOrderFilters(): void {
+    this.paymentFilter.set('all');
+    this.dateFilter.set('all');
+    this.customStartDate.set('');
+    this.customEndDate.set('');
+    this.currentPage.set(1);
+  }
+
+  matchesOrderDate(order: AdminOrderDto): boolean {
+    const filter = this.dateFilter();
+    if (filter === 'all') return true;
+
+    if (!order.createdAt) return false;
+    const orderDate = new Date(order.createdAt);
+    if (isNaN(orderDate.getTime())) return false;
+
+    const now = new Date();
+
+    if (filter === 'today') {
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0, 0);
+      return orderDate >= startOfToday;
+    }
+
+    if (filter === 'yesterday') {
+      const startOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 0, 0, 0, 0);
+      const endOfYesterday = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1, 23, 59, 59, 999);
+      return orderDate >= startOfYesterday && orderDate <= endOfYesterday;
+    }
+
+    if (filter === '7d') {
+      const startOf7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+      return orderDate >= startOf7d;
+    }
+
+    if (filter === '30d') {
+      const startOf30d = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+      return orderDate >= startOf30d;
+    }
+
+    if (filter === 'this_month') {
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0, 0);
+      return orderDate >= startOfMonth;
+    }
+
+    if (filter === 'custom') {
+      const start = this.customStartDate();
+      const end = this.customEndDate();
+      if (start) {
+        const s = new Date(`${start}T00:00:00`);
+        if (orderDate < s) return false;
+      }
+      if (end) {
+        const e = new Date(`${end}T23:59:59.999`);
+        if (orderDate > e) return false;
+      }
+      return true;
+    }
+
+    return true;
   }
 
   getStatusNumber(status: number | string): number {

@@ -188,6 +188,90 @@
           class="w-full bg-gray-50 border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden">
       </div>
     </div>
+
+    <!-- ROW 3: ALL ORDERS DEDICATED FILTERS (PAYMENT STATUS & DATE RANGE) -->
+    @if (activeTab() === 'all') {
+      <div class="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3 bg-gradient-to-r from-orange-50/50 via-amber-50/20 to-transparent p-3 rounded-xl border border-orange-100/70">
+        <div class="flex flex-wrap items-center gap-3">
+          <!-- Payment Filter Dropdown -->
+          <div class="flex items-center gap-2">
+            <label class="text-[11px] font-bold text-gray-500 whitespace-nowrap uppercase flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+              Payment:
+            </label>
+            <div class="w-52 sm:w-60">
+              <es-searchable-select
+                [options]="paymentFilterOptions"
+                [value]="paymentFilter()"
+                (valueChange)="onPaymentFilterChange($event)"
+                customClass="w-full flex items-center justify-between gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 cursor-pointer shadow-2xs hover:border-orange-300"
+                placeholder="Payment Status"
+                searchPlaceholder="Search payment status..."
+              />
+            </div>
+          </div>
+
+          <!-- Date Filter Dropdown -->
+          <div class="flex items-center gap-2">
+            <label class="text-[11px] font-bold text-gray-500 whitespace-nowrap uppercase flex items-center gap-1">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              Date:
+            </label>
+            <div class="w-48 sm:w-56">
+              <es-searchable-select
+                [options]="dateFilterOptions"
+                [value]="dateFilter()"
+                (valueChange)="onDateFilterChange($event)"
+                customClass="w-full flex items-center justify-between gap-1 px-3 py-1.5 bg-white border border-gray-200 rounded-xl text-xs font-semibold text-gray-800 cursor-pointer shadow-2xs hover:border-orange-300"
+                placeholder="Date Range"
+                searchPlaceholder="Search date option..."
+              />
+            </div>
+          </div>
+
+          <!-- Custom Date Picker Range Sub-Bar -->
+          @if (dateFilter() === 'custom') {
+            <div class="inline-flex items-center gap-1.5 p-1 rounded-xl bg-white border border-orange-200 shadow-2xs text-xs">
+              <span class="text-[11px] text-gray-400 font-bold px-1">From:</span>
+              <input
+                type="date"
+                [ngModel]="customStartDate()"
+                (ngModelChange)="onCustomDateChange('start', $event)"
+                class="px-2 py-0.5 rounded-lg border border-gray-200 text-gray-800 text-[11px] font-semibold focus:ring-1 focus:ring-orange-500 outline-hidden" />
+              <span class="text-[11px] text-gray-400 font-bold px-0.5">To:</span>
+              <input
+                type="date"
+                [ngModel]="customEndDate()"
+                (ngModelChange)="onCustomDateChange('end', $event)"
+                class="px-2 py-0.5 rounded-lg border border-gray-200 text-gray-800 text-[11px] font-semibold focus:ring-1 focus:ring-orange-500 outline-hidden" />
+            </div>
+          }
+        </div>
+
+        <!-- Filter Count & Reset Button -->
+        <div class="flex items-center gap-2">
+          @if (hasActiveAllOrderFilters()) {
+            <button
+              type="button"
+              (click)="clearAllOrderFilters()"
+              title="Reset all order filters"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 cursor-pointer transition-colors shadow-2xs">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+              </svg>
+              <span>Reset</span>
+            </button>
+          }
+          <div class="text-[11px] font-medium text-gray-500">
+            Filtered: <span class="font-bold text-orange-700">{{ filteredOrders().length }}</span> orders
+          </div>
+        </div>
+      </div>
+    }
   </div>
 
   <!-- ORDERS TABLE -->
@@ -258,6 +342,15 @@
                     <span [class]="'px-2.5 py-0.5 rounded-full text-[11px] font-bold border ' + getStatusColorClass(order.status)">
                       {{ getStatusLabel(order.status) }}
                     </span>
+                    @if (isPaymentPaid(order)) {
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-emerald-50 text-emerald-700 border border-emerald-200" title="Settled / Paid by Admin">
+                        ✓ Paid
+                      </span>
+                    } @else {
+                      <span class="px-2 py-0.5 rounded-md text-[10px] font-extrabold uppercase tracking-wide bg-amber-50 text-amber-700 border border-amber-200" title="Pending Payment">
+                        Unpaid
+                      </span>
+                    }
                     @if (getNextStatusOptions(order.status).length > 0) {
                       <div class="w-36">
                         <es-searchable-select
