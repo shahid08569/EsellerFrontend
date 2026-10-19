@@ -9,7 +9,7 @@
       <input 
         type="text" 
         [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)"
+        (ngModelChange)="onSearchChange($event)"
         placeholder="Filter by action or email..." 
         class="w-full bg-white border border-gray-200 rounded-xl px-3.5 py-2 text-xs text-gray-900 focus:ring-2 focus:ring-orange-500/20 focus:border-orange-500 outline-hidden shadow-2xs">
     </div>
@@ -39,7 +39,7 @@
             </tr>
           </thead>
           <tbody class="divide-y divide-gray-50">
-            @for (log of filteredLogs(); track log.id) {
+            @for (log of pagedLogs(); track log.id) {
               <tr class="hover:bg-orange-50/20 transition-colors">
                 <td class="py-3.5 px-4">
                   <span class="px-2 py-0.5 rounded-md bg-orange-50 text-orange-700 font-bold text-[10px] uppercase border border-orange-200">
@@ -66,6 +66,17 @@
           </tbody>
         </table>
       </div>
+
+      <!-- PAGINATION CONTROLS -->
+      <app-table-pagination
+        [page]="currentPage()"
+        [pageSize]="pageSize()"
+        [total]="filteredLogs().length"
+        [pageSizeOptions]="pageSizeOptions"
+        label="audit events"
+        (pageChange)="setPage($event)"
+        (pageSizeChange)="setPageSize($event)">
+      </app-table-pagination>
     }
   </div>
 </div>
