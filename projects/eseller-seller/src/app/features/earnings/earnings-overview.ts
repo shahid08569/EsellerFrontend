@@ -85,10 +85,11 @@ export class EarningsOverview implements OnInit {
 
             const txList: TransactionRecord[] = list.map(o => {
               const gross = Number(o.totalAmount) || 0;
+              const profit20 = Number((gross * rate).toFixed(2));
               const apiProfit = Number(o.merchantProfit);
-              const sellerCommission = Number.isFinite(apiProfit) && apiProfit > 0
+              const sellerCommission = Number.isFinite(apiProfit) && apiProfit > 0 && apiProfit < gross
                 ? apiProfit
-                : gross;
+                : profit20;
               const st = String(o.status || '').toLowerCase();
               return {
                 id: o.id,

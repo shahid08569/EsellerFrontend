@@ -315,7 +315,7 @@
             </div>
             <div class="pt-3 border-t border-slate-200">
               <p class="text-[10px] font-bold uppercase tracking-wider text-slate-400 mb-1">Wallet credit on delivery</p>
-              <p class="text-xl font-black text-primary">$ {{ (order.merchantProfit ?? getCommission(order.totalAmount)) | number:'1.2-2' }}</p>
+              <p class="text-xl font-black text-primary">$ {{ order.totalAmount | number:'1.2-2' }}</p>
               <p class="text-[10px] text-slate-400 mt-1 leading-relaxed">Credited after Management marks order Delivered.</p>
             </div>
           </aside>

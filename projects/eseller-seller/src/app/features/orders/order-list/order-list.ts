@@ -131,6 +131,11 @@ export class OrderList implements OnInit {
         const raw: any[] = Array.isArray(res) ? res : (res?.items ?? []);
         const items: Order[] = raw.map((o) => {
           const total = Number(o.totalAmount) || 0;
+          const profit20 = Number((total * 0.20).toFixed(2));
+          const apiProfit = Number(o.merchantProfit);
+          const merchantProfit = Number.isFinite(apiProfit) && apiProfit > 0 && apiProfit < total
+            ? apiProfit
+            : profit20;
           return {
             id: o.id,
             orderRequestId: o.orderRequestId || o.orderRequestID,
@@ -142,7 +147,7 @@ export class OrderList implements OnInit {
             status: o.status,
             paymentStatus: o.paymentStatus || 'Pending',
             paymentMethod: o.paymentMethod || 'Cash on delivery',
-            merchantProfit: Number(o.merchantProfit) || total,
+            merchantProfit: merchantProfit,
             totalAmount: total,
             totalItems: Number(o.totalItems) || 0,
             createdAt: o.createdAt,
@@ -169,7 +174,7 @@ export class OrderList implements OnInit {
   }
 
   getCommission(amount: number): number {
-    return Number(amount) || 0;
+    return Number(((Number(amount) || 0) * 0.20).toFixed(2));
   }
 
   openDetail(order: Order): void {
