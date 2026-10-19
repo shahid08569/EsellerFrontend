@@ -1563,11 +1563,34 @@ export class AdminService {
   // ═══════════════════════════════════════════════════════════
   // 15. AUDIT LOGS
   // ═══════════════════════════════════════════════════════════
-  getAuditLogs(actorType?: string, action?: string): Observable<AdminAuditLogDto[]> {
+  getAuditLogs(filters?: {
+    actorType?: string;
+    action?: string;
+    entityType?: string;
+    fromDate?: string;
+    toDate?: string;
+    pageNumber?: number;
+    pageSize?: number;
+  } | string, legacyAction?: string): Observable<AdminAuditLogDto[]> {
     let url = '/admin/audit-logs';
     const params: string[] = [];
-    if (actorType) params.push(`actorType=${actorType}`);
-    if (action) params.push(`action=${action}`);
+
+    if (typeof filters === 'string') {
+      if (filters) params.push(`actorType=${encodeURIComponent(filters)}`);
+      if (legacyAction) params.push(`action=${encodeURIComponent(legacyAction)}`);
+      params.push('pageSize=500');
+    } else if (filters) {
+      if (filters.actorType) params.push(`actorType=${encodeURIComponent(filters.actorType)}`);
+      if (filters.action) params.push(`action=${encodeURIComponent(filters.action)}`);
+      if (filters.entityType) params.push(`entityType=${encodeURIComponent(filters.entityType)}`);
+      if (filters.fromDate) params.push(`fromDate=${encodeURIComponent(filters.fromDate)}`);
+      if (filters.toDate) params.push(`toDate=${encodeURIComponent(filters.toDate)}`);
+      if (filters.pageNumber) params.push(`pageNumber=${filters.pageNumber}`);
+      params.push(`pageSize=${filters.pageSize || 500}`);
+    } else {
+      params.push('pageSize=500');
+    }
+
     if (params.length) url += `?${params.join('&')}`;
     return this.api.get<any>(url).pipe(
       map(res => {
