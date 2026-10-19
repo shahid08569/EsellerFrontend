@@ -122,6 +122,29 @@ export class ShopManagement implements OnInit, OnDestroy {
     return opts;
   });
 
+  // Store Source filter for Live Stores Directory (All, Normal, or by Partner)
+  readonly storeSourceFilter = signal<string>('all');
+
+  readonly storeSourceOptions = computed<SearchableSelectOption[]>(() => {
+    const opts: SearchableSelectOption[] = [
+      { value: 'all', label: 'All Stores (Normal & Referrals)' },
+      { value: 'normal', label: 'Normal Platform Stores Only' }
+    ];
+    for (const p of this.partners()) {
+      opts.push({
+        value: 'partner:' + p.id,
+        label: p.name || p.email,
+        sublabel: p.referralCode ? `Partner Code: ${p.referralCode}` : 'Partner Referral'
+      });
+    }
+    return opts;
+  });
+
+  onStoreSourceFilterChange(val: string): void {
+    this.storeSourceFilter.set(val || 'all');
+    this.currentPage.set(1);
+  }
+
   // Traffic & Visitor Analytics State
   readonly Math = Math;
   readonly shopTraffics = signal<AdminShopTrafficItemDto[]>([]);
@@ -646,12 +669,36 @@ export class ShopManagement implements OnInit, OnDestroy {
     return list;
   });
 
-  // Filtered Active Stores List (Direct Platform Stores ONLY, excludes partner referrals)
+  // Filtered Active Stores List (All Live Stores, with optional Normal vs Partner filter)
   readonly filteredActiveStores = computed(() => {
-    const refIds = this.referralShopIds();
-    let list = this.activeShops().filter(s => !refIds.has(s.id));
+    let list = this.activeShops();
+    const sourceFilter = this.storeSourceFilter();
     const term = this.searchTerm().trim().toLowerCase();
     const catFilter = this.selectedCategoryFilter();
+
+    if (sourceFilter !== 'all') {
+      const skMap = new Map<string, AdminShopkeeperDto>();
+      const skNameMap = new Map<string, AdminShopkeeperDto>();
+      for (const k of this.allShopkeepers()) {
+        if (k.shopId) skMap.set(k.shopId, k);
+        skMap.set(k.id, k);
+        if (k.storeName) skNameMap.set(k.storeName.trim().toLowerCase(), k);
+      }
+
+      list = list.filter(s => {
+        const sk = skMap.get(s.id) || (s.name ? skNameMap.get(s.name.trim().toLowerCase()) : undefined);
+        const isRef = !!sk?.partnerId || !!sk?.referredByCode;
+
+        if (sourceFilter === 'normal') {
+          return !isRef;
+        }
+        if (sourceFilter.startsWith('partner:')) {
+          const targetPartnerId = sourceFilter.replace('partner:', '');
+          return sk?.partnerId === targetPartnerId;
+        }
+        return true;
+      });
+    }
 
     if (catFilter !== 'all') {
       list = list.filter(s => s.shopCategoryId === catFilter);

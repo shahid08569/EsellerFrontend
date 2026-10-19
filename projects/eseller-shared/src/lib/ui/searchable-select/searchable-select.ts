@@ -28,8 +28,23 @@ export interface SearchableSelectOption {
   styleUrls: ['./searchable-select.css']
 })
 export class SearchableSelect {
-  @Input() options: SearchableSelectOption[] = [];
-  @Input() value: any = '';
+  readonly optionsSignal = signal<SearchableSelectOption[]>([]);
+  readonly valueSignal = signal<any>('');
+
+  @Input() set options(val: SearchableSelectOption[]) {
+    this.optionsSignal.set(val || []);
+  }
+  get options(): SearchableSelectOption[] {
+    return this.optionsSignal();
+  }
+
+  @Input() set value(val: any) {
+    this.valueSignal.set(val);
+  }
+  get value(): any {
+    return this.valueSignal();
+  }
+
   @Input() placeholder: string = 'Select an option';
   @Input() searchPlaceholder: string = 'Search...';
   @Input() disabled: boolean = false;
@@ -48,22 +63,25 @@ export class SearchableSelect {
   constructor(private readonly elementRef: ElementRef) {}
 
   isSelected(optValue: any): boolean {
-    if (this.value === undefined || this.value === null || this.value === '') {
+    const val = this.valueSignal();
+    if (val === undefined || val === null || val === '') {
       return optValue === undefined || optValue === null || optValue === '';
     }
-    return String(this.value).toLowerCase() === String(optValue).toLowerCase();
+    return String(val).toLowerCase() === String(optValue).toLowerCase();
   }
 
   readonly selectedOption = computed(() => {
-    const val = this.value;
+    const val = this.valueSignal();
+    const opts = this.optionsSignal();
     if (val === undefined || val === null) return null;
-    return this.options.find(o => String(o.value).toLowerCase() === String(val).toLowerCase()) || null;
+    return opts.find(o => String(o.value).toLowerCase() === String(val).toLowerCase()) || null;
   });
 
   readonly filteredOptions = computed(() => {
     const term = this.searchTerm().trim().toLowerCase();
-    if (!term) return this.options;
-    return this.options.filter(o =>
+    const opts = this.optionsSignal();
+    if (!term) return opts;
+    return opts.filter(o =>
       (o.label && o.label.toLowerCase().includes(term)) ||
       (o.sublabel && o.sublabel.toLowerCase().includes(term)) ||
       (o.value && o.value.toLowerCase().includes(term))
@@ -95,7 +113,7 @@ export class SearchableSelect {
 
   select(option: SearchableSelectOption, event?: Event): void {
     event?.stopPropagation();
-    this.value = option.value;
+    this.valueSignal.set(option.value);
     this.valueChange.emit(option.value);
     this.selectionChange.emit(option);
     this.close();
@@ -103,7 +121,7 @@ export class SearchableSelect {
 
   clear(event?: Event): void {
     event?.stopPropagation();
-    this.value = '';
+    this.valueSignal.set('');
     this.valueChange.emit('');
     this.selectionChange.emit(null);
     this.close();
