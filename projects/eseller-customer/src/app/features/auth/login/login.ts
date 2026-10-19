@@ -86,14 +86,25 @@ export class Login implements OnInit {
       }
     }
 
+    if (rawReturnUrl) {
+      const safeReturn = sanitizeAppPath(rawReturnUrl);
+      if (safeReturn && safeReturn !== '/auth/login') {
+        this.returnUrl = safeReturn;
+      } else if (rawReturnUrl.startsWith('http://') || rawReturnUrl.startsWith('https://')) {
+        this.returnUrl = rawReturnUrl;
+      }
+    }
+
     const isLogout = this.route.snapshot.queryParamMap.get('logout') === 'true' ||
                      (typeof window !== 'undefined' && window.location.search.includes('logout=true'));
     if (isLogout) {
       this.authStore.clearAuth();
-      this.toastService.show('You have been signed out successfully.', 'info');
-      try {
-        window.history.replaceState(null, '', '/auth/login');
-      } catch {}
+      const reason = this.route.snapshot.queryParamMap.get('reason');
+      if (reason === 'expired') {
+        this.toastService.show('Your session has expired. Please sign in again.', 'warning');
+      } else {
+        this.toastService.show('You have been signed out successfully.', 'info');
+      }
       return;
     }
 
@@ -138,12 +149,6 @@ export class Login implements OnInit {
       }
     }
 
-    // Capture returnUrl (same-origin relative paths only)
-    const rUrl = this.route.snapshot.queryParamMap.get('returnUrl');
-    const safeReturn = sanitizeAppPath(rUrl);
-    if (safeReturn && safeReturn !== '/auth/login') {
-      this.returnUrl = safeReturn;
-    }
 
     // Check if redirected after successful registration
     const registered = this.route.snapshot.queryParamMap.get('registered');

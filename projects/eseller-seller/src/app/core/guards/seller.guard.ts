@@ -64,8 +64,9 @@ export const sellerGuard: CanActivateFn = () => {
       /* ignore URL parse error */
     }
 
+    const expiredParam = isExpired ? '&logout=true&reason=expired' : '';
     window.location.replace(
-      `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}`
+      `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}${expiredParam}`
     );
   }
   return false;

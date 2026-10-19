@@ -88,8 +88,9 @@ export const adminGuard: CanActivateFn = () => {
 
   // Use main customer portal login (handoff back to admin after sign-in)
   if (typeof window !== 'undefined') {
+    const expiredParam = isExpired ? '&logout=true&reason=expired' : '';
     window.location.replace(
-      `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}`
+      `${environment.customerUrl}/auth/login?returnUrl=${encodeURIComponent(window.location.href)}${expiredParam}`
     );
   }
   return false;

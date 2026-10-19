@@ -2,6 +2,33 @@ import { Injectable, signal, computed } from '@angular/core';
 
 import { CurrentAccount, RoleType } from '../models/auth/auth.models';
 
+function getCustomerLoginUrl(reason: string = 'expired'): string {
+  if (typeof window === 'undefined') return '/auth/login';
+  const configured = (window as any).__ESELLER_CUSTOMER_URL__;
+  let base = '';
+  if (configured) {
+    base = String(configured).replace(/\/$/, '');
+  } else {
+    const host = window.location.hostname;
+    if (host.includes('esellerglobal.com')) {
+      base = 'https://www.esellerglobal.com';
+    } else if (host === 'localhost' || host === '127.0.0.1') {
+      base = 'http://localhost:4200';
+    } else {
+      base = window.location.origin;
+    }
+  }
+
+  const currentHref = window.location.href;
+  const isAlreadyLoginPage = window.location.pathname.includes('/auth/login');
+
+  if (isAlreadyLoginPage) {
+    return `${base}/auth/login?logout=true&reason=${encodeURIComponent(reason)}`;
+  }
+
+  return `${base}/auth/login?logout=true&reason=${encodeURIComponent(reason)}&returnUrl=${encodeURIComponent(currentHref)}`;
+}
+
 /**
  * ============================================================
  * AuthStore — In-memory authentication state
@@ -23,6 +50,10 @@ export class AuthStore {
   private readonly _accessToken = signal<string | null>(null);
   private readonly _currentAccount = signal<CurrentAccount | null>(null);
   private readonly _accessTokenExpiresAt = signal<Date | null>(null);
+
+  private logoutTimer: any = null;
+  private heartbeatTimer: any = null;
+  private visibilityListenerAttached = false;
 
   // ============================================================
   // PUBLIC READ-ONLY SIGNALS
@@ -83,6 +114,10 @@ export class AuthStore {
       this._currentAccount.set(data.account);
       this._accessTokenExpiresAt.set(expiresAt);
 
+      if (expiresAt) {
+        this.scheduleAutoLogout(expiresAt);
+      }
+
       // Keep both storages synchronized
       if (window.sessionStorage && window.localStorage) {
         window.sessionStorage.setItem('eseller_auth_session', saved);
@@ -114,6 +149,8 @@ export class AuthStore {
         : new Date(payload.accessTokenExpiresAt);
     this._accessTokenExpiresAt.set(expiresAt);
 
+    this.scheduleAutoLogout(expiresAt);
+
     if (typeof window !== 'undefined') {
       const serialized = JSON.stringify({
         accessToken: payload.accessToken,
@@ -137,6 +174,8 @@ export class AuthStore {
         : new Date(accessTokenExpiresAt);
     this._accessTokenExpiresAt.set(expiresAt);
 
+    this.scheduleAutoLogout(expiresAt);
+
     if (typeof window !== 'undefined') {
       for (const storage of [window.sessionStorage, window.localStorage]) {
         if (!storage) continue;
@@ -158,6 +197,7 @@ export class AuthStore {
    * fails irrecoverably.
    */
   clearAuth(): void {
+    this.cancelAutoLogout();
     this._accessToken.set(null);
     this._currentAccount.set(null);
     this._accessTokenExpiresAt.set(null);
@@ -165,6 +205,81 @@ export class AuthStore {
     if (typeof window !== 'undefined') {
       window.sessionStorage?.removeItem('eseller_auth_session');
       window.localStorage?.removeItem('eseller_auth_session');
+    }
+  }
+
+  /**
+   * Schedules automatic logout when accessToken expires.
+   * Uses both a precise setTimeout and a 15-second heartbeat interval (plus window focus/visibility listeners)
+   * to catch computer sleep, hibernation, and background tab resumption.
+   */
+  private scheduleAutoLogout(expiresAt: Date | null): void {
+    if (typeof window === 'undefined') return;
+
+    this.cancelAutoLogout();
+
+    if (!expiresAt) return;
+
+    const checkAndTrigger = () => {
+      const currentExpiry = this._accessTokenExpiresAt();
+      if (!currentExpiry) return;
+      if (Date.now() >= currentExpiry.getTime()) {
+        this.triggerAutoLogout('expired');
+      }
+    };
+
+    const remainingMs = expiresAt.getTime() - Date.now();
+    if (remainingMs <= 0) {
+      this.triggerAutoLogout('expired');
+      return;
+    }
+
+    // 1. Precise timeout for exact second expiry
+    this.logoutTimer = setTimeout(() => {
+      checkAndTrigger();
+    }, remainingMs);
+
+    // 2. 15-second heartbeat interval (handles laptop sleep/wake or hibernation)
+    this.heartbeatTimer = setInterval(() => {
+      checkAndTrigger();
+    }, 15000);
+
+    // 3. Listen to window focus & visibilitychange (instant check on tab switch or wake)
+    if (!this.visibilityListenerAttached) {
+      this.visibilityListenerAttached = true;
+      const onWakeOrFocus = () => checkAndTrigger();
+      window.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          onWakeOrFocus();
+        }
+      });
+      window.addEventListener('focus', onWakeOrFocus);
+    }
+  }
+
+  private cancelAutoLogout(): void {
+    if (this.logoutTimer) {
+      clearTimeout(this.logoutTimer);
+      this.logoutTimer = null;
+    }
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer);
+      this.heartbeatTimer = null;
+    }
+  }
+
+  /**
+   * Triggers automatic logout: purges state/storage and redirects to login with reason
+   */
+  triggerAutoLogout(reason = 'expired'): void {
+    this.cancelAutoLogout();
+    this.clearAuth();
+
+    if (typeof window !== 'undefined') {
+      const loginUrl = getCustomerLoginUrl(reason);
+      if (!window.location.href.includes('logout=true') || !window.location.href.includes(`reason=${reason}`)) {
+        window.location.replace(loginUrl);
+      }
     }
   }
 

@@ -74,7 +74,7 @@ export const refreshInterceptor: HttpInterceptorFn = (req, next) => {
         }),
         catchError((refreshError) => {
           isRefreshing = false;
-          authStore.clearAuth();
+          authStore.triggerAutoLogout('expired');
           // Unblock waiters (empty string = failed), then reset gate
           refreshTokenSubject.next('');
           refreshTokenSubject.next(null);
