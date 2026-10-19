@@ -89,7 +89,9 @@ export class PartnerReferrals implements OnInit {
   }
 
   loadReferrals(partnerId?: string): void {
-    this.isLoading.set(true);
+    if (!this.data()) {
+      this.isLoading.set(true);
+    }
     const pId = partnerId || this.selectedPartnerId();
     const req = (this.isSuperAdmin() && pId)
       ? this.adminService.getPartnerReferrals(pId)
@@ -156,7 +158,7 @@ export class PartnerReferrals implements OnInit {
   }
 
   openShopChat(shop: PartnerReferredShopDto): void {
-    this.router.navigate(['/chat'], { queryParams: { targetId: shop.id } });
+    this.router.navigate(['/chat'], { queryParams: { targetId: shop.id, name: shop.name } });
   }
 
   openPlaceOrder(shop: PartnerReferredShopDto): void {

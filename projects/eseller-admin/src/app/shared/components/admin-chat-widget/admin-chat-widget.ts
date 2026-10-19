@@ -8,6 +8,8 @@ import { AdminChatUnreadService } from '../../../core/services/admin-chat-unread
 export interface AdminChatShop {
   id: string;
   name: string;
+  conversationId?: string | null;
+  shopId?: string | null;
   logoUrl?: string | null;
   lastMessage?: string | null;
   lastMessageTime?: string | Date | null;
@@ -230,24 +232,30 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           return;
         }
 
-        const shopId = incoming.orderRequestId;
-        if (!shopId) return;
+        const incomingRoom = incoming.orderRequestId;
+        if (!incomingRoom) return;
 
-        const exists = (this.messagesMap()[shopId] || []).some(
+        const matchingShop = this.shops().find(s =>
+          s.id?.toLowerCase() === incomingRoom.toLowerCase() ||
+          s.conversationId?.toLowerCase() === incomingRoom.toLowerCase()
+        );
+        const targetMapKey = matchingShop?.conversationId || matchingShop?.id || incomingRoom;
+
+        const exists = (this.messagesMap()[targetMapKey] || this.messagesMap()[incomingRoom] || []).some(
           m => m.id && incoming.messageId && m.id.toLowerCase() === String(incoming.messageId).toLowerCase()
         );
         if (exists) return;
 
-        let shopName = this.shops().find(s => s.id?.toLowerCase() === shopId.toLowerCase())?.name;
-        if (!shopName && this.partnerServiceShop()?.id?.toLowerCase() === shopId.toLowerCase()) {
+        let shopName = matchingShop?.name;
+        if (!shopName && this.partnerServiceShop()?.id?.toLowerCase() === incomingRoom.toLowerCase()) {
           shopName = 'Partner Service';
         }
         if (!shopName) {
-          const p = this.partnerConvos().find(c => String(c.orderRequestId || c.id || '').toLowerCase() === shopId.toLowerCase());
+          const p = this.partnerConvos().find(c => String(c.orderRequestId || c.id || '').toLowerCase() === incomingRoom.toLowerCase());
           if (p) shopName = this.customerDisplayName(p);
         }
         if (!shopName) {
-          const cust = this.customerConvos().find(c => String(c.orderRequestId || c.id || '').toLowerCase() === shopId.toLowerCase());
+          const cust = this.customerConvos().find(c => String(c.orderRequestId || c.id || '').toLowerCase() === incomingRoom.toLowerCase());
           if (cust) shopName = this.customerDisplayName(cust);
         }
         if (!shopName) shopName = 'Contact';
@@ -255,35 +263,34 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         const senderDisplayName = this.getSenderDisplayName(incoming, false, shopName);
 
         this.messagesMap.update(map => {
-          const list = (map[shopId] || []).filter(m =>
+          const existingList = map[targetMapKey] || map[incomingRoom] || [];
+          const list = existingList.filter(m =>
             !(m.sender === 'seller' && String(m.id).startsWith('tmp-')
               && (m.message === incoming.message
                 || (!!incoming.attachmentUrl && m.attachmentUrl === incoming.attachmentUrl)))
           );
+          const newMsg = {
+            id: incoming.messageId || `m-${Date.now()}`,
+            sender: 'seller' as const,
+            senderName: senderDisplayName,
+            message: incoming.message,
+            timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
+              hour: '2-digit',
+              minute: '2-digit'
+            }),
+            attachmentUrl: incoming.attachmentUrl || null,
+            attachmentFileName: incoming.attachmentFileName || null,
+            attachmentContentType: incoming.attachmentContentType || null
+          };
           return {
             ...map,
-            [shopId]: [
-              ...list,
-              {
-                id: incoming.messageId || `m-${Date.now()}`,
-                sender: 'seller' as const,
-                senderName: senderDisplayName,
-                message: incoming.message,
-                timestamp: new Date(incoming.sentAt || Date.now()).toLocaleTimeString([], {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                }),
-                attachmentUrl: incoming.attachmentUrl || null,
-                attachmentFileName: incoming.attachmentFileName || null,
-                attachmentContentType: incoming.attachmentContentType || null
-              }
-            ]
+            [targetMapKey]: [...list, newMsg]
           };
         });
 
         const previewText = incoming.message || (incoming.attachmentUrl ? '📎 Attachment' : 'New message');
         this.shops.update(currentList => currentList.map(s => {
-          if (s.id.toLowerCase() === shopId.toLowerCase()) {
+          if (s.id.toLowerCase() === incomingRoom.toLowerCase() || (s.conversationId && s.conversationId.toLowerCase() === incomingRoom.toLowerCase())) {
             return {
               ...s,
               lastMessage: previewText,
@@ -293,7 +300,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           return s;
         }));
 
-        if (this.partnerServiceShop()?.id?.toLowerCase() === shopId.toLowerCase()) {
+        if (this.partnerServiceShop()?.id?.toLowerCase() === incomingRoom.toLowerCase()) {
           const current = this.partnerServiceShop();
           if (current) {
             this.partnerServiceShop.set({
@@ -305,7 +312,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         }
 
         this.partnerConvos.update(currentList => currentList.map(c => {
-          if (String(c.orderRequestId || c.id || '').toLowerCase() === shopId.toLowerCase()) {
+          if (String(c.orderRequestId || c.id || '').toLowerCase() === incomingRoom.toLowerCase()) {
             return {
               ...c,
               lastMessage: previewText,
@@ -315,16 +322,21 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           return c;
         }));
 
+        const activeShop = this.selectedShop();
+        const activeThreadId = activeShop?.conversationId || activeShop?.id;
         const isActiveOpen =
           this.isOpen()
           && this.currentView() === 'chat'
-          && this.selectedShop()?.id?.toLowerCase() === shopId.toLowerCase();
+          && (activeShop?.id?.toLowerCase() === incomingRoom.toLowerCase() ||
+              activeThreadId?.toLowerCase() === incomingRoom.toLowerCase());
 
         if (isActiveOpen) {
-          // Already viewing — clear unread immediately
-          this.chatUnread.markConversationRead(shopId);
+          this.chatUnread.markConversationRead(incomingRoom);
+          if (targetMapKey !== incomingRoom) {
+            this.chatUnread.markConversationRead(targetMapKey);
+          }
         } else {
-          this.chatUnread.bump(shopId, 1);
+          this.chatUnread.bump(incomingRoom, 1);
           this.toast.show(`New chat from ${shopName}`, 'info');
         }
         this.queueScrollToLatest();
@@ -394,9 +406,11 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.pollTimer = setInterval(() => {
       this.chatUnread.refresh();
       if (this.isOpen() && this.selectedShop() && this.currentView() === 'chat') {
-        this.fetchLiveMessages(this.selectedShop()!.id);
+        const activeShop = this.selectedShop()!;
+        const threadId = activeShop.conversationId || activeShop.id;
+        this.fetchLiveMessagesSilent(threadId, activeShop.id);
       }
-    }, 8000);
+    }, 15000);
   }
 
   ngOnDestroy(): void {
@@ -546,7 +560,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   private openThread(shop: AdminChatShop): void {
-    if (this.joinedRoomId && this.joinedRoomId !== shop.id) {
+    const threadId = shop.conversationId || shop.id;
+    if (this.joinedRoomId && this.joinedRoomId !== threadId && this.joinedRoomId !== shop.id) {
       this.signalR.leaveOrderRoom(this.joinedRoomId).catch(() => {});
     }
 
@@ -556,11 +571,17 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.selectedShop.set(shop);
     this.currentView.set('chat');
     this.isLoadingMessages.set(true);
-    this.signalR.joinOrderRoom(shop.id).then(() => {
-      this.joinedRoomId = shop.id;
+
+    this.signalR.joinOrderRoom(threadId).then(() => {
+      this.joinedRoomId = threadId;
     }).catch(() => {});
+    if (shop.id && shop.id !== threadId) {
+      this.signalR.joinOrderRoom(shop.id).catch(() => {});
+    }
+
+    this.chatUnread.markConversationRead(threadId);
     this.chatUnread.markConversationRead(shop.id);
-    this.fetchLiveMessages(shop.id);
+    this.fetchLiveMessages(threadId, shop.id);
     this.queueScrollToLatest();
   }
 
@@ -596,14 +617,19 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
           this.isLoadingCustomers.set(false);
         }
 
-        // Update seller shops with lastMessage, lastMessageTime, and logoUrl
+        // Update seller shops with conversationId, lastMessage, lastMessageTime, and logoUrl
         this.shops.update(currentList => currentList.map(shop => {
           const matching = convos.find((c: any) =>
-            String(c.orderRequestId || c.id || '').toLowerCase() === shop.id.toLowerCase()
+            String(c.orderRequestId || c.id || '').toLowerCase() === shop.id.toLowerCase() ||
+            String(c.shopId || '').toLowerCase() === shop.id.toLowerCase() ||
+            String(c.participantId || '').toLowerCase() === shop.id.toLowerCase()
           );
           if (matching) {
+            const convoRoomId = String(matching.orderRequestId || matching.id || '');
             return {
               ...shop,
+              conversationId: convoRoomId,
+              shopId: shop.id,
               lastMessage: matching.lastMessage || shop.lastMessage || null,
               lastMessageTime: matching.lastMessageAt || shop.lastMessageTime || null,
               logoUrl: shop.logoUrl || matching.logoUrl || null
@@ -715,69 +741,116 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
   getCurrentMessages(): AdminToSellerMessage[] {
     const shop = this.selectedShop();
     if (!shop) return [];
-    return this.messagesMap()[shop.id] || [];
+    const threadId = shop.conversationId || shop.id;
+    return this.messagesMap()[threadId] || this.messagesMap()[shop.id] || [];
   }
 
-  fetchLiveMessages(shopId: string): void {
-    this.adminService.getOrderMessages(shopId, 1, 50).subscribe({
+  fetchLiveMessages(targetId: string, fallbackShopId?: string): void {
+    this.adminService.getOrderMessages(targetId, 1, 50).subscribe({
       next: (msgs: any[]) => {
         this.isLoadingMessages.set(false);
-        if (!msgs || !msgs.length) {
-          if (!(this.messagesMap()[shopId]?.length)) {
-            const shop = this.shops().find(s => s.id === shopId);
-            const myName = this.isPartner() ? 'Partner Support' : 'Management';
-            const welcomeMsg = this.isPartner()
-              ? `Hello ${shop?.name || 'Merchant'}! This is your direct partner support channel.`
-              : `Hello ${shop?.name || 'Merchant'}! This is your direct support channel with Management.`;
-            this.messagesMap.update(map => ({
-              ...map,
-              [shopId]: [{
-                id: `init-${shopId}`,
-                sender: 'admin',
-                senderName: myName,
-                message: welcomeMsg,
-                timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-              }]
-            }));
+        const list = Array.isArray(msgs) ? msgs : (msgs as any)?.items || [];
+        if (!list || !list.length) {
+          if (fallbackShopId && fallbackShopId !== targetId) {
+            this.adminService.getOrderMessages(fallbackShopId, 1, 50).subscribe({
+              next: (fallbackMsgs: any[]) => {
+                const fbList = Array.isArray(fallbackMsgs) ? fallbackMsgs : (fallbackMsgs as any)?.items || [];
+                if (fbList && fbList.length) {
+                  this.populateMessagesForShop(targetId, fbList);
+                } else {
+                  this.ensureWelcomeMessage(targetId);
+                }
+              },
+              error: () => this.ensureWelcomeMessage(targetId)
+            });
+            return;
           }
+          this.ensureWelcomeMessage(targetId);
           return;
         }
-
-        const formatted: AdminToSellerMessage[] = msgs.map((m: any) => {
-          const isMe = this.isMyMessage(m);
-          const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
-          return {
-            id: m.id || `msg-${Math.random()}`,
-            sender: isMe ? 'admin' : 'seller',
-            senderName: this.getSenderDisplayName(m, isMe),
-            message: isDel ? 'This message was deleted' : (m.message || m.content || ''),
-            timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
-              hour: '2-digit',
-              minute: '2-digit'
-            }),
-            attachmentUrl: isDel ? null : (m.attachmentUrl || null),
-            attachmentFileName: isDel ? null : (m.attachmentFileName || null),
-            attachmentContentType: isDel ? null : (m.attachmentContentType || null),
-            isEdited: !!(m.isEdited ?? m.IsEdited),
-            editedAt: m.editedAt || m.EditedAt || null,
-            isDeletedForEveryone: isDel,
-            isRead: !!(m.isRead ?? m.IsRead),
-            readAt: m.readAt || m.ReadAt || null,
-            isDelivered: !!(m.deliveredAt || m.DeliveredAt || m.isRead || m.IsRead),
-            deliveredAt: m.deliveredAt || m.DeliveredAt || null,
-            isTemp: false
-          };
-        });
-
-        this.messagesMap.update(map => ({
-          ...map,
-          [shopId]: formatted
-        }));
-        this.queueScrollToLatest();
+        this.populateMessagesForShop(targetId, list);
       },
       error: () => {
         this.isLoadingMessages.set(false);
       }
+    });
+  }
+
+  fetchLiveMessagesSilent(targetId: string, fallbackShopId?: string): void {
+    this.adminService.getOrderMessages(targetId, 1, 50).subscribe({
+      next: (msgs: any[]) => {
+        const list = Array.isArray(msgs) ? msgs : (msgs as any)?.items || [];
+        if (list && list.length) {
+          this.populateMessagesForShop(targetId, list);
+        } else if (fallbackShopId && fallbackShopId !== targetId) {
+          this.adminService.getOrderMessages(fallbackShopId, 1, 50).subscribe({
+            next: (fallbackMsgs: any[]) => {
+              const fbList = Array.isArray(fallbackMsgs) ? fallbackMsgs : (fallbackMsgs as any)?.items || [];
+              if (fbList && fbList.length) {
+                this.populateMessagesForShop(targetId, fbList);
+              }
+            },
+            error: () => {}
+          });
+        }
+      },
+      error: () => {}
+    });
+  }
+
+  private populateMessagesForShop(targetId: string, list: any[]): void {
+    const formatted: AdminToSellerMessage[] = list.map((m: any) => {
+      const isMe = this.isMyMessage(m);
+      const isDel = !!(m.isDeletedForEveryone ?? m.IsDeletedForEveryone);
+      return {
+        id: m.id || `msg-${Math.random()}`,
+        sender: isMe ? 'admin' : 'seller',
+        senderName: this.getSenderDisplayName(m, isMe),
+        message: isDel ? 'This message was deleted' : (m.message || m.content || ''),
+        timestamp: new Date(m.sentAt || m.createdAt || Date.now()).toLocaleTimeString([], {
+          hour: '2-digit',
+          minute: '2-digit'
+        }),
+        attachmentUrl: isDel ? null : (m.attachmentUrl || null),
+        attachmentFileName: isDel ? null : (m.attachmentFileName || null),
+        attachmentContentType: isDel ? null : (m.attachmentContentType || null),
+        isEdited: !!(m.isEdited ?? m.IsEdited),
+        editedAt: m.editedAt || m.EditedAt || null,
+        isDeletedForEveryone: isDel,
+        isRead: !!(m.isRead ?? m.IsRead),
+        readAt: m.readAt || m.ReadAt || null,
+        isDelivered: !!(m.deliveredAt || m.DeliveredAt || m.isRead || m.IsRead),
+        deliveredAt: m.deliveredAt || m.DeliveredAt || null,
+        isTemp: false
+      };
+    });
+
+    this.messagesMap.update(map => ({
+      ...map,
+      [targetId]: formatted
+    }));
+    this.queueScrollToLatest();
+  }
+
+  private ensureWelcomeMessage(targetId: string): void {
+    if (this.messagesMap()[targetId]?.length) return;
+    const shop = this.shops().find(s => s.id === targetId || s.conversationId === targetId);
+    const myName = this.isPartner() ? 'Partner Support' : 'Management';
+    const welcomeMsg = this.isPartner()
+      ? `Hello ${shop?.name || 'Merchant'}! This is your direct partner support channel.`
+      : `Hello ${shop?.name || 'Merchant'}! This is your direct support channel with Management.`;
+    this.messagesMap.update(map => {
+      if (map[targetId]?.length) return map;
+      return {
+        ...map,
+        [targetId]: [{
+          id: `init-${targetId}`,
+          sender: 'admin',
+          senderName: myName,
+          message: welcomeMsg,
+          timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        }]
+      };
     });
   }
 
@@ -878,6 +951,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       return;
     }
 
+    const threadId = shop.conversationId || shop.id;
     this.isSending.set(true);
     this.adminService.editChatMessage(msg.id, newContent).subscribe({
       next: () => {
@@ -885,7 +959,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         const now = new Date().toISOString();
         this.messagesMap.update(map => ({
           ...map,
-          [shop.id]: (map[shop.id] || []).map(m =>
+          [threadId]: (map[threadId] || map[shop.id] || []).map(m =>
             m.id === msg.id ? { ...m, message: newContent, isEdited: true, editedAt: now } : m
           )
         }));
@@ -912,12 +986,13 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     const shop = this.selectedShop();
     if (!msg || !msg.id || !shop) return;
 
+    const threadId = shop.conversationId || shop.id;
     this.adminService.deleteChatMessage(msg.id, forEveryone).subscribe({
       next: () => {
         if (forEveryone) {
           this.messagesMap.update(map => ({
             ...map,
-            [shop.id]: (map[shop.id] || []).map(m =>
+            [threadId]: (map[threadId] || map[shop.id] || []).map(m =>
               m.id === msg.id
                 ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
                 : m
@@ -926,7 +1001,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         } else {
           this.messagesMap.update(map => ({
             ...map,
-            [shop.id]: (map[shop.id] || []).filter(m => m.id !== msg.id)
+            [threadId]: (map[threadId] || map[shop.id] || []).filter(m => m.id !== msg.id)
           }));
         }
         this.closeDeleteModal();
@@ -1011,13 +1086,14 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     const shop = this.selectedShop();
     if (!ids || ids.length === 0 || !shop) return;
 
+    const threadId = shop.conversationId || shop.id;
     this.adminService.batchDeleteChatMessages(ids, forEveryone).subscribe({
       next: () => {
         const idSet = new Set(ids);
         if (forEveryone) {
           this.messagesMap.update(map => ({
             ...map,
-            [shop.id]: (map[shop.id] || []).map(m =>
+            [threadId]: (map[threadId] || map[shop.id] || []).map(m =>
               idSet.has(m.id)
                 ? { ...m, message: 'This message was deleted', isDeletedForEveryone: true, attachmentUrl: null, attachmentFileName: null }
                 : m
@@ -1026,7 +1102,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         } else {
           this.messagesMap.update(map => ({
             ...map,
-            [shop.id]: (map[shop.id] || []).filter(m => !idSet.has(m.id))
+            [threadId]: (map[threadId] || map[shop.id] || []).filter(m => !idSet.has(m.id))
           }));
         }
         this.exitSelectionMode();
@@ -1054,6 +1130,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     const shop = this.selectedShop();
     if ((!text && !attachment) || !shop || this.isSending()) return;
 
+    const threadId = shop.conversationId || shop.id;
     const reply = this.replyingTo();
     const payloadText = reply ? buildReplyMessage(reply, text) : text;
 
@@ -1065,8 +1142,8 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
 
     this.messagesMap.update(map => ({
       ...map,
-      [shop.id]: [
-        ...(map[shop.id] || []),
+      [threadId]: [
+        ...(map[threadId] || map[shop.id] || []),
         {
           id: tempId,
           sender: 'admin',
@@ -1088,7 +1165,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
     this.queueScrollToLatest();
 
     this.shops.update(currentList => currentList.map(s => {
-      if (s.id.toLowerCase() === shop.id.toLowerCase()) {
+      if (s.id.toLowerCase() === shop.id.toLowerCase() || (s.conversationId && s.conversationId.toLowerCase() === threadId.toLowerCase())) {
         return {
           ...s,
           lastMessage: preview,
@@ -1098,7 +1175,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
       return s;
     }));
 
-    this.adminService.sendChatMessage(shop.id, payloadText, attachment ? {
+    this.adminService.sendChatMessage(threadId, payloadText, attachment ? {
       attachmentUrl: attachment.url,
       attachmentFileName: attachment.fileName,
       attachmentContentType: attachment.contentType,
@@ -1110,12 +1187,12 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         const isDelivered = !!(res?.isDelivered);
         const deliveredAt = res?.deliveredAt || null;
         this.messagesMap.update(map => {
-          const list = (map[shop.id] || []).filter(m =>
+          const list = (map[threadId] || []).filter(m =>
             m.id !== tempId && String(m.id).toLowerCase() !== realId.toLowerCase()
           );
           return {
             ...map,
-            [shop.id]: [
+            [threadId]: [
               ...list,
               {
                 id: realId,
@@ -1139,7 +1216,7 @@ export class AdminChatWidget implements OnInit, OnDestroy, AfterViewChecked {
         this.isSending.set(false);
         this.messagesMap.update(map => ({
           ...map,
-          [shop.id]: (map[shop.id] || []).filter(m => m.id !== tempId)
+          [threadId]: (map[threadId] || []).filter(m => m.id !== tempId)
         }));
         this.toast.show(err?.error?.error || 'Failed to send message.', 'error');
       }

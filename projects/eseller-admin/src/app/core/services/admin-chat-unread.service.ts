@@ -90,8 +90,26 @@ export class AdminChatUnreadService implements OnDestroy {
       }
     }
 
-    this.aliasMap.set(nextAliases);
-    this.byConversationId.set(nextConvos);
+    // Only update if something actually changed to avoid UI re-render flicker
+    const currConvos = this.byConversationId();
+    if (this.recordsDiffer(currConvos, nextConvos)) {
+      this.byConversationId.set(nextConvos);
+    }
+
+    const currAliases = this.aliasMap();
+    if (this.recordsDiffer(currAliases, nextAliases)) {
+      this.aliasMap.set(nextAliases);
+    }
+  }
+
+  private recordsDiffer<T>(a: Record<string, T>, b: Record<string, T>): boolean {
+    const keysA = Object.keys(a);
+    const keysB = Object.keys(b);
+    if (keysA.length !== keysB.length) return true;
+    for (const k of keysA) {
+      if (a[k] !== b[k]) return true;
+    }
+    return false;
   }
 
   refresh(): void {

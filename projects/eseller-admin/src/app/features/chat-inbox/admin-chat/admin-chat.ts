@@ -321,7 +321,12 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     const incomingId = String(incoming.messageId || '').toLowerCase();
 
     // If message belongs to active thread, append (dedupe by id / temp optimistic)
-    if (activeOrderId && incoming.orderRequestId && incoming.orderRequestId.toLowerCase() === activeOrderId.toLowerCase()) {
+    const matchesActive = activeOrderId && incoming.orderRequestId && (
+      incoming.orderRequestId.toLowerCase() === activeOrderId.toLowerCase() ||
+      (active?.shopId && incoming.orderRequestId.toLowerCase() === String(active.shopId).toLowerCase()) ||
+      (active?.participantId && incoming.orderRequestId.toLowerCase() === String(active.participantId).toLowerCase())
+    );
+    if (matchesActive) {
       this.messages.update((list) => {
         if (incomingId && list.some(m => String(m.id).toLowerCase() === incomingId)) {
           return list;
@@ -355,11 +360,20 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
     }
 
     // Update conversation sidebar preview — bump unreadCount (WhatsApp-style) unless the thread is open & it's our own message.
-    const isActiveThread = !!activeOrderId && incoming.orderRequestId?.toLowerCase() === activeOrderId.toLowerCase();
-    const found = this.conversations().some(c => (c.orderRequestId || c.id)?.toLowerCase() === incoming.orderRequestId?.toLowerCase());
+    const isActiveThread = !!matchesActive;
+    const incomingOrderReqId = (incoming.orderRequestId || '').toLowerCase();
+    const found = this.conversations().some(c =>
+      (c.orderRequestId || c.id)?.toLowerCase() === incomingOrderReqId ||
+      c.shopId?.toLowerCase() === incomingOrderReqId ||
+      c.participantId?.toLowerCase() === incomingOrderReqId
+    );
     if (found) {
       this.conversations.update(list => list.map(c => {
-        if ((c.orderRequestId || c.id)?.toLowerCase() === incoming.orderRequestId?.toLowerCase()) {
+        const isThisConvo =
+          (c.orderRequestId || c.id)?.toLowerCase() === incomingOrderReqId ||
+          c.shopId?.toLowerCase() === incomingOrderReqId ||
+          c.participantId?.toLowerCase() === incomingOrderReqId;
+        if (isThisConvo) {
           return {
             ...c,
             lastMessage: incoming.message,
@@ -373,12 +387,12 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         this.chatUnread.bump(incoming.orderRequestId, 1);
       }
     } else {
-      // New conversation from new customer — reload list immediately
+      // New conversation from new customer — reload list immediately (without flashing full skeleton)
       this.loadConversations(false);
     }
 
     // Notify even when another thread is open / inbox in background
-    if (!activeOrderId || incoming.orderRequestId?.toLowerCase() !== activeOrderId.toLowerCase()) {
+    if (!matchesActive) {
       if (!isFromAdmin) {
         this.toast.show(`New chat: ${incoming.message?.slice(0, 80) || 'message'}`, 'info');
       }
@@ -386,7 +400,9 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
   }
 
   loadConversations(selectFirst = true): void {
-    this.isLoading.set(true);
+    if (this.conversations().length === 0) {
+      this.isLoading.set(true);
+    }
     const targetId =
       this.route.snapshot.queryParamMap.get('targetId') ||
       this.route.snapshot.queryParamMap.get('c');
@@ -397,8 +413,31 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         let convos = Array.isArray(list) ? list : (list?.items || list?.conversations || []);
 
         if (targetId) {
-          const found = convos.find((c: any) => (c.orderRequestId || c.id)?.toLowerCase() === targetId.toLowerCase());
+          const targetLower = targetId.toLowerCase();
+          const found = convos.find((c: any) =>
+            (c.orderRequestId || c.id)?.toLowerCase() === targetLower ||
+            c.shopId?.toLowerCase() === targetLower ||
+            c.participantId?.toLowerCase() === targetLower ||
+            c.userId?.toLowerCase() === targetLower
+          );
           if (found) {
+            if (this.isPartner()) {
+              if (found.participantType === 'SellerPartner') {
+                this.filterTab.set('my-sellers');
+              } else {
+                this.filterTab.set('superadmin');
+              }
+            } else {
+              if (found.participantType === 'Seller') {
+                this.filterTab.set(found.isReferred ? 'partner-referrals' : 'direct-sellers');
+              } else if (found.participantType === 'SellerPartner') {
+                this.filterTab.set('partner-sellers');
+              } else if (found.participantType === 'Partner') {
+                this.filterTab.set('partners');
+              } else if (found.participantType === 'Customer') {
+                this.filterTab.set('customers');
+              }
+            }
             this.conversations.set(convos);
             this.chatUnread.applyFromConversations(convos);
             this.isLoading.set(false);
@@ -410,9 +449,15 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
               orderRequestId: targetId,
               customerName: targetName || 'Merchant Partner',
               shopName: targetName || 'Merchant Store',
+              participantType: this.isPartner() ? 'SellerPartner' : 'Seller',
+              participantId: targetId,
+              shopId: targetId,
               lastMessage: 'Direct Support Channel',
               orderStatus: 'Active Partner'
             };
+            if (this.isPartner()) {
+              this.filterTab.set('my-sellers');
+            }
             convos = [virtualConvo, ...convos];
             this.conversations.set(convos);
             this.chatUnread.applyFromConversations(convos);
@@ -430,12 +475,23 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
         // For Partner: automatically select their default SuperAdmin conversation!
         if (selectFirst && !this.activeConversation()) {
           if (targetId) {
+            const targetLower = targetId.toLowerCase();
             const match = convos.find((c: any) =>
-              (c.orderRequestId || c.id)?.toLowerCase() === targetId.toLowerCase());
+              (c.orderRequestId || c.id)?.toLowerCase() === targetLower ||
+              c.shopId?.toLowerCase() === targetLower ||
+              c.participantId?.toLowerCase() === targetLower ||
+              c.userId?.toLowerCase() === targetLower
+            );
             if (match) this.selectConversation(match);
           } else if (this.isPartner()) {
-            const saConvo = convos.find((c: any) => c.participantType === 'Partner');
-            if (saConvo) this.selectConversation(saConvo);
+            const tab = this.filterTab();
+            if (tab === 'my-sellers') {
+              const spConvo = convos.find((c: any) => c.participantType === 'SellerPartner');
+              if (spConvo) this.selectConversation(spConvo);
+            } else {
+              const saConvo = convos.find((c: any) => c.participantType === 'Partner');
+              if (saConvo) this.selectConversation(saConvo);
+            }
           }
         }
       },
@@ -446,9 +502,15 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
             orderRequestId: targetId,
             customerName: targetName || 'Merchant Partner',
             shopName: targetName || 'Merchant Store',
+            participantType: this.isPartner() ? 'SellerPartner' : 'Seller',
+            participantId: targetId,
+            shopId: targetId,
             lastMessage: 'Direct Support Channel',
             orderStatus: 'Active Partner'
           };
+          if (this.isPartner()) {
+            this.filterTab.set('my-sellers');
+          }
           this.conversations.set([virtualConvo]);
           this.isLoading.set(false);
           this.selectConversation(virtualConvo);
@@ -962,6 +1024,17 @@ export class AdminChat implements OnInit, OnDestroy, AfterViewChecked {
 
   setFilterTab(tab: AdminChatTab): void {
     this.filterTab.set(tab);
+    setTimeout(() => {
+      const filtered = this.filteredConversations();
+      const current = this.activeConversation();
+      const currentId = String(current?.orderRequestId || current?.id || '').toLowerCase();
+      const inTab = current && filtered.some(c =>
+        String(c.orderRequestId || c.id || '').toLowerCase() === currentId
+      );
+      if (!inTab && filtered.length > 0) {
+        this.selectConversation(filtered[0]);
+      }
+    }, 0);
   }
 
   isActiveConvo(convo: any): boolean {
