@@ -162,6 +162,13 @@ export class AdminPermissionService {
       }
     }
 
+    const roleLower = String(account?.roleType || '').toLowerCase();
+    if (roleLower === 'partner') {
+      this.permissions.set(PLATFORM_PERMISSIONS.map(p => p.key));
+      this.isLoaded.set(true);
+      return;
+    }
+
     // 2. Try from sessionStorage
     if (typeof window !== 'undefined' && window.sessionStorage) {
       try {
@@ -277,6 +284,10 @@ export class AdminPermissionService {
     if (this.isSuperAdmin()) return true;
     const list = this.permissions();
     if (list.includes('*') || list.includes('all')) return true;
+    const role = String(this.authStore.currentAccount()?.roleType || '').toLowerCase();
+    if (role === 'partner' && list.length === 0) {
+      return true;
+    }
     return list.includes(permission);
   }
 
