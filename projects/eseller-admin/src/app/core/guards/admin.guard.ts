@@ -7,10 +7,11 @@ export const adminGuard: CanActivateFn = () => {
   const authStore = inject(AuthStore);
 
   const role = authStore.currentAccount()?.roleType;
+  const roleLower = String(role || '').toLowerCase();
   const expiresAt = authStore.accessTokenExpiresAt();
   const isExpired = expiresAt ? expiresAt.getTime() <= Date.now() : false;
 
-  if (authStore.isAuthenticated() && !isExpired && (role === 'SuperAdmin' || role === 'Partner')) {
+  if (authStore.isAuthenticated() && !isExpired && (roleLower === 'superadmin' || roleLower === 'partner')) {
     return true;
   }
 
@@ -23,8 +24,10 @@ export const adminGuard: CanActivateFn = () => {
         if (match && match[1]) {
           const payload = safeDecodeHandoff<any>(decodeURIComponent(match[1]));
           if (payload?.accessToken && payload?.accountId) {
-            const r = payload.account?.roleType || payload.roleType;
-            if (r === 'SuperAdmin' || r === 'Partner') {
+            const rawR = String(payload.account?.roleType || payload.roleType || '');
+            const rLower = rawR.toLowerCase();
+            if (rLower === 'superadmin' || rLower === 'partner') {
+              const r = rLower === 'superadmin' ? 'SuperAdmin' : 'Partner';
               const exp = payload.accessTokenExpiresAt ? new Date(payload.accessTokenExpiresAt) : new Date(Date.now() + 15 * 60 * 1000);
               const perms = payload.permissions || payload.account?.permissions || null;
               authStore.setAuth({
@@ -63,11 +66,14 @@ export const adminGuard: CanActivateFn = () => {
 
       if (saved) {
         const data = JSON.parse(saved);
-        const r = data?.account?.roleType;
+        const rawR = String(data?.account?.roleType || '');
+        const rLower = rawR.toLowerCase();
         const savedExpires = data?.accessTokenExpiresAt ? new Date(data.accessTokenExpiresAt) : null;
         const savedExpired = savedExpires ? savedExpires.getTime() <= Date.now() : false;
 
-        if (data?.accessToken && !savedExpired && (r === 'SuperAdmin' || r === 'Partner')) {
+        if (data?.accessToken && !savedExpired && (rLower === 'superadmin' || rLower === 'partner')) {
+          const r = rLower === 'superadmin' ? 'SuperAdmin' : 'Partner';
+          if (data.account) data.account.roleType = r;
           authStore.setAuth({
             accessToken: data.accessToken,
             accessTokenExpiresAt: savedExpires || new Date(Date.now() + 15 * 60 * 1000),

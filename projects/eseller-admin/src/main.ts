@@ -20,6 +20,11 @@ function hydrateAuthHandoffFromHash(): void {
     const expiresAt = payload.accessTokenExpiresAt
       ? new Date(payload.accessTokenExpiresAt).toISOString()
       : new Date(Date.now() + 3600000).toISOString();
+    const rawRole = String(payload.account?.roleType || payload.roleType || '');
+    const rLower = rawRole.toLowerCase();
+    const roleType = rLower === 'superadmin' ? 'SuperAdmin' : (rLower === 'partner' ? 'Partner' : rawRole);
+    const perms = payload.permissions || payload.account?.permissions || null;
+
     const sessionData = JSON.stringify({
       accessToken: payload.accessToken,
       accessTokenExpiresAt: expiresAt,
@@ -27,7 +32,8 @@ function hydrateAuthHandoffFromHash(): void {
         accountId: payload.accountId,
         username: payload.username,
         email: payload.email,
-        roleType: payload.roleType
+        roleType: roleType,
+        permissions: perms
       }
     });
     window.sessionStorage?.setItem('eseller_auth_session', sessionData);

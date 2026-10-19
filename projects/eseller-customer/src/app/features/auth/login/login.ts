@@ -229,7 +229,10 @@ export class Login implements OnInit {
 
         this.isSubmitting.set(false);
         
-        if (res.roleType === 'Shopkeeper') {
+        const roleStr = String(res.roleType || '');
+        const roleLower = roleStr.toLowerCase();
+
+        if (roleLower === 'shopkeeper' || roleLower === 'seller') {
           if (typeof window !== 'undefined') {
             // Encode auth handoff in URL hash (hash never sent to server, more secure)
             const handoff = safeEncodeHandoff({
@@ -238,11 +241,11 @@ export class Login implements OnInit {
               accountId: res.accountId,
               username: res.username,
               email: res.email,
-              roleType: res.roleType
+              roleType: 'Shopkeeper'
             });
             window.location.href = this.portalHandoffUrl(environment.sellerUrl, handoff);
           }
-        } else if (res.roleType === 'SuperAdmin' || res.roleType === 'Partner') {
+        } else if (roleLower === 'superadmin' || roleLower === 'partner') {
           if (typeof window !== 'undefined') {
             const handoff = safeEncodeHandoff({
               accessToken: res.accessToken,
@@ -250,12 +253,18 @@ export class Login implements OnInit {
               accountId: res.accountId,
               username: res.username,
               email: res.email,
-              roleType: res.roleType
+              roleType: roleLower === 'superadmin' ? 'SuperAdmin' : 'Partner',
+              permissions: res.permissions || null
             });
             window.location.href = this.portalHandoffUrl(environment.adminUrl, handoff);
           }
         } else {
-          this.router.navigateByUrl(this.returnUrl);
+          const ret = (this.returnUrl || '').trim();
+          if (ret.startsWith('http://') || ret.startsWith('https://')) {
+            window.location.href = ret;
+          } else {
+            this.router.navigateByUrl(this.returnUrl);
+          }
         }
       },
       error: (err) => {
