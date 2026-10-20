@@ -232,6 +232,15 @@
                   <span>Partner Referrals</span>
                   <span class="text-[10px] text-purple-400 font-bold">Partner</span>
                 </a>
+                <a [routerLink]="['/shops']" [queryParams]="{view: 'seller-referrals'}"
+                  class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
+                  style="color: #f1f5f9 !important;"
+                  [class.text-orange-400]="isShopNav('seller-referrals')"
+                  [class.font-bold]="isShopNav('seller-referrals')"
+                  [class.bg-slate-800/80]="isShopNav('seller-referrals')">
+                  <span>Seller Referrals</span>
+                  <span class="text-[10px] text-blue-400 font-bold">Seller</span>
+                </a>
                 <a [routerLink]="['/shops']" [queryParams]="{view: 'tiers'}"
                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium"
                   style="color: #f1f5f9 !important;"
@@ -620,39 +629,59 @@
 
           <div class="overflow-hidden transition-all duration-300 ease-in-out"
                [class.max-h-0]="!isDropdownOpen('users')"
-               [class.max-h-56]="isDropdownOpen('users')"
+               [class.max-h-72]="isDropdownOpen('users')"
                [class.opacity-0]="!isDropdownOpen('users')"
                [class.opacity-100]="isDropdownOpen('users')">
             <div class="pl-8 pr-2 py-1 space-y-1 bg-slate-950/60 rounded-xl my-1 border-l-2 border-orange-500">
               @if (canAccessCustomers()) {
-                <a routerLink="/customers" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                  <span>Customers (Shoppers)</span>
+                <a routerLink="/customers" 
+                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" 
+                   style="color: #f1f5f9 !important;"
+                   [class.text-orange-400]="isUserNav('customers')"
+                   [class.font-bold]="isUserNav('customers')"
+                   [class.bg-slate-800/80]="isUserNav('customers')">
+                  <span>Customers</span>
                   @if (pendingCustomersCount() > 0) {
                     <span class="admin-nav-count">{{ formatNavBadge(pendingCustomersCount()) }}</span>
                   }
                 </a>
               }
               @if (canAccessShops()) {
-                <a routerLink="/sellers" [routerLinkActiveOptions]="{exact: true}" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                  <span>Sellers (Platform Direct)</span>
-                  @if (pendingSellersCount() > 0) {
-                    <span class="admin-nav-count">{{ formatNavBadge(pendingSellersCount()) }}</span>
-                  }
+                <a [routerLink]="['/sellers']" [queryParams]="{tab: 'all'}" 
+                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" 
+                   style="color: #f1f5f9 !important;"
+                   [class.text-orange-400]="isUserNav('all')"
+                   [class.font-bold]="isUserNav('all')"
+                   [class.bg-slate-800/80]="isUserNav('all')">
+                  <span>All Merchants</span>
                 </a>
-                <a [routerLink]="['/sellers']" [queryParams]="{tab: 'partner-approved'}" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                  <span>Partner Referral Sellers</span>
+                <a [routerLink]="['/sellers']" [queryParams]="{tab: 'partner-referrals'}" 
+                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" 
+                   style="color: #f1f5f9 !important;"
+                   [class.text-orange-400]="isUserNav('partner-referrals')"
+                   [class.font-bold]="isUserNav('partner-referrals')"
+                   [class.bg-slate-800/80]="isUserNav('partner-referrals')">
+                  <span>Partner Referrals</span>
                   <span class="text-[10px] text-purple-400 font-bold">Partner</span>
                 </a>
-                <a routerLink="/shops" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                  <span>Seller Registrations</span>
-                  @if (pendingShopsCount() > 0) {
-                    <span class="admin-nav-count">{{ formatNavBadge(pendingShopsCount()) }}</span>
-                  }
+                <a [routerLink]="['/sellers']" [queryParams]="{tab: 'seller-referrals'}" 
+                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" 
+                   style="color: #f1f5f9 !important;"
+                   [class.text-orange-400]="isUserNav('seller-referrals')"
+                   [class.font-bold]="isUserNav('seller-referrals')"
+                   [class.bg-slate-800/80]="isUserNav('seller-referrals')">
+                  <span>Seller Referrals</span>
+                  <span class="text-[10px] text-blue-400 font-bold">Seller</span>
                 </a>
               }
               @if (canAccessPartners()) {
-                <a routerLink="/partners" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="block px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                  <span>Partner Operators</span>
+                <a routerLink="/partners" 
+                   class="flex items-center justify-between gap-2 px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" 
+                   style="color: #f1f5f9 !important;"
+                   [class.text-orange-400]="isUserNav('partners')"
+                   [class.font-bold]="isUserNav('partners')"
+                   [class.bg-slate-800/80]="isUserNav('partners')">
+                  <span>Manage Partners</span>
                 </a>
               }
               @if (isPartner()) {
@@ -661,14 +690,27 @@
                   <span class="text-[10px] text-amber-400 font-bold">VIP</span>
                 </a>
               }
-              @if (canAccessAffiliates()) {
-                <a routerLink="/affiliates" routerLinkActive="text-orange-400 font-bold bg-slate-800/80" class="flex items-center justify-between px-2.5 py-1.5 rounded-lg text-xs hover:bg-slate-800 transition-colors font-medium" style="color: #f1f5f9 !important;">
-                  <span>Affiliates &amp; Referrals</span>
-                  <span class="text-[10px] text-orange-400 font-normal">New</span>
-                </a>
-              }
             </div>
           </div>
+        </div>
+        }
+
+        <!-- STANDALONE: SELLER REFERRAL SELLERS -->
+        @if (canAccessShops()) {
+        <div>
+          <a [routerLink]="['/sellers']" [queryParams]="{tab: 'seller-referrals'}"
+            class="w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold hover:bg-slate-800 transition-all group cursor-pointer"
+            style="color: #ffffff !important;"
+            [class.text-orange-400]="isSellerReferralStandaloneActive()"
+            [class.bg-slate-800/80]="isSellerReferralStandaloneActive()">
+            <div class="flex items-center gap-3 min-w-0">
+              <svg xmlns="http://www.w3.org/2000/svg" class="w-4 h-4 text-orange-400 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 003.741-.479 3 3 0 00-4.682-2.72m.94 3.198l.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0112 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 016 18.719m12 0a5.971 5.971 0 00-.941-3.197m0 0A5.995 5.995 0 0012 12.75a5.995 5.995 0 00-5.058 2.772m0 0a3 3 0 00-4.681 2.72 8.986 8.986 0 003.74.477m.94-3.197a5.971 5.971 0 00-.94 3.197M15 6.75a3 3 0 11-6 0 3 3 0 016 0zm6 3a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0zm-13.5 0a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+              </svg>
+              <span class="truncate font-semibold" style="color: #ffffff !important;">Seller Referral Sellers</span>
+            </div>
+            <span class="text-[10px] text-blue-400 font-bold">Seller</span>
+          </a>
         </div>
         }
 

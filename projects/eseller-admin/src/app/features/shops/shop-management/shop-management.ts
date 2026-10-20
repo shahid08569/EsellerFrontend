@@ -9,7 +9,7 @@ import { AdminShopkeeperDto, AdminShopDto, ShopCategoryDto, AdminShopTrafficItem
 import { environment } from '../../../../environments/environment';
 
 type FilterTab = 'all' | 'pending' | 'approved' | 'rejected';
-type ViewMode = 'stores' | 'applications' | 'referrals' | 'tiers' | 'traffic';
+type ViewMode = 'stores' | 'applications' | 'referrals' | 'seller-referrals' | 'tiers' | 'traffic';
 
 export interface TierUpgradeRequest {
   id: string;
@@ -88,16 +88,34 @@ export class ShopManagement implements OnInit, OnDestroy {
   readonly searchTerm = signal<string>('');
   readonly actionInProgress = signal<string | null>(null);
 
-  // Direct platform merchants vs Partner Referrals isolation
-  isNormalShopkeeper = (s: AdminShopkeeperDto) => !s.partnerId && !s.referredByCode;
-  isReferralShopkeeper = (s: AdminShopkeeperDto) => !!s.partnerId || !!s.referredByCode;
+  // Platform direct merchants vs Partner Referrals vs Seller Referrals isolation
+  isPartnerReferralShopkeeper = (s: AdminShopkeeperDto) => {
+    if (s.partnerId || s.partnerName) return true;
+    if (s.referredByCode) {
+      const isPartner = this.partners().some(p => p.referralCode && p.referralCode.toLowerCase() === s.referredByCode!.toLowerCase());
+      if (isPartner) return true;
+    }
+    return false;
+  };
+
+  isSellerReferralShopkeeper = (s: AdminShopkeeperDto) => {
+    if (s.partnerId || s.partnerName) return false;
+    if (!s.referredByCode) return false;
+    const isPartner = this.partners().some(p => p.referralCode && p.referralCode.toLowerCase() === s.referredByCode!.toLowerCase());
+    return !isPartner;
+  };
+
+  isNormalShopkeeper = (s: AdminShopkeeperDto) => !this.isPartnerReferralShopkeeper(s) && !this.isSellerReferralShopkeeper(s);
+  isReferralShopkeeper = (s: AdminShopkeeperDto) => this.isPartnerReferralShopkeeper(s) || this.isSellerReferralShopkeeper(s);
 
   readonly normalShopkeepers = computed(() => this.allShopkeepers().filter(this.isNormalShopkeeper));
-  readonly referralShopkeepers = computed(() => this.allShopkeepers().filter(this.isReferralShopkeeper));
+  readonly partnerReferralShopkeepers = computed(() => this.allShopkeepers().filter(this.isPartnerReferralShopkeeper));
+  readonly sellerReferralShopkeepers = computed(() => this.allShopkeepers().filter(this.isSellerReferralShopkeeper));
+  readonly referralShopkeepers = computed(() => this.partnerReferralShopkeepers());
 
   readonly referralShopIds = computed(() => {
     const set = new Set<string>();
-    for (const r of this.referralShopkeepers()) {
+    for (const r of this.partnerReferralShopkeepers()) {
       if (r.shopId) set.add(r.shopId);
     }
     return set;
@@ -486,7 +504,7 @@ export class ShopManagement implements OnInit, OnDestroy {
       const tabParam = params.get('tab') as FilterTab | null;
       const viewParam = params.get('view') as ViewMode | null;
 
-      if (viewParam && ['stores', 'applications', 'referrals', 'tiers', 'traffic'].includes(viewParam)) {
+      if (viewParam && ['stores', 'applications', 'referrals', 'seller-referrals', 'tiers', 'traffic'].includes(viewParam)) {
         this.viewMode.set(viewParam);
         if (viewParam === 'traffic') {
           this.loadAllShopsTraffic();
@@ -498,6 +516,7 @@ export class ShopManagement implements OnInit, OnDestroy {
       if (tabParam && ['all', 'pending', 'approved', 'rejected'].includes(tabParam)) {
         this.activeTab.set(tabParam);
         this.referralActiveTab.set(tabParam);
+        this.sellerReferralActiveTab.set(tabParam);
       }
       const partnerParam = params.get('partnerId');
       if (partnerParam) {
@@ -720,7 +739,7 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   // Filtered Partner Referrals List (Strictly Partner Referrals ONLY)
   readonly filteredReferralShopkeepers = computed(() => {
-    let list = this.referralShopkeepers();
+    let list = this.partnerReferralShopkeepers();
     const tab = this.referralActiveTab();
     const term = this.searchTerm().trim().toLowerCase();
     const selectedPartnerId = this.selectedPartnerFilter();
@@ -757,6 +776,37 @@ export class ShopManagement implements OnInit, OnDestroy {
     return list;
   });
 
+  // Filtered Seller Referrals List (Strictly Seller Referrals ONLY)
+  readonly sellerReferralActiveTab = signal<FilterTab>('all');
+
+  readonly filteredSellerReferralShopkeepers = computed(() => {
+    let list = this.sellerReferralShopkeepers();
+    const tab = this.sellerReferralActiveTab();
+    const term = this.searchTerm().trim().toLowerCase();
+
+    if (tab === 'pending') {
+      list = list.filter(s => String(s.status).toLowerCase() === 'pending');
+    } else if (tab === 'approved') {
+      list = list.filter(s => String(s.status).toLowerCase() === 'approved');
+    } else if (tab === 'rejected') {
+      list = list.filter(s => String(s.status).toLowerCase() === 'rejected');
+    }
+
+    if (term) {
+      list = list.filter(s => 
+        (s.storeName && s.storeName.toLowerCase().includes(term)) ||
+        (s.name && s.name.toLowerCase().includes(term)) ||
+        (s.email && s.email.toLowerCase().includes(term)) ||
+        (s.city && s.city.toLowerCase().includes(term)) ||
+        (s.phone && s.phone.includes(term)) ||
+        (s.referredByName && s.referredByName.toLowerCase().includes(term)) ||
+        (s.referredByCode && s.referredByCode.toLowerCase().includes(term))
+      );
+    }
+
+    return list;
+  });
+
   // Tab counts for Applications (Direct platform merchants only)
   readonly countPending = computed(() => 
     this.normalShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
@@ -770,13 +820,24 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   // Tab counts for Partner Referrals
   readonly countPendingReferrals = computed(() => 
-    this.referralShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
+    this.partnerReferralShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
   );
   readonly countApprovedReferrals = computed(() => 
-    this.referralShopkeepers().filter(s => String(s.status).toLowerCase() === 'approved').length
+    this.partnerReferralShopkeepers().filter(s => String(s.status).toLowerCase() === 'approved').length
   );
   readonly countRejectedReferrals = computed(() => 
-    this.referralShopkeepers().filter(s => String(s.status).toLowerCase() === 'rejected').length
+    this.partnerReferralShopkeepers().filter(s => String(s.status).toLowerCase() === 'rejected').length
+  );
+
+  // Tab counts for Seller Referrals
+  readonly countPendingSellerReferrals = computed(() => 
+    this.sellerReferralShopkeepers().filter(s => String(s.status).toLowerCase() === 'pending').length
+  );
+  readonly countApprovedSellerReferrals = computed(() => 
+    this.sellerReferralShopkeepers().filter(s => String(s.status).toLowerCase() === 'approved').length
+  );
+  readonly countRejectedSellerReferrals = computed(() => 
+    this.sellerReferralShopkeepers().filter(s => String(s.status).toLowerCase() === 'rejected').length
   );
 
   // Paginated Slices
@@ -810,15 +871,27 @@ export class ShopManagement implements OnInit, OnDestroy {
     Math.ceil(this.filteredReferralShopkeepers().length / this.pageSize()) || 1
   );
 
+  readonly pagedSellerReferralShopkeepers = computed(() => {
+    const list = this.filteredSellerReferralShopkeepers();
+    const start = (this.currentPage() - 1) * this.pageSize();
+    return list.slice(start, start + this.pageSize());
+  });
+
+  readonly totalSellerReferralPages = computed(() => 
+    Math.ceil(this.filteredSellerReferralShopkeepers().length / this.pageSize()) || 1
+  );
+
   readonly currentTotalPages = computed(() => {
     if (this.viewMode() === 'stores') return this.totalActiveStorePages();
     if (this.viewMode() === 'referrals') return this.totalReferralPages();
+    if (this.viewMode() === 'seller-referrals') return this.totalSellerReferralPages();
     return this.totalShopkeeperPages();
   });
 
   readonly currentTotalItems = computed(() => {
     if (this.viewMode() === 'stores') return this.filteredActiveStores().length;
     if (this.viewMode() === 'referrals') return this.filteredReferralShopkeepers().length;
+    if (this.viewMode() === 'seller-referrals') return this.filteredSellerReferralShopkeepers().length;
     return this.filteredShopkeepers().length;
   });
 
@@ -871,6 +944,8 @@ export class ShopManagement implements OnInit, OnDestroy {
         ? { view: mode, tab: this.activeTab() }
         : mode === 'referrals'
         ? { view: mode, tab: this.referralActiveTab() }
+        : mode === 'seller-referrals'
+        ? { view: mode, tab: this.sellerReferralActiveTab() }
         : { view: mode, tab: null },
       queryParamsHandling: ''
     });
@@ -891,6 +966,13 @@ export class ShopManagement implements OnInit, OnDestroy {
 
   switchReferralTab(tab: FilterTab): void {
     this.referralActiveTab.set(tab);
+    this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
+  switchSellerReferralTab(tab: FilterTab): void {
+    this.sellerReferralActiveTab.set(tab);
     this.currentPage.set(1);
     this.isLoading.set(true);
     setTimeout(() => this.isLoading.set(false), 180);

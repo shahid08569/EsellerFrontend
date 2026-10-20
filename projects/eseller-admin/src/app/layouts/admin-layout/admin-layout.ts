@@ -212,7 +212,7 @@ export class AdminLayout implements OnInit, OnDestroy {
   }
 
   /** Shop Management submenu — match by view (+ tab for applications). */
-  isShopNav(item: 'pending' | 'stores' | 'tiers' | 'traffic' | 'all' | 'referrals'): boolean {
+  isShopNav(item: 'pending' | 'stores' | 'tiers' | 'traffic' | 'all' | 'referrals' | 'seller-referrals'): boolean {
     const url = this.currentUrl() || this.router.url || '';
     if (!url.startsWith('/shops')) return false;
 
@@ -223,7 +223,8 @@ export class AdminLayout implements OnInit, OnDestroy {
 
     if (item === 'traffic') return view === 'traffic';
     if (item === 'tiers') return view === 'tiers';
-    if (item === 'referrals') return view === 'referrals';
+    if (item === 'referrals') return view === 'referrals' || view === 'partner-referrals';
+    if (item === 'seller-referrals') return view === 'seller-referrals';
     if (item === 'stores') return view === 'stores' || (!view && !tab);
     if (item === 'pending') {
       return view === 'applications' && (tab === 'pending' || tab === '');
@@ -232,6 +233,31 @@ export class AdminLayout implements OnInit, OnDestroy {
       return view === 'applications' && (tab === 'all' || tab === 'approved' || tab === 'rejected');
     }
     return false;
+  }
+
+  /** Users & Access navigation matching */
+  isUserNav(item: 'customers' | 'all' | 'partner-referrals' | 'seller-referrals' | 'partners'): boolean {
+    const url = this.currentUrl() || this.router.url || '';
+    if (item === 'customers') return url.startsWith('/customers');
+    if (item === 'partners') return url.startsWith('/partners');
+    if (!url.startsWith('/sellers')) return false;
+
+    const q = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(q);
+    const tab = (params.get('tab') || 'all').toLowerCase();
+
+    if (item === 'partner-referrals') return tab === 'partner-referrals' || tab === 'partner-approved';
+    if (item === 'seller-referrals') return tab === 'seller-referrals';
+    if (item === 'all') return tab === 'all' || !params.get('tab');
+    return false;
+  }
+
+  isSellerReferralStandaloneActive(): boolean {
+    const url = this.currentUrl() || this.router.url || '';
+    if (!url.startsWith('/sellers')) return false;
+    const q = url.includes('?') ? url.slice(url.indexOf('?') + 1) : '';
+    const params = new URLSearchParams(q);
+    return (params.get('tab') || '').toLowerCase() === 'seller-referrals';
   }
 
   private autoExpandActiveDropdown(url: string): void {

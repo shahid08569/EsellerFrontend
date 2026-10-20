@@ -20,7 +20,10 @@ export class SellerManagement implements OnInit {
 
   readonly isLoading = signal<boolean>(true);
   readonly searchTerm = signal<string>('');
-  readonly statusFilter = signal<'ALL' | 'Approved' | 'PartnerApproved' | 'Pending' | 'Rejected'>('ALL');
+  readonly currentTab = signal<'all' | 'partner-referrals' | 'seller-referrals'>('all');
+  readonly statusFilter = signal<'ALL' | 'Approved' | 'Pending' | 'Rejected'>('ALL');
+  readonly sortOrder = signal<'newest' | 'oldest'>('newest');
+  readonly merchantTypeFilter = signal<'all' | 'direct' | 'partner' | 'seller'>('all');
   readonly actionInProgress = signal<string | null>(null);
 
   // Sellers data
@@ -67,12 +70,18 @@ export class SellerManagement implements OnInit {
   ngOnInit(): void {
     this.loadPartners();
     this.route.queryParams.subscribe(params => {
-      if (params['tab'] === 'partner-approved') {
-        this.statusFilter.set('PartnerApproved');
+      const tabParam = params['tab'];
+      if (tabParam === 'partner-referrals' || tabParam === 'partner-approved') {
+        this.currentTab.set('partner-referrals');
+      } else if (tabParam === 'seller-referrals') {
+        this.currentTab.set('seller-referrals');
+      } else {
+        this.currentTab.set('all');
       }
       if (params['partnerId']) {
         this.selectedPartnerFilter.set(params['partnerId']);
       }
+      this.currentPage.set(1);
     });
     this.loadSellers();
   }
@@ -103,20 +112,45 @@ export class SellerManagement implements OnInit {
     });
   }
 
-  // Isolate Direct Platform Merchants vs Partner Referrals
-  isNormalSeller = (s: AdminShopkeeperDto) => !s.partnerId && !s.referredByCode;
-  isReferralSeller = (s: AdminShopkeeperDto) => !!s.partnerId || !!s.referredByCode;
+  // Precise classification: Partner Referral vs Seller Referral vs Direct Platform
+  isPartnerReferral = (s: AdminShopkeeperDto) => {
+    if (s.partnerId || s.partnerName) return true;
+    if (s.referredByCode) {
+      const isPartner = this.partners().some(p => p.referralCode && p.referralCode.toLowerCase() === s.referredByCode!.toLowerCase());
+      if (isPartner) return true;
+    }
+    return false;
+  };
 
-  readonly normalSellers = computed(() => this.sellers().filter(this.isNormalSeller));
-  readonly referralSellers = computed(() => this.sellers().filter(this.isReferralSeller));
+  isSellerReferral = (s: AdminShopkeeperDto) => {
+    if (s.partnerId || s.partnerName) return false;
+    if (!s.referredByCode) return false;
+    const isPartner = this.partners().some(p => p.referralCode && p.referralCode.toLowerCase() === s.referredByCode!.toLowerCase());
+    return !isPartner;
+  };
 
-  // Summary Metrics (Direct merchants for platform stats, Referral sellers for partner metrics)
-  readonly totalSellersCount = computed(() => this.normalSellers().length);
-  readonly approvedCount = computed(() => this.normalSellers().filter(s => s.status === 'Approved').length);
-  readonly partnerApprovedCount = computed(() => this.referralSellers().length);
-  readonly pendingCount = computed(() => this.normalSellers().filter(s => s.status === 'Pending').length);
+  isDirectSeller = (s: AdminShopkeeperDto) => !this.isPartnerReferral(s) && !this.isSellerReferral(s);
+
+  // Backward compatibility helpers
+  isNormalSeller = (s: AdminShopkeeperDto) => this.isDirectSeller(s);
+  isReferralSeller = (s: AdminShopkeeperDto) => this.isPartnerReferral(s) || this.isSellerReferral(s);
+
+  readonly directSellers = computed(() => this.sellers().filter(s => this.isDirectSeller(s)));
+  readonly partnerReferralSellers = computed(() => this.sellers().filter(s => this.isPartnerReferral(s)));
+  readonly sellerReferralSellers = computed(() => this.sellers().filter(s => this.isSellerReferral(s)));
+  readonly normalSellers = computed(() => this.directSellers());
+  readonly referralSellers = computed(() => this.partnerReferralSellers());
+
+  // Metrics
+  readonly totalSellersCount = computed(() => this.sellers().length);
+  readonly directCount = computed(() => this.directSellers().length);
+  readonly partnerCount = computed(() => this.partnerReferralSellers().length);
+  readonly sellerRefCount = computed(() => this.sellerReferralSellers().length);
+  readonly approvedCount = computed(() => this.sellers().filter(s => s.status === 'Approved').length);
+  readonly partnerApprovedCount = computed(() => this.partnerReferralSellers().length);
+  readonly pendingCount = computed(() => this.sellers().filter(s => s.status === 'Pending').length);
   readonly totalRevenue = computed(() => 
-    this.normalSellers().reduce((sum, s) => sum + (s.totalRevenue || 0), 0)
+    this.sellers().reduce((sum, s) => sum + (s.totalRevenue || 0), 0)
   );
 
   onSearch(term: string): void {
@@ -126,8 +160,22 @@ export class SellerManagement implements OnInit {
     setTimeout(() => this.isLoading.set(false), 180);
   }
 
-  onFilterStatus(status: 'ALL' | 'Approved' | 'PartnerApproved' | 'Pending' | 'Rejected'): void {
+  onFilterStatus(status: 'ALL' | 'Approved' | 'Pending' | 'Rejected'): void {
     this.statusFilter.set(status);
+    this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
+  onSortChange(order: 'newest' | 'oldest'): void {
+    this.sortOrder.set(order);
+    this.currentPage.set(1);
+    this.isLoading.set(true);
+    setTimeout(() => this.isLoading.set(false), 180);
+  }
+
+  onTypeFilterChange(type: 'all' | 'direct' | 'partner' | 'seller'): void {
+    this.merchantTypeFilter.set(type);
     this.currentPage.set(1);
     this.isLoading.set(true);
     setTimeout(() => this.isLoading.set(false), 180);
@@ -141,16 +189,17 @@ export class SellerManagement implements OnInit {
   }
 
   readonly filteredSellers = computed(() => {
-    const status = this.statusFilter();
+    const tab = this.currentTab();
     const term = this.searchTerm().trim().toLowerCase();
+    const sort = this.sortOrder();
+    const status = this.statusFilter();
+    const type = this.merchantTypeFilter();
     const selectedPartnerId = this.selectedPartnerFilter();
 
-    let list: AdminShopkeeperDto[];
+    let list: AdminShopkeeperDto[] = [];
 
-    if (status === 'PartnerApproved') {
-      // STRICTLY PARTNER REFERRALS ONLY
-      list = this.referralSellers();
-
+    if (tab === 'partner-referrals') {
+      list = this.partnerReferralSellers();
       if (selectedPartnerId !== 'ALL') {
         const partnerObj = this.partners().find(p => p.id === selectedPartnerId);
         list = list.filter(s => 
@@ -158,15 +207,27 @@ export class SellerManagement implements OnInit {
           (partnerObj?.referralCode && s.referredByCode === partnerObj.referralCode)
         );
       }
+    } else if (tab === 'seller-referrals') {
+      list = this.sellerReferralSellers();
     } else {
-      // STRICTLY NORMAL PLATFORM DIRECT MERCHANTS ONLY
-      list = this.normalSellers();
-
-      if (status !== 'ALL') {
-        list = list.filter(s => s.status === status);
+      // 'all' merchants view
+      if (type === 'direct') {
+        list = this.directSellers();
+      } else if (type === 'partner') {
+        list = this.partnerReferralSellers();
+      } else if (type === 'seller') {
+        list = this.sellerReferralSellers();
+      } else {
+        list = this.sellers();
       }
     }
 
+    // Status filter
+    if (status !== 'ALL') {
+      list = list.filter(s => s.status === status);
+    }
+
+    // Search query
     if (term) {
       list = list.filter(s =>
         (s.name && s.name.toLowerCase().includes(term)) ||
@@ -179,6 +240,13 @@ export class SellerManagement implements OnInit {
         (s.referredByCode && s.referredByCode.toLowerCase().includes(term))
       );
     }
+
+    // Sorting by newest / oldest
+    list = [...list].sort((a, b) => {
+      const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return sort === 'newest' ? timeB - timeA : timeA - timeB;
+    });
 
     return list;
   });
